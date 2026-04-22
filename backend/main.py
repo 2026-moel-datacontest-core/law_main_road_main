@@ -40,7 +40,7 @@ app.add_middleware(
     ),
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 app.include_router(api_router)
 app.mount("/api/v1/before", before_app)
