@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
+import { AuthProvider } from '@/context/AuthContext';
 import { FlowProvider } from '@/context/FlowContext';
 
 import './globals.css';
@@ -18,7 +19,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="ko">
       <body>
-        <FlowProvider>{children}</FlowProvider>
+        <AuthProvider>
+          <FlowProvider>{children}</FlowProvider>
+        </AuthProvider>
       </body>
     </html>
   );

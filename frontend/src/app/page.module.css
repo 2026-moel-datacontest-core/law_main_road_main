@@ -312,6 +312,11 @@
   background: #ffffff;
 }
 
+.accountSection {
+  padding: 48px 0 0;
+  background: #ffffff;
+}
+
 .sectionTop,
 .serviceHeader {
   display: flex;

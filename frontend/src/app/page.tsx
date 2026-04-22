@@ -23,6 +23,8 @@ import {
   X,
 } from 'lucide-react';
 
+import { LoginButton } from '@/components/auth/LoginButton';
+
 import styles from './page.module.css';
 
 const news = [
@@ -236,6 +238,16 @@ function NewsSection() {
             </article>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function AccountReadinessSection() {
+  return (
+    <section className={styles.accountSection} aria-label="SCN-001 계정 연결 준비">
+      <div className={styles.container}>
+        <LoginButton />
       </div>
     </section>
   );
@@ -525,6 +537,7 @@ export default function HomePage() {
     <div className={styles.page}>
       <Navbar />
       <Hero />
+      <AccountReadinessSection />
       <NewsSection />
       <ServiceNav />
       <SolutionCards />
