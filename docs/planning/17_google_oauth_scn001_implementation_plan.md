@@ -281,7 +281,7 @@ MVP에서는 backend가 Google authorization code exchange를 직접 담당하�
 | `created_at` | DateTime(tz) | Yes | server_default | |
 | `last_login_at` | DateTime(tz) | Yes | | |
 
-Note: Firebase Auth MVP path에서 `provider_subject`는 Firebase `uid`를 의미한다. Google `sub`는 Direct Google OAuth alternative에서의 subject이며, `docs/planning/15_scn001_account_auth_spec.md`와 `docs/planning/16_scn001_before_bridge_contract.md`의 `provider_subject` 설명은 후속 정렬 patch에서 Firebase uid 기준으로 맞춘다.
+Note: Firebase Auth MVP path에서 `provider_subject`는 Firebase `uid`를 의미한다. Google `sub`는 Direct Google OAuth Alternative/Fallback subject이며, `docs/planning/15_scn001_account_auth_spec.md`와 `docs/planning/16_scn001_before_bridge_contract.md`도 같은 의미로 정렬되어 있다.
 
 제약:
 
