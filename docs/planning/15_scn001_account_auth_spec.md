@@ -15,7 +15,7 @@
 포함 범위:
 
 - Firebase Auth Google Sign-In + Bearer Firebase ID token 기반 최소 로그인 capability의 account linkage 기준
-- Firebase uid as `provider_subject` 기반 internal user id 후보
+- Firebase uid as `provider_subject` 기반 internal user id 기준
 - Before job과 user 연결 후보
 - Bridge run 최소 스펙 후보
 - After artifact run과 user 연결 후보
@@ -51,7 +51,7 @@
 - 이메일은 primary identifier로 사용하지 않는다.
 - Firebase Auth MVP path에서 `provider_subject`는 Firebase `uid`를 의미한다.
 - Google `sub`는 Direct Google OAuth Alternative/Fallback path에서의 subject이며, Firebase Auth MVP path의 `provider_subject`와 혼동하지 않는다.
-- `users.auth_provider` 값은 Phase 0 open question으로 두며 `"firebase"` 또는 `"firebase_google"` 후보를 유지한다.
+- `users.auth_provider` 값은 MVP path 기준 `firebase_google`로 둔다. multi-provider / Future 확장에서는 provider 값 체계가 확장될 수 있다.
 - `users.auth_provider + users.provider_subject`에서 내부 `users.id`를 resolve한다.
 - business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal `users.id`만 참조한다.
 - `before_review_jobs.user_id`, `bridge_runs.user_id`, `after_artifact_runs.user_id`는 모두 internal user_id 참조다.
@@ -66,7 +66,7 @@
 | 필드 | 타입 후보 | 필수 | 설명 |
 |---|---:|---:|---|
 | `id` | string / uuid | Yes | 내부 user id. 외부 provider subject를 직접 노출하지 않는 내부 식별자 |
-| `auth_provider` | string | Yes | Phase 0 open question. Firebase Auth MVP path에서는 `"firebase"` 또는 `"firebase_google"` 후보 |
+| `auth_provider` | string | Yes | Firebase Auth MVP path에서는 `firebase_google` |
 | `provider_subject` | string | Yes | Firebase Auth MVP path에서는 Firebase `uid`. Google `sub`는 Direct Google OAuth Alternative/Fallback subject |
 | `display_name` | string | No | 표시용 nullable 값 |
 | `email` | string | No | 표시 / 연락 후보 nullable 값. primary key 아님 |
@@ -190,7 +190,7 @@ frontend가 주로 쓰는 Before result 필드:
 | 필드 | 필수 후보 | 설명 |
 |---|---:|---|
 | `id` 또는 `bridge_run_id` | Yes | Bridge run 식별자 |
-| `user_id` | TBD | internal `users.id` 참조. 로그인 필수 flow인지, 비로그인 demo-compatible flow인지 결정 필요 |
+| `user_id` | Yes | internal `users.id` 참조. SCN-001 protected bridge flow에서는 required. `SCN-001-BRIDGE-DEMO` presentation preset과 SCN-004 public flow는 `bridge_runs`를 만들지 않음 |
 | `before_review_job_id` | Yes | Before job 연결 |
 | `scenario_id` | Yes | 우선 `SCN-001` |
 | `preset_id` 또는 `source_scenario` | No | `SCN-001-BRIDGE-DEMO` 같은 preset / source 구분 |
@@ -200,8 +200,8 @@ frontend가 주로 쓰는 Before result 필드:
 | `detected_issues` | No | 안전 요약된 이슈 목록 |
 | `law_refs` | No | label 수준 법령 근거 |
 | `recommended_next_actions` | No | 다음 행동 후보 |
-| `after_query_seed` | TBD | After answer input으로 넘길 query seed 후보. 원문 seed 저장 여부는 개인정보 / retention 정책 확정 전까지 미결정. 가능하면 short-lived handoff 또는 hash-only를 우선 검토 |
-| `after_query_seed_hash` | 권장 | 원문 seed를 저장하지 않는 경우에도 중복 / 추적용 최소 식별자로 사용 가능 |
+| `after_query_seed` | No | raw seed persistent 저장 금지. 필요한 경우 nullable/future-only column 또는 short-lived transport로만 별도 검토 |
+| `after_query_seed_hash` | Yes | 원문 seed를 저장하지 않고 중복 / 추적용 최소 식별자로 사용 |
 | `artifact_refs` | No | 내부 artifact reference |
 | `created_at` | Yes | 생성 시각 |
 | `updated_at` | Yes | 갱신 시각 |
@@ -209,16 +209,16 @@ frontend가 주로 쓰는 Before result 필드:
 설명:
 
 - Bridge는 현재 구현되어 있지 않다.
-- 첫 구현은 별도 `/bridge` 화면보다 backend service 또는 frontend context adapter로 최소화할 수 있다.
+- 첫 구현은 backend route + service 기준으로 최소화한다. 독립 `/bridge` 화면 또는 frontend context adapter만으로 대체하는 방식은 후속 범위다.
 - Bridge output은 After answer input seed를 만들 뿐, retrieval 결과를 대신하지 않는다.
 - Bridge가 `grounded_context_ids` 또는 `retrieved_chunks`를 만들지 않는다. After answer retrieval이 새로 생성해야 한다.
-- `after_query_seed`에는 Before 원문 전체가 아니라 안전 요약, risk tag, 법령 label, 사용자 질문 후보만 포함한다.
+- `after_query_seed`에는 Before 원문 전체가 아니라 안전 요약, risk tag, 법령 label, 사용자 질문 후보만 포함한다. raw seed는 DB에 persistent 저장하지 않는다.
 
 ## 8. Bridge -> After Linkage
 
 - `/api/v1/answer` contract는 변경하지 않는다.
 - Bridge output의 `after_query_seed`를 `/after` 초기 입력 또는 answer request `query`로 넘기는 방식을 우선한다.
-- SCN-001은 우선 answer-only/context adapter 방식으로 연결한다.
+- SCN-001은 우선 answer-only로 연결한다. Bridge route + service가 생성한 `after_query_seed`를 기존 After query boundary에 전달한다.
 - document draft flow는 SCN-004 guard를 유지한다.
 - `/api/v1/documents/draft` contract도 변경하지 않는다.
 - `after_artifact_runs`에는 nullable `user_id` 추가 후보를 둔다. 이 값은 internal `users.id` 참조다.
@@ -242,7 +242,7 @@ frontend가 주로 쓰는 Before result 필드:
 
 ## 9. Proposed Minimal Data Flow
 
-아래 flow는 Firebase Auth MVP path의 로그인 전제 예시이며, `bridge_runs.user_id` required 여부가 확정되기 전까지 최종 구현 flow가 아니다. SCN-004 login-free flow는 기존처럼 로그인 없이 동작해야 하며, 이 예시와 혼동하지 않는다.
+아래 flow는 Firebase Auth MVP path의 로그인 전제 예시다. `bridge_runs.user_id`는 SCN-001 protected bridge flow에서 required이며, SCN-004 login-free flow는 기존처럼 로그인 없이 동작하고 `bridge_runs`를 만들지 않는다.
 
 1. User logs in with Firebase Auth Google Sign-In.
 2. Frontend calls SCN-001 protected endpoint with `Authorization: Bearer <Firebase ID token>`.
@@ -282,29 +282,34 @@ frontend가 주로 쓰는 Before result 필드:
 - SCN-001 연결 작업과 SCN-004 freeze QA를 한 patch에 섞지 않는다.
 - SCN-001 document draft, `/bridge` route, Recovery 본 구현은 이 스펙의 직접 구현 범위가 아니다.
 
-## 12. Gaps / Decisions Before Implementation
+## 12. Open Items / Resolved Phase 0 Decisions Before Implementation
+
+Open implementation details:
 
 - 팀원 Before / Bridge output contract 확인
 - Before canonical field 선택: `risk_summary` / `scenario_tags` vs `user_explanation.important_points`
 - `law_refs` normalization 방식
-- Bridge가 backend route인지 service / context adapter인지 결정
-- `bridge_runs.user_id` required 여부
-- `bridge_runs.after_query_seed`를 원문 저장할지, short-lived handoff로만 쓸지, hash-only로 둘지 결정 필요
+- Phase 5/6 전 `after_query_seed` exact handoff transport 결정: response payload direct handoff, short-lived server-side handoff id, URL param 사용 금지/허용 범위. raw seed persistent 저장은 MVP에서 금지.
 - artifact retention / deletion policy
 - 계정 연결 동의 시점
-- SCN-001 document draft가 후속 범위인지 확인
-- `users.auth_provider` 값을 `"firebase"`로 둘지 `"firebase_google"`로 둘지 결정
-- `before_review_jobs.user_id`, `bridge_runs.user_id`, `after_artifact_runs.user_id`의 FK / nullable / indexing 정책
+- `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id`의 FK / nullable / indexing 세부 정책은 Phase 1 schema 설계에서 확정 가능
 - `artifact_refs`가 로컬 파일, GCS object key, DB row ref 중 무엇을 가리킬지 결정
-- Direct Google OAuth + backend-managed session cookie를 Alternative/Fallback로만 유지할지, Post-MVP hardening에서 재검토할지 결정
+
+Resolved decisions from `docs/planning/18_scn001_firebase_auth_phase0_decisions.md`:
+
+- `users.auth_provider = "firebase_google"`와 `provider_subject = Firebase uid`는 결정 완료
+- `bridge_runs.user_id`는 SCN-001 protected bridge flow에서 required internal `users.id`로 결정 완료
+- raw `after_query_seed` persistent 저장 금지는 결정 완료
+- SCN-001 protected Bridge는 backend route + service 기준으로 구현한다. 독립 `/bridge` UI 또는 presentation context adapter는 후속 범위로 둔다.
+- SCN-001 document draft는 Minimum MVP 밖 Strong MVP / optional extension으로 둔다.
 
 ## 13. Recommended Next Steps
 
 1. 팀원 Before / Bridge output contract 확인
 2. `BeforeHandoffDTO` 필드 확정
-3. `bridge_runs` 최소 schema 확정
-4. Firebase Auth Bearer token boundary와 protected endpoint 목록 확정
-5. Firebase uid as `provider_subject` 기반 user model 설계
+3. `bridge_runs` 최소 schema 확정: `user_id` required, `after_query_seed_hash` 저장, raw `after_query_seed` persistent 저장 금지
+4. `docs/planning/18_scn001_firebase_auth_phase0_decisions.md` 기준 Firebase Auth Bearer token boundary와 protected endpoint 구현 detail 정리
+5. `auth_provider = "firebase_google"` + Firebase uid as `provider_subject` 기반 user model 설계
 6. `before_review_jobs` / `bridge_runs` / `after_artifact_runs` linkage migration 설계
 7. SCN-004 login-free regression checklist 작성
 8. 구현 착수

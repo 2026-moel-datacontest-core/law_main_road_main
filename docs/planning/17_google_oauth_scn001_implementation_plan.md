@@ -11,19 +11,20 @@
 관련 선행 문서:
 - `docs/planning/15_scn001_account_auth_spec.md` - account/auth 최소 데이터 계약
 - `docs/planning/16_scn001_before_bridge_contract.md` - BeforeHandoffDTO / BridgeOutputDTO contract 초안
+- `docs/planning/18_scn001_firebase_auth_phase0_decisions.md` - Phase 0 결정 기준
 
 ---
 
 ## 1. Purpose
 
-이 문서는 Firebase Auth 기반 Google Sign-In과 SCN-001 Before-Bridge-After 사용자 연결 구현을 위한 설계 계획이다.
+이 문서는 Firebase Auth Google Sign-In과 SCN-001 Before-Bridge-After 사용자 연결 구현을 위한 설계 계획이다.
 
-- Google Cloud Identity Platform / Firebase Auth 기반 Google Sign-In을 MVP recommended path로 둔다.
+- Firebase Auth Google Sign-In을 MVP recommended path로 둔다.
 - 첫 구현 적용 범위는 SCN-001 protected flow다.
 - SCN-004 After demo flow는 public / login-free로 계속 동작해야 한다.
 - `/api/v1/answer`, `/api/v1/documents/draft` public contract는 변경하지 않는다.
 - Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback으로만 둔다.
-- Firebase session cookie, Firebase Authentication with Identity Platform OIDC provider, multi-provider account linking은 Future/Post-MVP로 둔다.
+- Google Cloud Identity Platform / Firebase OIDC provider, Firebase session cookie, multi-provider account linking은 Future/Post-MVP로 둔다.
 
 ---
 
@@ -105,7 +106,7 @@
 | Authorization header helper | SCN-001 protected API 호출 때만 `Authorization: Bearer <Firebase ID token>` 첨부 | `frontend/src/lib` (proposed) |
 | Firebase Admin SDK dependency | Bearer Firebase ID token 검증, uid 추출 | `backend/app/dependencies/auth.py` (proposed) |
 | `users` table | Firebase uid를 internal user_id로 매핑 | `backend/app/models/user.py` (proposed) |
-| `/api/v1/auth/me` 또는 `/api/v1/auth/firebase/me` | frontend auth state 확인 endpoint | auth router (proposed) |
+| `/api/v1/auth/me` | frontend auth state 확인 endpoint | auth router (proposed) |
 | SCN-001 linkage service | before_review_jobs / bridge_runs / after_artifact_runs 연결 | `backend/app/services/scn001_linkage.py` (proposed) |
 | `bridge_runs` table | Bridge run 저장 및 internal user_id 연결 | `backend/app/models/bridge_run.py` (proposed) |
 | Answer/Draft contracts | **변경 없음, token 강제 없음** | 기존 유지 |
@@ -116,7 +117,7 @@
 - `/api/v1/auth/google/start`, `/api/v1/auth/google/callback`은 Firebase Auth MVP path의 필수 endpoint가 아니다.
 - Frontend는 Firebase Auth가 발급한 Firebase ID token을 SCN-001 protected backend API에 Bearer token으로 전달한다.
 - Backend는 Firebase Admin SDK로 Firebase ID token을 검증하고 Firebase `uid`를 추출한다.
-- Backend는 `auth_provider = "firebase_google"` 또는 `"firebase"`와 `provider_subject = uid`로 internal `users.id`를 resolve/upsert한다.
+- Backend는 `auth_provider = "firebase_google"`와 `provider_subject = Firebase uid`로 internal `users.id`를 resolve/upsert한다.
 - Business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal user_id만 저장한다.
 - SCN-004 request path에는 Firebase token을 강제하지 않는다.
 
@@ -167,7 +168,7 @@ Post-MVP hardening 또는 확장 후보:
 5. Frontend calls SCN-001 protected backend API with Authorization: Bearer <Firebase ID token>.
 6. FastAPI dependency verifies Firebase ID token via Firebase Admin SDK.
 7. Backend extracts Firebase uid.
-8. Backend upserts internal user using auth_provider = "firebase_google" or "firebase" and provider_subject = uid.
+8. Backend upserts internal user using auth_provider = "firebase_google" and provider_subject = Firebase uid.
 9. Backend uses internal users.id for before_review_jobs / bridge_runs / after_artifact_runs linkage.
 ```
 
@@ -189,17 +190,16 @@ Post-MVP hardening 또는 확장 후보:
 
 | Method | Path | Auth Required | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/auth/me` 또는 `/api/v1/auth/firebase/me` | Optional 또는 Required TBD | Bearer Firebase ID token 기반 현재 사용자 확인. Phase 0에서 optional/required 결정 |
+| GET | `/api/v1/auth/me` | Optional Bearer | missing token은 `{ "logged_in": false }`, valid token은 internal user info, invalid token은 401 |
 | POST | `/api/v1/scn001/bridge-runs` | **Yes - Bearer Firebase ID token required** | BeforeHandoffDTO -> BridgeOutputDTO 생성 + 저장 |
 | GET | `/api/v1/scn001/bridge-runs/{bridge_run_id}` | **Yes - Bearer Firebase ID token required** | Bridge run 조회, internal user_id ownership 확인 |
 | GET | `/api/v1/scn001/runs` | Yes - Bearer Firebase ID token required (optional endpoint) | 사용자 SCN-001 이력 목록 후보 |
 
-`GET /api/v1/auth/me` 선택지:
+`GET /api/v1/auth/me` policy:
 
-- Optional Bearer token: token 없으면 `{ "logged_in": false }`, 유효하면 user info 반환.
-- Required Bearer token: token 없으면 401, frontend는 Firebase Auth state를 primary source로 사용.
-
-Phase 0에서 둘 중 하나를 결정한다.
+- missing token: `200 { "logged_in": false }`
+- valid token: `200 { "logged_in": true, "user_id": "<internal user_id>", "display_name": string | null, "email": string | null }`
+- invalid / expired / malformed token: `401`
 
 ### 7.2 MVP에서 public 유지되는 기존 endpoint
 
@@ -212,10 +212,10 @@ Phase 0에서 둘 중 하나를 결정한다.
 
 ### 7.3 Endpoint 상세
 
-**GET `/api/v1/auth/me` 또는 `/api/v1/auth/firebase/me`**
+**GET `/api/v1/auth/me`**
 
 - purpose: frontend가 Firebase Auth 로그인 상태와 backend internal user mapping을 확인.
-- auth: Optional 또는 Required TBD.
+- auth: Optional Bearer token. Missing token은 logged-out browser state로 처리하고, invalid / expired / malformed token은 401로 처리한다.
 - MVP recommended: Bearer Firebase ID token을 받으면 검증 후 user upsert/resolve.
 - response shape (proposed):
   ```json
@@ -274,7 +274,7 @@ MVP에서는 backend가 Google authorization code exchange를 직접 담당하�
 | 필드 | 타입 | 필수 | 제약 | Privacy Note |
 |---|---|---|---|---|
 | `id` | UUID / String | Yes | PK | internal user_id |
-| `auth_provider` | String(32) | Yes | unique(auth_provider, provider_subject) | `"firebase_google"` 또는 `"firebase"` |
+| `auth_provider` | String(32) | Yes | unique(auth_provider, provider_subject) | `firebase_google` |
 | `provider_subject` | String(128) | Yes | unique(auth_provider, provider_subject) | Firebase uid. 외부 노출 금지 |
 | `display_name` | String(128) | No | nullable | optional |
 | `email` | String(254) | No | nullable, not unique | 표시용만. primary key 아님 |
@@ -312,8 +312,8 @@ MVP Bearer Firebase ID token 방식에서는 `auth_sessions` table이 필수 아
 | 필드 | 타입 | 필수 | 제약 | Privacy Note |
 |---|---|---|---|---|
 | `bridge_run_id` | String(32) | Yes | PK | |
-| `user_id` | FK -> users.id | TBD | nullable or required | Phase 0에서 required vs nullable 결정. protected route에서는 internal user_id 연결 |
-| `before_review_job_id` | String(32) | No | nullable, FK 후보 | mock/preset path fallback 허용 여부 TBD |
+| `user_id` | FK -> users.id | Yes | required | SCN-001 protected bridge flow에서는 internal `users.id` required |
+| `before_review_job_id` | String(32) | No | nullable, FK 후보 | direct review / mock fallback 허용 여부는 구현 detail. `SCN-001-BRIDGE-DEMO` presentation preset은 `bridge_runs`를 만들지 않음 |
 | `scenario_id` | String(20) | Yes | | `SCN-001` |
 | `source_scenario` | String(20) | Yes | | `before_review`, `preset`, `mock` |
 | `preset_id` | String(50) | No | nullable | `SCN-001-BRIDGE-DEMO` 후보 |
@@ -323,8 +323,8 @@ MVP Bearer Firebase ID token 방식에서는 `auth_sessions` table이 필수 아
 | `detected_issues` | JSONB | No | | summarized only |
 | `law_refs` | JSONB | No | | label-level only |
 | `recommended_next_actions` | JSONB | No | | |
-| `after_query_seed` | Text | TBD | nullable | 원문 저장 여부 TBD (raw / short-lived / hash-only) |
-| `after_query_seed_hash` | String(TBD) | Yes | | raw 미저장 path에도 사용 |
+| `after_query_seed` | Text | No for MVP persistence | omit or nullable/future-only | raw seed persistent 저장 금지. exact handoff transport는 Phase 5/6 전 결정 |
+| `after_query_seed_hash` | String | Yes | | raw seed를 저장하지 않는 path의 추적 / 중복 확인용. hash algorithm / length는 implementation detail |
 | `artifact_refs` | JSONB | No | | internal only |
 | `created_at` | DateTime(tz) | Yes | | |
 | `updated_at` | DateTime(tz) | Yes | | |
@@ -375,8 +375,8 @@ docs/planning/16 기준 요약 (구현 전 계획용):
 - `user_visible_summary` (raw facts 과다 포함 금지)
 - `issue_categories`, `risk_tags`, `detected_issues`, `law_refs`
 - `recommended_next_actions`
-- `after_query_seed` (TBD: raw vs short-lived vs hash-only)
-- `after_query_seed_hash` (항상 포함)
+- `after_query_seed` (transient handoff only; raw persistent 저장 금지)
+- `after_query_seed_hash` (항상 포함 / 저장 후보)
 - `artifact_refs` (internal only)
 - `created_at`
 
@@ -408,12 +408,13 @@ Bridge가 생성하지 않는 것:
 
 ### 10.2 Firebase persistence strategy
 
-Phase 0에서 Firebase Auth persistence mode를 결정한다.
+Phase 0 decision 기준으로 MVP frontend는 Firebase Auth `browserSessionPersistence`를 기본값으로 사용한다.
 
 | 방식 | 장점 | 단점 | 비고 |
 |---|---|---|---|
 | in-memory persistence | 브라우저 저장소 token footprint 최소화 | 새로고침/탭 종료 시 재로그인 가능성 증가 | 보안 우선 |
-| browser local persistence | UX 좋음, 새로고침 후 로그인 유지 | XSS 방어 중요, local persistence 정책 검토 필요 | Firebase Auth 자체 persistence와 app payload storage를 구분해야 함 |
+| browser session persistence | 새로고침 복원성과 장기 잔존 최소화 균형 | XSS 방어 중요 | **MVP 기본값**. Firebase Auth 자체 persistence와 app payload storage를 구분해야 함 |
+| browser local persistence | UX 좋음, 새로고침 후 로그인 유지 | XSS 방어 중요, local persistence 정책 검토 필요 | Post-MVP UX hardening에서 재검토 |
 
 주의:
 
@@ -590,21 +591,23 @@ Logs에는 다음을 남기지 않는다:
 
 ### Phase 0: Auth Path Final Decision
 
-**목적:** 구현 전 MVP auth path와 open questions 결정.
+**목적:** 구현 전 MVP auth path와 Phase 1 DB model/migration 착수에 필요한 결정을 고정.
 
 files likely touched: docs/planning/15, 16, 17 (doc-only)
 
 acceptance criteria:
-- MVP auth path가 Firebase Auth Google Sign-In + backend Firebase ID token verification인지 최종 확인.
-- Firebase project / web app config / env naming 결정.
-- Firebase Admin SDK credentials strategy 결정 (local vs Cloud Run).
-- token verification strategy 결정.
-- Firebase persistence mode 결정 (in-memory vs browser local persistence).
-- `after_query_seed` 저장 전략 결정 (raw / short-lived / hash-only).
-- `bridge_runs.user_id` required vs nullable 결정.
-- CORS `Authorization` header allowlist 확인.
-- `/api/v1/auth/me` optional vs required Bearer token 결정.
-- `auth_provider` value (`"firebase"` vs `"firebase_google"`) 결정.
+- MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase ID token verification로 결정 완료.
+- `auth_provider = "firebase_google"`로 결정 완료.
+- `provider_subject = Firebase uid`로 결정 완료. Google `sub`는 Direct Google OAuth Alternative/Fallback subject다.
+- `bridge_runs.user_id`는 SCN-001 protected bridge flow에서 required로 결정 완료.
+- raw `after_query_seed` persistent 저장 금지 결정 완료. `after_query_seed_hash`는 저장 후보/필수로 유지.
+- Firebase project / web app config env naming은 결정 완료. 실제 값은 Phase 2/3 전 제공 필요.
+- Firebase Admin SDK credentials strategy는 결정 완료. local credential provisioning 절차는 Phase 2 전 확정 필요.
+- token refresh strategy는 protected request 직전 `getIdToken()`, 401 forced refresh 1회로 결정 완료.
+- Firebase persistence mode는 `browserSessionPersistence`로 결정 완료.
+- CORS는 `Authorization` header 허용 필요로 결정 완료. 코드 반영과 regression 확인은 Phase 2 작업.
+- `/api/v1/auth/me`는 `GET /api/v1/auth/me`, missing token `{ logged_in: false }`, invalid token 401로 결정 완료.
+- exact `after_query_seed` handoff transport는 Phase 5/6 전 결정한다.
 
 SCN-004 freeze risk: 없음 (doc-only)
 
@@ -624,8 +627,10 @@ files likely touched:
 
 acceptance criteria:
 - `users` includes `auth_provider`, `provider_subject`, `display_name`, `email`, `created_at`, `last_login_at`.
+- `users.auth_provider = "firebase_google"` and `users.provider_subject = Firebase uid`.
 - `unique(auth_provider, provider_subject)` 적용.
-- `bridge_runs`는 internal `user_id` 참조 가능.
+- `bridge_runs.user_id`는 internal `users.id` required.
+- raw `after_query_seed` persistent 저장 금지. `after_query_seed_hash` 저장.
 - 기존 `before_review_jobs`, `after_artifact_runs` row 영향 없음 (nullable column 추가).
 - `auth_sessions`는 session-cookie path를 선택하지 않는 한 MVP migration에서 제외.
 
@@ -656,7 +661,7 @@ acceptance criteria:
 - 유효한 Firebase ID token -> internal user_id resolve/upsert.
 - invalid/expired token -> 401.
 - missing token on required protected route -> 401.
-- `/api/v1/auth/me` 또는 `/api/v1/auth/firebase/me` behavior가 Phase 0 결정과 일치.
+- `/api/v1/auth/me` behavior가 Phase 0 결정과 일치.
 - `/api/v1/answer`, `/api/v1/documents/draft`에는 Firebase token 강제 없음.
 - CORS preflight에서 `Authorization` header 허용.
 
@@ -837,7 +842,7 @@ acceptance criteria:
 | Firebase ID token verification smoke | valid Firebase ID token으로 protected dependency 통과 확인 |
 | invalid/expired token | SCN-001 protected route가 401 반환 |
 | missing token | SCN-001 protected route가 401 반환 |
-| auth/me smoke | `/api/v1/auth/me` 또는 `/api/v1/auth/firebase/me`가 Phase 0 결정대로 optional/required 동작 |
+| auth/me smoke | `/api/v1/auth/me`가 missing token `{ logged_in: false }`, valid token user info, invalid token 401로 동작 |
 | CORS Authorization header | preflight에서 `Authorization` header 허용 확인 |
 | bridge run smoke | `POST /api/v1/scn001/bridge-runs` -> DB row 확인 |
 | bridge run ownership | 다른 user_id의 bridge_run 조회 차단 |
@@ -854,31 +859,37 @@ acceptance criteria:
 
 ---
 
-## 17. Open Questions
+## 17. Phase 0 Decisions / Remaining Questions
 
-Phase 0에서 결정해야 할 항목:
+`docs/planning/18_scn001_firebase_auth_phase0_decisions.md` 기준으로 Phase 1 DB model/migration을 막던 결정사항은 아래처럼 닫혔다.
+
+| Topic | Decision |
+|---|---|
+| MVP auth path | Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase ID token verification |
+| `auth_provider` | `firebase_google` |
+| `provider_subject` | Firebase uid. Google `sub`는 Direct Google OAuth Alternative/Fallback subject |
+| `bridge_runs.user_id` | SCN-001 protected bridge flow에서 required internal `users.id` |
+| raw `after_query_seed` persistence | MVP에서 금지. `after_query_seed_hash` 저장 후보/필수 |
+| `/api/v1/auth/me` policy | `GET /api/v1/auth/me`; missing token `{ logged_in: false }`; invalid token 401 |
+| Firebase Auth persistence | `browserSessionPersistence` |
+| token refresh | protected request 직전 `getIdToken()`, 401 시 forced refresh 1회 |
+| anonymous artifacts | Firebase Auth 도입 전 artifact는 MVP에서 orphan 유지 |
+| Direct Google OAuth / session cookie | Alternative/Fallback 또는 Future/Post-MVP only |
+
+아직 Phase 2 또는 Phase 5/6 전에 정해야 할 항목:
 
 | # | Question | 현재 상태 | Priority |
 |---|---|---|---|
-| 1 | Firebase project / web app config env names | 미결 | High |
-| 2 | Firebase Admin SDK credentials strategy on local vs Cloud Run | 미결 | High |
-| 3 | `auth_provider` value: `"firebase"` vs `"firebase_google"` | 미결 | High |
-| 4 | Firebase Auth persistence mode: in-memory vs browser local persistence | 미결 | High |
-| 5 | token refresh strategy on frontend (`getIdToken()` timing, forced refresh 조건) | 미결 | High |
-| 6 | SCN-001 protected endpoints list | `bridge-runs` 우선, 세부 확정 필요 | High |
-| 7 | `/api/v1/auth/me` accepts Bearer token optional vs required | 미결 | Medium |
-| 8 | session cookie future path 채택 여부와 시점 | Future/Post-MVP | Medium |
-| 9 | `bridge_runs.user_id` required vs nullable | TBD. protected endpoint에서는 internal user_id 연결 | High |
-| 10 | `before_review_jobs.user_id` required vs nullable | nullable 권장 | Medium |
-| 11 | `after_query_seed` raw / short-lived / hash-only | TBD | High |
-| 12 | anonymous artifact handling (orphan 유지 / user linkage / 삭제) | TBD | Medium |
-| 13 | artifact retention/deletion 정책 | TBD | Medium |
-| 14 | Bridge 구현: backend route vs service adapter vs frontend context | TBD | Medium |
-| 15 | SCN-001 document draft 후속 여부 (현재 answer-only 유지) | answer-only 유지 | Low |
-| 16 | Before canonical field source (backend full vs frontend consumed) | TBD | Medium |
-| 17 | CORS Authorization header allowlist and local origins (`5090`, `127.0.0.1:5090`) | 미결 | High |
-| 18 | GCS artifact access-control future: signed URL vs auth proxy | Future/Post-MVP | Medium |
-| 19 | Cloud Tasks / Pub/Sub worker hardening and service account boundaries | Future/Post-MVP | Medium |
+| 1 | 실제 Firebase project id와 web app config env values | env names decided, actual values TBD | High |
+| 2 | local Firebase Admin credential provisioning 절차 | strategy decided, developer provisioning TBD | High |
+| 3 | CORS `Authorization` header code 반영과 local origins regression | decision made, implementation/check pending | High |
+| 4 | `/api/v1/auth/me` 세부 request/response schema와 frontend 사용 방식 | path/policy decided, implementation detail TBD | Medium |
+| 5 | `after_query_seed` exact handoff transport | raw persistence forbidden, response direct vs short-lived server-side handoff TBD before Phase 5/6 | High |
+| 6 | `before_review_jobs.user_id` required vs nullable | nullable 권장 | Medium |
+| 7 | artifact retention/deletion 정책 | TBD | Medium |
+| 8 | Before canonical field source (backend full vs frontend consumed) | TBD | Medium |
+| 9 | GCS artifact access-control future: signed URL vs auth proxy | Future/Post-MVP | Medium |
+| 10 | Cloud Tasks / Pub/Sub worker hardening and service account boundaries | Future/Post-MVP | Medium |
 
 ---
 
@@ -886,8 +897,8 @@ Phase 0에서 결정해야 할 항목:
 
 이 계획 문서 작성 완료 후 **바로 구현하지 않는다.**
 
-1. 이 문서 리뷰 - 팀원과 Firebase Auth MVP path, open questions 확인.
-2. Phase 0 결정 - Firebase project/config/env naming, Admin credentials, token verification, persistence, CORS Authorization header.
+1. 이 문서와 `docs/planning/18_scn001_firebase_auth_phase0_decisions.md`를 기준으로 Phase 1 DB model/migration 착수 범위를 확인한다.
+2. Phase 2 전 실제 Firebase project/config values, local Admin credential provisioning, CORS `Authorization` header code 반영 계획을 확정한다.
 3. Phase 1부터 작은 patch로 착수 - DB model 추가 -> migration -> auth dependency 순서로 분리된 PR.
 4. 각 phase마다 SCN-004 regression 확인 - `bash scripts/demo_preflight.sh` + manual rehearsal.
 5. Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback 문서 범위로 유지하고 MVP 필수 구현으로 착수하지 않는다.

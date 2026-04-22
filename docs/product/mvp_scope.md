@@ -7,7 +7,7 @@
 - 구현 우선순위 명확화
 - 데모 기준 정리
 - 구현 지시서가 아니라 MVP 범위와 완료 기준을 정리
-- Firebase Auth Google Sign-In 상세 구현 방식은 이 문서에서 확정하지 않고, 별도 draft 구현 계획은 참고용으로만 둠
+- Firebase Auth Google Sign-In MVP path는 `docs/planning/18_scn001_firebase_auth_phase0_decisions.md` 기준으로 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend verification으로 둠. 실제 Firebase project/config 값은 별도 구현 단계에서 확정
 - Direct Google OAuth는 Alternative/Fallback 또는 Post-MVP 후보로만 둠
 
 ---
@@ -58,10 +58,12 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - Firebase Auth Google Sign-In 기반 최소 로그인
 - SCN-001 protected path에서 Bearer Firebase ID token 사용
 - backend Firebase ID token verification으로 Firebase uid 확인
+- `auth_provider = "firebase_google"`와 `provider_subject = Firebase uid`로 internal `user_id` resolve
 - Firebase uid as `provider_subject` 기반 internal `user_id` 연결
 - SCN-001 Before job/result의 internal reference 또는 safe summary를 internal `user_id`와 연결
 - business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal `users.id`만 참조
 - Before 결과에서 raw 계약서 / OCR 전문 / full result artifact가 아니라 안전한 summary만 Bridge로 전달
+- raw `after_query_seed` persistent 저장 금지. `after_query_seed_hash`는 저장 후보/필수로 유지
 - Bridge가 SCN-001용 `after_query_seed`를 만들고 기존 After answer flow로 연결
 - SCN-001은 우선 answer-only로 안정화
 - SCN-004 document draft flow는 로그인 없이 그대로 유지
@@ -100,6 +102,7 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 
 - internal `user_id`와 Before job/result internal reference 또는 safe summary 연결
 - `before_review_jobs.user_id`, `bridge_runs.user_id`, `after_artifact_runs.user_id`는 Firebase uid / Google sub가 아니라 internal user_id 참조
+- SCN-001 protected bridge flow에서 `bridge_runs.user_id`는 required. `SCN-001-BRIDGE-DEMO` presentation preset과 SCN-004 public flow는 `bridge_runs`를 만들지 않음
 - Bridge handoff에는 raw 계약서 / OCR 전문 / full result artifact가 아닌 안전한 summary, 위험 태그, 법령 label 수준 정보만 사용
 - SCN-001용 `after_query_seed` 생성
 - After answer 입력 시 handoff summary를 query seed로 사용
@@ -251,10 +254,12 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 
 - Firebase Auth Google Sign-In은 최소 로그인 capability로 동작
 - SCN-001 protected path는 Bearer Firebase ID token을 사용하고 backend Firebase ID token verification을 통과
+- `auth_provider = "firebase_google"`로 internal user mapping 가능
 - Firebase uid as `provider_subject`에서 internal `user_id` resolve 가능
 - Google `sub`는 Direct Google OAuth Alternative/Fallback subject로만 분리
-- `users.auth_provider` 값은 Phase 0 open question으로 `"firebase"` 또는 `"firebase_google"` 후보 유지 가능
 - business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal user_id만 참조
+- SCN-001 protected bridge flow에서 `bridge_runs.user_id`는 required
+- raw `after_query_seed`는 persistent 저장하지 않고 `after_query_seed_hash`를 저장 후보/필수로 유지
 - email은 nullable display/contact 후보이며 primary key가 아님
 - 이메일은 primary identifier로 사용하지 않으며 phone scope를 요청하지 않음
 - OAuth access token / refresh token 장기 저장 없음
