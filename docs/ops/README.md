@@ -8,7 +8,7 @@
 
 ## 현재 진행 상태
 
-기준일: `2026-04-21`
+기준일: `2026-04-22`
 
 현재 `ops` 문서 기준으로 정리된 상태는 아래와 같다.
 
@@ -19,6 +19,7 @@
 - 디렉터리/파일 역할 문서 정리 완료
 - Cloud Run 데이터 저장 구조 문서 유지 중
 - troubleshooting 문서 유지 중
+- Firebase Auth Phase 2/3 로컬 설정 절차 정리 완료
 
 현재 코드/구조 기준으로 반영된 주요 상태:
 
@@ -27,6 +28,113 @@
 - `before` job 상태: DB 저장 전환 완료
 - `after` artifact 로컬 저장 구조: 반영 완료
 - frontend 실제 dev/start 포트: `5090`
+
+## Firebase Auth Phase 2/3 로컬 설정
+
+이 절차는 Firebase Auth Google login을 로컬에서 확인하기 위한 운영 메모다. Backend Firebase Admin SDK credential과 frontend Firebase Web App public config는 위치와 성격이 다르므로 섞지 않는다. Secret, token, `provider_subject`, email 전문은 문서/채팅/log/git에 남기지 않는다.
+
+### 1. Backend Firebase Admin SDK credential
+
+권장 local credential path:
+
+```text
+config/secrets/firebase-admin.json
+```
+
+- 이 JSON은 Firebase Admin SDK service account credential이므로 secret이다.
+- 절대 commit하지 않는다.
+- root `.gitignore`의 `config/secrets/` 또는 credential JSON ignore rule에 의해 ignored되어야 한다.
+- ignore 확인:
+
+```bash
+git check-ignore --no-index config/secrets/firebase-admin.json
+```
+
+Backend 실행 shell에서는 Firebase project와 Admin credential path를 명시한다.
+
+```bash
+FIREBASE_PROJECT_ID=<firebase-project-id>
+GOOGLE_APPLICATION_CREDENTIALS=$PWD/config/secrets/firebase-admin.json
+```
+
+주의:
+
+- `FIREBASE_ADMIN_CREDENTIALS`는 local fallback이다.
+- 현재 backend 구현은 ADC / `GOOGLE_APPLICATION_CREDENTIALS`를 우선 사용할 수 있으므로, smoke shell에서는 `GOOGLE_APPLICATION_CREDENTIALS=$PWD/config/secrets/firebase-admin.json`로 Firebase Admin JSON을 명확히 지정한다.
+- `GOOGLE_APPLICATION_CREDENTIALS`가 Vertex AI용 credential을 가리키고 있으면 Firebase Admin SDK도 그 ADC를 먼저 사용할 수 있다.
+
+### 2. Frontend Firebase Web App public config
+
+Frontend local env path:
+
+```text
+frontend/.env.local
+```
+
+- 이 파일은 local env 파일이므로 commit하지 않는다.
+- `NEXT_PUBLIC_*` 값은 Next.js browser bundle에 포함되는 Firebase Web App public config다.
+- Public config라도 repo에는 실제 값을 commit하지 않는다.
+- ignore 확인:
+
+```bash
+git check-ignore --no-index frontend/.env.local
+```
+
+Required keys:
+
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=<firebase-web-api-key>
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<firebase-auth-domain>
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=<firebase-project-id>
+NEXT_PUBLIC_FIREBASE_APP_ID=<firebase-web-app-id>
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+```
+
+Optional keys:
+
+```bash
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<firebase-messaging-sender-id>
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<firebase-storage-bucket>
+```
+
+Frontend public env를 바꾼 뒤에는 Next dev server를 재시작해야 한다.
+
+### 3. Local smoke flow
+
+1. Backend를 재시작한다.
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+2. Frontend를 재시작한다.
+
+```bash
+cd frontend && npm run dev
+```
+
+3. Backend OpenAPI에 auth endpoint가 있는지 확인한다.
+
+```bash
+curl -sS http://localhost:8000/openapi.json | python -m json.tool | rg -n '/api/v1/auth/me'
+```
+
+4. Browser에서 `http://localhost:5090`을 열고 Google login을 진행한다.
+
+Expected:
+
+- backend auth status가 `logged_in=true`로 표시된다.
+- internal `user_id`가 있다.
+- provider subject, Firebase uid, token은 화면/로그에 표시하지 않는다.
+- DB를 확인해야 할 때도 `provider_subject`는 masking된 형태로만 확인한다.
+
+### 4. Common pitfalls
+
+- `/api/v1/auth/me`가 404면 오래된 backend server일 가능성이 높다. backend를 재시작하고 `/openapi.json`을 다시 확인한다.
+- Login button이 `Firebase 설정 필요` 상태로 disabled이면 `frontend/.env.local`이 없거나, public env 변경 후 Next dev server를 재시작하지 않은 경우가 많다.
+- `GOOGLE_APPLICATION_CREDENTIALS`가 Vertex AI용 credential을 가리키면 Firebase Admin SDK도 그 ADC를 우선 사용할 수 있다. Firebase Auth smoke shell에서는 Firebase Admin JSON path를 명확히 지정한다.
+- Google OAuth access token과 Firebase ID token을 혼동하지 않는다. Backend `/api/v1/auth/me`에는 Firebase ID token을 Bearer token으로 보낸다.
+- token을 채팅, 문서, log, issue에 붙이지 않는다.
 
 ## 이 디렉터리에서 먼저 볼 문서
 

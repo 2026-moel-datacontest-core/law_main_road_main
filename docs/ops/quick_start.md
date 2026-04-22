@@ -35,6 +35,13 @@
 - frontend scripts: [frontend/package.json](/home/minsoo/after_pipeline/law_main_road/frontend/package.json:1)
 - PostgreSQL readiness helper: [backend/verify/ensure_postgres_ready.py](/home/minsoo/after_pipeline/law_main_road/backend/verify/ensure_postgres_ready.py:1)
 
+### Firebase Auth 로컬 설정 참고
+
+- backend Admin SDK credential 위치: `config/secrets/firebase-admin.json`
+- frontend public config 위치: `frontend/.env.local`
+- 자세한 절차: [docs/ops/README.md](README.md)
+- 문제 해결: [docs/ops/troubleshooting.md](troubleshooting.md)
+
 ### 법령 데이터
 
 - source corpus: [backend/data/law_chunks](/home/minsoo/after_pipeline/law_main_road/backend/data/law_chunks)
