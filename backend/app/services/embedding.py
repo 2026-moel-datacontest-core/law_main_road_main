@@ -14,6 +14,7 @@ from google import genai
 from google.genai import types as genai_types
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
+REPO_ROOT = BACKEND_DIR.parent
 load_dotenv(BACKEND_DIR / ".env")
 
 DEFAULT_EMBEDDING_MODEL_NAME = "gemini-embedding-001"
@@ -119,6 +120,24 @@ def is_placeholder_credentials_path(value: str) -> bool:
     }
 
 
+def resolve_credentials_path(value: str) -> Path:
+    credentials_path = Path(value).expanduser()
+    if not credentials_path.is_absolute():
+        return (REPO_ROOT / credentials_path).resolve()
+
+    if credentials_path.is_file():
+        return credentials_path.resolve()
+
+    parts = credentials_path.parts
+    if "config" in parts:
+        config_index = parts.index("config")
+        repo_relative_candidate = REPO_ROOT.joinpath(*parts[config_index:]).resolve()
+        if repo_relative_candidate.is_file():
+            return repo_relative_candidate
+
+    return credentials_path
+
+
 def resolve_positive_timeout_seconds(env_name: str, default: float) -> float:
     raw_value = os.environ.get(env_name, "").strip()
     if not raw_value:
@@ -160,7 +179,7 @@ def resolve_vertex_runtime() -> tuple[str, str, object]:
         if is_placeholder_credentials_path(credentials_path_value):
             os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)
         else:
-            credentials_path = Path(credentials_path_value).expanduser()
+            credentials_path = resolve_credentials_path(credentials_path_value)
             if not credentials_path.is_file():
                 raise FileNotFoundError(
                     "GOOGLE_APPLICATION_CREDENTIALS does not point to a readable file: "
