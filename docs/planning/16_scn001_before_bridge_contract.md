@@ -16,10 +16,11 @@
 | file/path | role | status | contract relevance |
 |---|---|---|---|
 | `AGENTS.md` | repo 작업 규칙, SCN-004 freeze, SCN-001/004 preset 정책 | doc-only | `SCN-001-BRIDGE-DEMO`는 answer-only, `SCN-004-DEMO-FREEZE`는 draft freeze path임을 고정 |
-| `CLAUDE.md` | 전역 프로젝트 상태와 OAuth/privacy guardrail | doc-only | Google OAuth는 SCN-001 연결 초안에만 허용, SCN-004 login-free 유지 |
+| `CLAUDE.md` | 전역 프로젝트 상태와 auth/privacy guardrail | doc-only | 최소 로그인은 SCN-001 연결 초안에만 허용, SCN-004 login-free 유지 |
 | `backend/CLAUDE.md` | backend API / document draft 규칙 | doc-only | `/api/v1/answer`, `/api/v1/documents/draft` contract 임의 변경 금지 |
 | `frontend/CLAUDE.md` | frontend scope와 Web Storage 금지 | doc-only | raw `user_statement`, `answer_response`, `case_intake`, `draft_response` Web Storage 저장 금지 |
-| `docs/planning/15_scn001_account_auth_spec.md` | account/auth 최소 linkage 후보 | doc-only | `BeforeHandoffDTO`, `bridge_runs`, `after_query_seed`, account linkage의 상위 기준 |
+| `docs/planning/15_scn001_account_auth_spec.md` | account/auth 최소 linkage 후보 | doc-only | Firebase uid as `provider_subject`, `BeforeHandoffDTO`, `bridge_runs`, `after_query_seed`, account linkage의 상위 기준 |
+| `docs/planning/17_google_oauth_scn001_implementation_plan.md` | Firebase Auth MVP path 기준 | doc-only | Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase ID token verification을 MVP path로 고정. Direct Google OAuth는 Alternative/Fallback |
 | `docs/product/before_flow.md` | Before 제품 흐름 | doc-only | Bridge로 넘길 최소 요약 후보를 설명 |
 | `docs/product/bridge_flow.md` | Bridge 제품 흐름 | doc-only | `/bridge` route 없음, Bridge는 후속 구현이라고 명시 |
 | `docs/planning/12_scenario_expansion_plan.md` | SCN-001 시나리오와 corpus 커버 | doc-only | SCN-001 Bridge narrative와 핵심 조문 후보 제공 |
@@ -278,7 +279,7 @@ JSON-like shape:
 | field | source | required | note |
 |---|---|---:|---|
 | `bridge_run_id` | new bridge adapter/service | Yes | DB row id or generated in-memory id |
-| `user_id` | auth linkage | TBD | docs/planning/15 기준 provider_subject-derived internal user id |
+| `user_id` | auth linkage | TBD | docs/planning/15 기준 Firebase uid as `provider_subject`에서 resolve한 internal `users.id` |
 | `before_review_job_id` | `BeforeHandoffDTO.before_review_job_id` | No | mock/direct review fallback 허용 |
 | `scenario_id` | `BeforeHandoffDTO.scenario_id` | Yes | first target `SCN-001` |
 | `source_scenario` | adapter | Yes | `before_review`, `preset`, `mock` 중 하나 |
@@ -339,12 +340,19 @@ Contract boundaries:
 ## 10. Storage / Account Linkage Notes
 
 - users / `provider_subject` 연계는 `docs/planning/15_scn001_account_auth_spec.md`를 따른다.
-- `before_review_jobs.user_id`는 nullable 후보이며 현재 model에는 없다.
-- `bridge_runs`는 신규 후보이며 현재 구현되어 있지 않다.
-- `after_artifact_runs.user_id`와 `after_artifact_runs.source_bridge_run_id`는 nullable 후보이며 현재 model에는 없다.
+- MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase ID token verification이다.
+- Firebase Auth MVP path에서 `provider_subject`는 Firebase `uid`를 의미한다.
+- Google `sub`는 Direct Google OAuth Alternative/Fallback path에서의 subject로 분리한다.
+- `users.auth_provider` 값은 Phase 0 open question으로 `"firebase"` 또는 `"firebase_google"` 후보를 유지한다.
+- business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal `users.id`만 참조한다.
+- `before_review_jobs.user_id`는 nullable 후보이며 현재 model에는 없다. 추가 시 internal `users.id` 참조다.
+- `bridge_runs`는 신규 후보이며 현재 구현되어 있지 않다. `bridge_runs.user_id`는 internal `users.id` 참조다.
+- `after_artifact_runs.user_id`와 `after_artifact_runs.source_bridge_run_id`는 nullable 후보이며 현재 model에는 없다. `after_artifact_runs.user_id`는 internal `users.id` 참조다.
 - 현재 `after_artifact_runs` implemented fields는 `run_id`, `stage`, `status`, `query_hash`, `document_type`, `artifact_root`, `error`, timestamps다.
 - 현재 `after_artifact_store.py`는 answer/draft artifact에 raw `user_statement.txt`와 request/response JSON을 저장한다. 계정 이력 UI에 raw artifact를 기본 노출하면 안 된다.
 - raw artifact 계정 이력은 기본 노출 금지이며, short summary / `query_hash` / internal artifact refs 중심으로 설계해야 한다.
+- Firebase session cookie, Identity Platform OIDC provider, multi-provider linking은 Future/Post-MVP로 둔다.
+- Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 둔다.
 
 ## 11. Privacy / Security Notes
 
@@ -359,7 +367,10 @@ Contract boundaries:
 - email, phone, token 저장 금지 원칙을 재확인한다.
   - 전화번호 직접 입력 수집 금지
   - email은 primary identifier 금지
+  - email은 nullable display/contact 후보일 뿐 primary key가 아님
   - OAuth access token / refresh token 장기 저장 금지
+- Firebase ID token raw value는 장기 저장하거나 로그에 남기지 않는다.
+- Firebase uid / Google sub / provider_subject / email은 DTO, backend response, business table에 직접 노출하지 않는다.
 - `contract_info.employee`, `contract_info.employer`, `uploaded_files.name`, `ocr_snapshot.*.evidence`, `user_explanation.evidence.excerpt`는 개인정보 또는 민감 사업장 정보를 포함할 수 있으므로 DTO에는 최소화/요약/내부 참조만 허용한다.
 
 ## 12. Open Questions / Decisions
@@ -372,14 +383,17 @@ Contract boundaries:
 - SCN-001 document draft 후속 여부: 현재는 answer-only. `workplace_change_reason_summary` 등 draft type 활성화는 별도 review 필요.
 - 계정 연결 동의 시점: Before review 전, Bridge 생성 전, After 결과 저장 전 중 어디에서 받을지 결정 필요.
 - `bridge_runs.user_id` required 여부와 login-free demo compatibility 결정 필요.
+- `users.auth_provider` 값: `"firebase"` vs `"firebase_google"` 결정 필요.
 - artifact retention / deletion / access-control 정책 필요.
-- OAuth 활성화 시 기존 익명 artifact 처리 정책을 결정해야 한다: user consent 후 연결할지, orphan 상태로 유지할지, delete할지, 또는 link/delete 선택지를 제공할지 검토 필요.
+- Firebase Auth 활성화 시 기존 익명 artifact 처리 정책을 결정해야 한다: user consent 후 연결할지, orphan 상태로 유지할지, delete할지, 또는 link/delete 선택지를 제공할지 검토 필요.
+- Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지한다.
+- Firebase session cookie, Identity Platform OIDC provider, multi-provider linking은 Future/Post-MVP로 유지한다.
 
 ## 13. Recommended Next Steps
 
 1. `BeforeHandoffDTO` 필드 review
 2. `BridgeOutputDTO` 필드 review
 3. `bridge_runs` 최소 schema 설계
-4. Google OAuth session strategy 설계
+4. Firebase Auth Bearer token boundary와 protected endpoint 목록 review
 5. `SCN-004` login-free regression checklist 작성
 6. 구현 착수
