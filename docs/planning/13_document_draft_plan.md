@@ -264,6 +264,8 @@ MVP에서는 `CaseIntake`를 request 중심 이름으로 사용하고, 향후 �
 - MVP demo에서는 이름, 연락처, 주소를 실제값으로 요구하지 않는다.
 - 입력값이 없으면 `[근로자 이름 확인 필요]`, `[회사명 확인 필요]` 같은 placeholder를 사용한다.
 - 전화번호, 이메일, 외국인등록번호, 계좌번호 등 직접 식별 정보는 MVP schema 필수값으로 두지 않는다.
+- OAuth 사용자 연결이 필요한 기능에서도 document draft `case_intake` schema에 이메일/전화번호를 필수값으로 추가하지 않는다. 첫 구현 적용 범위인 SCN-001 연결 초안도 이 원칙을 따른다.
+- 계정 식별이 필요할 경우 별도 auth/account layer에서 Google OAuth provider stable subject id 기반 내부 user id로 처리하고, 이메일은 nullable 표시 정보로만 둔다.
 
 ### 필드 상세
 
@@ -623,4 +625,5 @@ MVP에서는 `CaseIntake`를 request 중심 이름으로 사용하고, 향후 �
 - 제출기관별 실제 양식 반영
 - SCN-005 문서 타입 확장
 - 팀원 Before / Bridge contract 확인 후 SCN-001 문서 타입 확장
+- Google OAuth 기반 최소 로그인은 공통 인증 capability로 허용한다. 단, 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 결과 계정 연결 초안이다. document draft schema와 SCN-004 demo freeze는 변경하지 않는다. Kakao OAuth는 후속 provider 후보
 - sessionStorage backup/restore 없는 상태에서 demo 운영 문구 정리

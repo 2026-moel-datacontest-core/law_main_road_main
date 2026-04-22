@@ -227,7 +227,8 @@ Evolution note:
 - 남은 answer eval partial 16개는 현재 데모 blocker가 아니므로 문서 초안 작업보다 우선하지 않는다.
 - hybrid retrieval, reranker, broad decomposition은 현재 baseline을 유지한 채 필요성이 확인될 때만 검토한다.
 - `SCN-002` 자동 숫자 판정형 데모에 필요한 추가 source 또는 structured data 설계는 계속 범위 밖으로 둔다.
-- frontend 신규 화면, 로그인, 관리자 기능, 운영 보안 고도화는 QA 이후로 미룬다.
+- SCN-004 freeze와 무관한 frontend 신규 화면, 직접 회원가입/직접 로그인 UI, 관리자 기능, 운영 보안 고도화는 QA 이후로 미룬다.
+- Google OAuth 기반 최소 로그인 capability는 사용자별 상태 연결이 필요한 기능에 한해 다음 단계 설계 대상으로 허용한다. 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 연결 초안으로 제한하며, SCN-004 After demo flow는 로그인 없이 유지한다.
 
 ---
 

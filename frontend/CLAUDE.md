@@ -66,6 +66,17 @@
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`를 sessionStorage/localStorage에 저장하지 않음
 - 증거 체크리스트 상태는 화면 내 로컬 상태만 허용
 
+## 계정 / OAuth 정책
+
+- SCN-004 After demo 4-route flow는 로그인 없이 계속 동작해야 한다.
+- 직접 회원가입, 이메일 직접 입력 가입/로그인, 전화번호 직접 입력 수집은 계속 금지한다.
+- Google OAuth 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 다음 제약 준수 시.
+- 실제 적용은 사용자별 상태 연결이 필요한 기능으로 제한하며, 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 연결 초안이다.
+- OAuth 적용 시에도 전화번호 scope 요청은 금지하고, 이메일은 nullable 표시 정보로만 다루며 primary identifier로 사용하지 않는다.
+- 사용자 primary key는 OAuth provider의 stable subject id에서 파생한 내부 user id를 사용한다.
+- access token / refresh token 장기 저장은 금지한다.
+- Kakao OAuth는 첫 구현 범위에서 제외하고, 한국 생활 밀착 UX나 KakaoTalk 알림/상담 연계가 필요해질 때 후속 provider 후보로 검토한다.
+
 ## Backend 연동 규칙
 
 - backend schema 확인 없이 응답 필드 가정 금지
@@ -89,8 +100,8 @@
 
 - Android / iOS 네이티브 앱
 - 완전한 모바일 UX 최적화
-- 로그인 / 회원가입
-- 사용자별 서버 저장
+- 직접 회원가입 / 이메일·전화번호 직접 입력 로그인
+- SCN-004 demo flow의 사용자별 서버 저장. Google OAuth 최소 로그인의 첫 적용은 SCN-001 연결 초안에서 Before / Bridge / After 결과를 OAuth 사용자에 연결하는 최소 저장으로 둔다.
 - 관리자 페이지
 - 과도한 UI polishing
 - Before / Bridge / Recovery 본 구현
@@ -104,6 +115,6 @@
 
 - backend contract 임의 변경 전제 UI 작성
 - 근거 없는 법률 문구 하드코딩
-- 개인정보 수집 기능 추가
+- 직접 식별정보 수집 기능 추가. Google OAuth 최소 로그인은 위 계정 / OAuth 정책의 공통 capability와 제약 안에서만 사용
 - SCN-004 freeze 기준을 깨는 신규 대형 기능 추가
 - 문서 범위를 넘는 독단적 화면 확장

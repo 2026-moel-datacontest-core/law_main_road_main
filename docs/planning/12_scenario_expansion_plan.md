@@ -118,7 +118,7 @@
 ### AI 사후 대응 (After Solution)
 
 - 권리 진단:
-  - 열악한 기숙사 제공, 약정하지 않은 과도한 임금 공제, 차별 또는 폭언 정황이 있으면 사용자 귀책사유 판단과 사업장 변경 허용 가능성을 검토할 수 있음
+  - 열악한 기숙사 제공, 약정하지 않은 과도한 임금 공제, 차별 또는 폭언 정황이 있으면 사용자 귀책사유 판단과 사업장 변경 허용 여부를 검토할 수 있음
 - 맞춤형 증거 수집 가이드:
   - 기숙사 내외부 사진
   - 과도 공제가 반영된 급여명세서 또는 통장 입금 내역
@@ -223,6 +223,18 @@
    - query normalization 보강
    - clause ranking / adjacent context expansion 보강
 6. 현재 corpus로도 데모가 부족하다고 확인될 때만 데이터 확장 여부를 다시 판단
+
+### 계정 / OAuth 정책
+
+- Before-Bridge-After 결과 연결은 원문 전체 저장이 아니라 최소 요약과 근거를 사용자 계정에 연결하는 방향으로 검토한다.
+- 직접 회원가입, 이메일/전화번호 직접 입력 수집, 전화번호 scope 요청, 이메일 primary identifier 사용, access token / refresh token 장기 저장은 금지한다.
+- Google OAuth 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 실제 적용은 사용자별 상태 연결이 필요한 기능으로 제한한다.
+- 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 결과 연결 초안이다.
+- 사용자 primary key는 Google `sub` 같은 OAuth provider stable subject id에서 파생한 내부 user id를 사용한다.
+- 저장 가능한 최소 사용자 필드는 `internal user id`, `auth_provider="google"`, `provider_subject`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다.
+- Google Login을 우선하는 이유는 외국인 근로자 대상 접근성이 Kakao보다 넓고, OpenID Connect 표준 기반이며, stable subject id를 제공하고, 현재 GCP/Vertex 기반 인프라와 운영 친화적이며, 개인정보 최소 수집 원칙과 맞기 때문이다.
+- Kakao OAuth는 한국 생활 밀착 UX나 KakaoTalk 기반 알림/상담 연계가 필요해질 때 검토할 후속 provider 후보이며, 첫 구현 범위에서는 제외한다.
+- 이 정책은 SCN-004 After demo flow와 문서 초안 freeze를 변경하지 않는다.
 
 ### 리스크 / 메모
 

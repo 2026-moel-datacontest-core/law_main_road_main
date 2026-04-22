@@ -75,7 +75,12 @@ Evolution note:
 - 초안이 아니라 **수정 확정본** 기준으로 작업
 - `docs/planning/`은 기준 문서. 상세 설계는 거기서 확인
 - 개인정보 최소 수집 원칙 유지
-- 로그인/이메일/전화번호 수집 기능 추가 금지
+- 직접 회원가입 및 이메일/전화번호 직접 입력 수집 기능 추가 금지
+- Google OAuth 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 다음 제약 준수 시.
+- 실제 적용은 사용자별 상태 연결이 필요한 기능으로 제한하며, 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 연결 초안이다.
+- OAuth 적용 시에도 전화번호 scope 요청 금지, 이메일 primary identifier 사용 금지, OAuth provider의 stable subject id만 사용자 primary key로 사용
+- access token / refresh token 장기 저장 금지
+- Kakao OAuth는 첫 구현 범위에서 제외하고 후속 provider 후보로만 문서화
 - SCN-004 freeze 기준을 깨는 신규 기능 추가 금지
 - 현재 다음 단계는 SCN-004 demo freeze 유지와 제출 전 재현성 확인
 - 제출 안정성 우선. 막히면 범위 축소 허용
@@ -142,6 +147,7 @@ Evolution note:
 - 현재 SCN-004 demo freeze 유지 작업과 SCN-005 문서 타입 frontend 확장을 한 패치에 섞지 않음
 - SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
 - SCN-001 `Before -> Bridge -> After` frontend 확장은 팀원 Before / Bridge 코드와 contract 확인 후 별도 단계에서 검토
+- Google OAuth 기반 최소 로그인의 첫 구현 적용 범위는 SCN-001 연결 초안에서 Before / Bridge / After 결과를 사용자 계정에 연결 저장하는 흐름이다.
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`는 Web Storage에 저장하지 않음
 - presentation preset exact path는 fixed answer fixture를 사용하고 `/api/v1/answer`를 호출하지 않음
 - presentation preset modified path는 `top_k=10`, 자유 입력은 `top_k=5`, 항상 `ef_search=100`

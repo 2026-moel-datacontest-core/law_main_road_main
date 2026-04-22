@@ -11,7 +11,8 @@ Recovery는 제품 확장 단계이며 현재 MVP / frontend demo 범위가 아�
 - Recovery route 없음
 - 실제 제출 기능 없음
 - PDF / HWP export 없음
-- 사용자 계정 / 서버 저장 없음
+- Recovery 본 구현 범위에는 사용자 계정 / 서버 저장 없음. Google OAuth 기반 최소 로그인은 공통 인증 capability로 허용한다. 단, 첫 적용인 SCN-001 Before-Bridge-After 연결 초안과 Recovery는 별도 범위다.
+- Recovery는 로그인 없이 동작해야 하는 flow로 계속 분리한다.
 - 2026-04-20 기준 presentation-local preset과 SCN-004 document draft는 After flow 보조 기능이며 Recovery 본 구현이 아님
 
 ## 제품상 목표
