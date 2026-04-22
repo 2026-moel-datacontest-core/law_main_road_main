@@ -299,6 +299,103 @@ http://localhost:5091/index.html
 - 테스트 페이지의 `Google 로그인 Redirect`를 사용한다.
 - 또는 popup blocker를 해제하고 다시 `Google 로그인 Popup`을 누른다.
 
+#### Google login 화면에서 `This browser or app may not be secure`
+
+증상:
+
+```text
+Couldn’t sign you in
+This browser or app may not be secure.
+Try using a different browser.
+```
+
+판정:
+
+- 이 에러는 Firebase Auth Google Sign-In 방식 자체의 문제로 보지 않는다.
+- 일반 Chrome / Edge에서 사용자가 직접 접속하는 웹앱에서는 정상 동작해야 한다.
+- Google이 로그인 창을 띄운 browser를 automated / embedded / unsupported browser로 판단할 때 발생한다.
+
+주된 원인:
+
+- Playwright / Selenium / Puppeteer 같은 자동화 브라우저
+- headless browser
+- IDE / agent / preview 내장 browser
+- Electron / WebView / embedded user-agent
+- 오래된 browser 또는 강한 privacy / security extension
+- `file://` 또는 비정상 origin에서 열린 login flow
+
+정상 수동 검증 기준:
+
+1. 일반 Chrome 또는 Edge를 사용자가 직접 실행한다.
+2. 주소창에 직접 입력한다.
+
+```text
+http://localhost:5090
+```
+
+또는 token smoke page:
+
+```text
+http://localhost:5091/index.html
+```
+
+3. Google 계정이 같은 browser에서 정상 로그인 가능한지 먼저 확인한다.
+4. Firebase Auth login button을 누른다.
+5. popup이 계속 차단되면 redirect login을 사용한다.
+
+자동화 검증 정책:
+
+- 실제 Google account login을 Playwright headless/default browser에서 CI 필수 검증으로 두지 않는다.
+- backend Firebase token verification은 `/api/v1/auth/me` smoke, invalid token 401, missing token behavior로 검증한다.
+- frontend는 AuthContext state, `getIdToken()` 호출, `Authorization` header 첨부 여부를 mock 또는 local smoke로 검증한다.
+- 실제 Google login은 일반 Chrome / Edge manual rehearsal 기준으로 판정한다.
+
+불가피한 local smoke workaround:
+
+```js
+const context = await chromium.launchPersistentContext("/tmp/law-main-road-auth-profile", {
+  headless: false,
+  args: [
+    "--disable-blink-features=AutomationControlled",
+    "--no-first-run",
+    "--no-default-browser-check",
+  ],
+  ignoreDefaultArgs: ["--enable-automation"],
+  userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+});
+```
+
+주의:
+
+- 위 설정은 제품 auth 설정이 아니라 local verification workaround다.
+- 이 workaround는 Google 정책 / browser version / account 상태에 따라 언제든 다시 실패할 수 있다.
+- 성공하더라도 장기 안정 E2E 또는 CI acceptance criterion으로 보지 않는다.
+- 커밋 / PR 설명에서는 “Firebase Auth product path 정상”과 “Playwright login workaround”를 분리해서 기록한다.
+
+#### Login state does not persist after refresh
+
+증상:
+
+- Google login 후 backend auth status가 `logged_in=true`로 보인다.
+- page refresh / reload 또는 browser close 후 다시 열면 signed-out 상태로 돌아온다.
+
+판정:
+
+- MVP Phase 3 frontend에서는 정상 동작이다.
+- 현재 구현은 Firebase Auth `inMemoryPersistence`를 사용한다.
+- Firebase auth state / token을 `localStorage` 또는 `sessionStorage`에 남기지 않기 위한 의도된 선택이다.
+
+대응:
+
+1. refresh / reload 후에는 필요 시 다시 Google login을 진행한다.
+2. SCN-001 protected API 호출 전에는 현재 memory auth state가 있을 때 `getIdToken()`으로 새 Firebase ID token을 받는다.
+3. 로그인 유지 UX가 필요해지면 `browserSessionPersistence`를 Future/Post-MVP tradeoff로 재검토한다.
+
+주의:
+
+- refresh 후 재로그인이 필요한 현상을 env 설정 오류로 판단하지 않는다.
+- `localStorage` / `sessionStorage`에 raw token이나 Firebase auth state를 직접 저장하지 않는다.
+
 #### `/api/v1/auth/me`가 200인데 `logged_in=false`
 
 원인:

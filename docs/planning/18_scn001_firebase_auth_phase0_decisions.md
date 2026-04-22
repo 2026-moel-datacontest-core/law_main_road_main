@@ -19,7 +19,7 @@
 | 3. provider_subject meaning | Firebase Auth MVP path에서 `provider_subject = Firebase uid` | Decided | Phase 1 / Phase 2 | Google `sub`는 Direct Google OAuth Alternative/Fallback subject |
 | 4. Firebase project config env names | env var naming은 이 문서 기준으로 고정. 실제 값은 TBD | Decided / TBD | Phase 2 / Phase 3 | 값 제공은 Blocking Before Phase 2 또는 Phase 3 |
 | 5. Firebase Admin SDK credential strategy | Local은 ADC 우선, ignored service account path fallback. Cloud Run은 service account identity | Decided / TBD | Phase 2 | 실제 credential provisioning은 Blocking Before Phase 2 |
-| 6. Firebase Auth persistence mode | MVP는 `browserSessionPersistence` 권장 | Decided | Phase 3 | 앱 payload Web Storage 금지와 Firebase Auth persistence는 별개 |
+| 6. Firebase Auth persistence mode | MVP는 `inMemoryPersistence` 사용 | Decided | Phase 3 | Phase 3 구현 결과와 일치. Firebase auth state / token을 browser Web Storage에 남기지 않음 |
 | 7. token refresh strategy | protected SCN-001 API 호출 직전 `getIdToken()`, 401 시 forced refresh 1회 | Decided | Phase 3 | interval polling 금지, token 장기 app state 저장 금지 |
 | 8. SCN-001 protected endpoints | `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` | Decided | Phase 2 / Phase 5 | `GET /api/v1/scn001/runs`는 optional |
 | 9. `/api/v1/auth/me` path and bearer policy | `GET /api/v1/auth/me`, missing token은 `{ logged_in: false }`, invalid token은 401 | Decided | Phase 2 | Firebase uid / provider_subject는 response에 노출하지 않음 |
@@ -128,18 +128,19 @@ Backend config:
 
 ### D-006. Firebase Auth Persistence Mode
 
-- Decision: MVP frontend는 Firebase Auth `browserSessionPersistence`를 기본으로 사용한다.
+- Decision: MVP frontend는 Firebase Auth `inMemoryPersistence`를 기본으로 사용한다.
 - Status: Decided
 - Blocks: Phase 3
 - Rationale:
-  - in-memory persistence보다 demo 중 새로고침 복원성이 낫다.
-  - local persistence보다 장기 브라우저 잔존 범위를 줄인다.
-  - SCN-001 protected flow에서 로그인 UX와 보안 균형이 가장 적절하다.
+  - Phase 3 frontend 구현은 Firebase SDK `setPersistence(auth, inMemoryPersistence)`로 확정됐다.
+  - Firebase auth state / token을 `localStorage` 또는 `sessionStorage`에 남기지 않는 token memory-only 정책을 우선한다.
+  - SCN-001 protected API 호출은 현재 memory auth state가 있을 때 `getIdToken()`으로 Firebase ID token을 받아 수행한다.
+  - refresh / reload / browser close 후 로그인 유지가 약해지고 재로그인이 필요할 수 있지만, MVP에서는 보안 우선 tradeoff로 수용한다.
 - Implementation Notes:
-  - Firebase Auth persistence는 Firebase SDK의 auth session persistence 문제다.
+  - Firebase Auth persistence는 Firebase SDK의 auth session persistence 문제이며, MVP에서는 browser Web Storage 잔존을 만들지 않는 방향을 우선한다.
   - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`, raw Before review result를 Web Storage에 저장하지 않는 원칙은 그대로 유지한다.
-  - 고위험 데모 환경에서는 in-memory persistence로 낮추는 fallback을 허용할 수 있으나, MVP 기본값은 session persistence다.
-  - `browserLocalPersistence`는 Post-MVP UX hardening에서 재검토한다.
+  - `browserSessionPersistence`는 refresh 복원성이 필요할 때 Future/Post-MVP UX tradeoff 후보로 재검토한다.
+  - `browserLocalPersistence`는 Post-MVP UX hardening에서 별도로 재검토한다.
 
 ### D-007. Token Refresh Strategy
 
