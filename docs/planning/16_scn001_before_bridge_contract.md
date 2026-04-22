@@ -20,7 +20,7 @@
 | `backend/CLAUDE.md` | backend API / document draft 규칙 | doc-only | `/api/v1/answer`, `/api/v1/documents/draft` contract 임의 변경 금지 |
 | `frontend/CLAUDE.md` | frontend scope와 Web Storage 금지 | doc-only | raw `user_statement`, `answer_response`, `case_intake`, `draft_response` Web Storage 저장 금지 |
 | `docs/planning/15_scn001_account_auth_spec.md` | account/auth 최소 linkage 후보 | doc-only | Firebase uid as `provider_subject`, `BeforeHandoffDTO`, `bridge_runs`, `after_query_seed`, account linkage의 상위 기준 |
-| `docs/planning/17_google_oauth_scn001_implementation_plan.md` | Firebase Auth MVP path 기준 | doc-only | Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase ID token verification을 MVP path로 고정. Direct Google OAuth는 Alternative/Fallback |
+| `docs/planning/17_firebase_auth_scn001_implementation_plan.md` | Firebase Auth MVP path 기준 | doc-only | Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase ID token verification을 MVP path로 고정. Direct Google OAuth는 Alternative/Fallback |
 | `docs/product/before_flow.md` | Before 제품 흐름 | doc-only | Bridge로 넘길 최소 요약 후보를 설명 |
 | `docs/product/bridge_flow.md` | Bridge 제품 흐름 | doc-only | `/bridge` route 없음, Bridge는 후속 구현이라고 명시 |
 | `docs/planning/12_scenario_expansion_plan.md` | SCN-001 시나리오와 corpus 커버 | doc-only | SCN-001 Bridge narrative와 핵심 조문 후보 제공 |

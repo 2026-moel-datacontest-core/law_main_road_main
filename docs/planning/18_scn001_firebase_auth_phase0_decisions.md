@@ -5,7 +5,7 @@
 ## 1. Purpose
 
 - 이 문서는 Firebase Auth + SCN-001 Before-Bridge-After 연결 구현 전 Phase 0 결정 문서다.
-- `docs/planning/17_google_oauth_scn001_implementation_plan.md`의 Open Questions를 Phase 1 구현 전에 판단 가능한 수준으로 구체화한다.
+- `docs/planning/17_firebase_auth_scn001_implementation_plan.md`의 Open Questions를 Phase 1 구현 전에 판단 가능한 수준으로 구체화한다.
 - 코드 구현 문서가 아니며, 이 문서 작성만으로 Firebase/Auth/DB/Bridge 구현이 완료된 것이 아니다.
 - 확정 가능한 항목은 `Decision`, 구현 전 값 또는 후속 설계가 더 필요한 항목은 `TBD`로 분리한다.
 - SCN-004 `/after` flow, `/api/v1/answer`, `/api/v1/documents/draft` public contract와 demo freeze 보호를 우선한다.
@@ -353,7 +353,7 @@ Public 유지:
 | GCS artifact access-control | signed URL vs backend auth proxy는 production storage 전환 설계 필요 | Ops / Backend | Post-MVP |
 | Cloud Tasks / Pub/Sub worker hardening | Firebase end-user token과 service account boundary 세부화 필요 | Ops / Backend | Post-MVP |
 
-- GCP infra boundary는 `docs/planning/17_google_oauth_scn001_implementation_plan.md` §12를 따른다: Firebase end-user auth와 Cloud Run IAM은 별개이며, GCS artifact는 Firebase Auth만으로 자동 보호되지 않고, worker에는 Firebase token을 전달하지 않는다.
+- GCP infra boundary는 `docs/planning/17_firebase_auth_scn001_implementation_plan.md` §12를 따른다: Firebase end-user auth와 Cloud Run IAM은 별개이며, GCS artifact는 Firebase Auth만으로 자동 보호되지 않고, worker에는 Firebase token을 전달하지 않는다.
 
 ## 7. Recommended Next Step
 
