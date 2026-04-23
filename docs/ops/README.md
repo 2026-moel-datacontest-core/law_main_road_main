@@ -20,6 +20,7 @@
 - Cloud Run 데이터 저장 구조 문서 유지 중
 - troubleshooting 문서 유지 중
 - Firebase Auth Phase 2/3 로컬 설정 절차 정리 완료
+- SCN-001 Firebase Auth Phase 0~3 완료 상태 반영
 
 현재 코드/구조 기준으로 반영된 주요 상태:
 
@@ -28,10 +29,14 @@
 - `before` job 상태: DB 저장 전환 완료
 - `after` artifact 로컬 저장 구조: 반영 완료
 - frontend 실제 dev/start 포트: `5090`
+- `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id`: Phase 1 schema 반영 완료
+- `/api/v1/auth/me`: Phase 2 backend Firebase ID token verification 반영 완료
+- frontend Firebase Auth Google Sign-In, `AuthContext`, Login UI, backend verification UI: Phase 3 반영 완료
+- Firebase Auth persistence: MVP default는 `inMemoryPersistence`; `browserSessionPersistence`는 Future/Post-MVP tradeoff 후보
 
-## Firebase Auth Phase 2/3 로컬 설정
+## Firebase Auth Phase 2/3 로컬 설정 및 확인
 
-이 절차는 Firebase Auth Google login을 로컬에서 확인하기 위한 운영 메모다. Backend Firebase Admin SDK credential과 frontend Firebase Web App public config는 위치와 성격이 다르므로 섞지 않는다. Secret, token, `provider_subject`, email 전문은 문서/채팅/log/git에 남기지 않는다.
+이 절차는 Firebase Auth Google login과 backend `/api/v1/auth/me` verification을 로컬에서 확인하기 위한 운영 메모다. Backend Firebase Admin SDK credential과 frontend Firebase Web App public config는 위치와 성격이 다르므로 섞지 않는다. Secret, token, `provider_subject`, email 전문은 문서/채팅/log/git에 남기지 않는다.
 
 ### 1. Backend Firebase Admin SDK credential
 
@@ -125,8 +130,10 @@ Expected:
 
 - backend auth status가 `logged_in=true`로 표시된다.
 - internal `user_id`가 있다.
+- 같은 Google account로 반복 인증하면 같은 internal `user_id`가 유지된다.
 - provider subject, Firebase uid, token은 화면/로그에 표시하지 않는다.
 - DB를 확인해야 할 때도 `provider_subject`는 masking된 형태로만 확인한다.
+- SCN-004 `/after` path는 로그인 없이 계속 동작해야 한다.
 
 ### 4. Common pitfalls
 
@@ -191,7 +198,7 @@ Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서�
 
 현재 문서 정리 이후 다음 단계는 아래 순서가 적절하다.
 
-1. `ops` 문서를 `README.md` 또는 상위 문서에서 바로 찾을 수 있도록 링크 정리
+1. Phase 4 protected bridge-runs endpoint 구현 후 `/api/v1/scn001/bridge-runs` smoke 절차 추가
 2. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
 3. `before` artifact의 GCS 전환 설계 구체화
 4. `after` artifact의 향후 GCS 전환 기준 정리

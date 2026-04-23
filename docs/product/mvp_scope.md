@@ -28,13 +28,14 @@
 
 ## 포함 범위
 
-현재 구현 기준일: `2026-04-20`
+현재 구현 기준일: `2026-04-22`
 MVP 범위 업데이트 기준일: `2026-04-22`
 
 진화 기록:
 
 - 2026-04-17에는 SCN-004 After 4-route flow, document draft backend, copy/print, manual rehearsal 완료가 기준이었다.
 - 2026-04-20에는 이 기준 위에 presentation-local preset, free-input eligibility guard, demo preflight, full 60 answer evidence report가 추가됐다.
+- 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다.
 
 ### 현재 구현된 demo scope
 
@@ -55,11 +56,14 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 
 ### Firebase Auth 이후 Minimum MVP
 
-- Firebase Auth Google Sign-In 기반 최소 로그인
+- Firebase Auth Google Sign-In 기반 최소 로그인 구현 완료
 - SCN-001 protected path에서 Bearer Firebase ID token 사용
-- backend Firebase ID token verification으로 Firebase uid 확인
+- backend Firebase ID token verification으로 Firebase uid 확인 구현 완료
+- `/api/v1/auth/me` backend verification과 frontend verification UI 구현 완료
 - `auth_provider = "firebase_google"`와 `provider_subject = Firebase uid`로 internal `user_id` resolve
 - Firebase uid as `provider_subject` 기반 internal `user_id` 연결
+- `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` DB schema 구현 완료
+- frontend Firebase Auth persistence는 `inMemoryPersistence` 구현값이며, `browserSessionPersistence`는 Future/Post-MVP UX tradeoff 후보
 - SCN-001 Before job/result의 internal reference 또는 safe summary를 internal `user_id`와 연결
 - business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal `users.id`만 참조
 - Before 결과에서 raw 계약서 / OCR 전문 / full result artifact가 아니라 안전한 summary만 Bridge로 전달
@@ -69,6 +73,14 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - SCN-004 document draft flow는 로그인 없이 그대로 유지
 - SCN-004 regression이 없어야 함
 - Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지
+
+다음 구현 phase:
+
+- Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
+- Phase 5: Before review user linkage
+- Phase 6: Bridge -> After answer-only handoff
+- Phase 7: `after_artifact_runs` linkage
+- Phase 8: regression / demo preflight / manual rehearsal
 
 아래 Before / Bridge는 제품 구조상 MVP 범위다. 다만 현재 frontend 구현은 SCN-004 After flow에 맞춰져 있으므로, Before / Bridge frontend 확장은 팀원이 작성한 Before / Bridge 코드와 contract를 확인한 뒤 별도 단계에서 진행한다. SCN-001 연결은 `/api/v1/answer`와 `/api/v1/documents/draft` contract 변경 없이 answer-only 경로부터 고정한다.
 
@@ -293,9 +305,9 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 8. Firebase Auth Google Sign-In 기반 최소 로그인
 9. Bearer Firebase ID token + backend Firebase ID token verification
 10. Firebase uid as `provider_subject` 기반 internal `user_id` 연결
-11. 팀원 Before / Bridge 코드와 contract 확인
-12. SCN-001 Before job/result internal reference 또는 safe summary 사용자 연결
-13. 안전한 Before summary 기반 Bridge `after_query_seed` 생성
-14. SCN-001 `Before -> Bridge -> After` answer-only 연결
-15. SCN-004 regression preflight / manual rehearsal 유지
+11. Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
+12. Phase 5: Before review user linkage
+13. Phase 6: Bridge -> After answer-only handoff
+14. Phase 7: `after_artifact_runs` linkage
+15. Phase 8: SCN-004 regression preflight / manual rehearsal 유지
 16. SCN-001 전용 문서 초안 생성 여부를 Strong MVP / optional extension으로 별도 결정

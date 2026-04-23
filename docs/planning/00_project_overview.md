@@ -78,7 +78,7 @@
 
 ## Current Status
 
-기준일: `2026-04-20`
+기준일: `2026-04-22`
 
 - legalize-kr submodule 연결 완료
 - 청킹 Step 1~10 완료
@@ -87,7 +87,7 @@
 - 청크 수: `1722`
 - backend Task 2, 3, 4, 5 완료
 - PostgreSQL + pgvector 로컬 DB 구성 완료
-- Alembic migration 적용 완료 (`20260421_000005`)
+- Alembic migration 적용 완료 (`20260422_000006`)
 - `law_chunks` 테이블 생성 완료
 - `law_chunks` 1722건 ingestion 완료
 - `law_chunks.embedding` 1722건 저장 완료
@@ -145,6 +145,13 @@
   - 실제 `/api/v1/answer`, `/api/v1/documents/draft` 연동
   - loading/error/a11y/route guard 및 copy/print 구현
   - Phase 3C 이후 확장 작업은 보류
+- SCN-001 Firebase Auth Phase 0~3 완료:
+  - Phase 0: Firebase Auth MVP path / Phase 0 decisions 문서화 완료
+  - Phase 1: `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` DB model/migration 완료
+  - Phase 2: backend Firebase ID token verification, `GET /api/v1/auth/me`, `require_current_user` / optional user dependency 완료
+  - Phase 3: frontend Firebase Web SDK, `AuthContext`, Login UI, `/api/v1/auth/me` verification UI 완료
+  - evidence: actual Google popup login E2E, `users` row upsert, repeated auth same `user_id`, SCN-004 `/after` login-free, frontend build 통과 확인
+- Firebase Auth MVP persistence는 `inMemoryPersistence`다. token/auth state를 `localStorage`나 `sessionStorage`에 저장하지 않으며, `browserSessionPersistence`는 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - presentation-local preset 완료:
   - `SCN-001-BRIDGE-DEMO`: Before/Bridge handoff 설명용 answer-only
   - `SCN-004-DEMO-FREEZE`: main demo / document draft freeze용
@@ -160,12 +167,13 @@ Evolution note:
 
 - 2026-04-17 기준으로 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal까지 완료됐다.
 - 2026-04-20 기준으로 위 demo freeze를 유지하면서 fixed preset, free-input guard, preflight, item-level eval evidence가 추가됐다.
+- 2026-04-22 기준으로 SCN-001 Firebase Auth Phase 0~3이 완료됐고, 다음 구현 phase는 Phase 4: protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이다.
 
 ---
 
 ## Next Step
 
-현재 RAG refinement, SCN-004 문서 초안 backend, SCN-004 After frontend 구현, SCN-004 QA/content/frontend rehearsal은 완료 상태로 본다. 다음 단계의 중심은 기능 확장이 아니라 **demo freeze 유지와 제출 전 재현성 확인**이다.
+현재 RAG refinement, SCN-004 문서 초안 backend, SCN-004 After frontend 구현, SCN-004 QA/content/frontend rehearsal은 완료 상태로 본다. SCN-001 Firebase Auth Phase 0~3도 완료 상태로 본다. 다음 구현 단계의 중심은 **SCN-004 demo freeze를 유지한 Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction**이다.
 
 ### Step 0. Baseline freeze / 운영 기준 고정
 
@@ -222,13 +230,24 @@ Evolution note:
   - local dev server에서 desktop/mobile smoke
 - QA 통과 후 발표용 입력 문구, 기대 citation, fallback 문구를 문서화한다.
 
-### Step 5. 후순위 / 하지 말아야 할 것
+### Step 5. SCN-001 Phase 4 readiness
+
+- `require_current_user` dependency를 사용할 수 있다.
+- `users`와 `bridge_runs` schema가 있다.
+- `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` linkage column이 있다.
+- `BeforeHandoffDTO`와 `BridgeOutputDTO` contract draft가 `docs/planning/16_scn001_before_bridge_contract.md`에 있다.
+- `/api/v1/auth/me` backend verification과 frontend Google login capability가 있다.
+- Phase 4에서는 SCN-004 flow, `/api/v1/answer`, `/api/v1/documents/draft` contract를 변경하지 않는다.
+- raw OCR, raw contract, raw `after_query_seed`, raw answer/draft payload를 persistent 저장하지 않는다.
+- frontend Web Storage에 token/auth state나 raw flow payload를 저장하지 않는다.
+
+### Step 6. 후순위 / 하지 말아야 할 것
 
 - 남은 answer eval partial 16개는 현재 데모 blocker가 아니므로 문서 초안 작업보다 우선하지 않는다.
 - hybrid retrieval, reranker, broad decomposition은 현재 baseline을 유지한 채 필요성이 확인될 때만 검토한다.
 - `SCN-002` 자동 숫자 판정형 데모에 필요한 추가 source 또는 structured data 설계는 계속 범위 밖으로 둔다.
 - SCN-004 freeze와 무관한 frontend 신규 화면, 직접 회원가입/직접 로그인 UI, 관리자 기능, 운영 보안 고도화는 QA 이후로 미룬다.
-- Google OAuth 기반 최소 로그인 capability는 사용자별 상태 연결이 필요한 기능에 한해 다음 단계 설계 대상으로 허용한다. 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 연결 초안으로 제한하며, SCN-004 After demo flow는 로그인 없이 유지한다.
+- Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지한다. Firebase session cookie / Identity Platform OIDC / multi-provider linking은 Future/Post-MVP로 둔다.
 
 ---
 
@@ -243,6 +262,7 @@ Evolution note:
 - `docs/planning/06_backend_db_foundation.md`
 - `docs/planning/07_backend_ingestion.md`
 - `docs/planning/08_frontend_app_plan.md`
+- `docs/planning/19_scn001_auth_integration_status.md`
 - `docs/ops/README.md`
 
 ### Product

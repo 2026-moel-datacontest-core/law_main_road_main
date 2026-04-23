@@ -1,6 +1,6 @@
 # Bridge Flow
 
-기준일: `2026-04-20`
+기준일: `2026-04-22`
 
 ## 현재 상태
 
@@ -9,7 +9,9 @@ Bridge는 제품 구조상 `Before -> After`를 연결하는 단계다. 현재 S
 현재 기준:
 
 - `/bridge` route 없음
-- Before 결과 저장/복구 없음
+- `bridge_runs` DB schema는 Phase 1에서 구현 완료
+- protected bridge-runs route/service는 Phase 4 next
+- Before 결과 runtime user linkage는 Phase 5
 - SCN-004 demo freeze 유지 중에는 Bridge 확장 금지
 - 발표에서는 제품 확장 구조로 설명 가능
 
@@ -37,19 +39,19 @@ MVP에서는 개인정보 최소 수집 원칙을 우선한다.
 
 `scenario_id`, `source_scenario`, `preset_id`는 `SCN-001-BRIDGE-DEMO` 같은 presentation preset과 Before output을 After에서 연결하기 위한 후보 필드다. 실제 API/DB 스펙 확정 전까지는 계획 수준 후보로만 둔다.
 
-Google OAuth 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 실제 적용은 사용자별 상태 연결이 필요한 기능으로 제한한다. 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 연결 초안이며, Before / Bridge / After 결과를 사용자 계정에 연결 저장하는 흐름이다. 이 capability는 SCN-004 demo freeze를 변경하지 않는다.
+Firebase Auth Google Sign-In 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 실제 적용은 사용자별 상태 연결이 필요한 SCN-001 protected path로 제한한다. Phase 0~3은 완료됐고, 다음 구현은 Phase 4 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이다. 이 capability는 SCN-004 demo freeze를 변경하지 않는다.
 
 계정 최소 필드 후보:
 
 - internal user id
-- auth_provider = "google"
-- provider_subject
+- auth_provider = "firebase_google"
+- provider_subject = Firebase uid
 - display_name nullable
 - email nullable
 - created_at
 - last_login_at
 
-직접 회원가입, 이메일/전화번호 직접 입력 수집, 전화번호 scope 요청, 이메일 primary identifier 사용, access token / refresh token 장기 저장은 계속 금지한다. Kakao OAuth는 한국 생활 밀착 UX나 KakaoTalk 기반 알림/상담 연계가 필요해질 때 검토할 후속 provider 후보이며, 첫 구현 범위에서는 제외한다.
+직접 회원가입, 이메일/전화번호 직접 입력 수집, 전화번호 scope 요청, 이메일 primary identifier 사용, access token / refresh token 장기 저장은 계속 금지한다. Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지한다. Kakao OAuth는 한국 생활 밀착 UX나 KakaoTalk 기반 알림/상담 연계가 필요해질 때 검토할 후속 provider 후보이며, 첫 구현 범위에서는 제외한다.
 
 저장 금지 또는 후순위:
 
@@ -60,4 +62,4 @@ Google OAuth 기반 최소 로그인은 프로젝트 공통 인증 capability로
 
 ## 후속 조건
 
-Bridge는 Before frontend와 결과 schema가 안정화된 뒤 별도 단계로 구현한다. 현재 다음 단계는 Bridge 구현이 아니라 SCN-004 demo freeze 유지다.
+Bridge는 Phase 4에서 backend protected endpoint + service로 먼저 구현한다. 다음 단계는 독립 `/bridge` UI가 아니라 SCN-004 demo freeze를 유지한 `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`와 `BeforeHandoffDTO` extraction이다.

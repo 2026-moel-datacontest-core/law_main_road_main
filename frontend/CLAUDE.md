@@ -46,8 +46,14 @@
   - 팀원 Before / Bridge contract 확인 없는 SCN-001 문서 타입 확장
 - SCN-004 manual browser rehearsal과 content display 확인 완료
 - SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
-- SCN-001 `Before -> Bridge -> After` frontend 확장은 팀원 Before / Bridge 코드와 contract 확인 후 별도 단계에서 검토
-- 다음 단계는 SCN-004 demo freeze 유지와 제출 전 재현성 확인
+- SCN-001 Firebase Auth Phase 3 frontend integration 완료:
+  - Firebase Web SDK
+  - Firebase Auth `inMemoryPersistence`
+  - `AuthContext`
+  - Login UI
+  - `/api/v1/auth/me` backend verification UI
+  - actual Google popup login E2E, repeated auth same `user_id`, `/after` login-free, frontend build 통과 확인
+- 다음 구현 phase는 backend 중심 Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
 
 ## 핵심 원칙
 
@@ -70,11 +76,15 @@
 
 - SCN-004 After demo 4-route flow는 로그인 없이 계속 동작해야 한다.
 - 직접 회원가입, 이메일 직접 입력 가입/로그인, 전화번호 직접 입력 수집은 계속 금지한다.
-- Google OAuth 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 다음 제약 준수 시.
-- 실제 적용은 사용자별 상태 연결이 필요한 기능으로 제한하며, 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 연결 초안이다.
-- OAuth 적용 시에도 전화번호 scope 요청은 금지하고, 이메일은 nullable 표시 정보로만 다루며 primary identifier로 사용하지 않는다.
-- 사용자 primary key는 OAuth provider의 stable subject id에서 파생한 내부 user id를 사용한다.
+- Firebase Auth Google Sign-In 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 다음 제약 준수 시.
+- 실제 적용은 사용자별 상태 연결이 필요한 SCN-001 protected path로 제한한다.
+- MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이다.
+- `auth_provider = "firebase_google"`, `provider_subject = Firebase uid`에서 internal `users.id`를 resolve한다.
+- Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지한다.
+- 전화번호 scope 요청은 금지하고, 이메일은 nullable 표시 정보로만 다루며 primary identifier로 사용하지 않는다.
 - access token / refresh token 장기 저장은 금지한다.
+- Firebase Auth MVP frontend persistence는 `inMemoryPersistence`다. token/auth state를 `localStorage`나 `sessionStorage`에 저장하지 않는다.
+- `browserSessionPersistence`는 MVP default가 아니라 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - Kakao OAuth는 첫 구현 범위에서 제외하고, 한국 생활 밀착 UX나 KakaoTalk 알림/상담 연계가 필요해질 때 후속 provider 후보로 검토한다.
 
 ## Backend 연동 규칙
@@ -101,7 +111,7 @@
 - Android / iOS 네이티브 앱
 - 완전한 모바일 UX 최적화
 - 직접 회원가입 / 이메일·전화번호 직접 입력 로그인
-- SCN-004 demo flow의 사용자별 서버 저장. Google OAuth 최소 로그인의 첫 적용은 SCN-001 연결 초안에서 Before / Bridge / After 결과를 OAuth 사용자에 연결하는 최소 저장으로 둔다.
+- SCN-004 demo flow의 사용자별 서버 저장. Firebase Auth 최소 로그인의 적용 범위는 SCN-001 protected path로 둔다.
 - 관리자 페이지
 - 과도한 UI polishing
 - Before / Bridge / Recovery 본 구현
@@ -115,6 +125,6 @@
 
 - backend contract 임의 변경 전제 UI 작성
 - 근거 없는 법률 문구 하드코딩
-- 직접 식별정보 수집 기능 추가. Google OAuth 최소 로그인은 위 계정 / OAuth 정책의 공통 capability와 제약 안에서만 사용
+- 직접 식별정보 수집 기능 추가. Firebase Auth Google Sign-In은 위 계정 / OAuth 정책의 공통 capability와 제약 안에서만 사용
 - SCN-004 freeze 기준을 깨는 신규 대형 기능 추가
 - 문서 범위를 넘는 독단적 화면 확장

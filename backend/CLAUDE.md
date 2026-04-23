@@ -41,13 +41,24 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 ## 현재 상태
 
 - `POST /api/v1/retrieve` 구현 완료
+- `GET /api/v1/auth/me` 구현 완료
 - `POST /api/v1/answer` 구현 완료
 - `POST /api/v1/documents/draft` 구현 완료
+- SCN-001 Firebase Auth Phase 1 DB model/migration 완료:
+  - `users`
+  - `bridge_runs`
+  - `before_review_jobs.user_id`
+  - `after_artifact_runs.user_id`
+  - `after_artifact_runs.source_bridge_run_id`
+- SCN-001 Firebase Auth Phase 2 backend token verification 완료:
+  - Firebase Admin SDK ID token verification
+  - `require_current_user` / `get_optional_current_user`
+  - `auth_provider = "firebase_google"`, `provider_subject = Firebase uid` 기반 user upsert
 - RAG refinement landing 완료
 - SCN-004 answer completeness 보강과 document draft smoke 통과
 - SCN-004 demo freeze와 presentation-local fixed answer frontend path 확인 완료
 - full 60 answer evidence report 기준 `FAIL=0`, citation grounding / context id clean 확인 완료
-- 다음 backend 작업은 기능 확장이 아니라 SCN-004 demo freeze 유지와 regression 발생 시 좁은 수정
+- 다음 backend 작업은 SCN-004 demo freeze를 유지한 Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
 
 ## Document Draft 규칙
 
@@ -55,8 +66,17 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 - request로 받은 `legal_basis.cited_articles`, `source_context_ids`, `retrieved_chunks` 안에서만 근거 사용
 - 사용자가 입력하지 않은 사실은 단정하지 않고 placeholder 또는 `missing_fields`로 남김
 - `SCN-005` 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
+- `SCN-001` Phase 4는 `/api/v1/answer`나 `/api/v1/documents/draft` contract를 변경하지 않음
 - `SCN-001` 문서 타입 확장은 팀원 Before / Bridge code / contract 확인 전 추가하지 않음
 - presentation fixed answer fixture는 frontend code에 있으며 backend API contract를 변경하지 않는다.
+
+## Firebase Auth / SCN-001 규칙
+
+- MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이다.
+- Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 둔다.
+- Firebase uid / Google sub / provider_subject / email은 business table이나 backend response에 직접 노출하지 않고 internal `users.id`만 참조한다.
+- Firebase token은 SCN-001 protected endpoint에만 요구한다. SCN-004 `/api/v1/answer`와 `/api/v1/documents/draft`는 public contract를 유지한다.
+- raw OCR, raw contract, raw user_statement, raw `after_query_seed` persistent 저장을 Phase 4 DTO/DB에 추가하지 않는다.
 
 ## 환경변수
 

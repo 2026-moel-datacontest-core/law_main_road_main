@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-기준일: `2026-04-20`
+기준일: `2026-04-22`
 
 - RAG refinement landing 완료
 - SCN-004 document draft backend 완료
@@ -18,11 +18,16 @@
 - SCN-004 free input document eligibility guard 완료
 - SCN-001/004 presentation-local fixed answer preset architecture 완료
 - demo preflight script와 full 60 answer evidence report 추가 완료
-- 현재 작업 중심은 **SCN-004 demo freeze 유지와 제출 전 재현성 확인**
+- SCN-001 Firebase Auth Phase 0 완료: MVP path와 Phase 0 decisions 문서화 완료
+- SCN-001 Firebase Auth Phase 1 완료: `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` DB model/migration 커밋 완료
+- SCN-001 Firebase Auth Phase 2 완료: backend Firebase ID token verification과 `GET /api/v1/auth/me` 커밋 완료
+- SCN-001 Firebase Auth Phase 3 완료: frontend Firebase Web SDK, `AuthContext`, login UI, `/api/v1/auth/me` verification UI 커밋 완료
+- Phase 3 manual evidence: 실제 Google popup login E2E, `users` row upsert, repeated auth same `user_id`, `/after` login-free, frontend build 통과 확인
+- 현재 작업 중심은 **SCN-004 demo freeze 유지와 SCN-001 Firebase Auth Phase 4 착수 전 재현성 확인**
 - `SCN-001-BRIDGE-DEMO`는 Before/Bridge handoff 설명용 answer-only preset
 - `SCN-004-DEMO-FREEZE`는 main demo / document draft freeze용 preset
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지
-- SCN-001 frontend 확장은 팀원 Before / Bridge 코드와 contract 확인 후 진행
+- 다음 구현 phase는 Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
 - 현재 source of truth는 `backend/data/law_chunks/all_chunks.json`
 - current live corpus: `1722` chunks, `selected_as_of = 2026-04-11`
 
@@ -30,6 +35,7 @@ Evolution note:
 
 - 2026-04-17 기준 상태는 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal 완료였다.
 - 2026-04-20에는 위 상태를 흔들지 않고 presentation-local preset, preflight, free-input guard, eval evidence report를 추가해 MVP 제출 기준을 보강했다.
+- 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, frontend persistence는 `inMemoryPersistence`다.
 
 ## Read Order
 
@@ -124,6 +130,7 @@ npm run dev
 | Method | Path | Status |
 |---|---|---|
 | `POST` | `/api/v1/retrieve` | implemented |
+| `GET` | `/api/v1/auth/me` | implemented |
 | `POST` | `/api/v1/answer` | implemented |
 | `POST` | `/api/v1/documents/draft` | implemented |
 
@@ -189,7 +196,10 @@ Implemented integration:
 * draft service는 retrieval / answer_generation service를 직접 호출하지 않음
 * 사용자가 입력하지 않은 사실은 단정하지 않고 placeholder 또는 `missing_fields`로 남김
 * SCN-005 After 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
-* SCN-001 문서 타입 / Before-Bridge-After 확장은 팀원 Before / Bridge 코드와 contract 확인 후 검토
+* SCN-001 protected path는 Firebase Auth Bearer ID token을 사용하고, `auth_provider = "firebase_google"`, `provider_subject = Firebase uid`에서 internal `users.id`를 resolve
+* Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지
+* Phase 4는 SCN-004 public answer/draft contract를 바꾸지 않고 SCN-001 protected bridge-runs endpoint와 `BeforeHandoffDTO` extraction만 다룸
+* SCN-001 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서만 검토
 
 ## Frontend Rules
 
@@ -201,6 +211,8 @@ Implemented integration:
 * 현재 SCN-004 demo freeze 유지 작업과 SCN-005 문서 타입 frontend 확장을 한 패치에 섞지 않음
 * SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
 * SCN-001 `Before -> Bridge -> After` frontend 확장은 팀원 Before / Bridge 코드와 contract 확인 후 별도 단계에서 검토
+* Firebase Auth MVP frontend persistence는 `inMemoryPersistence`; token/auth state와 raw flow payload를 Web Storage에 저장하지 않음
+* `browserSessionPersistence`는 MVP default가 아니라 Future/Post-MVP UX tradeoff 후보
 * raw `user_statement`, `answer_response`, `case_intake`, `draft_response`는 Web Storage에 저장하지 않음
 * presentation preset exact path는 fixed answer fixture를 사용하고 `/api/v1/answer`를 호출하지 않음
 * presentation preset modified path는 `top_k=10`, 자유 입력은 `top_k=5`, 항상 `ef_search=100`
@@ -267,4 +279,5 @@ Run retrieval / answer full 60 only when `backend/app/services/retrieval.py`, `b
 * `docs/planning/12_scenario_expansion_plan.md`
 * `docs/planning/13_document_draft_plan.md`
 * `docs/planning/14_frontend_implementation_handoff.md`
+* `docs/planning/19_scn001_auth_integration_status.md`
 * `docs/ops/README.md`

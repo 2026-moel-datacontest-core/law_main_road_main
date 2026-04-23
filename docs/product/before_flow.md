@@ -1,6 +1,6 @@
 # Before Flow
 
-기준일: `2026-04-21`
+기준일: `2026-04-22`
 
 ## 현재 상태
 
@@ -51,10 +51,10 @@ Before 결과를 연결할 때는 원문 전체 저장보다 아래 최소 정�
 
 `scenario_id`, `source_scenario`, `preset_id`는 Bridge/After 연결 시 Before 결과가 어떤 시나리오/프리셋으로 이어지는지 구분하기 위한 후보 필드다. 실제 필드 확정은 팀원 Before-begin output contract 확인 후 진행한다.
 
-Google OAuth 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 실제 적용은 사용자별 상태 연결이 필요한 기능으로 제한한다. 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 연결 초안이며, Before 결과를 사용자 계정에 연결 저장하는 흐름부터 검토한다.
+Firebase Auth Google Sign-In 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 실제 적용은 사용자별 상태 연결이 필요한 SCN-001 protected path로 제한한다. Phase 0~3은 완료됐고, 다음 구현은 Phase 4 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이다. Before 결과를 사용자 계정에 연결 저장하는 runtime linkage는 Phase 5에서 진행한다.
 
 이 capability는 직접 회원가입, 이메일/전화번호 직접 입력 수집, 전화번호 scope 요청, 이메일 primary identifier 사용, access token / refresh token 장기 저장을 허용하지 않는다.
 
-사용자 식별은 OAuth provider의 stable subject id에서 파생한 내부 user id를 기준으로 하며, 저장 가능한 사용자 필드는 `internal user id`, `auth_provider="google"`, `provider_subject`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다. Kakao OAuth는 첫 구현 범위에서 제외하고 후속 provider 후보로만 둔다.
+사용자 식별은 Firebase uid를 `provider_subject`로 저장한 뒤 internal `users.id`를 resolve하는 방식이다. 저장 가능한 사용자 필드는 `internal user id`, `auth_provider="firebase_google"`, `provider_subject = Firebase uid`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다. Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지하고, Kakao OAuth는 첫 구현 범위에서 제외한 후속 provider 후보로만 둔다.
 
 개인정보 최소 수집 원칙을 유지한다.

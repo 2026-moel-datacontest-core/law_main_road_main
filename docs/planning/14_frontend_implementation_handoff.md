@@ -50,9 +50,16 @@
 - 현재 SCN-004 freeze 작업 중 SCN-005 문서 타입 확장
 - 팀원 Before / Bridge contract 확인 없는 SCN-001 문서 타입 확장
 
+SCN-001 Firebase Auth note:
+
+- Phase 3 frontend integration은 완료됐다: Firebase Web SDK, `AuthContext`, Login UI, `/api/v1/auth/me` verification UI.
+- Phase 3 구현값은 Firebase Auth `inMemoryPersistence`이며 browser Web Storage persistence를 MVP default로 쓰지 않는다.
+- actual Google popup login E2E, `users` row upsert, repeated auth same `user_id`, `/after` login-free, frontend build 통과가 확인됐다.
+- 이 handoff 문서는 여전히 SCN-004 4-route freeze 기준서이며, Phase 4 SCN-001 protected bridge-runs 작업과 SCN-004 freeze QA를 한 patch에 섞지 않는다.
+
 다음 단계:
 
-- backend schema와 frontend type 정합성 유지
+- Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction은 별도 backend 중심 patch로 진행
 - SCN-004 happy path / error path / guard path 제출 전 재확인
 - desktop/mobile demo layout 제출 전 재확인
 
@@ -159,16 +166,20 @@ live `/api/v1/answer` 호출 시 `ef_search`는 항상 100. preset exact path는
 - Recovery 화면
 - 연락처 / 계좌번호 / 실주소 / 파일 본문 입력 UI
 
-### 계정 / OAuth 정책
+### 계정 / Firebase Auth 정책
 
 - 이 handoff의 SCN-004 demo flow는 로그인 없이 동작해야 하며, 계정 기능을 추가하지 않는다.
 - 직접 회원가입, 이메일 직접 입력 가입/로그인, 전화번호 직접 입력 수집은 계속 금지한다.
-- Google OAuth 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 다음 제약 준수 시.
-- 실제 적용은 사용자별 상태 연결이 필요한 기능으로 제한하며, 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 연결 초안이다.
-- OAuth 적용 시에도 전화번호 scope 요청은 금지하고, 이메일은 nullable 표시 정보로만 다루며 primary identifier로 사용하지 않는다.
-- 사용자 primary key는 OAuth provider의 stable subject id에서 파생한 내부 user id를 사용한다.
-- 저장 가능한 최소 사용자 필드는 `internal user id`, `auth_provider="google"`, `provider_subject`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다.
-- Before / Bridge / After 결과를 사용자 계정에 연결 저장하는 것은 Google OAuth 공통 인증 capability의 첫 구현 적용 범위로 둔다.
+- Firebase Auth Google Sign-In 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 다음 제약 준수 시.
+- 실제 적용은 사용자별 상태 연결이 필요한 SCN-001 protected path로 제한한다.
+- MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이다.
+- `auth_provider = "firebase_google"`, `provider_subject = Firebase uid`에서 internal `users.id`를 resolve한다.
+- Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지한다.
+- 전화번호 scope 요청은 금지하고, 이메일은 nullable 표시 정보로만 다루며 primary identifier로 사용하지 않는다.
+- 저장 가능한 최소 사용자 필드는 `internal user id`, `auth_provider="firebase_google"`, `provider_subject = Firebase uid`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다.
+- Before / Bridge / After 결과를 사용자 계정에 연결 저장하는 것은 Firebase Auth 공통 인증 capability의 적용 범위로 둔다.
+- Firebase Auth MVP frontend persistence는 `inMemoryPersistence`다. token/auth state를 `localStorage`나 `sessionStorage`에 저장하지 않는다.
+- `browserSessionPersistence`는 MVP default가 아니라 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - access token / refresh token 장기 저장은 금지한다.
 - Kakao OAuth는 첫 구현 범위에서 제외하고, 한국 생활 밀착 UX나 KakaoTalk 알림/상담 연계가 필요해질 때 후속 provider 후보로 검토한다.
 
@@ -1174,7 +1185,7 @@ uvicorn backend.main:app --reload
 - backend 코드 수정 금지 (`backend/` 파일 전체)
 - `/api/v1/answer`, `/api/v1/documents/draft` contract 변경 금지
 - 직접 회원가입 / 이메일·전화번호 기반 로그인 / SCN-004 사용자 계정 기능 추가 금지
-- Google OAuth 최소 로그인은 공통 인증 capability로 허용한다. 단, 실제 적용은 사용자별 상태 연결이 필요한 기능으로 제한하고 첫 적용은 SCN-001 연결 초안으로 둔다.
+- Firebase Auth Google Sign-In은 공통 인증 capability로 허용한다. 단, 실제 적용은 SCN-001 protected path로 제한하고, Phase 4는 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction으로 둔다.
 - 전화번호 scope 요청 금지, 이메일 primary identifier 사용 금지, access token / refresh token 장기 저장 금지
 - OCR / 파일 업로드 기능 추가 금지
 - user_statement, answer_response, case_intake, draft_response를 sessionStorage / localStorage에 저장 금지

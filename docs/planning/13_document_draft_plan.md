@@ -625,5 +625,5 @@ MVP에서는 `CaseIntake`를 request 중심 이름으로 사용하고, 향후 �
 - 제출기관별 실제 양식 반영
 - SCN-005 문서 타입 확장
 - 팀원 Before / Bridge contract 확인 후 SCN-001 문서 타입 확장
-- Google OAuth 기반 최소 로그인은 공통 인증 capability로 허용한다. 단, 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 결과 계정 연결 초안이다. document draft schema와 SCN-004 demo freeze는 변경하지 않는다. Kakao OAuth는 후속 provider 후보
+- Firebase Auth Google Sign-In 기반 최소 로그인은 SCN-001 protected path 전용 공통 인증 capability로 유지한다. Phase 4는 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이며, document draft schema와 SCN-004 demo freeze는 변경하지 않는다. Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback, Kakao OAuth는 후속 provider 후보
 - sessionStorage backup/restore 없는 상태에서 demo 운영 문구 정리

@@ -20,17 +20,21 @@
 - SCN-004 After demo flow는 로그인 없이 사용 가능해야 함
 - 개인정보 최소 수집 원칙 유지
 
-## 계정 / OAuth 정책
+## 계정 / Firebase Auth 정책
 
 - 직접 회원가입, 이메일 직접 입력 가입/로그인, 전화번호 직접 입력 수집은 계속 금지한다.
-- Google OAuth 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 다음 제약 준수 시.
-- 실제 적용은 사용자별 상태 연결이 필요한 기능으로 제한하며, 첫 구현 적용 범위는 SCN-001 Before-Bridge-After 연결 초안이다.
+- Firebase Auth Google Sign-In 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 다음 제약 준수 시.
+- 실제 적용은 사용자별 상태 연결이 필요한 SCN-001 protected path로 제한한다.
+- MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이다.
+- `auth_provider = "firebase_google"`, `provider_subject = Firebase uid`에서 internal `users.id`를 resolve한다.
+- Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지한다.
 - 전화번호 scope 요청은 금지한다.
 - 이메일은 nullable 표시 정보로만 다루며 primary identifier로 사용하지 않는다.
-- 사용자 primary key는 OAuth provider의 stable subject id에서 파생한 내부 user id를 사용한다.
 - access token / refresh token 장기 저장은 금지한다.
-- 저장 가능한 최소 사용자 필드는 `internal user id`, `auth_provider="google"`, `provider_subject`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다.
-- Google Login을 1차 provider로 둔다. 외국인 근로자 대상 접근성이 Kakao보다 넓고, OpenID Connect 표준 기반이며, Google `sub`를 stable subject id로 사용할 수 있고, 현재 GCP/Vertex 기반 인프라와 운영 친화적이기 때문이다.
+- Firebase Auth MVP frontend persistence는 `inMemoryPersistence`다. token/auth state를 `localStorage`나 `sessionStorage`에 저장하지 않는다.
+- `browserSessionPersistence`는 MVP default가 아니라 Future/Post-MVP UX tradeoff 후보로만 둔다.
+- 저장 가능한 최소 사용자 필드는 `internal user id`, `auth_provider="firebase_google"`, `provider_subject = Firebase uid`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다.
+- Firebase Auth Google Sign-In을 1차 provider로 둔다. 외국인 근로자 대상 접근성이 Kakao보다 넓고, 현재 GCP/Vertex 기반 인프라와 운영 친화적이기 때문이다.
 - Kakao OAuth는 한국 생활 밀착 UX나 KakaoTalk 기반 알림/상담 연계가 필요해질 때 검토할 후속 provider 후보이며, 첫 구현 범위에서는 제외한다.
 - 이 capability는 SCN-004 demo freeze를 변경하지 않으며, SCN-004 After demo flow는 계속 로그인 없이 동작해야 한다.
 
@@ -67,18 +71,27 @@
   - `/bridge`, Recovery 본 구현 및 `/before` 추가 기능 확장
 - SCN-004 QA 정합성 검증, content display 확인, manual browser rehearsal은 통과 상태다.
 - 2026-04-20 기준 demo preflight와 browser dry-run도 통과 상태다.
-- 다음 단계는 SCN-004 demo freeze 유지 또는 팀원 Before / Bridge contract 확인 후 SCN-001 연결 검토다.
+- SCN-001 Firebase Auth Phase 3 frontend integration은 구현 완료 상태다.
+  - Firebase Web SDK
+  - `AuthContext`
+  - Login UI
+  - `/api/v1/auth/me` backend verification UI
+  - Firebase Auth `inMemoryPersistence`
+  - actual Google popup login E2E, `users` row upsert, repeated auth same `user_id`, `/after` login-free, frontend build 통과 확인
+- 다음 구현 phase는 backend 중심 Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이다.
 - SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행한다.
 
-SCN-001 연결 초안의 다음 목표 step:
+SCN-001 연결 초안의 phase 정렬:
 
-1. 팀원 Before / Bridge output contract 확인
-2. SCN-001 account/auth 최소 데이터 스펙 문서화
-3. Google OAuth 기반 최소 로그인 설계
-4. `provider_subject` 기반 internal user id 설계
-5. `before_review_jobs` / `bridge_runs` / `after_artifact_runs` 사용자 연결 저장 방식 결정
-6. SCN-004 After demo flow가 로그인 없이 유지되는지 회귀 확인
-7. 구현 착수
+1. Phase 0 완료: Firebase Auth MVP path / Phase 0 decisions 문서화
+2. Phase 1 완료: DB model/migration
+3. Phase 2 완료: backend Firebase ID token verification + `/api/v1/auth/me`
+4. Phase 3 완료: frontend Firebase Auth Google Sign-In integration
+5. Phase 4 next: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
+6. Phase 5: Before review user linkage
+7. Phase 6: Bridge -> After answer-only handoff
+8. Phase 7: `after_artifact_runs` linkage
+9. Phase 8: regression / demo preflight / manual rehearsal
 
 Evolution note:
 
@@ -177,7 +190,7 @@ Evolution note:
 - `docs/product/bridge_flow.md`의 개인정보 최소 수집 원칙과 저장 금지 원칙을 우선한다.
 - 저장 대상은 최소 필드만 허용
 - 원문 전체 저장은 기본 비활성
-- Before / Bridge / After 결과를 사용자 계정에 연결 저장하는 것은 Google OAuth 공통 인증 capability의 첫 구현 적용 범위로 검토한다.
+- Before / Bridge / After 결과를 사용자 계정에 연결 저장하는 것은 Firebase Auth 공통 인증 capability의 적용 범위로 검토한다.
 
 저장 후보:
 
@@ -255,7 +268,7 @@ MVP 최소 필요 API:
 - 현재 SCN-004 freeze 작업 중 SCN-005 문서 타입 frontend 확장
 - 팀원 Before / Bridge contract 확인 없는 SCN-001 frontend 확장
 
-다음 단계 범위: Google OAuth 최소 로그인의 첫 적용은 SCN-001 Before-Bridge-After 연결 초안에서 Before / Bridge / After 결과를 OAuth 사용자에 연결하는 최소 account/auth 작업으로 별도 진행한다.
+다음 단계 범위: Firebase Auth Phase 0~3은 완료됐다. 다음 구현은 SCN-004 demo freeze를 유지하면서 Phase 4 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction으로 별도 진행한다.
 
 ---
 

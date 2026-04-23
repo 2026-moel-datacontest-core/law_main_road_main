@@ -246,7 +246,7 @@ alembic upgrade head
 cd ..
 ```
 
-현재 기준 alembic head는 로컬 확인 시 `20260421_000005`다.
+현재 기준 alembic head는 로컬 확인 시 `20260422_000006`다.
 
 확인:
 
@@ -383,7 +383,7 @@ npm run dev
 
 메타데이터:
 
-- DB 테이블: `before_review_jobs`
+- DB 테이블: `before_review_jobs` (`user_id` nullable linkage column 포함)
 
 ### after
 
@@ -407,7 +407,13 @@ draft 단계 저장:
 
 메타데이터:
 
-- DB 테이블: `after_artifact_runs`
+- DB 테이블: `after_artifact_runs` (`user_id`, `source_bridge_run_id` nullable linkage column 포함)
+
+### account / bridge linkage schema
+
+- DB 테이블: `users`
+- DB 테이블: `bridge_runs`
+- Phase 4 전 현재 상태: schema는 있지만 protected bridge-runs route/service는 아직 없다.
 
 ## 10. 향후 `starting.sh`가 자동화할 범위
 
