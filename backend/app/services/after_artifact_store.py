@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -17,6 +18,12 @@ from backend.app.schemas.document_draft import (
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 AFTER_ARTIFACT_RUNS_DIR = BACKEND_DIR / "data" / "after_artifacts" / "runs"
+
+
+@dataclass(frozen=True)
+class AfterArtifactLinkage:
+    user_id: str | None = None
+    source_bridge_run_id: str | None = None
 
 
 def _utcnow() -> datetime:
@@ -65,6 +72,8 @@ def _jsonable_payload(payload: object) -> object:
 def _insert_run_row(
     *,
     run_id: str,
+    user_id: str | None,
+    source_bridge_run_id: str | None,
     stage: str,
     status: str,
     query_hash: str | None,
@@ -76,6 +85,8 @@ def _insert_run_row(
         db.add(
             AfterArtifactRun(
                 run_id=run_id,
+                user_id=user_id,
+                source_bridge_run_id=source_bridge_run_id,
                 stage=stage,
                 status=status,
                 query_hash=query_hash,
@@ -87,10 +98,16 @@ def _insert_run_row(
         db.commit()
 
 
-def persist_answer_artifacts(payload: AnswerRequest, response: AnswerResponse) -> str:
+def persist_answer_artifacts(
+    payload: AnswerRequest,
+    response: AnswerResponse,
+    *,
+    linkage: AfterArtifactLinkage | None = None,
+) -> str:
     AFTER_ARTIFACT_RUNS_DIR.mkdir(parents=True, exist_ok=True)
     run_id = _new_run_id()
     run_dir = _new_run_dir("answer", run_id)
+    resolved_linkage = linkage or AfterArtifactLinkage()
 
     try:
         _write_text(run_dir / "user_statement.txt", payload.query)
@@ -98,6 +115,8 @@ def persist_answer_artifacts(payload: AnswerRequest, response: AnswerResponse) -
         _write_json(run_dir / "answer_response.json", _jsonable_payload(response))
         _insert_run_row(
             run_id=run_id,
+            user_id=resolved_linkage.user_id,
+            source_bridge_run_id=resolved_linkage.source_bridge_run_id,
             stage="answer",
             status="completed",
             query_hash=_query_hash(payload.query),
@@ -108,6 +127,8 @@ def persist_answer_artifacts(payload: AnswerRequest, response: AnswerResponse) -
     except Exception as exc:
         _insert_run_row(
             run_id=run_id,
+            user_id=resolved_linkage.user_id,
+            source_bridge_run_id=resolved_linkage.source_bridge_run_id,
             stage="answer",
             status="failed",
             query_hash=_query_hash(payload.query),
@@ -148,6 +169,8 @@ def persist_draft_artifacts(
         )
         _insert_run_row(
             run_id=run_id,
+            user_id=None,
+            source_bridge_run_id=None,
             stage="draft",
             status="completed",
             query_hash=_query_hash(answer_query),
@@ -158,6 +181,8 @@ def persist_draft_artifacts(
     except Exception as exc:
         _insert_run_row(
             run_id=run_id,
+            user_id=None,
+            source_bridge_run_id=None,
             stage="draft",
             status="failed",
             query_hash=_query_hash(answer_query),
