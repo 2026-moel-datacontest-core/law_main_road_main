@@ -130,7 +130,7 @@ Notes:
 
 ## 5. Bridge Current Code Status
 
-- 독립 Bridge route/API/service: 아직 없음. `bridge_runs` DB model/schema는 Phase 1에서 구현 완료됐고, protected route/service는 Phase 4 범위다.
+- Phase 4 protected Bridge route/API/service: `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` patch 기준. 독립 `/bridge` UI는 후속 범위다.
 - frontend route: 없음. `frontend/src/app`에는 `/before`, `/after`만 있고 `/bridge` route는 없다.
 - `SCN-001-BRIDGE-DEMO` preset: 있음. `frontend/src/lib/scenarioPresets.ts`에 `scenarioId: "SCN-001"`, `recommendedTopK: 10`, `supportsDraft: false`로 정의되어 있다.
 - `scenarioPresetAnswers.json` Bridge-like fixed answer: `SCN-001-BRIDGE-DEMO` key의 fixed fixture는 일반 `AnswerResponse` shape다.
@@ -186,7 +186,7 @@ JSON-like shape:
 
 | field | source field | required | 저장 가능 여부 | 개인정보 주의점 | fallback |
 |---|---|---:|---:|---|---|
-| `before_review_job_id` | job API `job_id` | No | Yes | internal id only | `null` for direct `/review` or mock |
+| `before_review_job_id` | job API `job_id` | Yes for Phase 4 protected bridge POST | Yes | internal id only | mock/preset path는 bridge row를 만들지 않음 |
 | `review_id` | `review_id` | Yes | Yes | internal id only | generate adapter id only if fixture lacks it |
 | `source_run_directory` | `run_directory` | No | Internal only | local path 노출 금지 | `null` |
 | `scenario_id` | adapter constant | Yes | Yes | Low | `SCN-001` |
@@ -205,6 +205,7 @@ JSON-like shape:
 Notes:
 
 - raw `contract_info.employer`, raw `contract_info.employee`는 의도적으로 `BeforeHandoffDTO`에서 제외하고, 필요 시 개인정보를 최소화한 `contract_summary`로 대체한다.
+- Phase 4 protected bridge POST는 `before_review_jobs.user_id`가 현재 internal `users.id`와 일치하는 completed Before job만 입력으로 받는다. `user_id = null` orphan job, 다른 사용자 job, 존재하지 않는 job은 외부 응답에서 모두 404 not-found로 숨긴다.
 
 ## 7. Field Extraction Rules
 
@@ -243,6 +244,20 @@ Exclusion rule:
 - `ocr_conflicts`는 field value와 OCR-derived snippet을 포함할 수 있는 medium privacy risk field이므로 `BeforeHandoffDTO`에서 제외한다. 필요한 경우에도 conflict count 또는 field label 수준의 요약만 별도 검토한다.
 
 ## 8. Proposed BridgeOutputDTO
+
+Phase 4 protected POST request body is intentionally narrow:
+
+```json
+{
+  "before_review_job_id": "string"
+}
+```
+
+Clients cannot set `source_scenario` or `preset_id` in Phase 4. The server only
+creates a bridge row from a linked completed Before job and stores
+`source_scenario = "before_review"` and `preset_id = null`. Preset/mock paths,
+including `SCN-001-BRIDGE-DEMO`, remain presentation-only and do not create
+`bridge_runs` rows.
 
 JSON-like shape:
 
@@ -283,10 +298,10 @@ JSON-like shape:
 |---|---|---:|---|
 | `bridge_run_id` | new bridge adapter/service | Yes | DB row id or generated in-memory id |
 | `user_id` | auth linkage | Yes for SCN-001 protected bridge flow | Firebase uid as `provider_subject`에서 resolve한 internal `users.id`. Firebase uid / Google sub가 아님 |
-| `before_review_job_id` | `BeforeHandoffDTO.before_review_job_id` | No | mock/direct review fallback 허용 |
+| `before_review_job_id` | `BeforeHandoffDTO.before_review_job_id` | Yes for Phase 4 protected bridge flow | mock/preset path는 bridge_runs 미생성 answer-only |
 | `scenario_id` | `BeforeHandoffDTO.scenario_id` | Yes | first target `SCN-001` |
-| `source_scenario` | adapter | Yes | `before_review`, `preset`, `mock` 중 하나 |
-| `preset_id` | preset metadata | No | presentation path는 `SCN-001-BRIDGE-DEMO` 후보 |
+| `source_scenario` | server-side bridge service | Yes | Phase 4 protected flow stores fixed `before_review`; preset/mock paths do not create bridge rows |
+| `preset_id` | server-side bridge service | No | Phase 4 protected flow stores `null`; `SCN-001-BRIDGE-DEMO` remains presentation-only |
 | `user_visible_summary` | `contract_summary` + issue summary | Yes | raw facts 과다 포함 금지 |
 | `issue_categories` | normalized issue types | No | UI grouping 후보 |
 | `risk_tags` | `BeforeHandoffDTO.risk_tags` | No | short labels only |
@@ -318,7 +333,7 @@ JSON-like shape:
 
 Mapping note:
 
-- presentation/demo Bridge path는 `SCN-001-BRIDGE-DEMO` preset 후보를 사용할 수 있지만, real Before review에서 온 handoff는 `preset_id = null`로 두고 After에서 live answer path를 사용해야 한다.
+- presentation/demo Bridge path는 `SCN-001-BRIDGE-DEMO` preset 후보를 사용할 수 있지만 Phase 4 protected bridge row를 만들지 않는다. real Before review에서 온 handoff는 `preset_id = null`로 두고 After에서 live answer path를 사용해야 한다.
 
 Fixed answer path:
 
@@ -349,6 +364,8 @@ Contract boundaries:
 - MVP path의 `users.auth_provider` 값은 `firebase_google`이다. multi-provider / Future 확장에서는 provider 값 체계가 확장될 수 있다.
 - business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal `users.id`만 참조한다.
 - `before_review_jobs.user_id` nullable column은 Phase 1에서 구현 완료됐다. Phase 5에서는 로그인 사용자가 Before review/job을 실행할 때 이 column을 internal `users.id`로 채우는 runtime linkage를 구현한다.
+- Phase 4 bridge POST는 이미 linked 된 Before job만 bridge run으로 변환한다. `before_review_jobs.user_id = null` orphan job은 claim/link하지 않고 reject하며, Phase 5 Before runtime linkage 이후 정상 flow에서 bridge 생성 가능해진다.
+- job 없음, 다른 사용자 job, null orphan job은 외부 응답에서 404 not-found로 통일해 job 존재성 leak을 줄인다. incomplete job과 result/extraction failure는 별도 conflict/validation 계열로 다룬다.
 - `bridge_runs` DB model/schema는 Phase 1에서 구현 완료됐다. SCN-001 protected bridge flow에서 `bridge_runs.user_id`는 required internal `users.id` 참조다.
 - `SCN-001-BRIDGE-DEMO` presentation preset은 `bridge_runs`를 만들지 않는 answer-only path다. SCN-004 public/login-free flow도 `bridge_runs`를 만들지 않는다.
 - `after_artifact_runs.user_id`와 `after_artifact_runs.source_bridge_run_id` nullable column은 Phase 1에서 구현 완료됐다. `after_artifact_runs.user_id`는 internal `users.id` 참조다.
@@ -395,7 +412,7 @@ Contract boundaries:
 
 ## 13. Recommended Next Steps
 
-1. Phase 4: `POST /api/v1/scn001/bridge-runs`와 `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` protected endpoint 구현
+1. Phase 4: linked completed Before job만 받는 `POST /api/v1/scn001/bridge-runs`와 ownership-checked `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` protected endpoint 구현
 2. `BeforeHandoffDTO` extraction rules를 이 문서의 DTO boundary에 맞춰 구현
 3. `BridgeOutputDTO` response shape를 이 문서와 맞춘다.
 4. `bridge_runs` existing schema 사용: `user_id` required, `after_query_seed_hash` 저장, raw `after_query_seed` persistent 저장 금지

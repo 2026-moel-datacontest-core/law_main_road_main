@@ -27,7 +27,7 @@
 | 10. CORS Authorization header allowlist | MVP Bearer path는 `Authorization` header 허용 필요, `allow_credentials=True` 필수 아님 | Decided | Phase 2 | SCN-004 public preflight regression check 필수 |
 | 11. bridge_runs.user_id required vs nullable | MVP protected `bridge_runs.user_id`는 required | Decided | Phase 1 / Phase 4 | `SCN-001-BRIDGE-DEMO`는 bridge_runs 미생성 answer-only |
 | 12. after_query_seed storage strategy | raw seed persistent 저장 금지. `after_query_seed_hash` + safe summary 중심 | Decided / TBD | Phase 1 / Phase 4 / Phase 6 | exact handoff transport는 Phase 6 전 TBD |
-| 13. anonymous artifact handling | 기존 anonymous artifact는 orphan 유지 | Decided | Phase 5+ | retroactive linking은 Post-MVP |
+| 13. anonymous artifact handling | 기존 anonymous artifact는 orphan 유지 | Decided | Phase 5+ | Phase 4 bridge POST는 null `before_review_jobs.user_id` orphan job을 reject. retroactive linking은 Post-MVP |
 | 14. artifact retention/deletion | raw artifact는 민감 데이터로 취급. retention duration/deletion workflow는 TBD | TBD | Phase 5+ | 최소 노출 정책은 지금 적용, 운영 삭제 정책은 후속 |
 | 15. Bridge implementation location | protected flow는 backend route + service | Decided | Phase 4 | 독립 `/bridge` UI route는 후속 |
 | 16. SCN-001 document draft scope | Minimum MVP는 SCN-001 answer-only | Decided | Non-blocking | SCN-001 draft는 Strong MVP / optional extension |
@@ -166,7 +166,7 @@ MVP protected:
 
 | Method | Path | Auth policy | Purpose |
 |---|---|---|---|
-| `POST` | `/api/v1/scn001/bridge-runs` | Bearer Firebase ID token required | `BeforeHandoffDTO`에서 `BridgeOutputDTO` 생성 및 저장 |
+| `POST` | `/api/v1/scn001/bridge-runs` | Bearer Firebase ID token required | linked Before job id에서 `BeforeHandoffDTO`를 추출해 `BridgeOutputDTO` 생성 및 저장 |
 | `GET` | `/api/v1/scn001/bridge-runs/{bridge_run_id}` | Bearer Firebase ID token required | bridge run 조회, internal user_id ownership 확인 |
 
 Optional:
@@ -231,6 +231,9 @@ Public 유지:
   - `SCN-001-BRIDGE-DEMO`는 bridge_runs를 만들지 않고 기존 answer-only preset으로 유지한다.
   - 기존 SCN-004 `/after` flow도 bridge_runs를 만들지 않는다.
   - 신규 `bridge_runs` table은 protected flow 전용으로 설계한다.
+  - Phase 4 bridge POST는 `before_review_jobs.user_id`가 현재 internal `users.id`와 일치하는 completed Before job만 허용한다.
+  - Phase 4 POST request body는 `before_review_job_id`만 받으며, server가 `source_scenario = "before_review"`, `preset_id = null`을 저장한다.
+  - job 없음, 다른 사용자 job, `user_id = null` orphan job은 외부 응답에서 404 not-found로 통일해 존재성 leak을 줄인다.
 
 ### D-012. after_query_seed Storage Strategy
 
@@ -261,6 +264,8 @@ Public 유지:
 - Implementation Notes:
   - OAuth 도입 후 새로 생성되는 protected flow artifact만 internal user_id와 연결한다.
   - 기존 `before_review_jobs`, `after_artifact_runs`의 anonymous row는 `user_id = null` orphan로 유지한다.
+  - Phase 4에서는 session-bound handoff token이나 account linkage consent timing이 없으므로 null Before job을 bridge POST에서 claim하지 않는다.
+  - Phase 5 Before review runtime linkage가 구현된 뒤 linked Before job만 정상 bridge 생성 대상이 된다.
   - user consent 후 retroactive linking, orphan delete 선택지, migration UI는 Post-MVP로 둔다.
 
 ### D-014. Artifact Retention / Deletion
@@ -291,7 +296,8 @@ Public 유지:
   - frontend context adapter만으로는 account-linked bridge_runs ownership을 보장하기 어렵다.
 - Implementation Notes:
   - route: `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`.
-  - service: Bridge DTO validation, safe summary generation, hash generation, DB persistence.
+  - service: linked Before job validation, `BeforeHandoffDTO` extraction, safe summary generation, hash generation, DB persistence.
+  - Phase 4 service does not accept client-provided `source_scenario` or `preset_id`; preset/mock paths stay presentation-only.
   - 독립 `/bridge` UI route는 Minimum MVP 후속이다.
   - SCN-004 flow와 분리하고 `/api/v1/answer`, `/api/v1/documents/draft` contract를 변경하지 않는다.
 
@@ -317,7 +323,7 @@ Public 유지:
 | Phase 1 DB models | D-002, D-003, D-011, D-012 | Completed | `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` implemented |
 | Phase 2 Backend Firebase verification | D-004, D-005, D-008, D-009, D-010 | Completed | Firebase Admin SDK verification, `/api/v1/auth/me`, CORS `Authorization` header implemented |
 | Phase 3 Frontend auth | D-004, D-006, D-007 | Completed | Firebase Web SDK, `AuthContext`, Login UI, backend verification UI, `inMemoryPersistence` implemented |
-| Phase 4 Protected bridge-runs endpoint + `BeforeHandoffDTO` extraction | D-008, D-011, D-012, D-015 | Yes, next | `require_current_user`, users/bridge_runs schema, `/api/v1/auth/me`, frontend login capability are ready |
+| Phase 4 Protected bridge-runs endpoint + `BeforeHandoffDTO` extraction | D-008, D-011, D-012, D-015 | Yes, next | `require_current_user`, users/bridge_runs schema, `/api/v1/auth/me`, frontend login capability are ready. Only linked completed Before jobs can create bridge_runs |
 | Phase 5 Before review user linkage | D-013, D-014 plus consent timing | Later | nullable `before_review_jobs.user_id` exists; runtime linkage and consent timing remain |
 | Phase 6 Bridge -> After answer-only handoff | D-012 | Later | raw seed persistent 저장 금지. exact handoff transport TBD |
 | Phase 7 `after_artifact_runs` linkage | D-013, D-014 | Later | nullable `user_id` / `source_bridge_run_id` exists; runtime linkage remains |

@@ -1,21 +1,21 @@
 # SCN-001 Auth Integration Status
 
-기준일: `2026-04-22`
+기준일: `2026-04-23`
 
 ## Purpose
 
-이 문서는 설계 문서가 아니라 Phase 4 착수 전 handoff/status checkpoint다. 현재 HEAD 기준으로 SCN-001 Firebase Auth Phase 0~3 완료 상태, SCN-004 freeze guard, Phase 4 entry criteria, 다음 작업 순서를 한 곳에 고정한다.
+이 문서는 설계 문서가 아니라 Phase 4 handoff/status checkpoint다. 현재 patch 기준으로 SCN-001 Firebase Auth Phase 0~3 완료 상태, SCN-004 freeze guard, Phase 4 bridge-runs 구현 정책, 다음 작업 순서를 한 곳에 고정한다.
 
 ## Current Status by Phase
 
-| Phase | Status | Current HEAD 기준 |
+| Phase | Status | Current patch 기준 |
 |---|---|---|
 | Phase 0 | 완료 | Firebase Auth MVP path와 Phase 0 decisions 문서화 완료 |
 | Phase 1 | 완료 | DB model/migration 완료: `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` |
 | Phase 2 | 완료 | backend Firebase ID token verification, `GET /api/v1/auth/me`, optional/required current user dependency 완료 |
 | Phase 3 | 완료 | frontend Firebase Web SDK, `AuthContext`, Login UI, `/api/v1/auth/me` backend verification UI 완료 |
-| Phase 4 | next | SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction |
-| Phase 5 | pending | Before review user linkage |
+| Phase 4 | patch-ready | SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction implemented in this patch |
+| Phase 5 | next | Before review user linkage |
 | Phase 6 | pending | Bridge -> After answer-only handoff |
 | Phase 7 | pending | `after_artifact_runs` linkage |
 | Phase 8 | pending | regression / demo preflight / manual rehearsal |
@@ -71,25 +71,27 @@ Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`,
 - `SCN-001-BRIDGE-DEMO` remains answer-only and must not open SCN-004 document draft UI.
 - SCN-004 demo freeze QA and Phase 4 feature work must not be mixed in one patch.
 
-## Phase 4 Entry Criteria
+## Phase 4 Patch Contract
 
 - `require_current_user` dependency is available.
 - `get_optional_current_user` is available for auth status / future optional linkage.
 - `users` schema exists with `auth_provider`, `provider_subject`, display fields, timestamps, and unique provider subject constraint.
 - `bridge_runs` schema exists with required internal `user_id` and `after_query_seed_hash`.
 - `before_review_jobs.user_id` exists as nullable linkage column.
+- Phase 4 bridge POST only accepts completed Before jobs whose `before_review_jobs.user_id` matches the current internal `users.id`; null orphan jobs are rejected until Phase 5 Before runtime linkage.
+- Phase 4 bridge POST request body accepts only `before_review_job_id`; client-provided `source_scenario` or `preset_id` is rejected by schema validation.
+- Phase 4 bridge rows are always stored with `source_scenario = "before_review"` and `preset_id = null`.
+- Missing job, other-user job, and null orphan job are externally mapped to 404 not-found to reduce existence leak.
 - `after_artifact_runs.user_id` and `after_artifact_runs.source_bridge_run_id` exist as nullable linkage columns.
 - `BeforeHandoffDTO` and `BridgeOutputDTO` contract draft exists in `docs/planning/16_scn001_before_bridge_contract.md`.
 - `/api/v1/auth/me` and frontend login capability are implemented.
 
 ## Next Steps
 
-1. Implement Phase 4 backend route/schema/service for `POST /api/v1/scn001/bridge-runs`.
-2. Implement protected `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` with internal `user_id` ownership check.
-3. Implement `BeforeHandoffDTO` extraction using safe summary fields only.
-4. Store `bridge_runs.user_id`, safe summary fields, label-level `law_refs`, `after_query_seed_hash`, and internal artifact refs only.
-5. Keep raw `after_query_seed` out of persistent DB storage.
-6. Preserve SCN-004 public contract and run focused auth/SCN-004 regression checks after code changes.
+1. Commit the Phase 4 backend route/schema/service patch after focused smoke checks.
+2. Start Phase 5 Before review runtime linkage so newly created Before jobs receive internal `users.id`.
+3. Keep retroactive linking for existing null orphan jobs as Post-MVP.
+4. Preserve SCN-004 public contract during Phase 5 work.
 
 ## Do Not Mix
 
