@@ -260,6 +260,74 @@
   min-width: 0;
 }
 
+.bridgeCta {
+  display: grid;
+  gap: 14px;
+}
+
+.bridgeCtaHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.bridgeCtaEyebrow {
+  margin: 0;
+  color: rgba(191, 219, 254, 0.78);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bridgeCtaTitle {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.2rem;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+}
+
+.bridgeCtaDescription,
+.bridgeCtaNotice,
+.bridgeCtaError,
+.bridgeCtaSuccess {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.bridgeCtaDescription {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.bridgeCtaNotice {
+  color: #bfdbfe;
+}
+
+.bridgeCtaError {
+  color: #fecaca;
+}
+
+.bridgeCtaSuccess {
+  color: #bbf7d0;
+}
+
+.bridgeCtaActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.bridgeCtaButtonLabel {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
 @media (min-width: 672px) {
   .heroSection,
   .uploadSection,

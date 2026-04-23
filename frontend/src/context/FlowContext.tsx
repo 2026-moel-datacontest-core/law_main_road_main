@@ -111,11 +111,16 @@ export function flowReducer(
       const existingIndex = state.bridge_handoff.items.findIndex(
         (item) => item.bridge_run_id === nextItem.bridge_run_id,
       );
+      const existingItem =
+        existingIndex === -1 ? null : state.bridge_handoff.items[existingIndex];
+      const mergedItem = existingItem
+        ? { ...nextItem, include_in_query: existingItem.include_in_query }
+        : nextItem;
       const items =
         existingIndex === -1
-          ? [...state.bridge_handoff.items, nextItem]
+          ? [...state.bridge_handoff.items, mergedItem]
           : state.bridge_handoff.items.map((item, index) =>
-              index === existingIndex ? nextItem : item,
+              index === existingIndex ? mergedItem : item,
             );
 
       return {

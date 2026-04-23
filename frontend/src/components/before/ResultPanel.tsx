@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -11,9 +12,17 @@ interface ResultPanelProps {
   review: BeforeReviewResult;
   overviewCards: Array<{ label: string; value: string }>;
   onReset: () => void;
+  resetDisabled?: boolean;
+  bridgeAction?: ReactNode;
 }
 
-export function ResultPanel({ review, overviewCards, onReset }: ResultPanelProps) {
+export function ResultPanel({
+  review,
+  overviewCards,
+  onReset,
+  resetDisabled = false,
+  bridgeAction,
+}: ResultPanelProps) {
   const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(0);
 
   const issueCards = useMemo(() => {
@@ -48,7 +57,7 @@ export function ResultPanel({ review, overviewCards, onReset }: ResultPanelProps
           <div className={styles.heroActions}>
             <StatusBadge kind="status" value={review.overall_result} />
             <StatusBadge kind="severity" value={review.overall_severity} />
-            <Button type="button" variant="ghost" onClick={onReset}>
+            <Button type="button" variant="ghost" onClick={onReset} disabled={resetDisabled}>
               새 분석으로 돌아가기
             </Button>
           </div>
@@ -69,6 +78,8 @@ export function ResultPanel({ review, overviewCards, onReset }: ResultPanelProps
           <InfoRow label="시작일" value={review.contract_info.start_date} />
           <InfoRow label="요약" value={review.summary} />
         </div>
+
+        {bridgeAction ? <div className={styles.bridgeActionSlot}>{bridgeAction}</div> : null}
       </section>
 
       <div className={styles.grid}>

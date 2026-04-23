@@ -170,6 +170,13 @@
   gap: 12px;
 }
 
+.bridgeActionSlot {
+  position: relative;
+  z-index: 1;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .overviewCard,
 .infoRow {
   padding: 16px 18px;

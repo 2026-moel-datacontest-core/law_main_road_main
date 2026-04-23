@@ -1,15 +1,20 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import { AccessibilityPanel } from '@/components/before/AccessibilityPanel';
 import { LoadingPanel } from '@/components/before/LoadingPanel';
 import { ResultPanel } from '@/components/before/ResultPanel';
 import { UploadPanel } from '@/components/before/UploadPanel';
 import { Masthead } from '@/components/layout/Masthead';
+import { Button } from '@/components/ui/Button';
 import { DisclaimerBanner } from '@/components/ui/DisclaimerBanner';
 import { Notification } from '@/components/ui/Notification';
 import { SkipLink } from '@/components/ui/SkipLink';
+import { useAuth } from '@/context/AuthContext';
+import { useFlow } from '@/context/FlowContext';
 import {
   BeforeApiError,
   fetchBeforeAccessibility,
@@ -18,6 +23,8 @@ import {
   loadBeforeMockReview,
   startBeforeReviewJob,
 } from '@/lib/before-api';
+import { BridgeApiError, bridgeRunToHandoffItem, createBridgeRun } from '@/lib/bridge-api';
+import { getFirebaseAuth } from '@/lib/firebase';
 import type {
   BeforeAccessibilityRecommendation,
   BeforeDisabilityType,
@@ -36,6 +43,8 @@ const mockLoadingSteps = [
   { key: 'rule_validation', label: '수치 검증', message: '임금, 시간, 휴게 조건을 검토합니다.' },
   { key: 'explanation', label: '설명 생성', message: '사용자용 설명과 결과 요약을 만듭니다.' },
 ] as const;
+
+type BridgeActionStatus = 'idle' | 'loading' | 'success' | 'error';
 
 function createMockJob(): BeforeReviewJob {
   const now = new Date().toISOString();
@@ -85,18 +94,36 @@ function advanceMockJob(job: BeforeReviewJob): BeforeReviewJob {
 }
 
 export default function BeforePage() {
+  const router = useRouter();
+  const { dispatch } = useFlow();
+  const {
+    firebaseConfigured,
+    firebaseUser,
+    isInitializing,
+    isSigningIn,
+    isCheckingBackend,
+    errorMessage: authErrorMessage,
+    signInWithGoogle,
+  } = useAuth();
   const uploadRef = useRef<HTMLElement | null>(null);
   const resultRef = useRef<HTMLElement | null>(null);
   const [screenState, setScreenState] = useState<BeforeScreenState>('home');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loadingJob, setLoadingJob] = useState<BeforeReviewJob | null>(null);
+  const [completedReviewJobId, setCompletedReviewJobId] = useState<string | null>(null);
   const [review, setReview] = useState<BeforeReviewResult | null>(null);
   const [selectedDisability, setSelectedDisability] = useState<BeforeDisabilityType | null>(null);
   const [accessibility, setAccessibility] = useState<BeforeAccessibilityRecommendation | null>(null);
   const [accessibilityError, setAccessibilityError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAccessibilityLoading, setIsAccessibilityLoading] = useState(false);
+  const [isBridgeSubmitting, setIsBridgeSubmitting] = useState(false);
+  const [bridgeActionStatus, setBridgeActionStatus] = useState<BridgeActionStatus>('idle');
+  const [bridgeActionMessage, setBridgeActionMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const authBusy = isInitializing || isSigningIn || isCheckingBackend;
+  const hasBridgeJobId = Boolean(completedReviewJobId);
+  const isBridgeAuthenticated = Boolean(firebaseUser);
 
   const overviewCards = useMemo(() => {
     if (!review) {
@@ -134,9 +161,11 @@ export default function BeforePage() {
     if (loadingJob.status === 'completed') {
       if (loadingJob.result) {
         setReview(loadingJob.result);
+        setCompletedReviewJobId(loadingJob.job_id);
         setScreenState('result');
       } else {
         setErrorMessage('분석은 완료되었지만 결과를 불러오지 못했습니다.');
+        setCompletedReviewJobId(null);
         setScreenState('home');
       }
       setLoadingJob(null);
@@ -148,6 +177,7 @@ export default function BeforePage() {
       setErrorMessage(loadingJob.error ?? '계약서 분석 중 문제가 발생했습니다.');
       setScreenState('home');
       setLoadingJob(null);
+      setCompletedReviewJobId(null);
       setIsSubmitting(false);
       return;
     }
@@ -170,6 +200,7 @@ export default function BeforePage() {
         setErrorMessage(message);
         setScreenState('home');
         setLoadingJob(null);
+        setCompletedReviewJobId(null);
         setIsSubmitting(false);
       }
     }, 1000);
@@ -182,6 +213,8 @@ export default function BeforePage() {
 
   async function runMockReview(scenario: BeforeMockScenario) {
     setErrorMessage(null);
+    clearBridgeActionFeedback();
+    setCompletedReviewJobId(null);
     setIsSubmitting(true);
     setScreenState('loading');
     setAccessibility(null);
@@ -204,10 +237,12 @@ export default function BeforePage() {
       const nextReview = await loadBeforeMockReview(scenario);
       window.clearInterval(intervalId);
       setReview(nextReview);
+      setCompletedReviewJobId(null);
       setScreenState('result');
     } catch {
       window.clearInterval(intervalId);
       setErrorMessage('before mock 결과를 불러오지 못했습니다.');
+      setCompletedReviewJobId(null);
       setScreenState('home');
     } finally {
       setLoadingJob(null);
@@ -222,12 +257,14 @@ export default function BeforePage() {
     }
 
     setErrorMessage(null);
+    clearBridgeActionFeedback();
     setIsSubmitting(true);
     setScreenState('loading');
     setAccessibility(null);
     setAccessibilityError(null);
     setSelectedDisability(null);
     setReview(null);
+    setCompletedReviewJobId(null);
 
     try {
       const job = await startBeforeReviewJob(selectedFiles);
@@ -240,6 +277,7 @@ export default function BeforePage() {
       setErrorMessage(message);
       setScreenState('home');
       setLoadingJob(null);
+      setCompletedReviewJobId(null);
       setIsSubmitting(false);
     }
   }
@@ -283,6 +321,7 @@ export default function BeforePage() {
     setScreenState('home');
     setSelectedFiles([]);
     setLoadingJob(null);
+    setCompletedReviewJobId(null);
     setReview(null);
     setAccessibility(null);
     setSelectedDisability(null);
@@ -290,12 +329,97 @@ export default function BeforePage() {
     setAccessibilityError(null);
     setIsSubmitting(false);
     setIsAccessibilityLoading(false);
+    setIsBridgeSubmitting(false);
+    clearBridgeActionFeedback();
+  }
+
+  function clearBridgeActionFeedback() {
+    setBridgeActionStatus('idle');
+    setBridgeActionMessage(null);
+  }
+
+  async function handleBridgeSignIn() {
+    clearBridgeActionFeedback();
+    await signInWithGoogle();
+  }
+
+  async function handleCreateBridgeRun() {
+    if (!completedReviewJobId) {
+      setBridgeActionStatus('error');
+      setBridgeActionMessage(
+        'Before 검토 작업 정보를 확인할 수 없습니다. 실제 검토 작업 완료 후 다시 시도해주세요.',
+      );
+      return;
+    }
+
+    const currentUser = getFirebaseAuth()?.currentUser ?? null;
+    if (!currentUser) {
+      setBridgeActionStatus('error');
+      setBridgeActionMessage('After 연결에는 Google 로그인이 필요합니다.');
+      return;
+    }
+
+    setIsBridgeSubmitting(true);
+    setBridgeActionStatus('loading');
+    setBridgeActionMessage(null);
+
+    try {
+      const response = await createBridgeRunWithCurrentToken(completedReviewJobId);
+      const handoffItem = bridgeRunToHandoffItem(response);
+
+      dispatch({ type: 'ADD_BRIDGE_HANDOFF_ITEM', payload: handoffItem });
+      setBridgeActionStatus('success');
+      setBridgeActionMessage('Bridge 연결을 저장했습니다. After로 이동합니다.');
+      router.push('/after');
+    } catch (error) {
+      setBridgeActionStatus('error');
+      setBridgeActionMessage(getBridgeActionErrorMessage(error));
+    } finally {
+      setIsBridgeSubmitting(false);
+    }
+  }
+
+  async function createBridgeRunWithCurrentToken(
+    beforeReviewJobId: string,
+  ) {
+    const idToken = await getCurrentFirebaseIdToken(false);
+
+    try {
+      return await createBridgeRun({
+        before_review_job_id: beforeReviewJobId,
+        idToken,
+      });
+    } catch (error) {
+      if (error instanceof BridgeApiError && error.status === 401) {
+        const refreshedIdToken = await getCurrentFirebaseIdToken(true);
+        return createBridgeRun({
+          before_review_job_id: beforeReviewJobId,
+          idToken: refreshedIdToken,
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  async function getCurrentFirebaseIdToken(forceRefresh: boolean): Promise<string> {
+    const currentUser = getFirebaseAuth()?.currentUser ?? null;
+
+    if (!currentUser) {
+      throw new BridgeApiError(
+        401,
+        'Bridge 연결에는 로그인이 필요합니다. 다시 로그인한 뒤 시도해주세요.',
+        false,
+      );
+    }
+
+    return currentUser.getIdToken(forceRefresh);
   }
 
   return (
     <>
       <SkipLink />
-      <Masthead isLoading={isSubmitting} />
+      <Masthead isLoading={isSubmitting || isBridgeSubmitting} />
       <main id="main-content" tabIndex={-1} className={styles.main}>
         <section className={styles.heroSection} aria-labelledby="before-title">
           <div className={styles.heroGlowPrimary} />
@@ -413,7 +537,25 @@ export default function BeforePage() {
             <div className={styles.sectionInner}>
               <div className={styles.resultGrid}>
                 <div className={styles.resultPrimary}>
-                  <ResultPanel review={review} overviewCards={overviewCards} onReset={handleReset} />
+                  <ResultPanel
+                    review={review}
+                    overviewCards={overviewCards}
+                    onReset={handleReset}
+                    resetDisabled={isBridgeSubmitting}
+                    bridgeAction={
+                      <BridgeHandoffCta
+                        hasJobId={hasBridgeJobId}
+                        isAuthenticated={isBridgeAuthenticated}
+                        isAuthBusy={authBusy}
+                        isFirebaseConfigured={firebaseConfigured}
+                        isSubmitting={isBridgeSubmitting}
+                        status={bridgeActionStatus}
+                        message={bridgeActionMessage ?? authErrorMessage}
+                        onCreate={() => void handleCreateBridgeRun()}
+                        onSignIn={() => void handleBridgeSignIn()}
+                      />
+                    }
+                  />
                 </div>
 
                 <aside className={styles.resultAside}>
@@ -432,4 +574,150 @@ export default function BeforePage() {
       </main>
     </>
   );
+}
+
+interface BridgeHandoffCtaProps {
+  hasJobId: boolean;
+  isAuthenticated: boolean;
+  isAuthBusy: boolean;
+  isFirebaseConfigured: boolean;
+  isSubmitting: boolean;
+  status: BridgeActionStatus;
+  message: string | null;
+  onCreate: () => void;
+  onSignIn: () => void;
+}
+
+function BridgeHandoffCta({
+  hasJobId,
+  isAuthenticated,
+  isAuthBusy,
+  isFirebaseConfigured,
+  isSubmitting,
+  status,
+  message,
+  onCreate,
+  onSignIn,
+}: BridgeHandoffCtaProps) {
+  const canCreate =
+    hasJobId && isAuthenticated && isFirebaseConfigured && !isAuthBusy && !isSubmitting;
+  const shouldShowLogin = hasJobId && isFirebaseConfigured && !isAuthenticated;
+  const statusText = getBridgeCtaStatusText({
+    hasJobId,
+    isAuthenticated,
+    isAuthBusy,
+    isFirebaseConfigured,
+    status,
+    message,
+  });
+
+  return (
+    <div className={styles.bridgeCta}>
+      <div className={styles.bridgeCtaHeader}>
+        <p className={styles.bridgeCtaEyebrow}>Bridge handoff</p>
+        <h3 className={styles.bridgeCtaTitle}>After에서 이어서 조문 찾기</h3>
+        <p className={styles.bridgeCtaDescription}>
+          이 검토 요약을 바탕으로 질문을 이어갑니다.
+        </p>
+      </div>
+
+      {statusText ? (
+        <p className={getBridgeCtaMessageClassName(status)} role={status === 'error' ? 'alert' : 'status'}>
+          {statusText}
+        </p>
+      ) : null}
+
+      <div className={styles.bridgeCtaActions}>
+        {shouldShowLogin ? (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onSignIn}
+            disabled={isAuthBusy || isSubmitting}
+          >
+            Google 로그인
+          </Button>
+        ) : null}
+
+        <Button
+          type="button"
+          onClick={onCreate}
+          disabled={!canCreate}
+          isLoading={isSubmitting || status === 'loading'}
+        >
+          <span className={styles.bridgeCtaButtonLabel}>
+            After에서 조문 찾기
+            <ArrowRight size={18} aria-hidden="true" />
+          </span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function getBridgeCtaStatusText(input: {
+  hasJobId: boolean;
+  isAuthenticated: boolean;
+  isAuthBusy: boolean;
+  isFirebaseConfigured: boolean;
+  status: BridgeActionStatus;
+  message: string | null;
+}): string | null {
+  if (!input.hasJobId) {
+    return '실제 Before 검토 작업 완료 결과에서만 After 연결을 만들 수 있습니다.';
+  }
+
+  if (!input.isFirebaseConfigured) {
+    return 'Google 로그인 설정이 필요해 현재 After 연결을 만들 수 없습니다.';
+  }
+
+  if (!input.isAuthenticated) {
+    return 'After 연결에는 Google 로그인이 필요합니다. 로그인 후 이 결과 화면에서 연결을 시작할 수 있습니다.';
+  }
+
+  if (input.isAuthBusy) {
+    return '로그인 상태를 확인하는 중입니다.';
+  }
+
+  if (input.status === 'loading') {
+    return 'Bridge 연결을 만드는 중입니다.';
+  }
+
+  return input.message;
+}
+
+function getBridgeCtaMessageClassName(status: BridgeActionStatus): string {
+  if (status === 'error') {
+    return styles.bridgeCtaError;
+  }
+
+  if (status === 'success') {
+    return styles.bridgeCtaSuccess;
+  }
+
+  return styles.bridgeCtaNotice;
+}
+
+function getBridgeActionErrorMessage(error: unknown): string {
+  if (error instanceof BridgeApiError) {
+    if (error.status === 401) {
+      return '로그인 또는 인증 확인이 필요합니다. 다시 로그인한 뒤 시도해주세요.';
+    }
+
+    if (error.status === 404) {
+      return '로그인 후 생성한 Before 검토 작업만 After로 연결할 수 있습니다. 비로그인 검토 결과는 로그인 후 다시 검토해주세요.';
+    }
+
+    if (error.status === 409) {
+      return 'Before 검토가 아직 완료되지 않았습니다. 완료 후 다시 시도해주세요.';
+    }
+
+    if (error.status === 422 || error.status >= 500) {
+      return 'Bridge 연결 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+    }
+
+    return error.message;
+  }
+
+  return 'Bridge 연결 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
 }
