@@ -189,7 +189,6 @@ def _bridge_response_from_row(
 ) -> BridgeRunResponse:
     return BridgeRunResponse(
         bridge_run_id=bridge_run.bridge_run_id,
-        user_id=bridge_run.user_id,
         before_review_job_id=bridge_run.before_review_job_id or "",
         scenario_id=bridge_run.scenario_id,
         source_scenario=bridge_run.source_scenario,

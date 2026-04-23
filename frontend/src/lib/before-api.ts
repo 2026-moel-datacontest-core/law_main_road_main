@@ -372,6 +372,7 @@ async function postFormData<T>(
   files: File[],
   timeoutMs: number,
   fallbackMessage: string,
+  idToken?: string | null,
 ): Promise<T> {
   const formData = new FormData();
   if (files.length === 1) {
@@ -381,10 +382,12 @@ async function postFormData<T>(
   }
 
   const { controller, timeoutId } = createAbortSignal(timeoutMs);
+  const headers = createBearerHeaders(idToken);
 
   try {
     const response = await fetch(`${getBeforeApiBaseUrl()}${path}`, {
       method: 'POST',
+      ...(headers ? { headers } : {}),
       body: formData,
       signal: controller.signal,
     });
@@ -402,6 +405,11 @@ async function postFormData<T>(
   } finally {
     window.clearTimeout(timeoutId);
   }
+}
+
+function createBearerHeaders(idToken: string | null | undefined): HeadersInit | undefined {
+  const token = idToken?.trim();
+  return token ? { Authorization: `Bearer ${token}` } : undefined;
 }
 
 async function getJson<T>(path: string, timeoutMs: number, fallbackMessage: string): Promise<T> {
@@ -461,12 +469,16 @@ async function postJson<TRequest, TResponse>(
   }
 }
 
-export async function startBeforeReviewJob(files: File[]): Promise<BeforeReviewJob> {
+export async function startBeforeReviewJob(
+  files: File[],
+  idToken?: string | null,
+): Promise<BeforeReviewJob> {
   const response = await postFormData<BeforeApiReviewJobResponse>(
     '/api/v1/before/review/jobs',
     files,
     REVIEW_TIMEOUT_MS,
     '계약서 분석 작업 생성에 실패했습니다.',
+    idToken,
   );
   return mapReviewJob(response);
 }

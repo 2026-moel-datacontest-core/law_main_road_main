@@ -267,7 +267,7 @@ export default function BeforePage() {
     setCompletedReviewJobId(null);
 
     try {
-      const job = await startBeforeReviewJob(selectedFiles);
+      const job = await startBeforeReviewJobWithOptionalAuth(selectedFiles);
       setLoadingJob(job);
     } catch (error) {
       const message =
@@ -284,6 +284,56 @@ export default function BeforePage() {
 
   async function handleLoadMock(scenario: BeforeMockScenario) {
     await runMockReview(scenario);
+  }
+
+  async function startBeforeReviewJobWithOptionalAuth(
+    files: File[],
+  ): Promise<BeforeReviewJob> {
+    const currentUser = getFirebaseAuth()?.currentUser ?? null;
+
+    if (!currentUser) {
+      if (firebaseUser) {
+        throw new BeforeApiError(
+          401,
+          '로그인 상태를 확인하지 못했습니다. 다시 로그인한 뒤 분석을 시작해주세요.',
+        );
+      }
+
+      return startBeforeReviewJob(files);
+    }
+
+    const idToken = await getCurrentBeforeJobIdToken(false);
+
+    try {
+      return await startBeforeReviewJob(files, idToken);
+    } catch (error) {
+      if (error instanceof BeforeApiError && error.status === 401) {
+        const refreshedIdToken = await getCurrentBeforeJobIdToken(true);
+        return startBeforeReviewJob(files, refreshedIdToken);
+      }
+
+      throw error;
+    }
+  }
+
+  async function getCurrentBeforeJobIdToken(forceRefresh: boolean): Promise<string> {
+    const currentUser = getFirebaseAuth()?.currentUser ?? null;
+
+    if (!currentUser) {
+      throw new BeforeApiError(
+        401,
+        '로그인 상태를 확인하지 못했습니다. 다시 로그인한 뒤 분석을 시작해주세요.',
+      );
+    }
+
+    try {
+      return await currentUser.getIdToken(forceRefresh);
+    } catch {
+      throw new BeforeApiError(
+        401,
+        '로그인 인증을 확인하지 못했습니다. 다시 로그인한 뒤 분석을 시작해주세요.',
+      );
+    }
   }
 
   async function handleSelectDisability(option: BeforeDisabilityType) {

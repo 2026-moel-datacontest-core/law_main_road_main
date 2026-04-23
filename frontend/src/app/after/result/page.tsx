@@ -45,6 +45,7 @@ export default function AfterResultPage() {
   const activePreset = getScenarioPreset(state.selected_preset_id);
   const isBridgeHandoffAnswer = state.answer_origin === 'bridge_handoff';
   const supportsDraft = !isBridgeHandoffAnswer && (activePreset?.supportsDraft ?? true);
+  const canRenderDraftCta = !isBridgeHandoffAnswer;
   const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(
     state.selected_document_type,
   );
@@ -258,9 +259,13 @@ export default function AfterResultPage() {
 
           <aside className={styles.selectorColumn} aria-labelledby="document-type-title">
             <section className={styles.selectorPanel}>
-              <p className={styles.eyebrow}>문서 유형</p>
+              <p className={styles.eyebrow}>
+                {isBridgeHandoffAnswer ? 'Answer-only' : '문서 유형'}
+              </p>
               <h2 id="document-type-title" className={styles.selectorTitle}>
-                다음 단계에서 만들 문서를 선택하세요
+                {isBridgeHandoffAnswer
+                  ? '문서 초안 없이 조문만 확인합니다'
+                  : '다음 단계에서 만들 문서를 선택하세요'}
               </h2>
               {canProceedToDraftFlow ? (
                 <div
@@ -316,17 +321,19 @@ export default function AfterResultPage() {
                 </Notification>
               )}
 
-              <Button
-                type="button"
-                fullWidth
-                disabled={
-                  !selectedDocumentTypeIsAvailable || !canProceedToDraftFlow || isNavigating
-                }
-                isLoading={isNavigating}
-                onClick={handleNextClick}
-              >
-                사건 정보 입력하기 →
-              </Button>
+              {canRenderDraftCta ? (
+                <Button
+                  type="button"
+                  fullWidth
+                  disabled={
+                    !selectedDocumentTypeIsAvailable || !canProceedToDraftFlow || isNavigating
+                  }
+                  isLoading={isNavigating}
+                  onClick={handleNextClick}
+                >
+                  사건 정보 입력하기 →
+                </Button>
+              ) : null}
               <Button type="button" variant="ghost" fullWidth onClick={resetFlow}>
                 처음으로 돌아가기
               </Button>

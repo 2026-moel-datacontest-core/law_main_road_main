@@ -58,7 +58,6 @@ class BeforeHandoffDTO(StrictSchema):
 
 class BridgeOutputDTO(StrictSchema):
     bridge_run_id: SafeLabel
-    user_id: SafeLabel
     before_review_job_id: SafeLabel
     scenario_id: Literal["SCN-001"] = "SCN-001"
     source_scenario: SourceScenario
