@@ -22,13 +22,17 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import yaml
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
 
+from backend.app.db import get_db
+from backend.app.dependencies.auth import get_optional_current_user
+from backend.app.models.user import User
 from backend.app.before_stack.core.settings import (
     BEFORE_LAW_SOURCE,
     LAW_CHUNKS_PATH,
@@ -1059,6 +1063,8 @@ async def review_contract(
 
 @app.post("/review/jobs")
 async def create_review_job(
+    current_user: Annotated[User | None, Depends(get_optional_current_user)],
+    db: Annotated[Session, Depends(get_db)],
     image: UploadFile | None = File(None),
     images: list[UploadFile] | None = File(None),
 ):
@@ -1072,6 +1078,8 @@ async def create_review_job(
         job_id=job_id,
         status="queued",
         steps=_build_default_steps(),
+        user_id=current_user.id if current_user is not None else None,
+        db=db,
     )
     asyncio.create_task(_execute_review_job(app, job_id, page_files))
     return JSONResponse(content=job)

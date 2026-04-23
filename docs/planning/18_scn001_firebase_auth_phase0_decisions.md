@@ -265,7 +265,8 @@ Public 유지:
   - OAuth 도입 후 새로 생성되는 protected flow artifact만 internal user_id와 연결한다.
   - 기존 `before_review_jobs`, `after_artifact_runs`의 anonymous row는 `user_id = null` orphan로 유지한다.
   - Phase 4에서는 session-bound handoff token이나 account linkage consent timing이 없으므로 null Before job을 bridge POST에서 claim하지 않는다.
-  - Phase 5 Before review runtime linkage가 구현된 뒤 linked Before job만 정상 bridge 생성 대상이 된다.
+  - Phase 5 Before review runtime linkage는 구현 완료됐다. missing `Authorization`은 `before_review_jobs.user_id = null`, valid Firebase auth는 internal `users.id`, invalid `Authorization`은 401로 처리한다.
+  - MVP consent model은 로그인 상태에서 생성한 Before job만 Bridge 연결 대상으로 보는 implicit login-gated consent로 수용한다.
   - user consent 후 retroactive linking, orphan delete 선택지, migration UI는 Post-MVP로 둔다.
 
 ### D-014. Artifact Retention / Deletion
@@ -323,13 +324,19 @@ Public 유지:
 | Phase 1 DB models | D-002, D-003, D-011, D-012 | Completed | `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` implemented |
 | Phase 2 Backend Firebase verification | D-004, D-005, D-008, D-009, D-010 | Completed | Firebase Admin SDK verification, `/api/v1/auth/me`, CORS `Authorization` header implemented |
 | Phase 3 Frontend auth | D-004, D-006, D-007 | Completed | Firebase Web SDK, `AuthContext`, Login UI, backend verification UI, `inMemoryPersistence` implemented |
-| Phase 4 Protected bridge-runs endpoint + `BeforeHandoffDTO` extraction | D-008, D-011, D-012, D-015 | Yes, next | `require_current_user`, users/bridge_runs schema, `/api/v1/auth/me`, frontend login capability are ready. Only linked completed Before jobs can create bridge_runs |
-| Phase 5 Before review user linkage | D-013, D-014 plus consent timing | Later | nullable `before_review_jobs.user_id` exists; runtime linkage and consent timing remain |
-| Phase 6 Bridge -> After answer-only handoff | D-012 | Later | raw seed persistent 저장 금지. exact handoff transport TBD |
+| Phase 4 Protected bridge-runs endpoint + `BeforeHandoffDTO` extraction | D-008, D-011, D-012, D-015 | Completed | protected bridge-runs endpoint and `BeforeHandoffDTO` extraction implemented. Only linked completed Before jobs can create bridge_runs |
+| Phase 5 Before review user linkage | D-013, D-014 | Completed | `/api/v1/before/review/jobs` uses optional auth: missing auth stores `user_id = null`, valid Firebase auth stores internal `users.id`, invalid auth returns 401 |
+| Phase 6 Bridge -> After answer-only handoff | D-012 | Next | raw seed persistent 저장 금지. exact handoff transport TBD |
 | Phase 7 `after_artifact_runs` linkage | D-013, D-014 | Later | nullable `user_id` / `source_bridge_run_id` exists; runtime linkage remains |
 | Phase 8 Regression / demo preflight / manual rehearsal | all SCN-004 guards | Later | no code change phase |
-| Phase 5+ Artifact/account history | D-013, D-014 | No for raw artifact exposure | orphan 유지 결정은 완료. retention/deletion/access-control 상세는 TBD |
+| Post-MVP Artifact/account history | D-013, D-014 | No for raw artifact exposure | orphan 유지 결정은 완료. retroactive/orphan linking, retention/deletion/access-control 상세는 Post-MVP |
 | Strong MVP SCN-001 draft | D-016 | No | Minimum MVP 범위 밖. SCN-001 answer-only 안정화 후 별도 review |
+
+Phase 5 policy note:
+
+- 로그인 상태에서 생성한 Before job만 Phase 4 bridge-runs 연결 대상이다.
+- Before job creation response에는 internal `user_id`를 노출하지 않는다.
+- anonymous/orphan Before job retroactive linking은 Post-MVP로 유지한다.
 
 ## 5. SCN-004 Regression Guard
 
@@ -359,7 +366,7 @@ Public 유지:
 | `after_query_seed` exact handoff transport | raw persistent 저장 금지는 결정됐지만 response payload vs temporary handoff id 방식은 UX/route 설계 필요 | Frontend + Backend | Phase 6 |
 | artifact retention duration | 민감 raw artifact 보관 기간 정책은 제품/운영 결정 필요 | Product / Ops / Backend | Phase 5+ |
 | deletion workflow | 계정 삭제, artifact 삭제, orphan 만료 삭제 구현 범위 미확정 | Product / Ops | Post-MVP or before account history |
-| account linkage consent timing | Before review 전, Bridge 생성 전, After 저장 전 중 UX 결정 필요 | Product / UX | Phase 5 |
+| account linkage consent timing | MVP는 로그인 상태에서 생성한 Before job만 연결하는 implicit login-gated consent로 수용. retroactive/orphan linking consent UX는 별도 결정 필요 | Product / UX | Post-MVP before retroactive linking |
 | `law_refs` normalization rule | full citation label vs 법령명+조문번호 축약 기준 필요 | Backend / Legal content owner | Phase 4 / Phase 5 |
 | optional `GET /api/v1/scn001/runs` | account history가 Minimum MVP인지 미확정 | Product / Backend | Non-blocking |
 | GCS artifact access-control | signed URL vs backend auth proxy는 production storage 전환 설계 필요 | Ops / Backend | Post-MVP |
@@ -369,8 +376,8 @@ Public 유지:
 
 ## 7. Recommended Next Step
 
-1. `docs/planning/19_scn001_auth_integration_status.md`를 Phase 4 handoff checkpoint로 읽는다.
-2. Phase 4에서 `POST /api/v1/scn001/bridge-runs`와 `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` protected endpoint를 구현한다.
-3. `BeforeHandoffDTO` extraction은 raw OCR / raw contract / raw user_statement / raw `after_query_seed` persistent 저장 없이 구현한다.
+1. `docs/planning/19_scn001_auth_integration_status.md`를 Phase 5 auth/linkage checkpoint로 읽는다.
+2. Phase 6에서 Bridge -> After answer-only handoff를 구현한다.
+3. `BeforeHandoffDTO` / Bridge output handoff는 raw OCR / raw contract / raw user_statement / raw `after_query_seed` persistent 저장 없이 구현한다.
 4. SCN-004 `/after`, `/api/v1/answer`, `/api/v1/documents/draft` login-free/public contract를 유지한다.
-5. Phase 5는 Before review user linkage, Phase 6은 Bridge -> After answer-only handoff, Phase 7은 `after_artifact_runs` linkage로 유지한다.
+5. Phase 7은 `after_artifact_runs` linkage로 유지한다.

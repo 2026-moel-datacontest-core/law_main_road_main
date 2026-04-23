@@ -4,7 +4,7 @@
 
 ## Purpose
 
-이 문서는 설계 문서가 아니라 Phase 4 handoff/status checkpoint다. 현재 patch 기준으로 SCN-001 Firebase Auth Phase 0~3 완료 상태, SCN-004 freeze guard, Phase 4 bridge-runs 구현 정책, 다음 작업 순서를 한 곳에 고정한다.
+이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 patch 기준으로 SCN-001 Firebase Auth Phase 0~5 완료 상태, SCN-004 freeze guard, protected bridge-runs / Before review linkage 정책, 다음 작업 순서를 한 곳에 고정한다.
 
 ## Current Status by Phase
 
@@ -14,9 +14,9 @@
 | Phase 1 | 완료 | DB model/migration 완료: `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` |
 | Phase 2 | 완료 | backend Firebase ID token verification, `GET /api/v1/auth/me`, optional/required current user dependency 완료 |
 | Phase 3 | 완료 | frontend Firebase Web SDK, `AuthContext`, Login UI, `/api/v1/auth/me` backend verification UI 완료 |
-| Phase 4 | patch-ready | SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction implemented in this patch |
-| Phase 5 | next | Before review user linkage |
-| Phase 6 | pending | Bridge -> After answer-only handoff |
+| Phase 4 | 완료 | SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction implemented |
+| Phase 5 | 완료 | Before review job optional auth linkage: valid Bearer token stores internal `users.id`; missing token keeps `user_id = null`; invalid token returns 401 |
+| Phase 6 | next | Bridge -> After answer-only handoff |
 | Phase 7 | pending | `after_artifact_runs` linkage |
 | Phase 8 | pending | regression / demo preflight / manual rehearsal |
 
@@ -71,7 +71,7 @@ Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`,
 - `SCN-001-BRIDGE-DEMO` remains answer-only and must not open SCN-004 document draft UI.
 - SCN-004 demo freeze QA and Phase 4 feature work must not be mixed in one patch.
 
-## Phase 4 Patch Contract
+## Phase 4 / 5 Patch Contract
 
 - `require_current_user` dependency is available.
 - `get_optional_current_user` is available for auth status / future optional linkage.
@@ -82,24 +82,30 @@ Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`,
 - Phase 4 bridge POST request body accepts only `before_review_job_id`; client-provided `source_scenario` or `preset_id` is rejected by schema validation.
 - Phase 4 bridge rows are always stored with `source_scenario = "before_review"` and `preset_id = null`.
 - Missing job, other-user job, and null orphan job are externally mapped to 404 not-found to reduce existence leak.
+- Phase 5 Before job creation keeps anonymous Before reviews allowed: no `Authorization` header stores `before_review_jobs.user_id = null`.
+- Phase 5 Before job creation links only reviews created after login: valid `Authorization: Bearer <Firebase ID token>` stores the resolved internal `users.id`.
+- Phase 5 invalid or malformed `Authorization` on Before job creation returns 401 and is not silently treated as anonymous.
+- Non-login Bridge save/link remains disallowed because `/api/v1/scn001/bridge-runs` requires Firebase Bearer auth.
+- Only logged-in-created Before jobs can be converted into Bridge runs. Anonymous/orphan Before jobs continue to return 404 at Bridge.
+- Retroactive linking of `user_id = null` Before jobs is Post-MVP and not implemented.
 - `after_artifact_runs.user_id` and `after_artifact_runs.source_bridge_run_id` exist as nullable linkage columns.
 - `BeforeHandoffDTO` and `BridgeOutputDTO` contract draft exists in `docs/planning/16_scn001_before_bridge_contract.md`.
 - `/api/v1/auth/me` and frontend login capability are implemented.
 
 ## Next Steps
 
-1. Commit the Phase 4 backend route/schema/service patch after focused smoke checks.
-2. Start Phase 5 Before review runtime linkage so newly created Before jobs receive internal `users.id`.
+1. Review and commit the Phase 5 backend/doc patch after focused smoke checks.
+2. Start Phase 6 Bridge -> After answer-only handoff without changing `/api/v1/answer`.
 3. Keep retroactive linking for existing null orphan jobs as Post-MVP.
-4. Preserve SCN-004 public contract during Phase 5 work.
+4. Preserve SCN-004 public contract during Phase 6 work.
 
 ## Do Not Mix
 
-- Do not change SCN-004 `/after` 4-route behavior in the Phase 4 patch.
+- Do not change SCN-004 `/after` 4-route behavior in the Phase 5 patch.
 - Do not change `/api/v1/answer` contract.
 - Do not change `/api/v1/documents/draft` contract.
 - Do not require Firebase token for SCN-004 or public answer/draft paths.
 - Do not store raw OCR, raw contract, raw user_statement, raw answer/draft payload, raw Before full result, or raw `after_query_seed` in browser Web Storage.
 - Do not store Firebase ID token, Firebase uid, Google `sub`, `provider_subject`, or email value in business tables or backend responses.
 - Do not switch MVP persistence to `browserSessionPersistence`.
-- Do not add SCN-001 document draft or SCN-004 document type expansion in the Phase 4 patch.
+- Do not add SCN-001 document draft or SCN-004 document type expansion in the Phase 5 patch.

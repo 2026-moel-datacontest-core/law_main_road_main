@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+from sqlalchemy.orm import Session
+
 from backend.app.db import SessionLocal
 from backend.app.models import BeforeReviewJob
 
@@ -29,23 +31,61 @@ def create_job_record(
     job_id: str,
     status: str,
     steps: list[dict[str, Any]],
+    user_id: str | None = None,
     run_directory: str | None = None,
     error: str | None = None,
     result: dict[str, Any] | None = None,
+    db: Session | None = None,
 ) -> dict[str, Any]:
-    with SessionLocal() as session:
-        job = BeforeReviewJob(
+    if db is not None:
+        return _create_job_record_in_session(
+            db,
             job_id=job_id,
             status=status,
-            run_directory=run_directory,
             steps=steps,
+            user_id=user_id,
+            run_directory=run_directory,
             error=error,
             result=result,
         )
-        session.add(job)
-        session.commit()
-        session.refresh(job)
-        return serialize_job_row(job)
+
+    with SessionLocal() as session:
+        return _create_job_record_in_session(
+            session,
+            job_id=job_id,
+            status=status,
+            steps=steps,
+            user_id=user_id,
+            run_directory=run_directory,
+            error=error,
+            result=result,
+        )
+
+
+def _create_job_record_in_session(
+    session: Session,
+    *,
+    job_id: str,
+    status: str,
+    steps: list[dict[str, Any]],
+    user_id: str | None,
+    run_directory: str | None,
+    error: str | None,
+    result: dict[str, Any] | None,
+) -> dict[str, Any]:
+    job = BeforeReviewJob(
+        job_id=job_id,
+        user_id=user_id,
+        status=status,
+        run_directory=run_directory,
+        steps=steps,
+        error=error,
+        result=result,
+    )
+    session.add(job)
+    session.commit()
+    session.refresh(job)
+    return serialize_job_row(job)
 
 
 def get_job_record(job_id: str) -> dict[str, Any] | None:

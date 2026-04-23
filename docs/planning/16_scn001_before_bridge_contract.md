@@ -364,7 +364,10 @@ Contract boundaries:
 - MVP path의 `users.auth_provider` 값은 `firebase_google`이다. multi-provider / Future 확장에서는 provider 값 체계가 확장될 수 있다.
 - business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal `users.id`만 참조한다.
 - `before_review_jobs.user_id` nullable column은 Phase 1에서 구현 완료됐다. Phase 5에서는 로그인 사용자가 Before review/job을 실행할 때 이 column을 internal `users.id`로 채우는 runtime linkage를 구현한다.
-- Phase 4 bridge POST는 이미 linked 된 Before job만 bridge run으로 변환한다. `before_review_jobs.user_id = null` orphan job은 claim/link하지 않고 reject하며, Phase 5 Before runtime linkage 이후 정상 flow에서 bridge 생성 가능해진다.
+- Phase 5 runtime linkage는 `/api/v1/before/review/jobs` job creation에만 적용한다. no `Authorization` request는 기존처럼 허용하고 `before_review_jobs.user_id = null`로 저장한다. valid `Authorization: Bearer <Firebase ID token>` request는 Firebase token verification 후 internal `users.id`를 저장한다. invalid or malformed `Authorization`은 401이며 anonymous로 조용히 처리하지 않는다.
+- Phase 4 bridge POST는 이미 linked 된 Before job만 bridge run으로 변환한다. `before_review_jobs.user_id = null` orphan job은 claim/link하지 않고 404로 reject한다. 로그인 후 생성한 Before job만 Bridge 연결 대상이다.
+- 비로그인 Bridge 저장/연결은 불허한다. `/api/v1/scn001/bridge-runs`는 Firebase Bearer auth를 요구하고, current internal user와 linked completed Before job owner가 일치해야 한다.
+- anonymous/orphan Before job을 나중에 계정에 붙이는 retroactive linking은 Post-MVP이며 현재 구현하지 않는다.
 - job 없음, 다른 사용자 job, null orphan job은 외부 응답에서 404 not-found로 통일해 job 존재성 leak을 줄인다. incomplete job과 result/extraction failure는 별도 conflict/validation 계열로 다룬다.
 - `bridge_runs` DB model/schema는 Phase 1에서 구현 완료됐다. SCN-001 protected bridge flow에서 `bridge_runs.user_id`는 required internal `users.id` 참조다.
 - `SCN-001-BRIDGE-DEMO` presentation preset은 `bridge_runs`를 만들지 않는 answer-only path다. SCN-004 public/login-free flow도 `bridge_runs`를 만들지 않는다.
