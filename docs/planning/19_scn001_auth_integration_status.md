@@ -4,7 +4,7 @@
 
 ## Purpose
 
-이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 patch 기준으로 SCN-001 Firebase Auth Phase 0~5 완료 상태, Phase 6A~6D Bridge -> After answer-only handoff 구현 상태, SCN-004 freeze guard, protected bridge-runs / Before review linkage 정책, 다음 작업 순서를 한 곳에 고정한다.
+이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 patch 기준으로 SCN-001 Firebase Auth Phase 0~5 완료 상태, Phase 6A~6D Bridge -> After answer-only handoff 구현 상태, Phase 6E blocker fix, Phase 6F live subset smoke evidence, SCN-004 freeze guard, protected bridge-runs / Before review linkage 정책, 다음 작업 순서를 한 곳에 고정한다.
 
 ## Current Status by Phase
 
@@ -16,9 +16,9 @@
 | Phase 3 | 완료 | frontend Firebase Web SDK, `AuthContext`, Login UI, `/api/v1/auth/me` backend verification UI 완료 |
 | Phase 4 | 완료 | SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction implemented |
 | Phase 5 | 완료 | Before review job optional auth linkage: valid Bearer token stores internal `users.id`; missing token keeps `user_id = null`; invalid token returns 401 |
-| Phase 6 | 부분 완료 | 6A~6D implemented through commit `43d47f4`; remaining E2E / 6F verification pending |
-| Phase 7 | pending | `after_artifact_runs` linkage and `source_bridge_run_id` provenance policy |
-| Phase 8 | pending | broader regression / demo preflight / manual rehearsal after Phase 6 verification |
+| Phase 6 | 부분 완료 / live subset PASS | 6A~6D implemented through commit `43d47f4`; Phase 6E blocker fixes committed via `ab1c838`; Phase 6F live subset passed with retry and residual `provider_timeout` runtime risk |
+| Phase 7 | pending | not started; `after_artifact_runs` linkage and `source_bridge_run_id` provenance policy |
+| Phase 8 | pending | broader regression / demo preflight / manual rehearsal after remaining Phase 6 / Phase 7 decisions |
 
 ## Completed Commits / Evidence
 
@@ -38,6 +38,8 @@ Recent relevant commits:
 - `2245061` feat(frontend): add SCN-001 bridge run client helper
 - `2ca2bbe` feat(scn-001): add Phase 6C Before result bridge handoff CTA
 - `43d47f4` feat(scn-001): add Phase 6D Bridge handoff cards to After
+- `d67ac78` docs(scn-001): update Phase 6D handoff integration status
+- `ab1c838` fix(scn-001): complete Phase 6E handoff blockers
 
 Manual / local evidence recorded for Phase 3:
 
@@ -54,9 +56,24 @@ Phase 6 status evidence:
 - Phase 6B implemented the SCN-001 protected bridge run frontend client helper.
 - Phase 6C implemented the Before result Bridge handoff CTA.
 - Phase 6D implemented Bridge handoff cards on `/after`.
-- Phase 6 is not fully closed: logged-in browser E2E and interaction regression verification remain pending.
+- Phase 6E fixed handoff blockers in `ab1c838`: Before job optional Firebase Bearer token, Bridge public response `user_id` removal, and Bridge-origin result draft CTA/button hiding.
+- Phase 6F live subset passed with retry. This is not a "full Phase 6 pass with no residual risk" claim.
+- Full real Before/OCR completed E2E remains separate if needed; the Bridge checked-live evidence below used memory-only synthetic handoff state.
 
-Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`, email value, or credential values in docs, logs, commits, issues, or chat.
+Phase 6F live subset smoke evidence:
+
+- Vertex IAM/credential issue is considered resolved at runtime: embedding-only smoke succeeded, and `embed_query("해고예고수당")` returned vector length `768`.
+- Backend `/api/v1/answer` direct live path: first attempt hit `provider_timeout`; one retry succeeded with HTTP 200; `cited_articles` count, `key_points` count, and answer length were present; `after_artifact_runs` delta was observed.
+- Frontend direct `/after` live path: PASS; Bridge card/checkbox absent; preset row visible; `POST /api/v1/answer` called once; `Authorization` absent; `top_k=5`, `ef_search=100`; `/after/result` reached.
+- SCN-004 modified/live path: PASS; modified preset path called `/api/v1/answer`; `Authorization` absent; `top_k=10`, `ef_search=100`; `/after/result` reached; document draft POST was not run.
+- SCN-004 fixed exact path: PASS; exact preset path did not call `/api/v1/answer`; fixed answer result reached; eligible draft choices/button visible; document draft POST was not run.
+- Bridge handoff checked-live path: PASS on retry; first attempt hit `provider_timeout`; retry succeeded with HTTP 200 and `/after/result` reached; request `Authorization` absent; `top_k=10`, `ef_search=100`; query included displayed safe subset plus user question; query excluded raw `after_query_seed`, `after_query_seed` label, Bridge id, and token-like sentinel.
+- Bridge answer-only guard: Bridge answer-only notice visible; draft choices absent; `사건 정보 입력하기` button absent; document draft POST was not run.
+- Privacy / artifact guard: `fetchAnswer` and `fetchDraft` did not auto-attach `Authorization`; `localStorage` / `sessionStorage` count was `0`; IndexedDB names observed were `firebase-heartbeat-database` and `firebaseLocalStorageDb`, with values not dumped.
+- Answer artifact note: answer artifact query persistence is existing behavior; latest Bridge artifact sentinel grep was false; `after_artifact_runs` increased during successful answer smoke.
+- Git status after smoke was clean; generated `frontend/next-env.d.ts` churn was restored.
+
+Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`, email value, or credential values in docs, logs, commits, issues, or chat. Phase 6F evidence must also avoid full answer bodies, raw query text, and artifact file contents.
 
 ## Current Auth Architecture
 
@@ -110,9 +127,12 @@ Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`,
 - `BeforeHandoffDTO` and `BridgeOutputDTO` contract draft exists in `docs/planning/16_scn001_before_bridge_contract.md`.
 - `/api/v1/auth/me` and frontend login capability are implemented.
 
-## Phase 6A~6D Implemented Contract
+## Phase 6A~6F Status
 
-- Phase 6A~6D are implemented through commit `43d47f4`; Phase 6 remaining browser E2E / 6F verification is still pending.
+- Phase 6A~6D are implemented through commit `43d47f4`.
+- Phase 6E blocker fixes are committed through `ab1c838`.
+- Phase 6F live subset passed with retry, while retaining residual `provider_timeout` runtime risk.
+- Full real Before/OCR completed E2E remains separate if needed; the current Bridge checked-live smoke used memory-only synthetic handoff state.
 - `/after` reads `FlowContext` `bridge_handoff.items` and renders Bridge handoff summary card(s) only when memory handoff state exists.
 - Each Bridge handoff card exposes an include checkbox and dispatches `SET_BRIDGE_HANDOFF_ITEM_INCLUDED`.
 - `이번 질문에서 제외` dispatches only `REMOVE_BRIDGE_HANDOFF_ITEM`.
@@ -135,21 +155,23 @@ Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`,
 
 ## Next Steps
 
-1. Run actual logged-in Before -> Bridge -> `/after` -> answer browser E2E smoke.
-2. Verify checked / unchecked / `이번 질문에서 제외` Bridge handoff interactions.
-3. Verify Bridge-origin answer result does not show document draft choices and cannot enter SCN-004 draft flow.
-4. Verify direct `/after`, `SCN-004-DEMO-FREEZE`, and SCN-004 free input regression.
+1. Treat Phase 6F live subset as passed with retry, not as a no-risk full Phase 6 closure.
+2. Run full real Before/OCR completed E2E only if that evidence is needed separately from the memory-only synthetic handoff smoke.
+3. Follow up on IndexedDB Firebase SDK persistence policy if needed; observed `firebaseLocalStorageDb` values were not dumped in this smoke.
+4. Start Phase 7 `after_artifact_runs` / `source_bridge_run_id` provenance design; Phase 7 is not started.
 5. Keep retroactive linking for existing null orphan jobs as Post-MVP.
-6. Preserve SCN-004 public contract during remaining Phase 6 verification.
+6. Preserve SCN-004 public contract during remaining Phase 6 / Phase 7 work.
 
 ## Phase 7 Open Items
 
+- Phase 7 is not started.
 - Define how `after_artifact_runs` records linkage to Bridge-origin answers.
 - Decide runtime assignment policy for nullable `after_artifact_runs.source_bridge_run_id`.
 - Decide multiple Bridge contexts provenance before enabling persisted After artifact linkage:
   - one primary `source_bridge_run_id`
   - `source_bridge_run_ids` list/JSON
   - join table such as `after_artifact_run_bridge_runs`
+- The Phase 6F `after_artifact_runs` delta only confirms existing answer artifact persistence during live answer smoke; it does not settle Phase 7 provenance or `source_bridge_run_id` assignment.
 - Do not infer Phase 7 provenance from Phase 6 `bridge_handoff.items`; Phase 6 only builds an answer query through the existing public answer contract.
 
 ## Do Not Mix
