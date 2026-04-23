@@ -6,6 +6,16 @@ import type {
 const MAX_ITEM_CONTEXT_CHARS = 900;
 const MAX_TOTAL_BRIDGE_CONTEXT_CHARS = 2500;
 const MAX_FINAL_QUERY_CHARS = 3500;
+const MAX_VISIBLE_ISSUE_LABELS = 4;
+const MAX_VISIBLE_LAW_REFS = 5;
+const MAX_VISIBLE_RECOMMENDED_ACTIONS = 3;
+
+export interface BridgeHandoffDisplayFields {
+  userVisibleSummary: string;
+  issueLabels: string[];
+  lawRefs: string[];
+  recommendedNextActions: string[];
+}
 
 export function buildBridgeContextQuery(
   bridgeHandoffItems: BridgeHandoffItem[],
@@ -37,20 +47,35 @@ export function hasIncludedBridgeContext(state: BridgeHandoffState): boolean {
   return state.items.some((item) => item.include_in_query);
 }
 
-function buildBridgeItemContext(item: BridgeHandoffItem, position: number): string {
-  const seed = optionalText(item.after_query_seed);
+export function getBridgeHandoffDisplayFields(
+  item: BridgeHandoffItem,
+): BridgeHandoffDisplayFields {
+  const issueCategories = normalizeVisibleList(
+    item.issue_categories,
+    MAX_VISIBLE_ISSUE_LABELS,
+  );
+  const riskTags = normalizeVisibleList(item.risk_tags, MAX_VISIBLE_ISSUE_LABELS);
 
-  if (seed) {
-    return clipText(`[Before 검토 요약 ${position}]\n${seed}`, MAX_ITEM_CONTEXT_CHARS);
-  }
+  return {
+    userVisibleSummary: optionalText(item.user_visible_summary) ?? '',
+    issueLabels: issueCategories.length > 0 ? issueCategories : riskTags,
+    lawRefs: normalizeVisibleList(item.law_refs, MAX_VISIBLE_LAW_REFS),
+    recommendedNextActions: normalizeVisibleList(
+      item.recommended_next_actions,
+      MAX_VISIBLE_RECOMMENDED_ACTIONS,
+    ),
+  };
+}
+
+function buildBridgeItemContext(item: BridgeHandoffItem, position: number): string {
+  const displayFields = getBridgeHandoffDisplayFields(item);
 
   return joinClippedSections(
     [
-      formatTextSection(`[Before 검토 요약 ${position}]`, item.user_visible_summary),
-      formatListSection('[주요 쟁점]', item.issue_categories),
-      formatListSection('[위험 태그]', item.risk_tags),
-      formatListSection('[관련 법령 후보]', item.law_refs),
-      formatListSection('[권장 다음 조치]', item.recommended_next_actions),
+      formatTextSection(`[Before 검토 요약 ${position}]`, displayFields.userVisibleSummary),
+      formatListSection('[주요 쟁점]', displayFields.issueLabels),
+      formatListSection('[관련 법령 후보]', displayFields.lawRefs),
+      formatListSection('[권장 다음 행동]', displayFields.recommendedNextActions),
     ].filter((section) => section.length > 0),
     '\n\n',
     MAX_ITEM_CONTEXT_CHARS,
@@ -63,12 +88,18 @@ function formatTextSection(title: string, value: string): string {
 }
 
 function formatListSection(title: string, values: string[]): string {
-  const items = values.flatMap((value) => {
-    const text = optionalInlineText(value);
-    return text ? [`- ${text}`] : [];
-  });
+  const items = values.map((value) => `- ${value}`);
 
   return items.length > 0 ? `${title}\n${items.join('\n')}` : '';
+}
+
+function normalizeVisibleList(values: string[], maxItems: number): string[] {
+  return values
+    .flatMap((value) => {
+      const text = optionalInlineText(value);
+      return text ? [text] : [];
+    })
+    .slice(0, maxItems);
 }
 
 function joinClippedSections(

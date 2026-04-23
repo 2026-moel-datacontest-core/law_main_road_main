@@ -15,6 +15,7 @@ import type { BridgeHandoffItem, BridgeHandoffState } from '@/types/bridge-hando
 export const initialFlowState: KLaborShieldFlowState = {
   user_statement: '',
   selected_preset_id: null,
+  answer_origin: 'regular_after',
   answer_response: null,
   selected_document_type: null,
   legal_basis: null,
@@ -35,6 +36,7 @@ export function flowReducer(
         ...state,
         user_statement: action.payload.statement,
         selected_preset_id: action.payload.selected_preset_id,
+        answer_origin: action.payload.answer_origin ?? 'regular_after',
         answer_response: null,
         legal_basis: null,
         selected_document_type: null,

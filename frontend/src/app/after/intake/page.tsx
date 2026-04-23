@@ -49,7 +49,8 @@ export default function AfterIntakePage() {
   const answer = state.answer_response;
   const selectedDocumentType = state.selected_document_type;
   const activePreset = getScenarioPreset(state.selected_preset_id);
-  const supportsDraft = activePreset?.supportsDraft ?? true;
+  const isBridgeHandoffAnswer = state.answer_origin === 'bridge_handoff';
+  const supportsDraft = !isBridgeHandoffAnswer && (activePreset?.supportsDraft ?? true);
   const hasGrounding = answer ? hasDraftGrounding(answer) : false;
   const eligibility = answer && supportsDraft ? getScn004DraftEligibility(answer) : null;
   const selectedDocumentTypeIsEligible =
@@ -134,7 +135,9 @@ export default function AfterIntakePage() {
 
     if (!supportsDraft) {
       setErrorState({
-        message: '이 프리셋은 현재 답변 확인 전용이라 문서 초안을 만들 수 없습니다.',
+        message: isBridgeHandoffAnswer
+          ? '이 답변은 Before/Bridge 검토에서 이어진 조문 확인용이라 문서 초안을 만들 수 없습니다.'
+          : '이 프리셋은 현재 답변 확인 전용이라 문서 초안을 만들 수 없습니다.',
         retryable: false,
       });
       return;

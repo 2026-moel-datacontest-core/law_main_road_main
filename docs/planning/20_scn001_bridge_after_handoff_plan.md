@@ -171,7 +171,8 @@ Consent requirements:
 
 - The user must be able to see that Bridge context may be included.
 - The include checkbox must be directly associated with the visible summary card.
-- Context inclusion uses only user-visible safe summary fields or the transient `after_query_seed`.
+- Context inclusion uses only user-visible safe summary fields displayed on the card.
+- `after_query_seed` remains a Phase 4 transient response field, but Phase 6D must not place it in `/api/v1/answer.query` because the answer artifact path can persist the query.
 - raw contract, OCR full text, full Before result, full DTO payloads, and internal auth identifiers are not used.
 
 ## 7. Frontend Memory State
@@ -293,13 +294,15 @@ Unchecked or no checked cards:
 
 Construction rules:
 
-- Use checked item's transient `after_query_seed` as the primary Bridge context text when present.
-- If `after_query_seed` is `null`, missing, or unusable, fall back to safe fields:
+- Build Bridge context only from displayed safe fields:
   - `user_visible_summary`
   - `issue_categories`
   - `risk_tags`
   - `law_refs`
   - `recommended_next_actions`
+- Phase 6D query builder uses the same displayed subset as the summary card: issue labels max 4, law refs max 5, next actions max 3; `risk_tags` are only used as issue fallback when `issue_categories` is empty.
+- Do not include `after_query_seed` in the query text, even when it is present in memory.
+- Reason: `/api/v1/answer.query` can be saved as a persistent answer artifact, so raw transient seed text must not enter that path.
 - Do not include `bridge_run_id` in the query text.
 - Do not include `artifact_refs` in the query text.
 - Do not include internal ids in the query text.
@@ -394,8 +397,10 @@ Recommended flow:
 9. User submits.
 10. Frontend builds query based on checked cards.
 11. Frontend calls `/api/v1/answer` through existing `fetchAnswer`.
-12. `/after/result` behaves like the existing answer flow.
+12. `/after/result` treats the answer as Bridge-origin answer-only state.
 13. Draft remains disabled for SCN-001 unless a future scope explicitly enables it.
+
+The Phase 6D query builder uses only displayed safe fields. It must not pass transient `after_query_seed` into `/api/v1/answer.query`.
 
 ## 13. Privacy / Security Guard
 
@@ -424,6 +429,7 @@ Phase 6 must preserve:
 - SCN-004 free input behavior unchanged
 - SCN-004 document draft guard unchanged
 - `supportsDraft` behavior unchanged
+- Bridge-origin answers are answer-only and force draft flow disabled.
 - `/api/v1/answer` request/response unchanged
 - `/api/v1/documents/draft` request/response unchanged
 - SCN-004 public/login-free behavior unchanged
@@ -437,7 +443,7 @@ Risk controls:
 - Existing presentation presets remain presentation-local.
 - Bridge summary cards render only when memory handoff state exists.
 - Missing handoff state degrades to regular `/after`.
-- Draft flow remains guarded by existing answer grounding and SCN-004 document eligibility.
+- Draft flow remains guarded by existing answer grounding and SCN-004 document eligibility, plus Bridge-origin answer-only scope.
 
 ## 15. Implementation Slices
 
@@ -492,7 +498,8 @@ Keep Phase 6 in small patches.
 - The user sees safe Bridge summary before submission.
 - The include checkbox is checked by default for Bridge handoff entry.
 - Unchecking the checkbox sends only the user additional question.
-- Checked context sends safe Bridge context plus user additional question as `/api/v1/answer.query`.
+- Checked context sends displayed safe Bridge context plus user additional question as `/api/v1/answer.query`.
+- Checked context does not send `after_query_seed`, `bridge_run_id`, `artifact_refs`, or internal ids as `/api/v1/answer.query`.
 - Multiple checked cards can be combined in stable order.
 - `이번 질문에서 제외` affects only current memory handoff state.
 - Existing direct `/after` free input works unchanged.
@@ -552,7 +559,9 @@ For this doc-only planning task:
 For future Phase 6 implementation, focused smoke should cover:
 
 - checked Bridge handoff sends combined query with `top_k=10`, `ef_search=100`;
+- checked Bridge handoff query includes displayed safe fields and excludes `after_query_seed`;
 - unchecked Bridge handoff sends user question only;
+- Bridge-origin answer state disables `/after/result` document type selection and draft navigation;
 - direct `/after` sends regular free input with `top_k=5`, `ef_search=100`;
 - `SCN-004-DEMO-FREEZE` exact preset still uses fixed answer fixture;
 - `SCN-001-BRIDGE-DEMO` remains answer-only with `supportsDraft=false`;

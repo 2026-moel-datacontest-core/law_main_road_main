@@ -43,7 +43,8 @@ export default function AfterResultPage() {
   const { state, dispatch } = useFlow();
   const answer = state.answer_response;
   const activePreset = getScenarioPreset(state.selected_preset_id);
-  const supportsDraft = activePreset?.supportsDraft ?? true;
+  const isBridgeHandoffAnswer = state.answer_origin === 'bridge_handoff';
+  const supportsDraft = !isBridgeHandoffAnswer && (activePreset?.supportsDraft ?? true);
   const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(
     state.selected_document_type,
   );
@@ -226,6 +227,15 @@ export default function AfterResultPage() {
               </Notification>
             ) : null}
 
+            {hasGrounding && isBridgeHandoffAnswer ? (
+              <Notification variant="warning" title="Bridge 검토 답변 확인 전용">
+                <p>
+                  이 답변은 Before/Bridge 검토에서 이어진 조문 확인용입니다. SCN-001 문서
+                  초안 생성은 MVP 범위가 아닙니다.
+                </p>
+              </Notification>
+            ) : null}
+
             {hasGrounding && supportsDraft && !hasAvailableDocumentTypes ? (
               <Notification variant="warning" title="현재 문서 초안 지원 범위 밖">
                 <p>
@@ -285,7 +295,9 @@ export default function AfterResultPage() {
                 <Notification
                   variant="warning"
                   title={
-                    activePreset && !activePreset.supportsDraft
+                    isBridgeHandoffAnswer
+                      ? 'Bridge 검토 답변 확인 전용'
+                      : activePreset && !activePreset.supportsDraft
                       ? '답변 확인 전용 프리셋'
                       : hasGrounding
                       ? '현재 문서 초안 지원 범위 밖'
@@ -293,7 +305,9 @@ export default function AfterResultPage() {
                   }
                 >
                   <p>
-                    {activePreset && !activePreset.supportsDraft
+                    {isBridgeHandoffAnswer
+                      ? '이 답변은 Before/Bridge 검토에서 이어진 조문 확인용입니다. SCN-001 문서 초안 생성은 MVP 범위가 아닙니다.'
+                      : activePreset && !activePreset.supportsDraft
                       ? '이 프리셋은 현재 답변 확인 전용입니다.'
                       : hasGrounding
                       ? '이 답변은 확인할 수 있지만 SCN-004 문서 초안으로 이어지지 않습니다.'

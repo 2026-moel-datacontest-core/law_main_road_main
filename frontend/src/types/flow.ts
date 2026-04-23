@@ -10,9 +10,12 @@ import type {
 import type { BridgeHandoffItem, BridgeHandoffState } from './bridge-handoff';
 import type { ScenarioPresetId } from '@/lib/scenarioPresets';
 
+export type AnswerOrigin = 'regular_after' | 'bridge_handoff';
+
 export interface KLaborShieldFlowState {
   user_statement: string;
   selected_preset_id: ScenarioPresetId | null;
+  answer_origin: AnswerOrigin;
   answer_response: AnswerResponse | null;
   selected_document_type: DocumentType | null;
   legal_basis: LegalBasisInput | null;
@@ -29,6 +32,7 @@ export type FlowAction =
       payload: {
         statement: string;
         selected_preset_id: ScenarioPresetId | null;
+        answer_origin?: AnswerOrigin;
       };
     }
   | { type: 'SET_ANSWER'; payload: AnswerResponse }
