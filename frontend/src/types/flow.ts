@@ -7,6 +7,7 @@ import type {
   EvidenceUiStatus,
   LegalBasisInput,
 } from './api';
+import type { BridgeHandoffItem, BridgeHandoffState } from './bridge-handoff';
 import type { ScenarioPresetId } from '@/lib/scenarioPresets';
 
 export interface KLaborShieldFlowState {
@@ -19,6 +20,7 @@ export interface KLaborShieldFlowState {
   case_intake: CaseIntake | null;
   evidence_status_map: Record<string, EvidenceUiStatus>;
   draft_response: DocumentDraftResponse | null;
+  bridge_handoff: BridgeHandoffState;
 }
 
 export type FlowAction =
@@ -38,4 +40,12 @@ export type FlowAction =
   | { type: 'SET_DRAFT'; payload: DocumentDraftResponse }
   | { type: 'CLEAR_DRAFT' }
   | { type: 'CLEAR_DRAFT_AND_CASE_INTAKE' }
+  | { type: 'SET_BRIDGE_HANDOFF'; payload: BridgeHandoffState }
+  | { type: 'ADD_BRIDGE_HANDOFF_ITEM'; payload: BridgeHandoffItem }
+  | {
+      type: 'SET_BRIDGE_HANDOFF_ITEM_INCLUDED';
+      payload: { bridge_run_id: string; include_in_query: boolean };
+    }
+  | { type: 'REMOVE_BRIDGE_HANDOFF_ITEM'; payload: { bridge_run_id: string } }
+  | { type: 'CLEAR_BRIDGE_HANDOFF' }
   | { type: 'RESET' };
