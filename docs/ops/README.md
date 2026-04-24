@@ -113,7 +113,71 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<firebase-storage-bucket>
 
 Frontend public env를 바꾼 뒤에는 Next dev server를 재시작해야 한다.
 
-### 3. Local smoke flow
+### 3. Local secret / env inventory
+
+새 clone이나 임시 작업 디렉터리에서 live smoke를 재현하려면 아래 파일만 맞춘다.
+Secret 파일과 public frontend env는 성격이 다르므로 섞지 않는다.
+
+| Path | Required for | Secret | Notes |
+|---|---|---:|---|
+| `backend/.env` | backend DB, Vertex, Firebase Admin 설정 | Yes | local env 파일. commit 금지 |
+| `frontend/.env.local` | Firebase Web SDK, frontend API base URL | No, but local-only | `NEXT_PUBLIC_*` 값은 browser bundle에 포함됨. repo commit 금지 |
+| `config/secrets/firebase-admin.json` 또는 `GOOGLE_APPLICATION_CREDENTIALS` 대상 JSON | Firebase Admin token verification, Vertex runtime credential | Yes | `backend/.env`가 가리키는 실제 파일이 clone에도 있어야 함 |
+
+`backend/.env`에서 현재 local smoke에 필요한 대표 key:
+
+```bash
+DATABASE_URL
+FIREBASE_PROJECT_ID
+GCP_PROJECT
+GCP_LOCATION
+GOOGLE_APPLICATION_CREDENTIALS
+VERTEX_ANSWER_MODEL
+```
+
+`VERTEX_ANSWER_MODEL`은 없으면 backend 기본값 `gemini-2.5-flash`를 사용한다.
+`GOOGLE_APPLICATION_CREDENTIALS`가 Firebase Admin JSON을 가리키는 구성에서는 그
+credential이 Vertex 권한도 가져야 answer / embedding live call이 통과한다.
+반대로 Vertex 전용 credential을 가리키면 Firebase Admin SDK도 그 ADC를 먼저 사용할
+수 있으므로 `/api/v1/auth/me` smoke가 실패할 수 있다.
+
+값을 출력하지 않고 설정 여부만 확인:
+
+```bash
+grep -E '^(DATABASE_URL|GCP_PROJECT|GCP_PROJECT_ID|GCP_LOCATION|FIREBASE_PROJECT_ID|FIREBASE_ADMIN_CREDENTIALS|GOOGLE_APPLICATION_CREDENTIALS|VERTEX_ANSWER_MODEL)=' backend/.env | cut -d= -f1 | sed 's/$/=set/'
+grep -E '^(NEXT_PUBLIC_API_BASE_URL|NEXT_PUBLIC_FIREBASE_API_KEY|NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN|NEXT_PUBLIC_FIREBASE_PROJECT_ID|NEXT_PUBLIC_FIREBASE_APP_ID|NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID|NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET)=' frontend/.env.local | cut -d= -f1 | sed 's/$/=set/'
+```
+
+`GOOGLE_APPLICATION_CREDENTIALS` 대상 파일 존재 확인:
+
+```bash
+python -c 'from pathlib import Path; from dotenv import dotenv_values; p=dotenv_values("backend/.env").get("GOOGLE_APPLICATION_CREDENTIALS"); q=Path(p) if p else None; q=(Path.cwd()/q) if q and not q.is_absolute() else q; print("google_credentials_present" if q and q.is_file() else "google_credentials_missing_file")'
+```
+
+ignore 확인:
+
+```bash
+git check-ignore --no-index backend/.env
+git check-ignore --no-index frontend/.env.local
+git check-ignore --no-index config/secrets/firebase-admin.json
+```
+
+Vertex credential smoke:
+
+```bash
+python -c 'from backend.app.services.embedding import embed_query; v=embed_query("해고예고수당"); print("embedding_ok", len(v))'
+```
+
+Expected: `embedding_ok 768`.
+
+Do not:
+
+- `firebase-admin.json`, service account JSON, token, Firebase uid, `provider_subject`, email 값을 채팅/문서/log/git에 남기지 않는다.
+- backend secret JSON을 `frontend/`로 옮기지 않는다.
+- `NEXT_PUBLIC_*` 값을 secret처럼 backend credential 대체 용도로 쓰지 않는다.
+- `.env` 또는 `config/secrets/*`를 commit하지 않는다.
+
+### 4. Local smoke flow
 
 1. Backend를 재시작한다.
 
@@ -144,7 +208,7 @@ Expected:
 - DB를 확인해야 할 때도 `provider_subject`는 masking된 형태로만 확인한다.
 - SCN-004 `/after` path는 로그인 없이 계속 동작해야 한다.
 
-### 4. Common pitfalls
+### 5. Common pitfalls
 
 - `/api/v1/auth/me`가 404면 오래된 backend server일 가능성이 높다. backend를 재시작하고 `/openapi.json`을 다시 확인한다.
 - Login button이 `Firebase 설정 필요` 상태로 disabled이면 `frontend/.env.local`이 없거나, public env 변경 후 Next dev server를 재시작하지 않은 경우가 많다.

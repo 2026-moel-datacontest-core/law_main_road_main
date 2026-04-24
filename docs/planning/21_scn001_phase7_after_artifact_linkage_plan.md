@@ -493,7 +493,7 @@ Status: 완료 (`27bf054`)
 
 ### Phase 7C. Frontend client helper
 
-Status: pending / separate candidate
+Status: 완료
 
 - Add `fetchBridgeAnswer` or equivalent.
 - Attach Firebase ID token only for this protected endpoint.
@@ -502,7 +502,7 @@ Status: pending / separate candidate
 
 ### Phase 7D. `/after` submit routing
 
-Status: pending / separate candidate
+Status: 완료
 
 - Checked Bridge context -> protected bridge answer endpoint with primary bridge id.
 - No included Bridge context -> public `fetchAnswer`, no linkage metadata, and
@@ -513,7 +513,10 @@ Status: pending / separate candidate
 
 ### Phase 7E. Verification
 
-Status: pending / as-needed
+Status: PASS
+
+2026-04-24 live browser/network/DB smoke passed. Sanitized evidence is recorded in
+`docs/planning/19_scn001_auth_integration_status.md`.
 
 - Public `/api/v1/answer` still works without auth.
 - Public `/api/v1/answer` artifact rows keep `user_id = null` and
