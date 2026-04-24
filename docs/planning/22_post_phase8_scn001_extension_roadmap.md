@@ -51,10 +51,36 @@ Acceptance direction:
 - 로그아웃 후에도 SCN-004 `/after` public answer/draft path는 로그인 없이
   동작한다.
 
+### Step 1.5. Before Login-required UX Message
+
+Before action 시작 시 로그인 없이 진행하려는 사용자가 왜 진행할 수 없는지
+명확히 알려주는 작은 UX polish 후보다. Step 2 history UI 전에 별도 patch로
+검토할 수 있다.
+
+- protected Before action 진입 시 logged-out 상태면 "로그인이 필요합니다" 문구를
+  명확히 노출하는 방향을 검토한다.
+- 사용자가 Bridge 연결 또는 계정 연결이 필요한 동작을 시작했기 때문에 진행할 수
+  없다는 안내를 함께 제공한다.
+- SCN-004 `/after` login-free path나 public answer/draft behavior에는 영향을 주지
+  않는다.
+- Step 2A backend history API 변경과 같은 patch에 섞지 않는다.
+
+Acceptance direction:
+
+- 로그인 없이 protected Before action을 시작하면 "로그인이 필요합니다" 메시지가
+  보인다.
+- 사용자는 실패 원인이 입력 오류가 아니라 로그인-required 상태임을 이해할 수
+  있다.
+- 로그인 후 동일 action을 다시 시작할 수 있는 UX path가 유지된다.
+
 ### Step 2. Read-only History
 
 로그인 사용자가 이전 Before review jobs / Bridge runs를 조회하는 후보 phase다.
 먼저 read-only list/detail만 검토한다.
+
+Step 2A status (2026-04-24): backend read-only history API slice implemented.
+Frontend UI, deletion API, retention policy, and SCN-001 document draft remain out of
+scope.
 
 - 삭제, 수정, artifact body 노출 없이 목록/상세 조회만 고려한다.
 - internal user linkage로 ownership을 확인한다.
@@ -98,6 +124,8 @@ SCN-001 Bridge checked answer에서 문서 초안을 제공하는 후보 phase�
 - SCN-004 document draft freeze와 같은 patch에 섞지 않는다.
 - public `/api/v1/documents/draft` contract를 변경하지 않는 방향을 우선 검토한다.
 - protected SCN-001 draft endpoint 또는 별도 contract가 필요한지 검토한다.
+- Bridge result ↔ After query relevance/matching guard를 둔 뒤에만 오른쪽 추가
+  설명 또는 문서 초안 affordance를 여는 방향을 후보로 검토한다.
 - Bridge checked answer의 cited_articles / grounded_context_ids / displayed safe subset
   boundary를 기준으로 draft eligibility를 검토한다.
 - raw Before/Bridge payload, after_query_seed, token을 저장하지 않는다.
@@ -107,6 +135,7 @@ Open design questions:
 
 - SCN-001에서 어떤 document type이 필요한가.
 - draft request는 protected SCN-001 endpoint로 분리할지, 별도 contract를 둘지.
+- Bridge result와 현재 After query의 관련성/정합성은 어떤 기준으로 판단할지.
 - `after_artifact_runs.source_bridge_run_id` 단일 provenance로 충분한지, draft
   provenance에는 별도 linkage가 필요한지.
 - SCN-001 draft result의 quality gate와 manual rehearsal 기준은 무엇인지.
@@ -126,6 +155,8 @@ fixture/preset 후보로 검토한다.
 ## 4. Do Not Mix
 
 - logout clear와 history API를 한 patch에 섞지 않는다.
+- Before login-required UX polish와 Step 2A history API 구현을 한 patch에 섞지
+  않는다.
 - read-only history와 history deletion을 한 patch에 섞지 않는다.
 - history deletion과 artifact retention/access-control 정책 확정을 한 patch에서
   무리하게 닫지 않는다.
@@ -149,6 +180,8 @@ fixture/preset 후보로 검토한다.
   artifact body를 docs/logs/UI/commits/issues/chat에 기록하지 않는다.
 - Business table과 response는 Firebase uid/provider_subject/email이 아니라 internal
   user linkage만 사용한다.
+- SCN-001 draft affordance는 Bridge result와 After query의 relevance/matching guard
+  없이 열지 않는다.
 - `data/legalize-kr/` 직접 수정 금지.
 - `backend/data/law_chunks/` 직접 수정 금지.
 - RAG / answer / retrieval behavior 또는 API response contract 변경이 없으면 broad
