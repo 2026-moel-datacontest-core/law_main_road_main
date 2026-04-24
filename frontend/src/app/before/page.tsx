@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { AccessibilityPanel } from '@/components/before/AccessibilityPanel';
@@ -25,6 +25,11 @@ import {
 } from '@/lib/before-api';
 import { BridgeApiError, bridgeRunToHandoffItem, createBridgeRun } from '@/lib/bridge-api';
 import { getFirebaseAuth } from '@/lib/firebase';
+import {
+  fetchBeforeReviewHistory,
+  fetchBridgeRunHistory,
+  Scn001HistoryApiError,
+} from '@/lib/scn001-history-api';
 import type {
   BeforeAccessibilityRecommendation,
   BeforeDisabilityType,
@@ -33,6 +38,12 @@ import type {
   BeforeReviewResult,
   BeforeScreenState,
 } from '@/types/before';
+import type {
+  BeforeReviewJobHistoryItem,
+  BridgeRunHistoryItem,
+  Scn001HistoryOverallResult,
+  Scn001HistorySeverity,
+} from '@/types/scn001-history';
 
 import styles from './page.module.css';
 
@@ -45,7 +56,9 @@ const mockLoadingSteps = [
 ] as const;
 
 type BridgeActionStatus = 'idle' | 'loading' | 'success' | 'error';
+type Scn001HistoryStatus = 'idle' | 'loading' | 'success' | 'error';
 
+const SCN001_HISTORY_LIMIT = 10;
 const BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE =
   'Before 계약서 분석은 Google 로그인이 필요합니다. 로그인 후 다시 시도해주세요.';
 const BEFORE_ANALYZE_AUTH_CHECKING_MESSAGE =
@@ -132,6 +145,11 @@ export default function BeforePage() {
   const [isBridgeSubmitting, setIsBridgeSubmitting] = useState(false);
   const [bridgeActionStatus, setBridgeActionStatus] = useState<BridgeActionStatus>('idle');
   const [bridgeActionMessage, setBridgeActionMessage] = useState<string | null>(null);
+  const [historyStatus, setHistoryStatus] = useState<Scn001HistoryStatus>('idle');
+  const [historyErrorMessage, setHistoryErrorMessage] = useState<string | null>(null);
+  const [beforeHistory, setBeforeHistory] = useState<BeforeReviewJobHistoryItem[]>([]);
+  const [bridgeHistory, setBridgeHistory] = useState<BridgeRunHistoryItem[]>([]);
+  const [historyRefreshNonce, setHistoryRefreshNonce] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [beforeAnalyzeAuthMessage, setBeforeAnalyzeAuthMessage] = useState<string | null>(null);
   const authBusy = isInitializing || isSigningIn || isCheckingBackend;
@@ -234,6 +252,94 @@ export default function BeforePage() {
       setBeforeAnalyzeAuthMessage(null);
     }
   }, [firebaseUser]);
+
+  useEffect(() => {
+    if (!firebaseConfigured || authBusy || !firebaseUser) {
+      setHistoryStatus('idle');
+      setHistoryErrorMessage(null);
+      setBeforeHistory([]);
+      setBridgeHistory([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function getCurrentHistoryIdToken(forceRefresh: boolean): Promise<string> {
+      const currentUser = getFirebaseAuth()?.currentUser ?? null;
+
+      if (!currentUser) {
+        throw new Scn001HistoryApiError(
+          401,
+          '로그인 후 기록을 볼 수 있습니다. 다시 로그인한 뒤 시도해주세요.',
+          false,
+        );
+      }
+
+      try {
+        return await currentUser.getIdToken(forceRefresh);
+      } catch {
+        throw new Scn001HistoryApiError(
+          401,
+          '로그인 인증을 확인하지 못했습니다. 다시 로그인한 뒤 시도해주세요.',
+          false,
+        );
+      }
+    }
+
+    async function fetchCurrentHistory(forceRefresh: boolean): Promise<{
+      beforeJobs: BeforeReviewJobHistoryItem[];
+      bridgeRuns: BridgeRunHistoryItem[];
+    }> {
+      const idToken = await getCurrentHistoryIdToken(forceRefresh);
+
+      try {
+        const [beforeJobs, bridgeRuns] = await Promise.all([
+          fetchBeforeReviewHistory({ idToken, limit: SCN001_HISTORY_LIMIT }),
+          fetchBridgeRunHistory({ idToken, limit: SCN001_HISTORY_LIMIT }),
+        ]);
+
+        return { beforeJobs, bridgeRuns };
+      } catch (error) {
+        if (
+          error instanceof Scn001HistoryApiError &&
+          error.status === 401 &&
+          !forceRefresh
+        ) {
+          return fetchCurrentHistory(true);
+        }
+
+        throw error;
+      }
+    }
+
+    setHistoryStatus('loading');
+    setHistoryErrorMessage(null);
+
+    void fetchCurrentHistory(false)
+      .then(({ beforeJobs, bridgeRuns }) => {
+        if (cancelled) {
+          return;
+        }
+
+        setBeforeHistory(beforeJobs);
+        setBridgeHistory(bridgeRuns);
+        setHistoryStatus('success');
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+
+        setBeforeHistory([]);
+        setBridgeHistory([]);
+        setHistoryErrorMessage(getScn001HistoryErrorMessage(error));
+        setHistoryStatus('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authBusy, firebaseConfigured, firebaseUser, historyRefreshNonce]);
 
   function handleFilesChange(files: File[]) {
     setSelectedFiles(files);
@@ -653,6 +759,21 @@ export default function BeforePage() {
           </div>
         </section>
 
+        <section className={styles.historySection} aria-labelledby="before-history-title">
+          <div className={styles.sectionInner}>
+            <Scn001HistoryPanel
+              firebaseConfigured={firebaseConfigured}
+              isAuthBusy={authBusy}
+              isAuthenticated={Boolean(firebaseUser)}
+              status={historyStatus}
+              errorMessage={historyErrorMessage}
+              beforeJobs={beforeHistory}
+              bridgeRuns={bridgeHistory}
+              onRetry={() => setHistoryRefreshNonce((current) => current + 1)}
+            />
+          </div>
+        </section>
+
         {screenState === 'loading' ? (
           <section className={styles.loadingSection} aria-label="before 분석 진행">
             <div className={styles.sectionInner}>
@@ -702,6 +823,266 @@ export default function BeforePage() {
         ) : null}
       </main>
     </>
+  );
+}
+
+interface Scn001HistoryPanelProps {
+  firebaseConfigured: boolean;
+  isAuthBusy: boolean;
+  isAuthenticated: boolean;
+  status: Scn001HistoryStatus;
+  errorMessage: string | null;
+  beforeJobs: BeforeReviewJobHistoryItem[];
+  bridgeRuns: BridgeRunHistoryItem[];
+  onRetry: () => void;
+}
+
+function Scn001HistoryPanel({
+  firebaseConfigured,
+  isAuthBusy,
+  isAuthenticated,
+  status,
+  errorMessage,
+  beforeJobs,
+  bridgeRuns,
+  onRetry,
+}: Scn001HistoryPanelProps) {
+  const notice = getScn001HistoryNotice({
+    firebaseConfigured,
+    isAuthBusy,
+    isAuthenticated,
+    status,
+    errorMessage,
+    beforeJobs,
+    bridgeRuns,
+  });
+
+  return (
+    <div className={styles.historyPanel}>
+      <div className={styles.historyHeader}>
+        <div>
+          <p className={styles.historyEyebrow}>SCN-001 history</p>
+          <h2 id="before-history-title" className={styles.historyTitle}>
+            내 Before / Bridge 기록
+          </h2>
+          <p className={styles.historyDescription}>
+            로그인한 계정의 최근 기록을 읽기 전용으로 확인합니다.
+          </p>
+        </div>
+        <span className={styles.historyReadOnlyPill}>읽기 전용</span>
+      </div>
+
+      {notice ? (
+        <div
+          className={notice.kind === 'error' ? styles.historyError : styles.historyNotice}
+          role={notice.kind === 'error' ? 'alert' : 'status'}
+        >
+          <span>{notice.message}</span>
+          {notice.canRetry ? (
+            <button className={styles.historyRetryButton} type="button" onClick={onRetry}>
+              <RefreshCw size={16} aria-hidden="true" />
+              다시 시도
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isAuthenticated && status === 'success' ? (
+        <div className={styles.historyColumns}>
+          <BeforeHistoryList jobs={beforeJobs} />
+          <BridgeHistoryList bridgeRuns={bridgeRuns} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+interface Scn001HistoryNoticeInput {
+  firebaseConfigured: boolean;
+  isAuthBusy: boolean;
+  isAuthenticated: boolean;
+  status: Scn001HistoryStatus;
+  errorMessage: string | null;
+  beforeJobs: BeforeReviewJobHistoryItem[];
+  bridgeRuns: BridgeRunHistoryItem[];
+}
+
+function getScn001HistoryNotice(input: Scn001HistoryNoticeInput): {
+  kind: 'notice' | 'error';
+  message: string;
+  canRetry: boolean;
+} | null {
+  if (!input.firebaseConfigured) {
+    return {
+      kind: 'notice',
+      message: 'Firebase 설정 후 로그인하면 이전 Before 검토와 Bridge 연결 기록을 볼 수 있습니다.',
+      canRetry: false,
+    };
+  }
+
+  if (input.isAuthBusy) {
+    return {
+      kind: 'notice',
+      message: '로그인 상태를 확인하는 중입니다.',
+      canRetry: false,
+    };
+  }
+
+  if (!input.isAuthenticated) {
+    return {
+      kind: 'notice',
+      message: 'Google 로그인 후 이전 Before 검토와 Bridge 연결 기록을 볼 수 있습니다.',
+      canRetry: false,
+    };
+  }
+
+  if (input.status === 'loading') {
+    return {
+      kind: 'notice',
+      message: '기록을 불러오는 중입니다.',
+      canRetry: false,
+    };
+  }
+
+  if (input.status === 'error') {
+    return {
+      kind: 'error',
+      message: input.errorMessage ?? '기록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+      canRetry: true,
+    };
+  }
+
+  if (
+    input.status === 'success' &&
+    input.beforeJobs.length === 0 &&
+    input.bridgeRuns.length === 0
+  ) {
+    return {
+      kind: 'notice',
+      message: '아직 이 계정에 저장된 Before 또는 Bridge 기록이 없습니다.',
+      canRetry: true,
+    };
+  }
+
+  return null;
+}
+
+function BeforeHistoryList({ jobs }: { jobs: BeforeReviewJobHistoryItem[] }) {
+  return (
+    <section className={styles.historyColumn} aria-label="Before 검토 기록">
+      <div className={styles.historyColumnHeader}>
+        <h3 className={styles.historyColumnTitle}>Before 검토 기록</h3>
+        <span className={styles.historyCount}>{jobs.length}건</span>
+      </div>
+
+      {jobs.length === 0 ? (
+        <p className={styles.historyEmpty}>최근 Before 검토 기록이 없습니다.</p>
+      ) : (
+        <ol className={styles.historyList}>
+          {jobs.map((job) => (
+            <li className={styles.historyItem} key={job.before_review_job_id}>
+              <div className={styles.historyItemHeader}>
+                <strong className={styles.historyItemTitle}>
+                  {formatInlineText(job.summary, '요약이 없는 Before 검토입니다.')}
+                </strong>
+                <span className={styles.historyStatusPill}>
+                  {formatBeforeJobStatus(job.status)}
+                </span>
+              </div>
+
+              <dl className={styles.historyMetaGrid}>
+                <HistoryMeta label="판정" value={formatOverallResult(job.overall_result)} />
+                <HistoryMeta label="심각도" value={formatSeverity(job.overall_severity)} />
+                <HistoryMeta label="Bridge 연결" value={job.has_bridge_run ? '있음' : '없음'} />
+                <HistoryMeta label="생성" value={formatHistoryDateTime(job.created_at)} />
+                <HistoryMeta label="업데이트" value={formatHistoryDateTime(job.updated_at)} />
+              </dl>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+function BridgeHistoryList({ bridgeRuns }: { bridgeRuns: BridgeRunHistoryItem[] }) {
+  return (
+    <section className={styles.historyColumn} aria-label="Bridge 연결 기록">
+      <div className={styles.historyColumnHeader}>
+        <h3 className={styles.historyColumnTitle}>Bridge 연결 기록</h3>
+        <span className={styles.historyCount}>{bridgeRuns.length}건</span>
+      </div>
+
+      {bridgeRuns.length === 0 ? (
+        <p className={styles.historyEmpty}>최근 Bridge 연결 기록이 없습니다.</p>
+      ) : (
+        <ol className={styles.historyList}>
+          {bridgeRuns.map((bridgeRun) => (
+            <li className={styles.historyItem} key={bridgeRun.bridge_run_id}>
+              <p className={styles.historyBridgeSummary}>
+                {formatInlineText(bridgeRun.user_visible_summary, 'Bridge 요약이 없습니다.')}
+              </p>
+
+              <HistoryTagList
+                label="이슈"
+                values={
+                  bridgeRun.issue_categories.length > 0
+                    ? bridgeRun.issue_categories
+                    : bridgeRun.risk_tags
+                }
+              />
+              <HistoryTagList label="법령 근거" values={bridgeRun.law_refs} />
+
+              {bridgeRun.recommended_next_actions.length > 0 ? (
+                <div className={styles.historyActionBlock}>
+                  <p className={styles.historyMetaLabel}>권장 다음 단계</p>
+                  <ul className={styles.historyActionList}>
+                    {bridgeRun.recommended_next_actions.map((action, index) => (
+                      <li key={`${bridgeRun.bridge_run_id}-action-${index}`}>
+                        {formatInlineText(action, '확인 필요')}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              <dl className={styles.historyMetaGrid}>
+                <HistoryMeta label="생성" value={formatHistoryDateTime(bridgeRun.created_at)} />
+                <HistoryMeta label="업데이트" value={formatHistoryDateTime(bridgeRun.updated_at)} />
+              </dl>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+function HistoryTagList({ label, values }: { label: string; values: string[] }) {
+  if (values.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.historyTagBlock}>
+      <p className={styles.historyMetaLabel}>{label}</p>
+      <ul className={styles.historyTagList}>
+        {values.map((value, index) => (
+          <li className={styles.historyTag} key={`${label}-${value}-${index}`}>
+            {formatInlineText(value, '확인 필요')}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function HistoryMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={styles.historyMetaItem}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
   );
 }
 
@@ -849,6 +1230,85 @@ function getBridgeActionErrorMessage(error: unknown): string {
   }
 
   return 'Bridge 연결 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+}
+
+function getScn001HistoryErrorMessage(error: unknown): string {
+  if (error instanceof Scn001HistoryApiError) {
+    if (error.status === 401) {
+      return '로그인 후 기록을 볼 수 있습니다. 다시 로그인한 뒤 시도해주세요.';
+    }
+
+    if (error.status === 0 || error.status >= 500) {
+      return '기록 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해주세요.';
+    }
+
+    return error.message;
+  }
+
+  return '기록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+}
+
+function formatBeforeJobStatus(status: string): string {
+  switch (status) {
+    case 'queued':
+      return '대기';
+    case 'running':
+      return '분석 중';
+    case 'completed':
+      return '완료';
+    case 'failed':
+      return '실패';
+    default:
+      return formatInlineText(status, '확인 필요');
+  }
+}
+
+function formatOverallResult(value: Scn001HistoryOverallResult | null): string {
+  switch (value) {
+    case 'PASS':
+      return '문제 없음';
+    case 'WARNING':
+      return '주의';
+    case 'VIOLATION':
+      return '위반 가능';
+    default:
+      return '미정';
+  }
+}
+
+function formatSeverity(value: Scn001HistorySeverity | null): string {
+  switch (value) {
+    case 'NONE':
+      return '없음';
+    case 'LOW':
+      return '낮음';
+    case 'MEDIUM':
+      return '중간';
+    case 'HIGH':
+      return '높음';
+    case 'CRITICAL':
+      return '매우 높음';
+    default:
+      return '미정';
+  }
+}
+
+function formatHistoryDateTime(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '확인 불가';
+  }
+
+  return date.toLocaleString('ko-KR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
+function formatInlineText(value: string | null | undefined, fallback: string): string {
+  const trimmed = value?.replace(/\s+/g, ' ').trim();
+  return trimmed && trimmed.length > 0 ? trimmed : fallback;
 }
 
 function getBeforeJobFailureMessage(job: BeforeReviewJob): string {
