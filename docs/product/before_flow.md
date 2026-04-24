@@ -1,6 +1,6 @@
 # Before Flow
 
-기준일: `2026-04-22`
+기준일: `2026-04-24`
 
 ## 현재 상태
 
@@ -10,6 +10,8 @@ Before는 제품 구조상 핵심 단계이며, 현재 이 저장소에는 `/bef
 
 - `/before` route가 구현되어 있고 계약서 업로드/결과 확인 흐름을 제공한다.
 - backend는 DB source 기반 법령 캐시, job DB 저장, artifact 로컬 저장 구조를 사용한다.
+- Phase 5 optional auth linkage가 구현되어, 로그인 사용자의 Before review job은 internal `users.id`에 연결되고 비로그인 job은 `user_id = null`로 유지된다.
+- `/before` result에서 logged-in completed Before job을 protected `bridge_runs`로 연결하는 CTA가 구현되어 있다.
 - 다만 현재 제출/메인 demo 범위는 여전히 `/after` 중심이다.
 - `/before`는 repo에 포함된 별도 흐름으로 유지하며, 추가 확장은 별도 범위에서 진행한다.
 
@@ -51,10 +53,11 @@ Before 결과를 연결할 때는 원문 전체 저장보다 아래 최소 정�
 
 `scenario_id`, `source_scenario`, `preset_id`는 Bridge/After 연결 시 Before 결과가 어떤 시나리오/프리셋으로 이어지는지 구분하기 위한 후보 필드다. 실제 필드 확정은 팀원 Before-begin output contract 확인 후 진행한다.
 
-Firebase Auth Google Sign-In 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 실제 적용은 사용자별 상태 연결이 필요한 SCN-001 protected path로 제한한다. Phase 0~3은 완료됐고, 다음 구현은 Phase 4 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이다. Before 결과를 사용자 계정에 연결 저장하는 runtime linkage는 Phase 5에서 진행한다.
+Firebase Auth Google Sign-In 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 실제 적용은 사용자별 상태 연결이 필요한 SCN-001 protected path로 제한한다. Phase 0~5, Phase 6A~6F, Phase 7A~7B는 완료됐다. Before 결과를 사용자 계정에 연결 저장하는 runtime linkage는 Phase 5에서 완료됐고, protected bridge-runs 생성은 Phase 4에서 완료됐다.
 
 이 capability는 직접 회원가입, 이메일/전화번호 직접 입력 수집, 전화번호 scope 요청, 이메일 primary identifier 사용, access token / refresh token 장기 저장을 허용하지 않는다.
 
 사용자 식별은 Firebase uid를 `provider_subject`로 저장한 뒤 internal `users.id`를 resolve하는 방식이다. 저장 가능한 사용자 필드는 `internal user id`, `auth_provider="firebase_google"`, `provider_subject = Firebase uid`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다. Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지하고, Kakao OAuth는 첫 구현 범위에서 제외한 후속 provider 후보로만 둔다.
 
 개인정보 최소 수집 원칙을 유지한다.
+raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않는다. Bridge handoff는 displayed safe subset plus user question을 사용한다.

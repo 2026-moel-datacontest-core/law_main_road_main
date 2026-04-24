@@ -18,11 +18,12 @@
 ## 현재 범위
 
 - `/`
+- `/before`
 - `/after`
 - `/after/result`
 - `/after/intake`
 - `/after/draft`
-- `Before` / `Bridge` / `Recovery`는 현재 frontend 구현 범위에서 제외
+- 독립 `/bridge` / `Recovery`는 현재 frontend 구현 범위에서 제외
 
 ## 현재 구현 상태
 
@@ -53,7 +54,14 @@
   - Login UI
   - `/api/v1/auth/me` backend verification UI
   - actual Google popup login E2E, repeated auth same `user_id`, `/after` login-free, frontend build 통과 확인
-- 다음 구현 phase는 backend 중심 Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
+- SCN-001 Phase 4/5/6A~6F 구현 반영:
+  - `/before` result에서 logged-in completed Before job을 protected `bridge_runs`로 연결
+  - Bridge handoff item은 React memory state에만 저장
+  - `/after` Bridge summary cards, include checkbox, displayed safe subset query builder 구현
+  - Bridge-origin result는 answer-only / draft disabled
+  - Phase 6F live subset PASS with retry; Vertex IAM resolved, residual runtime risk는 transient `provider_timeout`
+- SCN-001 Phase 7 설계 문서 완료, Phase 7A backend linkage plumbing과 Phase 7B protected bridge answer endpoint 완료
+- protected bridge answer endpoint frontend helper/routing은 별도 후보 작업이다.
 
 ## 핵심 원칙
 
@@ -70,6 +78,7 @@
 - MVP는 복잡한 전역 상태 관리 도입 금지
 - 현재 SCN-004 flow는 React Context + useReducer 메모리 상태만 사용
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`를 sessionStorage/localStorage에 저장하지 않음
+- raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않음
 - 증거 체크리스트 상태는 화면 내 로컬 상태만 허용
 
 ## 계정 / OAuth 정책
@@ -97,6 +106,10 @@
 - presentation preset modified path는 `top_k=10`, 일반 자유 입력은 `top_k=5`, 항상 `ef_search=100`
 - SCN-004 범위 밖 자유 입력은 answer-only로 처리하고 document draft UI를 열지 않음
 - `/api/v1/documents/draft`에는 `buildCaseIntake()`와 `buildLegalBasis()` 결과만 보냄
+- `/api/v1/answer` public contract unchanged
+- `/api/v1/documents/draft` contract unchanged
+- Bridge handoff screen submission은 all unchecked라도 sticky `answer_origin = "bridge_handoff"`를 유지한다.
+- Bridge-origin result는 answer-only / draft disabled다. regular draft behavior는 direct `/after` 진입 또는 reset/re-entry가 필요하다.
 
 ## 구현 우선순위
 
@@ -114,12 +127,12 @@
 - SCN-004 demo flow의 사용자별 서버 저장. Firebase Auth 최소 로그인의 적용 범위는 SCN-001 protected path로 둔다.
 - 관리자 페이지
 - 과도한 UI polishing
-- Before / Bridge / Recovery 본 구현
+- 독립 `/bridge` / Recovery 본 구현
 - sessionStorage backup/restore
 - PDF 다운로드 / 실제 제출 기능
 - 현재 SCN-004 demo freeze 유지 작업과 SCN-005 문서 타입 확장을 한 패치에 혼합
 - SCN-005 API / schema 검토 없는 독단적 문서 타입 확장
-- 팀원 Before / Bridge code / schema / API contract 확인 없는 SCN-001 frontend 확장
+- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장. protected bridge answer frontend routing이나 독립 `/bridge` 확장은 별도 범위에서만 검토
 
 ## Do Not
 

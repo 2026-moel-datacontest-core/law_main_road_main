@@ -1,13 +1,13 @@
 # Scenario Expansion Plan
 
-기준일: `2026-04-20`
+기준일: `2026-04-24`
 
 ## 목적
 
 - 데모용 시나리오를 현재 corpus 기준으로 분류
 - 현재 데이터로 바로 가능한 시나리오와 데이터 확장이 필요한 시나리오를 구분
 - 다음 세션에서 source update / ingestion / embedding 재실행이 필요한지 빠르게 판단할 수 있게 정리
-- 2026-04-17 검증 기록은 보존하되, 2026-04-20 presentation-local preset 운영 정책을 현재 기준으로 둔다.
+- 2026-04-17 검증 기록과 2026-04-20 presentation-local preset 운영 정책은 보존하되, 2026-04-24 SCN-001 Phase 6/7 상태를 현재 기준으로 둔다.
 
 관련 기준 문서:
 
@@ -229,7 +229,7 @@
 - Before-Bridge-After 결과 연결은 원문 전체 저장이 아니라 최소 요약과 근거를 사용자 계정에 연결하는 방향으로 검토한다.
 - 직접 회원가입, 이메일/전화번호 직접 입력 수집, 전화번호 scope 요청, 이메일 primary identifier 사용, access token / refresh token 장기 저장은 금지한다.
 - Firebase Auth Google Sign-In 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 실제 적용은 사용자별 상태 연결이 필요한 SCN-001 protected path로 제한한다.
-- Phase 0~3은 완료됐고, 다음 구현은 Phase 4 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이다.
+- Phase 0~5, Phase 6A~6F, Phase 7A~7B는 완료됐다. `/api/v1/answer` public contract와 `/api/v1/documents/draft` contract는 unchanged이며, SCN-001 document draft는 열지 않는다.
 - `auth_provider = "firebase_google"`, `provider_subject = Firebase uid`에서 internal `users.id`를 resolve한다. Google `sub`는 Direct Google OAuth Alternative/Fallback subject로만 둔다.
 - 저장 가능한 최소 사용자 필드는 `internal user id`, `auth_provider="firebase_google"`, `provider_subject = Firebase uid`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다.
 - Firebase Auth Google Sign-In을 우선하는 이유는 외국인 근로자 대상 접근성이 Kakao보다 넓고, 현재 GCP/Vertex 기반 인프라와 운영 친화적이며, 개인정보 최소 수집 원칙과 맞기 때문이다.

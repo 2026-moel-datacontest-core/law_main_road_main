@@ -8,7 +8,7 @@
 
 ## 현재 진행 상태
 
-기준일: `2026-04-22`
+기준일: `2026-04-24`
 
 현재 `ops` 문서 기준으로 정리된 상태는 아래와 같다.
 
@@ -20,7 +20,8 @@
 - Cloud Run 데이터 저장 구조 문서 유지 중
 - troubleshooting 문서 유지 중
 - Firebase Auth Phase 2/3 로컬 설정 절차 정리 완료
-- SCN-001 Firebase Auth Phase 0~3 완료 상태 반영
+- SCN-001 Firebase Auth Phase 0~5, Phase 6A~6F, Phase 7A~7B 완료 상태 반영
+- local secret/database ignore rules hardening 반영
 
 현재 코드/구조 기준으로 반영된 주요 상태:
 
@@ -33,6 +34,13 @@
 - `/api/v1/auth/me`: Phase 2 backend Firebase ID token verification 반영 완료
 - frontend Firebase Auth Google Sign-In, `AuthContext`, Login UI, backend verification UI: Phase 3 반영 완료
 - Firebase Auth persistence: MVP default는 `inMemoryPersistence`; `browserSessionPersistence`는 Future/Post-MVP tradeoff 후보
+- `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`: Phase 4 반영 완료
+- Before review job optional auth linkage: Phase 5 반영 완료
+- Bridge -> After answer-only handoff: Phase 6A~6F 반영 완료
+- `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`: Phase 7B 반영 완료
+- `/api/v1/answer` public contract unchanged
+- `/api/v1/documents/draft` contract unchanged
+- Vertex IAM/credential issue는 runtime resolved. Residual runtime risk는 transient `provider_timeout`
 
 ## Firebase Auth Phase 2/3 로컬 설정 및 확인
 
@@ -67,6 +75,7 @@ GOOGLE_APPLICATION_CREDENTIALS=$PWD/config/secrets/firebase-admin.json
 - `FIREBASE_ADMIN_CREDENTIALS`는 local fallback이다.
 - 현재 backend 구현은 ADC / `GOOGLE_APPLICATION_CREDENTIALS`를 우선 사용할 수 있으므로, smoke shell에서는 `GOOGLE_APPLICATION_CREDENTIALS=$PWD/config/secrets/firebase-admin.json`로 Firebase Admin JSON을 명확히 지정한다.
 - `GOOGLE_APPLICATION_CREDENTIALS`가 Vertex AI용 credential을 가리키고 있으면 Firebase Admin SDK도 그 ADC를 먼저 사용할 수 있다.
+- Phase 6F 이후 Vertex IAM/credential issue는 runtime resolved 상태로 기록한다. 이후 answer smoke에서 남은 주된 runtime risk는 transient `provider_timeout`이며, retry/backoff hardening은 별도 runtime 작업이다.
 
 ### 2. Frontend Firebase Web App public config
 
@@ -147,44 +156,44 @@ Expected:
 
 ### 1. 로컬 실행 시작
 
-- [quick_start.md](/home/minsoo/after_pipeline/law_main_road/docs/ops/quick_start.md:1)
+- [quick_start.md](./quick_start.md)
 
 새 환경에서 프로젝트를 처음 실행할 때 가장 먼저 보는 문서다.
 
 ### 2. 스타팅 후 검증
 
-- [스타팅_후_자체_테스트.md](/home/minsoo/after_pipeline/law_main_road/docs/ops/스타팅_후_자체_테스트.md:1)
+- [스타팅_후_자체_테스트.md](./스타팅_후_자체_테스트.md)
 
 서버가 뜬 뒤 현재 상태가 정상인지 점검하는 체크 문서다.
 
 ### 3. 데이터 흐름
 
-- [데이터_파이프라인.md](/home/minsoo/after_pipeline/law_main_road/docs/ops/데이터_파이프라인.md:1)
+- [데이터_파이프라인.md](./데이터_파이프라인.md)
 
 법령 데이터, DB 적재, embedding, `before` supplement, 클라우드 마이그레이션 시 주의점까지 포함한 문서다.
 
 ### 4. 저장소 구조
 
-- [각_디렉터리_및_파일의_역할.md](/home/minsoo/after_pipeline/law_main_road/docs/ops/각_디렉터리_및_파일의_역할.md:1)
+- [각_디렉터리_및_파일의_역할.md](./각_디렉터리_및_파일의_역할.md)
 
 repo 전체 구조와 핵심 파일 역할을 설명하는 저장소 지도 문서다.
 
 ### 5. 클라우드 전환
 
-- [클라우드런_데이터_저장_구조.md](/home/minsoo/after_pipeline/law_main_road/docs/ops/클라우드런_데이터_저장_구조.md:1)
+- [클라우드런_데이터_저장_구조.md](./클라우드런_데이터_저장_구조.md)
 
 Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서다.
 
 ### 6. 트러블슈팅
 
-- [troubleshooting.md](/home/minsoo/after_pipeline/law_main_road/docs/ops/troubleshooting.md:1)
+- [troubleshooting.md](./troubleshooting.md)
 
 반복되는 문제와 해결책을 기록하는 운영 로그 문서다.
 
 ## 관련 실행 파일
 
-- [starting.sh](/home/minsoo/after_pipeline/law_main_road/scripts/starting.sh:1)
-- [demo_preflight.sh](/home/minsoo/after_pipeline/law_main_road/scripts/demo_preflight.sh:1)
+- [starting.sh](../../scripts/starting.sh)
+- [demo_preflight.sh](../../scripts/demo_preflight.sh)
 
 역할:
 
@@ -198,11 +207,12 @@ Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서�
 
 현재 문서 정리 이후 다음 단계는 아래 순서가 적절하다.
 
-1. Phase 4 protected bridge-runs endpoint 구현 후 `/api/v1/scn001/bridge-runs` smoke 절차 추가
-2. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
-3. `before` artifact의 GCS 전환 설계 구체화
-4. `after` artifact의 향후 GCS 전환 기준 정리
-5. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
+1. protected bridge answer frontend routing을 구현하는 경우 `/api/v1/scn001/bridge-runs/{bridge_run_id}/answer` smoke 절차 추가
+2. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
+3. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
+4. `before` artifact의 GCS 전환 설계 구체화
+5. `after` artifact의 향후 GCS 전환 기준 정리
+6. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
 
 ## 현재 남아 있는 큰 기술 작업
 

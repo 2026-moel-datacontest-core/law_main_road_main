@@ -5,7 +5,7 @@
 - MVP 앱 구현 범위 고정
 - 웹앱 기준 화면/상태/API 전제 정리
 - 데모 우선 구현 순서 명확화
-- 2026-04-20 기준 실제 frontend 구현 상태와 다음 QA 범위 정리
+- 2026-04-24 기준 실제 frontend 구현 상태와 다음 QA 범위 정리
 - 2026-04-17 상태는 evolution note로 남겨 구현 발전 흐름을 보존
 
 ---
@@ -48,6 +48,7 @@
   - CSS Modules + `--kl-*` design tokens
 - 구현 route:
   - `/`
+  - `/before`
   - `/after`
   - `/after/result`
   - `/after/intake`
@@ -78,7 +79,14 @@
   - `/api/v1/auth/me` backend verification UI
   - Firebase Auth `inMemoryPersistence`
   - actual Google popup login E2E, `users` row upsert, repeated auth same `user_id`, `/after` login-free, frontend build 통과 확인
-- 다음 구현 phase는 backend 중심 Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이다.
+- SCN-001 Phase 4/5/6A~6F 구현이 frontend에 반영됐다.
+  - `/before` result에서 logged-in completed Before job을 protected `bridge_runs`로 연결
+  - Bridge handoff item은 React memory state에만 저장
+  - `/after` Bridge summary cards, include checkbox, displayed safe subset query builder 구현
+  - Bridge-origin result는 answer-only / draft disabled
+  - Phase 6F live subset PASS with retry; Vertex IAM resolved, residual runtime risk는 transient `provider_timeout`
+- SCN-001 Phase 7 설계 문서 완료, Phase 7A backend linkage plumbing과 Phase 7B protected bridge answer endpoint 완료.
+- protected bridge answer endpoint frontend helper/routing은 별도 후보 작업이다.
 - SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행한다.
 
 SCN-001 연결 초안의 phase 정렬:
@@ -87,11 +95,11 @@ SCN-001 연결 초안의 phase 정렬:
 2. Phase 1 완료: DB model/migration
 3. Phase 2 완료: backend Firebase ID token verification + `/api/v1/auth/me`
 4. Phase 3 완료: frontend Firebase Auth Google Sign-In integration
-5. Phase 4 next: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
-6. Phase 5: Before review user linkage
-7. Phase 6: Bridge -> After answer-only handoff
-8. Phase 7: `after_artifact_runs` linkage
-9. Phase 8: regression / demo preflight / manual rehearsal
+5. Phase 4 완료: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
+6. Phase 5 완료: Before review user linkage
+7. Phase 6A~6F 완료: Bridge -> After answer-only handoff and live subset PASS with retry
+8. Phase 7A~7B 완료: `after_artifact_runs` optional linkage plumbing and protected bridge answer endpoint
+9. Remaining 후보: protected bridge answer frontend routing / verification
 
 Evolution note:
 
@@ -109,8 +117,8 @@ Evolution note:
 
 ### Before
 
-- 현재 frontend 구현 범위 밖이다.
-- 제품 구조상 남겨두되 SCN-004 demo freeze 유지 중에는 확장하지 않는다.
+- `/before` route는 구현되어 있고 계약서 업로드/검토 결과, optional auth Before job linkage, Bridge handoff CTA를 제공한다.
+- 다만 SCN-004 제출/메인 demo freeze 중에는 `/before` 추가 기능 확장을 섞지 않는다.
 
 ### After
 
@@ -127,8 +135,10 @@ Evolution note:
 
 ### Bridge
 
-- 현재 frontend 구현 범위 밖이다.
-- Before 구현 이후 별도 단계에서 연결한다.
+- 독립 `/bridge` route는 구현 범위 밖이다.
+- 현재 구현된 Bridge 연결은 `/before` result CTA -> protected `bridge_runs` 생성 -> React memory handoff item -> `/after` summary card 흐름이다.
+- Bridge handoff screen submission은 all unchecked라도 sticky `answer_origin = "bridge_handoff"`를 유지한다.
+- Bridge-origin result는 answer-only / draft disabled이며, regular draft behavior는 direct `/after` 진입 또는 reset/re-entry가 필요하다.
 
 ### Recovery
 
@@ -183,10 +193,11 @@ Evolution note:
 
 ---
 
-## 후속 Bridge 저장 원칙
+## Bridge 저장 / 연계 원칙
 
-- 현재 SCN-004 frontend demo는 Bridge 저장을 구현하지 않는다.
-- 후속 Bridge 구현 시 저장 위치는 팀원 Before / Bridge contract 확인 후 결정한다.
+- 현재 SCN-004 frontend demo flow 자체는 Bridge 저장을 요구하지 않는다.
+- SCN-001 protected flow에서는 `/before` 결과에서 `bridge_runs`를 생성하고 React memory handoff item으로 `/after`에 전달하는 answer-only 연결이 구현되어 있다.
+- protected bridge answer frontend routing, 독립 `/bridge` route, 계정 이력 UI 같은 추가 확장은 SCN-004 freeze를 유지한 별도 단계에서 검토한다.
 - `docs/product/bridge_flow.md`의 개인정보 최소 수집 원칙과 저장 금지 원칙을 우선한다.
 - 저장 대상은 최소 필드만 허용
 - 원문 전체 저장은 기본 비활성
@@ -218,11 +229,15 @@ Evolution note:
 - `NEXT_PUBLIC_API_BASE_URL` 기본값은 `http://localhost:8000`
 - `cited_articles.length === 0` 또는 `grounded_context_ids.length === 0`이면 문서 초안 flow로 진행하지 않음
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`는 Web Storage에 저장하지 않음
+- raw `after_query_seed`는 Web Storage에 저장하지 않고 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않음
 
 MVP 최소 필요 API:
 
 - `POST /api/v1/answer`
 - `POST /api/v1/documents/draft`
+- `POST /api/v1/scn001/bridge-runs` for protected SCN-001 Bridge handoff
+- `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` for protected SCN-001 Bridge lookup
+- `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` for protected Bridge-origin linked answer artifact persistence
 
 응답 최소 요구:
 
@@ -247,7 +262,8 @@ MVP 최소 필요 API:
 7. API error / route guard / focus / skip link: 완료
 8. copy / print: 완료
 9. sessionStorage backup/restore: 보류
-10. Before / Bridge / Recovery: 보류
+10. `/before` + Bridge handoff CTA/cards: 완료
+11. 독립 `/bridge` / Recovery: 보류
 
 우선순위 기준:
 
@@ -266,9 +282,9 @@ MVP 최소 필요 API:
 - 채팅형 agent loop UI 고도화
 - sessionStorage / localStorage backup-restore
 - 현재 SCN-004 freeze 작업 중 SCN-005 문서 타입 frontend 확장
-- 팀원 Before / Bridge contract 확인 없는 SCN-001 frontend 확장
+- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장 또는 protected bridge answer frontend routing
 
-다음 단계 범위: Firebase Auth Phase 0~3은 완료됐다. 다음 구현은 SCN-004 demo freeze를 유지하면서 Phase 4 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction으로 별도 진행한다.
+다음 단계 범위: Firebase Auth Phase 0~5, Phase 6A~6F, Phase 7A~7B는 완료됐다. 다음 후보 구현은 SCN-004 demo freeze를 유지하면서 protected bridge answer frontend routing / verification으로 별도 진행한다.
 
 ---
 

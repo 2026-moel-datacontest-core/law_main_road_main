@@ -489,6 +489,28 @@ backend code 기준:
 - Cloud Tasks / Pub/Sub worker에 Firebase end-user token을 전달하지 않는다.
 - GCS artifact가 Firebase Auth만으로 자동 보호된다고 가정하지 않는다. artifact 접근은 backend에서 internal `user_id` ownership을 확인해야 한다.
 
+## 2026-04-24 Vertex / Provider Runtime Notes
+
+### 1. Vertex IAM/credential issue resolved, provider timeout remains transient risk
+
+판정:
+
+- Phase 6F smoke 기준 Vertex IAM/credential issue는 runtime resolved 상태다.
+- Embedding-only smoke와 `embed_query("해고예고수당")` vector length `768` 확인으로 Vertex credential path 자체는 blocker가 아니라고 본다.
+- 이후 live answer smoke에서 남은 residual runtime risk는 transient `provider_timeout`이다.
+
+대응:
+
+- `provider_timeout`은 credential 미설정으로 단정하지 말고 retryable transient provider/runtime risk로 분리해서 본다.
+- answer smoke에서 첫 시도가 `provider_timeout`이고 재시도 성공이면 Phase 6F와 같은 PASS with retry evidence로 기록한다.
+- 반복적으로 재현되면 retry/backoff hardening 또는 provider timeout tuning을 별도 runtime 작업으로 분리한다.
+
+주의:
+
+- Firebase Admin credential과 Vertex AI credential을 혼동하지 않는다.
+- credential path, service account JSON, token, Firebase uid, provider_subject, email 값은 문서/로그/채팅/git에 남기지 않는다.
+- `/api/v1/answer` public contract와 `/api/v1/documents/draft` contract를 timeout 회피 목적으로 확장하지 않는다.
+
 ## 2026-04-20 Demo / QA Troubleshooting
 
 ### 1. Non-interactive shell에서 `conda activate` 실패

@@ -1,14 +1,14 @@
 # SCN-001 Auth Integration Status
 
-기준일: `2026-04-23`
+기준일: `2026-04-24`
 
 ## Purpose
 
-이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 patch 기준으로 SCN-001 Firebase Auth Phase 0~5 완료 상태, Phase 6A~6D Bridge -> After answer-only handoff 구현 상태, Phase 6E blocker fix, Phase 6F live subset smoke evidence, SCN-004 freeze guard, protected bridge-runs / Before review linkage 정책, 다음 작업 순서를 한 곳에 고정한다.
+이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 repo 기준으로 Firebase Auth Phase 0~5, Phase 6A~6F Bridge -> After answer-only handoff, Phase 7A~7B after artifact linkage/protected bridge answer endpoint, SCN-004 freeze guard, residual runtime risk, current git history hash를 한 곳에 고정한다.
 
 ## Current Status by Phase
 
-| Phase | Status | Current patch 기준 |
+| Phase | Status | Current repo 기준 |
 |---|---|---|
 | Phase 0 | 완료 | Firebase Auth MVP path와 Phase 0 decisions 문서화 완료 |
 | Phase 1 | 완료 | DB model/migration 완료: `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` |
@@ -16,66 +16,54 @@
 | Phase 3 | 완료 | frontend Firebase Web SDK, `AuthContext`, Login UI, `/api/v1/auth/me` backend verification UI 완료 |
 | Phase 4 | 완료 | SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction implemented |
 | Phase 5 | 완료 | Before review job optional auth linkage: valid Bearer token stores internal `users.id`; missing token keeps `user_id = null`; invalid token returns 401 |
-| Phase 6 | 부분 완료 / live subset PASS | 6A~6D implemented through commit `43d47f4`; Phase 6E blocker fixes committed via `ab1c838`; Phase 6F live subset passed with retry and residual `provider_timeout` runtime risk |
-| Phase 7 | pending | not started; `after_artifact_runs` linkage and `source_bridge_run_id` provenance policy |
-| Phase 8 | pending | broader regression / demo preflight / manual rehearsal after remaining Phase 6 / Phase 7 decisions |
+| Phase 6A~6D | 완료 | Bridge handoff memory state/query builder, bridge run client helper, Before result CTA, `/after` Bridge cards implemented |
+| Phase 6E | 완료 | handoff blocker fixes: Before optional Bearer token, Bridge response public `user_id` removal, Bridge-origin draft CTA/button hiding |
+| Phase 6F | PASS with retry | live subset passed with retry. Vertex IAM/credential issue runtime resolved. Residual runtime risk is transient `provider_timeout` |
+| Phase 7 design | 완료 | protected Bridge-origin answer endpoint + single primary `source_bridge_run_id` policy documented |
+| Phase 7A | 완료 | `AfterArtifactLinkage` optional answer artifact persistence plumbing implemented |
+| Phase 7B | 완료 | `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` implemented |
+| Phase 8 | pending / as-needed | broader regression / demo preflight / manual rehearsal when remaining routing or runtime hardening changes require it |
 
-## Completed Commits / Evidence
+## Current Git History References
 
-Recent relevant commits:
+Recent relevant commits after history rewrite:
 
-- `a575b2e` docs(scn-001): add Firebase Auth Phase 0 decisions for MVP auth
-- `6e02c7f` docs(auth): propagate scn-001 firebase auth phase 0 decisions
-- `5e94d2d` feat(db): add user and bridge run linkage for scn-001 phase 1
-- `0c6a41c` feat(auth): add Firebase ID token verification and auth status endpoint
-- `eea42d2` docs(ops): document Firebase Auth local setup and smoke checks
-- `ec46e67` feat(frontend): add Firebase Google auth integration
-- `9cb6891` docs(auth): align Firebase persistence docs with in-memory frontend state
-- `f9ab46b` feat(scn-001): add protected bridge runs endpoint
-- `4bdac90` feat(scn-001): link Before review jobs to logged-in users
-- `51846fe` docs(scn-001): plan Phase 6 consent-based Bridge handoff to After
-- `823216c` feat(scn-001): add Phase 6A bridge handoff state and query builder
-- `2245061` feat(frontend): add SCN-001 bridge run client helper
-- `2ca2bbe` feat(scn-001): add Phase 6C Before result bridge handoff CTA
-- `43d47f4` feat(scn-001): add Phase 6D Bridge handoff cards to After
-- `d67ac78` docs(scn-001): update Phase 6D handoff integration status
-- `ab1c838` fix(scn-001): complete Phase 6E handoff blockers
+- `5557f97` docs(scn-001): add Firebase Auth Phase 0 decisions for MVP auth
+- `fa22438` docs(auth): propagate scn-001 firebase auth phase 0 decisions
+- `4a59b47` feat(db): add user and bridge run linkage for scn-001 phase 1
+- `61a2bc6` feat(auth): add Firebase ID token verification and auth status endpoint
+- `3369238` docs(ops): document Firebase Auth local setup and smoke checks
+- `1e4df77` feat(frontend): add Firebase Google auth integration
+- `9eed711` docs(auth): align Firebase persistence docs with in-memory frontend state
+- `5ee820d` feat(scn-001): add protected bridge runs endpoint
+- `d3a44bc` feat(scn-001): link Before review jobs to logged-in users
+- `f0bb0d3` docs(scn-001): plan Phase 6 consent-based Bridge handoff to After
+- `21ea687` feat(scn-001): add Phase 6A bridge handoff state and query builder
+- `3c7fce3` feat(frontend): add SCN-001 bridge run client helper
+- `b04ac45` feat(scn-001): add Phase 6C Before result bridge handoff CTA
+- `0da93c2` feat(scn-001): add Phase 6D Bridge handoff cards to After
+- `3fd36da` docs(scn-001): update Phase 6D handoff integration status
+- `82e86ec` fix(scn-001): complete Phase 6E handoff blockers
+- `8f07a98` docs(scn-001): record Phase 6F live handoff smoke evidence
+- `ab63bc3` docs(scn-001): plan Phase 7 after artifact provenance linkage
+- `aff0a7f` feat(scn-001): add Phase 7A answer artifact linkage plumbing
+- `27bf054` feat(scn-001): add protected bridge answer endpoint
+- `9287281` chore(gitignore): harden local secret and database ignore rules
 
-Manual / local evidence recorded for Phase 3:
-
-- actual Google popup login E2E 통과
-- `users` row upsert 확인
-- repeated auth same `user_id` 확인
-- `/after` login-free 확인
-- frontend build 통과
-
-Phase 6 status evidence:
-
-- Phase 6 design doc completed in `51846fe`.
-- Phase 6A implemented Bridge handoff memory state and `buildBridgeContextQuery`.
-- Phase 6B implemented the SCN-001 protected bridge run frontend client helper.
-- Phase 6C implemented the Before result Bridge handoff CTA.
-- Phase 6D implemented Bridge handoff cards on `/after`.
-- Phase 6E fixed handoff blockers in `ab1c838`: Before job optional Firebase Bearer token, Bridge public response `user_id` removal, and Bridge-origin result draft CTA/button hiding.
-- Phase 6F live subset passed with retry. This is not a "full Phase 6 pass with no residual risk" claim.
-- Full real Before/OCR completed E2E remains separate if needed; the Bridge checked-live evidence below used memory-only synthetic handoff state.
-
-Phase 6F live subset smoke evidence:
+## Phase 6F Evidence Summary
 
 - Vertex IAM/credential issue is considered resolved at runtime: embedding-only smoke succeeded, and `embed_query("해고예고수당")` returned vector length `768`.
-- Backend `/api/v1/answer` direct live path: first attempt hit `provider_timeout`; one retry succeeded with HTTP 200; `cited_articles` count, `key_points` count, and answer length were present; `after_artifact_runs` delta was observed.
-- Frontend direct `/after` live path: PASS; Bridge card/checkbox absent; preset row visible; `POST /api/v1/answer` called once; `Authorization` absent; `top_k=5`, `ef_search=100`; `/after/result` reached.
-- SCN-004 modified/live path: PASS; modified preset path called `/api/v1/answer`; `Authorization` absent; `top_k=10`, `ef_search=100`; `/after/result` reached; document draft POST was not run.
+- Backend `/api/v1/answer` direct live path: first attempt hit `provider_timeout`; one retry succeeded with HTTP 200 and answer artifact row delta was observed.
+- Frontend direct `/after` live path: PASS; Bridge card/checkbox absent; `Authorization` absent; `top_k=5`, `ef_search=100`; `/after/result` reached.
+- SCN-004 modified/live path: PASS; public `/api/v1/answer` called without `Authorization`; `top_k=10`, `ef_search=100`; document draft POST was not run.
 - SCN-004 fixed exact path: PASS; exact preset path did not call `/api/v1/answer`; fixed answer result reached; eligible draft choices/button visible; document draft POST was not run.
-- Bridge handoff checked-live path: PASS on retry; first attempt hit `provider_timeout`; retry succeeded with HTTP 200 and `/after/result` reached; request `Authorization` absent; `top_k=10`, `ef_search=100`; query included displayed safe subset plus user question; query excluded raw `after_query_seed`, `after_query_seed` label, Bridge id, and token-like sentinel.
+- Bridge handoff checked-live path: PASS on retry; first attempt hit `provider_timeout`; retry succeeded with HTTP 200; query included displayed safe subset plus user question; query excluded raw `after_query_seed`, Bridge id, and token-like sentinel.
 - Bridge answer-only guard: Bridge answer-only notice visible; draft choices absent; `사건 정보 입력하기` button absent; document draft POST was not run.
-- Privacy / artifact guard: `fetchAnswer` and `fetchDraft` did not auto-attach `Authorization`; `localStorage` / `sessionStorage` count was `0`; IndexedDB names observed were `firebase-heartbeat-database` and `firebaseLocalStorageDb`, with values not dumped.
-- Answer artifact note: answer artifact query persistence is existing behavior; latest Bridge artifact sentinel grep was false; `after_artifact_runs` increased during successful answer smoke.
-- Git status after smoke was clean; generated `frontend/next-env.d.ts` churn was restored.
+- Privacy / artifact guard: `fetchAnswer` and `fetchDraft` did not auto-attach `Authorization`; raw flow payload was not stored in Web Storage.
 
-Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`, email value, or credential values in docs, logs, commits, issues, or chat. Phase 6F evidence must also avoid full answer bodies, raw query text, and artifact file contents.
+Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`, email value, credential values, full answer bodies, raw query text, or artifact file contents in docs, logs, commits, issues, or chat.
 
-## Current Auth Architecture
+## Current Auth / Linkage Architecture
 
 - MVP auth path: Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification.
 - Frontend gets Firebase ID token from Firebase SDK only when needed for protected SCN-001 requests.
@@ -85,102 +73,65 @@ Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`,
 - Direct Google OAuth + backend-managed session cookie remains Alternative/Fallback only.
 - Firebase session cookie, Identity Platform OIDC, multi-provider linking, and browser local persistence remain Future/Post-MVP.
 
-## Local Env Notes
-
-- Backend Firebase project id is configured through `FIREBASE_PROJECT_ID`.
-- Local Firebase Admin credential should use ADC or ignored credential path such as `config/secrets/firebase-admin.json`.
-- Frontend Firebase Web App public config belongs in `frontend/.env.local`.
-- `NEXT_PUBLIC_*` Firebase web config values are public browser config, but actual values are still not committed to repo docs.
-- MVP frontend persistence is `inMemoryPersistence`; refresh/reload can require login again by design.
-- `browserSessionPersistence` is not MVP default. Revisit only as a Future/Post-MVP UX tradeoff.
-
 ## SCN-004 Freeze Guard
 
 - `/after`, `/after/result`, `/after/intake`, `/after/draft` must remain login-free.
-- `POST /api/v1/answer` remains public and its request/response contract is unchanged.
-- `POST /api/v1/documents/draft` remains public and its request/response contract is unchanged.
+- `/api/v1/answer` public contract unchanged.
+- `/api/v1/documents/draft` contract unchanged.
 - Firebase token must not be required on SCN-004 paths.
 - `SCN-004-DEMO-FREEZE` exact preset continues to use fixed answer fixture.
 - `SCN-001-BRIDGE-DEMO` remains answer-only and must not open SCN-004 document draft UI.
-- Bridge-origin answer state uses `answer_origin = "bridge_handoff"` and remains answer-only.
-- Bridge-origin `/after/result` and `/after/draft` paths must keep `supportsDraft=false`; SCN-001 document draft is not activated.
-- SCN-004 demo freeze QA and Phase 6 feature work must not be mixed in one patch.
+- SCN-004 fixed/free input/draft flow unchanged.
+- SCN-001 document draft is not activated.
 
-## Phase 4 / 5 Patch Contract
+## Phase 6 Sticky Bridge Origin Policy
 
-- `require_current_user` dependency is available.
-- `get_optional_current_user` is available for auth status / future optional linkage.
-- `users` schema exists with `auth_provider`, `provider_subject`, display fields, timestamps, and unique provider subject constraint.
-- `bridge_runs` schema exists with required internal `user_id` and `after_query_seed_hash`.
-- `before_review_jobs.user_id` exists as nullable linkage column.
-- Phase 4 bridge POST only accepts completed Before jobs whose `before_review_jobs.user_id` matches the current internal `users.id`; null orphan jobs are rejected until Phase 5 Before runtime linkage.
-- Phase 4 bridge POST request body accepts only `before_review_job_id`; client-provided `source_scenario` or `preset_id` is rejected by schema validation.
-- Phase 4 bridge rows are always stored with `source_scenario = "before_review"` and `preset_id = null`.
-- Missing job, other-user job, and null orphan job are externally mapped to 404 not-found to reduce existence leak.
-- Phase 5 Before job creation keeps anonymous Before reviews allowed: no `Authorization` header stores `before_review_jobs.user_id = null`.
-- Phase 5 Before job creation links only reviews created after login: valid `Authorization: Bearer <Firebase ID token>` stores the resolved internal `users.id`.
-- Phase 5 invalid or malformed `Authorization` on Before job creation returns 401 and is not silently treated as anonymous.
-- Non-login Bridge save/link remains disallowed because `/api/v1/scn001/bridge-runs` requires Firebase Bearer auth.
-- Only logged-in-created Before jobs can be converted into Bridge runs. Anonymous/orphan Before jobs continue to return 404 at Bridge.
-- Retroactive linking of `user_id = null` Before jobs is Post-MVP and not implemented.
-- `after_artifact_runs.user_id` and `after_artifact_runs.source_bridge_run_id` exist as nullable linkage columns.
-- `BeforeHandoffDTO` and `BridgeOutputDTO` contract draft exists in `docs/planning/16_scn001_before_bridge_contract.md`.
-- `/api/v1/auth/me` and frontend login capability are implemented.
+- Bridge-origin answer state uses sticky `answer_origin = "bridge_handoff"`.
+- If at least one Bridge card is checked, query uses displayed safe subset plus user question.
+- If all Bridge cards are unchecked, excluded, or missing, query can be user question only, but `answer_origin` still remains `bridge_handoff`.
+- Bridge-origin `/after/result` remains answer-only and draft disabled.
+- regular draft behavior requires direct `/after` entry or reset/re-entry into regular After flow.
+- raw `after_query_seed` is not placed into `/api/v1/answer.query`.
+- raw Before result, raw contract/OCR, full DTO payloads, internal auth identifiers, and `bridge_run_id` are not placed into answer query.
 
-## Phase 6A~6F Status
+Displayed safe subset:
 
-- Phase 6A~6D are implemented through commit `43d47f4`.
-- Phase 6E blocker fixes are committed through `ab1c838`.
-- Phase 6F live subset passed with retry, while retaining residual `provider_timeout` runtime risk.
-- Full real Before/OCR completed E2E remains separate if needed; the current Bridge checked-live smoke used memory-only synthetic handoff state.
-- `/after` reads `FlowContext` `bridge_handoff.items` and renders Bridge handoff summary card(s) only when memory handoff state exists.
-- Each Bridge handoff card exposes an include checkbox and dispatches `SET_BRIDGE_HANDOFF_ITEM_INCLUDED`.
-- `이번 질문에서 제외` dispatches only `REMOVE_BRIDGE_HANDOFF_ITEM`.
-- `이번 질문에서 제외` is not deletion, retention policy, source document deletion, Before result deletion, or `bridge_runs` deletion.
-- When at least one Bridge handoff item is checked, `/after` builds the existing `/api/v1/answer` `query` with `buildBridgeContextQuery`.
-- Bridge handoff live answer uses `top_k=10`, `ef_search=100`, and `selected_preset_id = null`.
-- When all Bridge handoff items are unchecked, excluded, or missing, `/after` sends only the user's question.
-- `buildBridgeContextQuery` uses only the displayed safe subset:
-  - `user_visible_summary`
-  - `issue_categories` first, or `risk_tags` fallback when `issue_categories` is empty, max 4 labels
-  - `law_refs` max 5
-  - `recommended_next_actions` max 3
-- `after_query_seed` is not placed into `/api/v1/answer.query`.
-- Raw Before result, raw contract/OCR, full DTO payloads, internal auth identifiers, and `bridge_run_id` are not placed into `/api/v1/answer.query`.
-- Bridge-origin answer state is marked with `answer_origin = "bridge_handoff"`.
-- Bridge-origin answer result/draft flow is answer-only: `supportsDraft=false`, no SCN-001 document draft activation.
-- `SCN-004-DEMO-FREEZE`, SCN-004 free input, `fetchAnswer`, and `fetchDraft` contracts are unchanged.
-- `POST /api/v1/answer` request/response contract remains unchanged.
-- `POST /api/v1/documents/draft` request/response contract remains unchanged.
+- `user_visible_summary`
+- `issue_categories` first, or `risk_tags` fallback when `issue_categories` is empty, max 4 labels
+- `law_refs` max 5
+- `recommended_next_actions` max 3
 
-## Next Steps
+## Phase 7A / 7B Contract
 
-1. Treat Phase 6F live subset as passed with retry, not as a no-risk full Phase 6 closure.
-2. Run full real Before/OCR completed E2E only if that evidence is needed separately from the memory-only synthetic handoff smoke.
-3. Follow up on IndexedDB Firebase SDK persistence policy if needed; observed `firebaseLocalStorageDb` values were not dumped in this smoke.
-4. Start Phase 7 `after_artifact_runs` / `source_bridge_run_id` provenance design; Phase 7 is not started.
-5. Keep retroactive linking for existing null orphan jobs as Post-MVP.
-6. Preserve SCN-004 public contract during remaining Phase 6 / Phase 7 work.
+- Phase 7A adds optional `AfterArtifactLinkage` plumbing to answer artifact persistence.
+- Public `/api/v1/answer` calls persistence with no linkage metadata, so public answer rows keep `user_id = null` and `source_bridge_run_id = null`.
+- Phase 7B endpoint: `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`.
+- Phase 7B requires Firebase Bearer auth.
+- Missing or unowned `bridge_run_id` returns 404 to reduce existence leaks.
+- Request body is `AnswerRequest`-compatible.
+- Response body is `AnswerResponse`-compatible.
+- Protected bridge answer persists `after_artifact_runs.user_id = current_user.id`.
+- Protected bridge answer persists `after_artifact_runs.source_bridge_run_id = bridge_run_id`.
+- raw `after_query_seed` is not placed into the protected bridge answer query.
+- MVP provenance is single primary `source_bridge_run_id`.
+- Multi-bridge full provenance remains a Post-MVP join table candidate, not a `source_bridge_run_ids` JSON/list in MVP.
 
-## Phase 7 Open Items
+## Current Open / Future Items
 
-- Phase 7 is not started.
-- Define how `after_artifact_runs` records linkage to Bridge-origin answers.
-- Decide runtime assignment policy for nullable `after_artifact_runs.source_bridge_run_id`.
-- Decide multiple Bridge contexts provenance before enabling persisted After artifact linkage:
-  - one primary `source_bridge_run_id`
-  - `source_bridge_run_ids` list/JSON
-  - join table such as `after_artifact_run_bridge_runs`
-- The Phase 6F `after_artifact_runs` delta only confirms existing answer artifact persistence during live answer smoke; it does not settle Phase 7 provenance or `source_bridge_run_id` assignment.
-- Do not infer Phase 7 provenance from Phase 6 `bridge_handoff.items`; Phase 6 only builds an answer query through the existing public answer contract.
+- Protected bridge answer frontend helper/routing is a separate candidate; backend Phase 7B endpoint exists.
+- Phase 6F passed with retry, but transient `provider_timeout` remains residual runtime risk. Retry/backoff hardening is separate runtime work.
+- Full real Before/OCR completed E2E remains separate if needed; Phase 6F Bridge checked-live smoke used memory-only synthetic handoff state.
+- IndexedDB Firebase SDK persistence policy can be revisited if needed; MVP app code still uses `inMemoryPersistence` and does not store raw flow payload in Web Storage.
+- Retroactive linking for existing null orphan Before jobs is Post-MVP.
+- Artifact retention/deletion/account history access control remains Post-MVP.
 
 ## Do Not Mix
 
-- Do not change SCN-004 `/after` 4-route behavior in Phase 6 remaining verification patches.
+- Do not change SCN-004 `/after` 4-route behavior in SCN-001 linkage patches.
 - Do not change `/api/v1/answer` contract.
 - Do not change `/api/v1/documents/draft` contract.
 - Do not require Firebase token for SCN-004 or public answer/draft paths.
 - Do not store raw OCR, raw contract, raw user_statement, raw answer/draft payload, raw Before full result, or raw `after_query_seed` in browser Web Storage.
 - Do not store Firebase ID token, Firebase uid, Google `sub`, `provider_subject`, or email value in business tables or backend responses.
 - Do not switch MVP persistence to `browserSessionPersistence`.
-- Do not add SCN-001 document draft or SCN-004 document type expansion in Phase 6 remaining verification patches.
+- Do not add SCN-001 document draft or SCN-004 document type expansion in this scope.

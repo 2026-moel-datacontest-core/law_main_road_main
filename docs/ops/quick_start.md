@@ -30,10 +30,10 @@
 
 ### 설정 및 실행
 
-- backend env: [backend/.env.example](/home/minsoo/after_pipeline/law_main_road/backend/.env.example:1)
-- backend entry: [backend/main.py](/home/minsoo/after_pipeline/law_main_road/backend/main.py:1)
-- frontend scripts: [frontend/package.json](/home/minsoo/after_pipeline/law_main_road/frontend/package.json:1)
-- PostgreSQL readiness helper: [backend/verify/ensure_postgres_ready.py](/home/minsoo/after_pipeline/law_main_road/backend/verify/ensure_postgres_ready.py:1)
+- backend env: [backend/.env.example](../../backend/.env.example)
+- backend entry: [backend/main.py](../../backend/main.py)
+- frontend scripts: [frontend/package.json](../../frontend/package.json)
+- PostgreSQL readiness helper: [backend/verify/ensure_postgres_ready.py](../../backend/verify/ensure_postgres_ready.py)
 
 ### Firebase Auth 로컬 설정 참고
 
@@ -41,22 +41,23 @@
 - frontend public config 위치: `frontend/.env.local`
 - 자세한 절차: [docs/ops/README.md](README.md)
 - 문제 해결: [docs/ops/troubleshooting.md](troubleshooting.md)
+- local secret/database ignore rules are hardened. Do not commit credential JSON, local env files, local DB files, Firebase ID tokens, provider subjects, or email values.
 
 ### 법령 데이터
 
-- source corpus: [backend/data/law_chunks](/home/minsoo/after_pipeline/law_main_road/backend/data/law_chunks)
-- upstream submodule: [data/legalize-kr](/home/minsoo/after_pipeline/law_main_road/data/legalize-kr)
+- source corpus: [backend/data/law_chunks](../../backend/data/law_chunks)
+- upstream submodule: [data/legalize-kr](../../data/legalize-kr)
 
 ### before 관련 저장 위치
 
-- before assets: [backend/data/before_assets](/home/minsoo/after_pipeline/law_main_road/backend/data/before_assets)
-- before artifacts: [backend/data/before_artifacts/runs](/home/minsoo/after_pipeline/law_main_road/backend/data/before_artifacts/runs)
-- before 설정: [backend/app/before_stack/core/settings.py](/home/minsoo/after_pipeline/law_main_road/backend/app/before_stack/core/settings.py:1)
+- before assets: [backend/data/before_assets](../../backend/data/before_assets)
+- before artifacts: [backend/data/before_artifacts/runs](../../backend/data/before_artifacts/runs)
+- before 설정: [backend/app/before_stack/core/settings.py](../../backend/app/before_stack/core/settings.py)
 
 ### after 관련 저장 위치
 
-- after artifacts: [backend/data/after_artifacts/runs](/home/minsoo/after_pipeline/law_main_road/backend/data/after_artifacts/runs)
-- after artifact store: [backend/app/services/after_artifact_store.py](/home/minsoo/after_pipeline/law_main_road/backend/app/services/after_artifact_store.py:1)
+- after artifacts: [backend/data/after_artifacts/runs](../../backend/data/after_artifacts/runs)
+- after artifact store: [backend/app/services/after_artifact_store.py](../../backend/app/services/after_artifact_store.py)
 
 ## 현재 구조 기준으로 유지되는 것
 
@@ -374,7 +375,7 @@ npm run dev
 
 사용자 업로드 원본과 결과 파일:
 
-- 저장 루트: [backend/data/before_artifacts/runs](/home/minsoo/after_pipeline/law_main_road/backend/data/before_artifacts/runs)
+- 저장 루트: [backend/data/before_artifacts/runs](../../backend/data/before_artifacts/runs)
 - 각 run 폴더:
   - 업로드 원본 이미지/PDF
   - `ocr_output.json`
@@ -389,7 +390,7 @@ npm run dev
 
 사용자 입력/응답 artifact:
 
-- 저장 루트: [backend/data/after_artifacts/runs](/home/minsoo/after_pipeline/law_main_road/backend/data/after_artifacts/runs)
+- 저장 루트: [backend/data/after_artifacts/runs](../../backend/data/after_artifacts/runs)
 
 answer 단계 저장:
 
@@ -413,7 +414,13 @@ draft 단계 저장:
 
 - DB 테이블: `users`
 - DB 테이블: `bridge_runs`
-- Phase 4 전 현재 상태: schema는 있지만 protected bridge-runs route/service는 아직 없다.
+- protected bridge-runs route/service는 구현되어 있다.
+- `POST /api/v1/scn001/bridge-runs`
+- `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`
+- `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`
+- protected bridge answer endpoint는 Firebase Bearer auth required, missing/unowned bridge_run 404 masking, `AnswerResponse`-compatible response, `after_artifact_runs.user_id/source_bridge_run_id` linkage를 사용한다.
+- `/api/v1/answer` public contract와 `/api/v1/documents/draft` contract는 unchanged다.
+- raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않는다.
 
 ## 10. 향후 `starting.sh`가 자동화할 범위
 
@@ -515,14 +522,14 @@ npm run build
 
 확인:
 
-- [backend/data/after_artifacts/runs](/home/minsoo/after_pipeline/law_main_road/backend/data/after_artifacts/runs)
+- [backend/data/after_artifacts/runs](../../backend/data/after_artifacts/runs)
 - `after_artifact_runs` DB row
 
 ### 7. before 실행 후 저장이 안 된 것 같다
 
 확인:
 
-- [backend/data/before_artifacts/runs](/home/minsoo/after_pipeline/law_main_road/backend/data/before_artifacts/runs)
+- [backend/data/before_artifacts/runs](../../backend/data/before_artifacts/runs)
 - `before_review_jobs` DB row
 
 ## 12. 다른 채팅/다른 세션에 전달할 정보

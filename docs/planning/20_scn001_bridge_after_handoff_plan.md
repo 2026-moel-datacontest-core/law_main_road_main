@@ -1,12 +1,22 @@
 # SCN-001 Phase 6 Bridge -> After Answer-only Handoff Plan
 
-기준일: `2026-04-23`
+기준일: `2026-04-24`
 
-이 문서는 Phase 6 구현 전에 Bridge -> After handoff 방식을 확정하기 위한 설계 문서다. 코드 수정, env 수정, DB/migration 수정, git add/commit, 서버 실행, build, eval은 이 문서 범위가 아니다.
+이 문서는 Phase 6 구현 전에 Bridge -> After handoff 방식을 확정하기 위한 설계 문서였고, 현재는 구현 완료된 Phase 6A~6F의 정책 기준서로 유지한다. 코드 수정, env 수정, DB/migration 수정, git add/commit, 서버 실행, build, eval은 이 문서 범위가 아니다.
+
+Implementation status:
+
+- Phase 6A~6D implemented.
+- Phase 6E blocker fixes completed.
+- Phase 6F live subset PASS with retry.
+- Vertex IAM/credential issue is runtime resolved.
+- Residual runtime risk is transient `provider_timeout`.
+- Phase 6 did not change `/api/v1/answer` or `/api/v1/documents/draft`.
+- raw `after_query_seed` is not placed into `/api/v1/answer.query`.
 
 ## 1. Purpose
 
-- SCN-001 Bridge -> After answer-only handoff를 구현하기 전에 UX와 data boundary를 고정한다.
+- 구현된 SCN-001 Bridge -> After answer-only handoff의 UX와 data boundary를 고정한다.
 - 사용자가 Bridge/Before 문맥을 이번 After 질문에 포함할지 직접 선택하는 consent-based bridge context inclusion 모델을 채택한다.
 - 단일 Bridge뿐 아니라 향후 여러 Before 문서 / 여러 Bridge context가 들어오는 multiple bridge contexts 모델과 호환되게 설계한다.
 - `/api/v1/answer` contract를 변경하지 않는다.
@@ -26,7 +36,7 @@
 | `docs/planning/16_scn001_before_bridge_contract.md` | `BeforeHandoffDTO`, `BridgeOutputDTO`, `after_query_seed` boundary |
 | `docs/planning/17_firebase_auth_scn001_implementation_plan.md` | Phase 6 location, auth path, public endpoint guard |
 | `docs/planning/18_scn001_firebase_auth_phase0_decisions.md` | raw seed persistence decision, phase gates |
-| `docs/planning/19_scn001_auth_integration_status.md` | Phase 0~5 current status and Phase 6 next step |
+| `docs/planning/19_scn001_auth_integration_status.md` | Phase 0~7B current status, Phase 6F evidence, sticky origin policy |
 | `docs/product/bridge_flow.md` | Bridge product role and storage principles |
 | `docs/product/before_flow.md` | Before output and minimum handoff summary goal |
 | `docs/product/mvp_scope.md` | Minimum MVP answer-only SCN-001 linkage and SCN-004 freeze |
@@ -160,6 +170,9 @@ If the checkbox is checked:
 If the checkbox is unchecked:
 
 - Frontend sends only the user additional question as the existing `/api/v1/answer` `query`.
+- The submission still originates from the Bridge handoff screen, so `answer_origin = "bridge_handoff"` remains sticky.
+- The result remains answer-only / draft disabled even when all cards are unchecked.
+- Regular draft behavior requires direct `/after` entry or reset/re-entry into regular After flow.
 
 Checked is the recommended default because:
 
@@ -245,10 +258,11 @@ Rules for multiple items:
 - Future work may revisit `created_at` or user-controlled ordering.
 - Phase 6 may start with one-card rendering, but names like `BridgeHandoffItem[]`, `items`, and `buildBridgeContextQuery()` must not block multiple cards later.
 
-Phase 7 open question:
+Phase 7 provenance policy:
 
-- If multiple Bridge contexts are included in one After answer, provenance must be designed separately.
-- Options include primary `source_bridge_run_id`, `source_bridge_run_ids` list/JSON, or an `after_artifact_run_bridge_runs` join table.
+- Phase 7 MVP uses a single primary `source_bridge_run_id`.
+- Multi-bridge full provenance is a Post-MVP join table candidate.
+- `source_bridge_run_ids` JSON/list is not added in MVP.
 
 ## 9. Query Construction
 
@@ -292,6 +306,12 @@ Unchecked or no checked cards:
 사용자 추가 질문만 보낸다.
 ```
 
+Origin policy:
+
+- User-question-only submission from the Bridge handoff screen still keeps `answer_origin = "bridge_handoff"`.
+- It does not become `regular_after`.
+- It remains answer-only / draft disabled.
+
 Construction rules:
 
 - Build Bridge context only from displayed safe fields:
@@ -315,12 +335,11 @@ Construction rules:
   - clip final combined query to about 3500 characters.
 - Exact clipping policy and user-visible warning are open questions, but clipping must happen before request submission.
 
-Open behavior:
+Implemented behavior:
 
-- Whether to allow a summary-only query when `userAdditionalQuestion` is empty and at least one checked card exists remains open.
-- Recommended default candidate: allow summary-only query when at least one checked item exists.
-- Recommended default candidate: disable submit when no checked item exists and the additional question is empty.
-- Until decided, the safer UI copy should encourage the user to add a short question, even if checked context exists.
+- Summary-only query is allowed when at least one checked item exists.
+- When no Bridge item is checked, user question must satisfy the normal minimum length guard.
+- The UI copy encourages adding a short question when Bridge context is unchecked.
 
 ## 10. API Call Policy
 
@@ -376,11 +395,7 @@ Phase 6 backend non-goals:
 - no SCN-001 document draft activation
 - no `after_artifact_runs.source_bridge_run_id` runtime linkage
 
-Phase 7 must decide how answer artifacts receive source Bridge provenance:
-
-- single primary `source_bridge_run_id`;
-- `source_bridge_run_ids` JSON/list;
-- join table such as `after_artifact_run_bridge_runs`.
+Phase 7 provenance policy is single primary `source_bridge_run_id` for MVP. Multi-bridge full provenance remains a Post-MVP join table candidate.
 
 ## 12. UI Flow
 
@@ -395,8 +410,8 @@ Recommended flow:
 7. User can uncheck context inclusion.
 8. User can choose `이번 질문에서 제외` for a card.
 9. User submits.
-10. Frontend builds query based on checked cards.
-11. Frontend calls `/api/v1/answer` through existing `fetchAnswer`.
+10. Frontend builds query based on checked cards, or user question only when all cards are unchecked.
+11. Frontend currently calls `/api/v1/answer` through existing `fetchAnswer`; Phase 7B protected bridge answer endpoint exists for separate frontend routing work.
 12. `/after/result` treats the answer as Bridge-origin answer-only state.
 13. Draft remains disabled for SCN-001 unless a future scope explicitly enables it.
 
@@ -451,11 +466,15 @@ Keep Phase 6 in small patches.
 
 ### 6A. Frontend type/state
 
+Status: 완료
+
 - Add `BridgeHandoffItem` and `BridgeHandoffState`.
 - Decide FlowContext extension vs dedicated `Scn001HandoffContext`.
 - Keep state memory-only.
 
 ### 6B. Bridge run client helper
+
+Status: 완료
 
 - Add frontend helper for `POST /api/v1/scn001/bridge-runs`.
 - Attach Bearer Firebase ID token only for this protected SCN-001 API.
@@ -463,11 +482,15 @@ Keep Phase 6 in small patches.
 
 ### 6C. Before result UI action
 
+Status: 완료
+
 - Add action to create bridge run and navigate to `/after`.
 - Exact button location remains open; default candidate is a bottom CTA in the Before result/summary area.
 - On success, store minimal `BridgeHandoffState` in memory.
 
 ### 6D. `/after` summary card and query builder
+
+Status: 완료
 
 - Render summary card(s) only when handoff state exists.
 - Add include checkbox(es), default checked.
@@ -477,12 +500,16 @@ Keep Phase 6 in small patches.
 
 ### 6E. Answer-only result integration
 
+Status: 완료
+
 - Call existing `fetchAnswer`.
 - Store answer in existing memory state.
 - Route to `/after/result`.
 - Keep SCN-001 draft disabled.
 
 ### 6F. E2E smoke
+
+Status: live subset PASS with retry
 
 - logged-in Before job -> bridge run -> `/after` checked query -> answer result
 - unchecked query sends user question only
@@ -498,6 +525,7 @@ Keep Phase 6 in small patches.
 - The user sees safe Bridge summary before submission.
 - The include checkbox is checked by default for Bridge handoff entry.
 - Unchecking the checkbox sends only the user additional question.
+- All-unchecked submission keeps sticky `answer_origin = "bridge_handoff"` and remains answer-only / draft disabled.
 - Checked context sends displayed safe Bridge context plus user additional question as `/api/v1/answer.query`.
 - Checked context does not send `after_query_seed`, `bridge_run_id`, `artifact_refs`, or internal ids as `/api/v1/answer.query`.
 - Multiple checked cards can be combined in stable order.
@@ -512,23 +540,13 @@ Keep Phase 6 in small patches.
 
 ## 17. Open Questions
 
-- Before result UI에서 handoff button 위치.
-- `BridgeHandoffState`를 `FlowContext`에 둘지 dedicated `Scn001HandoffContext`에 둘지.
-- `after_query_seed`를 navigation 직후 한 번 consume할지, back navigation에서는 유지할지.
-- user additional question이 empty일 때 checked summary-only query를 허용할지. Recommended default candidate: checked item이 1개 이상이면 summary-only query 허용, checked item이 0개이고 추가 질문도 비었으면 submit disabled.
-- failed bridge creation UX.
-- Phase 7에서 `source_bridge_run_id`를 answer artifact에 어떻게 전달할지.
-- multiple bridge contexts가 하나의 After answer에 포함될 때 provenance 표현 방식:
-  - primary `source_bridge_run_id`
-  - `source_bridge_run_ids` list/JSON
-  - `after_artifact_run_bridge_runs` join table
+- protected bridge answer frontend helper/routing을 Phase 7B backend endpoint에 연결할지 여부.
+- failed bridge creation UX 고도화.
+- multiple bridge contexts가 하나의 After answer에 포함될 때 UI에 partial provenance warning을 표시할지 여부.
 - answer result 화면에 `Bridge context included` 표시 여부.
-- multiple cards의 default checked 정책:
-  - all checked by default
-  - most recent checked only
-  - user must explicitly check
+- multiple cards default checked 정책은 현재 all checked by default로 구현됐다. 향후 카드 수 제한이나 사용자 제어가 필요하면 별도 UX로 검토한다.
 - max number of bridge cards allowed in one answer query.
-- clipping policy and user-visible warning when bridge context is clipped.
+- current clipping constants are implemented in `frontend/src/lib/bridge-handoff.ts`; user-visible warning when bridge context is clipped remains future UX.
 
 ## 18. Do Not
 
@@ -556,7 +574,7 @@ For this doc-only planning task:
 - inspect the diff;
 - inspect git status.
 
-For future Phase 6 implementation, focused smoke should cover:
+For regression / focused verification of the implemented Phase 6 behavior, smoke should cover:
 
 - checked Bridge handoff sends combined query with `top_k=10`, `ef_search=100`;
 - checked Bridge handoff query includes displayed safe fields and excludes `after_query_seed`;

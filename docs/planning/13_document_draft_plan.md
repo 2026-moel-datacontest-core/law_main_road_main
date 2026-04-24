@@ -1,6 +1,6 @@
 # Document Draft Plan
 
-기준일: `2026-04-20`
+기준일: `2026-04-24`
 
 ## 목적
 
@@ -8,7 +8,7 @@
 - `SCN-004`를 1순위 MVP로 두고, 노동청 진정서 / 노동위원회 이유서 초안에 필요한 `case intake`와 `document draft` schema를 정의한다.
 - 기존 `/api/v1/answer` contract와 retrieval / answer generation service를 변경하지 않고, 사건 사실관계 구조화 레이어를 별도로 둔다.
 - 현재 구현 완료 상태를 기준으로 frontend QA에서 확인해야 할 contract를 고정한다.
-- 2026-04-17 초기 document draft 구현/QA 기록은 아래에 보존하고, 2026-04-20 presentation fixed path와 preflight 기준을 운영 기준으로 추가한다.
+- 2026-04-17 초기 document draft 구현/QA 기록과 2026-04-20 presentation fixed path / preflight 기준은 보존하고, 2026-04-24 SCN-001 Phase 6/7 상태를 현재 기준으로 추가한다.
 
 관련 기준 문서:
 
@@ -625,5 +625,5 @@ MVP에서는 `CaseIntake`를 request 중심 이름으로 사용하고, 향후 �
 - 제출기관별 실제 양식 반영
 - SCN-005 문서 타입 확장
 - 팀원 Before / Bridge contract 확인 후 SCN-001 문서 타입 확장
-- Firebase Auth Google Sign-In 기반 최소 로그인은 SCN-001 protected path 전용 공통 인증 capability로 유지한다. Phase 4는 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이며, document draft schema와 SCN-004 demo freeze는 변경하지 않는다. Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback, Kakao OAuth는 후속 provider 후보
+- Firebase Auth Google Sign-In 기반 최소 로그인은 SCN-001 protected path 전용 공통 인증 capability로 유지한다. Phase 4/5/6A~6F와 Phase 7A~7B는 완료됐으며, document draft schema와 SCN-004 demo freeze는 변경하지 않았다. `/api/v1/answer` public contract와 `/api/v1/documents/draft` contract도 unchanged다. SCN-001 document draft는 열지 않는다. Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback, Kakao OAuth는 후속 provider 후보
 - sessionStorage backup/restore 없는 상태에서 demo 운영 문구 정리

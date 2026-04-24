@@ -1,11 +1,21 @@
 # SCN-001 Phase 7 After Artifact Linkage / Bridge Provenance Plan
 
-기준일: `2026-04-23`
+기준일: `2026-04-24`
 
 이 문서는 Phase 7 구현 전에 `after_artifact_runs` linkage와
-`source_bridge_run_id` provenance 정책을 확정하기 위한 설계 문서다.
+`source_bridge_run_id` provenance 정책을 확정하기 위한 설계 문서였고,
+현재는 Phase 7A~7B 구현 상태와 남은 frontend/future scope를 함께 고정한다.
 코드 수정, env 수정, DB/migration 수정, git add/commit, 서버 실행, build,
 eval은 이 문서 범위가 아니다.
+
+Implementation status:
+
+- Phase 7 design document completed in `ab63bc3`.
+- Phase 7A `AfterArtifactLinkage` optional persistence plumbing completed in `aff0a7f`.
+- Phase 7B protected bridge answer endpoint completed in `27bf054`.
+- Public `/api/v1/answer` contract unchanged.
+- Public `/api/v1/documents/draft` contract unchanged.
+- SCN-004 fixed/free input/draft flow unchanged.
 
 ## 1. Purpose
 
@@ -26,7 +36,7 @@ eval은 이 문서 범위가 아니다.
 
 | file | Phase 7 relevance |
 |---|---|
-| `AGENTS.md` | SCN-004 freeze, public contract, Web Storage 금지, Phase 7 pending scope |
+| `AGENTS.md` | SCN-004 freeze, public contract, Web Storage 금지, Phase 7A~7B status |
 | `CLAUDE.md` | SCN-001 protected path는 Firebase Bearer token, public answer/draft contract 유지 |
 | `backend/CLAUDE.md` | Firebase uid / provider_subject 노출 금지, SCN-004 public endpoints 유지 |
 | `frontend/CLAUDE.md` | `inMemoryPersistence`, raw flow payload Web Storage 저장 금지 |
@@ -40,7 +50,7 @@ eval은 이 문서 범위가 아니다.
 | `backend/app/models/bridge_run.py` | `bridge_runs.user_id` required, `before_review_job_id` linkage exists |
 | `backend/app/models/user.py` | internal `users.id` plus `auth_provider/provider_subject` unique mapping |
 | `backend/app/routers/answer.py` | public answer route builds `AnswerResponse`, then calls `persist_answer_artifacts(payload, response)` |
-| `backend/app/routers/scn001.py` | protected SCN-001 router currently has bridge-runs POST/GET only |
+| `backend/app/routers/scn001.py` | protected SCN-001 router has bridge-runs POST/GET and bridge-runs/{id}/answer |
 | `backend/app/dependencies/auth.py` | `require_current_user` and optional auth dependency behavior |
 | `backend/app/services/auth_service.py` | Firebase ID token verification and internal user upsert |
 | `backend/app/schemas/answer.py` | current `AnswerRequest` / `AnswerResponse` public contract |
@@ -101,22 +111,24 @@ Phase 7 is answer-only linkage. Existing nullable DB columns are enough for MVP:
   - `answer_request.json`
   - `answer_response.json`
   - one `after_artifact_runs` row
-- `persist_answer_artifacts` currently inserts `after_artifact_runs` rows with
+- Public `persist_answer_artifacts` calls insert `after_artifact_runs` rows with
   nullable `user_id` and nullable `source_bridge_run_id` left `null`.
+- Phase 7A added optional `AfterArtifactLinkage` so protected bridge answer can
+  populate `user_id` and `source_bridge_run_id`.
 - `AfterArtifactRun` already has nullable `user_id` and `source_bridge_run_id`
   columns plus indexes.
 - `BridgeRun` already has required `user_id` and `before_review_job_id` linkage for
   protected Bridge flow.
 - Existing public answer artifacts should continue to be written with
   `user_id = null` and `source_bridge_run_id = null`.
-- Phase 7 should add linkage through optional persistence metadata, not by changing
+- Phase 7A added linkage through optional persistence metadata, not by changing
   public `AnswerRequest` or public `AnswerResponse`.
-- The protected bridge answer endpoint may return the same `AnswerResponse` without
-  exposing artifact run id in MVP.
+- The protected bridge answer endpoint returns the same `AnswerResponse` shape
+  without exposing artifact run id in MVP.
 
 ## 5. Recommended Endpoint Design
 
-Phase 7 MVP endpoint:
+Phase 7B MVP endpoint:
 
 ```text
 POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer
@@ -266,15 +278,18 @@ Forbidden in query:
 
 ## 9. `after_artifact_store` / Persistence Design
 
-Current state:
+Current implemented state:
 
 - `after_artifact_store` already persists answer artifacts.
 - `AfterArtifactRun` already has nullable `user_id` and nullable
   `source_bridge_run_id`.
-- `_insert_run_row` currently does not accept linkage metadata.
-- `persist_answer_artifacts` currently calls `_insert_run_row` without linkage.
+- `_insert_run_row` accepts `user_id` and `source_bridge_run_id`.
+- `persist_answer_artifacts` accepts optional `AfterArtifactLinkage`.
+- Public `/api/v1/answer` calls `persist_answer_artifacts` without linkage.
+- Protected bridge answer calls `persist_answer_artifacts` with current user and
+  primary bridge id linkage.
 
-Design candidates:
+Original design candidates:
 
 | Option | Approach | Risk |
 |---|---|---|
@@ -282,11 +297,11 @@ Design candidates:
 | B | Add protected endpoint wrapper that calls answer generation then persistence with linkage | Recommended only with shared helper, not duplicated logic |
 | C | Duplicate persistence logic in `scn001` router | Not recommended. Increases drift and SCN-004 regression risk |
 
-Recommended design:
+Implemented design:
 
 - Do not duplicate persistence logic.
-- Add optional linkage metadata parameter to the existing after artifact persistence
-  path.
+- Optional linkage metadata parameter was added to the existing after artifact
+  persistence path.
 - Existing `/api/v1/answer` calls persistence with no linkage metadata.
 - Protected bridge answer endpoint calls persistence with:
   - `user_id = current_user.id`
@@ -315,7 +330,7 @@ def persist_answer_artifacts(
     ...
 ```
 
-If needed, extract a shared backend helper that:
+Implemented shared backend helper:
 
 - validates `AnswerRequest.query`
 - calls `answer_question()`
@@ -324,8 +339,8 @@ If needed, extract a shared backend helper that:
 - centralizes answer error mapping
 
 Both public `/api/v1/answer` and protected
-`POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` should reuse that helper.
-Avoid duplicating answer router logic.
+`POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` reuse
+`generate_answer_response()` to avoid duplicating answer router logic.
 
 Protected endpoint persistence policy:
 
@@ -337,7 +352,8 @@ Protected endpoint persistence policy:
 
 ## 10. Frontend Phase 7 Impact
 
-Add a protected helper, for example `fetchBridgeAnswer` or `createBridgeAnswer`.
+Backend Phase 7B endpoint exists. Frontend protected helper/routing remains a
+separate candidate, for example `fetchBridgeAnswer` or `createBridgeAnswer`.
 
 Rules:
 
@@ -455,6 +471,8 @@ Phase 7 must preserve:
 
 ### Phase 7A. Backend shared answer execution / persistence plumbing
 
+Status: 완료 (`aff0a7f`)
+
 - Add optional linkage metadata to after artifact persistence path.
 - If needed, extract shared answer execution helper to avoid duplicating answer
   router logic.
@@ -462,6 +480,8 @@ Phase 7 must preserve:
 - Do not change `AnswerRequest` or `AnswerResponse`.
 
 ### Phase 7B. Protected bridge answer endpoint
+
+Status: 완료 (`27bf054`)
 
 - Add `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`.
 - Require Firebase auth.
@@ -473,12 +493,16 @@ Phase 7 must preserve:
 
 ### Phase 7C. Frontend client helper
 
+Status: pending / separate candidate
+
 - Add `fetchBridgeAnswer` or equivalent.
 - Attach Firebase ID token only for this protected endpoint.
 - Request body remains `AnswerRequest`-compatible.
 - Preserve `fetchAnswer` and `fetchDraft` public behavior.
 
 ### Phase 7D. `/after` submit routing
+
+Status: pending / separate candidate
 
 - Checked Bridge context -> protected bridge answer endpoint with primary bridge id.
 - No included Bridge context -> public `fetchAnswer`, no linkage metadata, and
@@ -488,6 +512,8 @@ Phase 7 must preserve:
 - Preserve SCN-004 fixed/free input behavior.
 
 ### Phase 7E. Verification
+
+Status: pending / as-needed
 
 - Public `/api/v1/answer` still works without auth.
 - Public `/api/v1/answer` artifact rows keep `user_id = null` and
@@ -503,9 +529,9 @@ Phase 7 must preserve:
   sticky `bridge_handoff` origin as documented.
 - raw seed is not persisted.
 
-## 15. Verification Plan for Future Implementation
+## 15. Verification Plan
 
-Future Phase 7 implementation should cover:
+Phase 7A/7B verification or remaining frontend routing should cover:
 
 - Backend route smoke for `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`.
 - Missing token -> 401.
@@ -526,8 +552,8 @@ Future Phase 7 implementation should cover:
 - Query contains displayed safe subset only.
 - Query excludes `after_query_seed`, Bridge ids, artifact refs, raw OCR, raw contract,
   provider identifiers, and token-like values.
-- `bash scripts/demo_preflight.sh` after implementation, because Phase 7 touches backend
-  answer plumbing and frontend submit routing.
+- `bash scripts/demo_preflight.sh` after remaining frontend routing implementation,
+  because that would touch backend answer plumbing and frontend submit routing.
 
 For this doc-only task:
 
@@ -541,13 +567,9 @@ For this doc-only task:
 
 ## 16. Open Questions
 
-- Should multiple checked Bridge cards be allowed with primary-only partial
-  provenance, or should MVP restrict to exactly one checked card?
-  - Recommended: allow with first included primary and document partial provenance.
 - Should `AnswerResponse` expose artifact/run id in future?
 - Should `after_artifact_runs` support many-to-many provenance later via join table?
-- Should provider_timeout retry/backoff be handled in Phase 7 or separate runtime
-  hardening?
+- Should provider_timeout retry/backoff be handled as separate runtime hardening?
 - If multiple checked cards are included, should the result page display partial
   provenance warning?
 - Should `source_bridge_run_id` ever be shown in UI?

@@ -1,6 +1,6 @@
 # Frontend Implementation Handoff — K-Labor Shield SCN-004 Demo
 
-기준일: `2026-04-20`
+기준일: `2026-04-24`
 대상: Codex / QA handoff
 범위: SCN-004 After flow (4 routes)
 
@@ -8,7 +8,7 @@
 
 ## 0. Current Implementation Status
 
-이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
+이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 2026-04-24에는 SCN-001 Phase 6/7 상태와 freeze 보호 정책을 추가 반영했다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
 
 현재 코드 위치:
 
@@ -55,11 +55,12 @@ SCN-001 Firebase Auth note:
 - Phase 3 frontend integration은 완료됐다: Firebase Web SDK, `AuthContext`, Login UI, `/api/v1/auth/me` verification UI.
 - Phase 3 구현값은 Firebase Auth `inMemoryPersistence`이며 browser Web Storage persistence를 MVP default로 쓰지 않는다.
 - actual Google popup login E2E, `users` row upsert, repeated auth same `user_id`, `/after` login-free, frontend build 통과가 확인됐다.
-- 이 handoff 문서는 여전히 SCN-004 4-route freeze 기준서이며, Phase 4 SCN-001 protected bridge-runs 작업과 SCN-004 freeze QA를 한 patch에 섞지 않는다.
+- Phase 4/5/6A~6F와 Phase 7A~7B는 완료됐다. Phase 6F live subset은 retry 후 PASS이며, Vertex IAM은 runtime resolved, residual risk는 transient `provider_timeout`이다.
+- 이 handoff 문서는 여전히 SCN-004 4-route freeze 기준서이며, protected bridge answer frontend routing 같은 SCN-001 후속 작업과 SCN-004 freeze QA를 한 patch에 섞지 않는다.
 
 다음 단계:
 
-- Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction은 별도 backend 중심 patch로 진행
+- protected bridge answer frontend routing / verification은 별도 후보 작업으로 진행
 - SCN-004 happy path / error path / guard path 제출 전 재확인
 - desktop/mobile demo layout 제출 전 재확인
 
@@ -139,14 +140,14 @@ live `/api/v1/answer` 호출 시 `ef_search`는 항상 100. preset exact path는
 
 ## 2. Product Scope
 
-### 이번 구현 범위 (SCN-004 only)
+### 이번 문서의 직접 범위 (SCN-004-centric freeze note)
 
 - `/after` — 상황 입력 및 법령 검색
 - `/after/result` — 검색 결과 및 문서 타입 선택
 - `/after/intake` — 사건 정보 입력
 - `/after/draft` — 문서 초안 결과
 
-**Scope override note**: `frontend/CLAUDE.md`도 현재는 이 문서의 4-route 범위로 갱신되었다. 이전 `/before`, `/bridge` 중심 route 목록은 historical scope로만 본다.
+**Scope note**: 이 문서는 이전 단계에서 작성된 SCN-004 중심 handoff / demo freeze 기준서다. 현재 frontend에는 `/before`와 SCN-001 Before -> Bridge -> After answer-only handoff가 구현되어 있지만, 이 문서의 직접 QA 범위는 SCN-004 4-route flow다. SCN-001 document draft는 활성화하지 않는다.
 
 ### 지원 문서 타입 (SCN-004)
 
@@ -433,6 +434,9 @@ SCN-004 free-input document eligibility guard:
 - `SCN-001-BRIDGE-DEMO` preset은 fixed/live 여부와 관계없이 `supportsDraft=false`로 answer-only 처리한다.
 - `SCN-004-DEMO-FREEZE` preset과 preset 없는 자유 입력은 기존 SCN-004 eligibility를 적용한다.
 - SCN-005 / SCN-001 문서 타입 추가가 아니며 backend contract를 변경하지 않는다.
+- Real Bridge handoff screen submission은 all unchecked라도 sticky `answer_origin = "bridge_handoff"`를 유지한다.
+- Result는 answer-only / draft disabled다.
+- raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않는다.
 
 **CaseIntake payload 구성**:
 ```
@@ -1185,10 +1189,11 @@ uvicorn backend.main:app --reload
 - backend 코드 수정 금지 (`backend/` 파일 전체)
 - `/api/v1/answer`, `/api/v1/documents/draft` contract 변경 금지
 - 직접 회원가입 / 이메일·전화번호 기반 로그인 / SCN-004 사용자 계정 기능 추가 금지
-- Firebase Auth Google Sign-In은 공통 인증 capability로 허용한다. 단, 실제 적용은 SCN-001 protected path로 제한하고, Phase 4는 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction으로 둔다.
+- Firebase Auth Google Sign-In은 공통 인증 capability로 허용한다. 단, 실제 적용은 SCN-001 protected path로 제한한다. Phase 4/5/6A~6F와 Phase 7A~7B는 완료됐고, SCN-004 public contract를 변경하지 않았다.
 - 전화번호 scope 요청 금지, 이메일 primary identifier 사용 금지, access token / refresh token 장기 저장 금지
 - OCR / 파일 업로드 기능 추가 금지
 - user_statement, answer_response, case_intake, draft_response를 sessionStorage / localStorage에 저장 금지
+- raw `after_query_seed`를 sessionStorage / localStorage 또는 `/api/v1/answer.query`에 저장/전달 금지
 - 연락처, 계좌번호, 주민등록번호, 외국인등록번호, 실거주지 주소 입력 필드 추가 금지
 - `Partial<CaseIntake>`를 `fetchDraft`에 직접 전달 금지 (`buildCaseIntake()` 사용)
 - ungrounded retrieved chunks를 `legal_basis.retrieved_chunks`에 전달 금지
@@ -1230,4 +1235,4 @@ uvicorn backend.main:app --reload
 
 ---
 
-*이 문서는 2026-04-20 기준 K-Labor Shield SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록은 evolution history로 보존한다. backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*
+*이 문서는 2026-04-24 기준 K-Labor Shield SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록과 2026-04-20 presentation-local preset 기준은 evolution history로 보존한다. backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*

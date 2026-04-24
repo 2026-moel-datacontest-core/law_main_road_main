@@ -78,7 +78,7 @@
 
 ## Current Status
 
-기준일: `2026-04-22`
+기준일: `2026-04-24`
 
 - legalize-kr submodule 연결 완료
 - 청킹 Step 1~10 완료
@@ -151,11 +151,37 @@
   - Phase 2: backend Firebase ID token verification, `GET /api/v1/auth/me`, `require_current_user` / optional user dependency 완료
   - Phase 3: frontend Firebase Web SDK, `AuthContext`, Login UI, `/api/v1/auth/me` verification UI 완료
   - evidence: actual Google popup login E2E, `users` row upsert, repeated auth same `user_id`, SCN-004 `/after` login-free, frontend build 통과 확인
+- SCN-001 Phase 4 완료:
+  - protected `POST /api/v1/scn001/bridge-runs`
+  - protected `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`
+  - `BeforeHandoffDTO` extraction
+- SCN-001 Phase 5 완료:
+  - Before review job optional Firebase Bearer linkage
+  - no `Authorization` -> `before_review_jobs.user_id = null`
+  - valid token -> internal `users.id`
+  - invalid token -> 401
+- SCN-001 Phase 6A~6D 구현 완료, Phase 6E blocker fixes 완료, Phase 6F live subset PASS with retry
+- Phase 6F 기준 Vertex IAM/credential issue는 runtime resolved 상태이며 residual runtime risk는 transient `provider_timeout`이다.
+- SCN-001 Phase 7 설계 문서 완료
+- SCN-001 Phase 7A 완료: `AfterArtifactLinkage` optional persistence plumbing
+- SCN-001 Phase 7B 완료:
+  - protected `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`
+  - Firebase Bearer auth required
+  - missing/unowned bridge_run -> 404 masking
+  - `AnswerResponse`-compatible response
+  - `after_artifact_runs.user_id` / `after_artifact_runs.source_bridge_run_id` linkage
 - Firebase Auth MVP persistence는 `inMemoryPersistence`다. token/auth state를 `localStorage`나 `sessionStorage`에 저장하지 않으며, `browserSessionPersistence`는 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - presentation-local preset 완료:
   - `SCN-001-BRIDGE-DEMO`: Before/Bridge handoff 설명용 answer-only
   - `SCN-004-DEMO-FREEZE`: main demo / document draft freeze용
 - SCN-004 free input document eligibility guard 완료
+- SCN-004 fixed/free input/draft flow unchanged
+- `/api/v1/answer` public contract unchanged
+- `/api/v1/documents/draft` contract unchanged
+- Bridge handoff screen submission은 all unchecked라도 sticky `answer_origin = "bridge_handoff"`를 유지한다.
+- Result는 answer-only / draft disabled다.
+- raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않는다.
+- `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary bridge_run_id만 저장한다. multi-bridge full provenance는 Post-MVP join table 후보로 둔다.
 - demo preflight script 추가 및 final pass 확인 완료
 - SCN-004 QA/content/frontend rehearsal 완료:
   - preset answer `cited_articles=6`, `grounded_context_ids=[1, 2, 3, 5, 10, 4]`
@@ -167,13 +193,14 @@ Evolution note:
 
 - 2026-04-17 기준으로 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal까지 완료됐다.
 - 2026-04-20 기준으로 위 demo freeze를 유지하면서 fixed preset, free-input guard, preflight, item-level eval evidence가 추가됐다.
-- 2026-04-22 기준으로 SCN-001 Firebase Auth Phase 0~3이 완료됐고, 다음 구현 phase는 Phase 4: protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이다.
+- 2026-04-22 기준으로 SCN-001 Firebase Auth Phase 0~3이 완료됐다.
+- 2026-04-24 기준으로 SCN-001 Phase 4/5/6A~6F와 Phase 7A~7B가 완료됐다. public answer/draft contract와 SCN-004 freeze는 변경하지 않았다.
 
 ---
 
 ## Next Step
 
-현재 RAG refinement, SCN-004 문서 초안 backend, SCN-004 After frontend 구현, SCN-004 QA/content/frontend rehearsal은 완료 상태로 본다. SCN-001 Firebase Auth Phase 0~3도 완료 상태로 본다. 다음 구현 단계의 중심은 **SCN-004 demo freeze를 유지한 Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction**이다.
+현재 RAG refinement, SCN-004 문서 초안 backend, SCN-004 After frontend 구현, SCN-004 QA/content/frontend rehearsal은 완료 상태로 본다. SCN-001 Firebase Auth Phase 0~5, Phase 6A~6F, Phase 7A~7B도 완료 상태로 본다. 다음 후보 구현 단계의 중심은 **SCN-004 demo freeze를 유지한 protected bridge answer frontend routing / verification**이다.
 
 ### Step 0. Baseline freeze / 운영 기준 고정
 
@@ -230,14 +257,19 @@ Evolution note:
   - local dev server에서 desktop/mobile smoke
 - QA 통과 후 발표용 입력 문구, 기대 citation, fallback 문구를 문서화한다.
 
-### Step 5. SCN-001 Phase 4 readiness
+### Step 5. SCN-001 Phase 7B current contract
 
 - `require_current_user` dependency를 사용할 수 있다.
 - `users`와 `bridge_runs` schema가 있다.
 - `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` linkage column이 있다.
 - `BeforeHandoffDTO`와 `BridgeOutputDTO` contract draft가 `docs/planning/16_scn001_before_bridge_contract.md`에 있다.
 - `/api/v1/auth/me` backend verification과 frontend Google login capability가 있다.
-- Phase 4에서는 SCN-004 flow, `/api/v1/answer`, `/api/v1/documents/draft` contract를 변경하지 않는다.
+- Phase 4/5/6/7A/7B에서는 SCN-004 flow, `/api/v1/answer`, `/api/v1/documents/draft` contract를 변경하지 않았다.
+- Phase 7B protected bridge answer endpoint는 `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`이다.
+- Phase 7B endpoint는 Firebase Bearer auth를 요구하고, missing/unowned bridge_run은 404로 masking한다.
+- Phase 7B endpoint는 `AnswerResponse`-compatible response를 반환하고, linked artifact persistence 실패 시 success로 위장하지 않는다.
+- public `/api/v1/answer`는 bridge_run_id/auth/provenance field를 받지 않는다.
+- `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary bridge_run_id이며, multi-bridge full provenance는 Post-MVP join table 후보로 둔다.
 - raw OCR, raw contract, raw `after_query_seed`, raw answer/draft payload를 persistent 저장하지 않는다.
 - frontend Web Storage에 token/auth state나 raw flow payload를 저장하지 않는다.
 

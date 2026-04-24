@@ -1,16 +1,16 @@
 # Before/Begin Requirements
 
-상태: current code-based requirements  
-기준: `z_before_begin/web` 현재 코드, `docs/specs/before_begin/api_spec.md`, `docs/specs/before_begin/data_model.md`  
-범위: main After/RAG 앱과 분리된 teammate Before/Begin surface
+상태: archived legacy requirements for the pre-integration `z_before_begin/web` surface
+기준: legacy `z_before_begin/web`, `docs/specs/before_begin/api_spec.md`, `docs/specs/before_begin/data_model.md`
+범위: main `frontend/` + `backend/` 통합 `/before` / SCN-001 Bridge 구현 이전 teammate Before/Begin surface
 
 ## 1. 문서 목적
 
 이 문서는 Before/Begin 계약서 업로드 및 사전 검토 기능의 요구정의서다. 사용자가 근로계약서 또는 관련 계약 문서를 업로드하면, 현재 MVP는 OCR, 계약 항목 점검, 규칙 검증, LLM 기반 내용 검토, 쉬운 설명, 접근성 추천을 통해 서명 전 또는 근무 시작 전 위험을 이해하도록 돕는다.
 
-이 문서는 main `frontend/` + `backend/`의 After/RAG 앱 요구정의서가 아니다. 현재 구현 기준은 팀원이 별도 surface로 만든 `z_before_begin/web`이며, `/api/v1/retrieve`, `/api/v1/answer`, `/api/v1/documents/draft`와 계약을 섞어서 해석하지 않는다.
+이 문서는 main `frontend/` + `backend/`의 현재 `/before` / Bridge / After 요구정의서가 아니다. legacy 구현 기준은 팀원이 별도 surface로 만든 `z_before_begin/web`이며, `/api/v1/retrieve`, `/api/v1/answer`, `/api/v1/documents/draft`와 계약을 섞어서 해석하지 않는다.
 
-팀 통합 전에는 이 문서를 `z_before_begin/web` 기준 Before/Begin 요구정의서로 유지한다. integrated 요구정의서는 Before/Begin, Bridge, After 코드와 payload contract가 실제 merge된 뒤 `docs/specs/integrated/`에서 별도로 확정한다.
+2026-04-24 현재 main repo에는 `frontend/src/app/before`, `backend/app/before_stack`, SCN-001 protected Bridge endpoints, Phase 6A~6F handoff, Phase 7A~7B backend linkage가 구현되어 있다. 현재 source of truth는 `AGENTS.md`, `CLAUDE.md`, `docs/planning/16_scn001_before_bridge_contract.md`, `docs/planning/19_scn001_auth_integration_status.md`, `docs/planning/20_scn001_bridge_after_handoff_plan.md`, `docs/planning/21_scn001_phase7_after_artifact_linkage_plan.md`를 우선한다.
 
 ## 2. 제품/사용자 배경
 
@@ -27,7 +27,7 @@ Before/Begin의 사용자는 근로계약서, 표준근로계약서, 자체 양�
 
 ## 3. 현재 MVP 범위
 
-현재 MVP는 `z_before_begin/web`의 FastAPI API service와 Vite React frontend를 기준으로 다음 기능을 제공한다.
+이 legacy spec의 MVP는 `z_before_begin/web`의 FastAPI API service와 Vite React frontend를 기준으로 다음 기능을 제공한다.
 
 - 계약서 이미지/PDF 업로드: `jpg`, `png`, `pdf` 파일을 multipart로 전송한다. PDF는 단일 파일, 이미지는 다중 페이지 업로드를 허용한다.
 - 비동기 review job 생성과 polling: `POST /api/v1/contract/review/jobs`로 job을 만들고 `GET /api/v1/contract/review/jobs/{job_id}`를 1초 간격으로 조회한다.
@@ -50,7 +50,7 @@ Before/Begin 요구정의서의 제외 범위는 다음과 같다.
 
 - main After RAG 답변 생성, 검색, 법률 문서 초안 생성은 이 문서 범위가 아니다.
 - `frontend/`의 `/after`, `/after/result`, `/after/intake`, `/after/draft` flow 요구사항은 이 문서에서 정의하지 않는다.
-- Bridge 저장/전달 contract와 Before -> Bridge -> After 통합 flow는 아직 확정하지 않는다.
+- legacy `z_before_begin/web` surface 자체는 Bridge 저장/전달 contract와 Before -> Bridge -> After 통합 flow를 정의하지 않는다. 현재 main repo의 SCN-001 Bridge contract는 planning/current-status 문서를 따른다.
 - DB 영속화는 현재 범위가 아니다. review job state는 `app.state.review_jobs` in-memory에만 있다.
 - 사용자 계정, 권한, 인증, 세션 기반 접근 제어는 현재 구현 범위가 아니다.
 - artifact TTL, access control, deletion workflow는 현재 구현되어 있지 않으며 배포 전 별도 요구사항으로 확정해야 한다.

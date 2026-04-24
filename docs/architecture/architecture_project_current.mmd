@@ -1,76 +1,87 @@
 %% K-Labor Shield current project architecture
-%% 기준일: 2026-04-20 / 현재 repo 기준
+%% 기준일: 2026-04-24 / 현재 repo 기준
 %% Self-hosted LLM / Compute Engine GPU VM is intentionally omitted from this current MVP diagram.
 flowchart LR
 
-    subgraph MAIN["Main After/RAG App (frontend/ + backend/)"]
+    subgraph APP["Main Next.js + FastAPI App (frontend/ + backend/)"]
         direction TB
-        MainUser["User / Browser"]
-        NextFrontend["Next.js Frontend<br/>SCN-004 After flow"]
+        User["User / Browser"]
+        NextFrontend["Next.js Frontend<br/>/before + /after"]
         FixedFixture["Fixed Answer Fixture<br/>SCN-004-DEMO-FREEZE<br/>SCN-001-BRIDGE-DEMO"]
         MainBackend["FastAPI Backend"]
+        AuthAPI["Auth API<br/>GET /api/v1/auth/me"]
+        BeforeAPI["Before API<br/>/api/v1/before/*"]
+        BridgeRunsAPI["Bridge Runs API<br/>POST/GET /api/v1/scn001/bridge-runs"]
+        BridgeAnswerAPI["Protected Bridge Answer<br/>POST /api/v1/scn001/bridge-runs/{id}/answer"]
         RetrieveAPI["Retrieve API<br/>POST /api/v1/retrieve"]
-        AnswerAPI["Answer API<br/>POST /api/v1/answer"]
-        RetrievalService["Shared Retrieval Service / Vector Search"]
+        AnswerAPI["Public Answer API<br/>POST /api/v1/answer"]
         DraftAPI["Document Draft API<br/>POST /api/v1/documents/draft"]
+    end
+
+    subgraph SERVICES["Backend Services / Storage"]
+        direction TB
+        BeforeStack["Before Stack<br/>backend/app/before_stack"]
+        ContractPipeline["OCR + contract review pipeline"]
+        BeforeArtifacts["Before artifacts<br/>backend/data/before_artifacts/runs"]
+        BridgeService["SCN-001 Bridge Service<br/>safe handoff + hash"]
+        AfterStore["After Artifact Store<br/>after_artifact_runs"]
+        RetrievalService["Shared Retrieval Service / Vector Search"]
         DraftBuilder["Deterministic Draft Builder"]
-        MainDB["PostgreSQL + pgvector"]
+        MainDB["PostgreSQL + pgvector<br/>users, bridge_runs, after_artifact_runs, law_chunks"]
         MainChunks["law_chunks 1722<br/>backend/data/law_chunks/all_chunks.json"]
         VertexEmbedding["Vertex AI query embedding<br/>gemini-embedding-001"]
         VertexAnswer["Vertex AI Gemini answer generation<br/>default answer model: gemini-2.5-flash"]
-    end
-
-    subgraph BEFORE["z_before_begin Before/Begin Contract Review App"]
-        direction TB
-        BeforeUser["User / Browser"]
-        ViteFront["Vite React Front"]
-        ApiService["FastAPI api-service"]
-        ReviewJobAPI["Review Job API<br/>POST /api/v1/contract/review/jobs<br/>GET /api/v1/contract/review/jobs/{job_id}"]
-        SyncReviewAPI["Sync Review API<br/>POST /api/v1/contract/review"]
-        ContractPipeline["Contract Review Pipeline"]
-        ArtifactStorage["Artifact Storage<br/>/artifacts mounts TEST_RUNS_DIR.parent<br/>z_before_begin/web/test<br/>runs under test/runs timestamp dirs"]
         VertexOCR["Vertex AI OCR"]
         VertexContent["Vertex/LLM Content Check"]
-        BeforeAssets["Standard Map / Minimum Wage / law_chunks assets"]
-        AccessibilityEngine["Accessibility Recommendation Engine"]
     end
 
-    MainUser --> NextFrontend
+    User --> NextFrontend
+    NextFrontend -->|Firebase login check| AuthAPI
+    NextFrontend -->|/before upload| BeforeAPI
     NextFrontend -->|After exact preset| FixedFixture
     FixedFixture -->|fixed AnswerResponse, no /answer call| NextFrontend
-    NextFrontend -->|After free/modified input| MainBackend
+    NextFrontend -->|Bridge handoff CTA| BridgeRunsAPI
+    NextFrontend -->|Bridge-origin linked answer candidate| BridgeAnswerAPI
+    NextFrontend -->|After free/modified input| AnswerAPI
+    NextFrontend -->|After intake + legal_basis| DraftAPI
+
+    MainBackend --> AuthAPI
+    MainBackend --> BeforeAPI
+    MainBackend --> BridgeRunsAPI
+    MainBackend --> BridgeAnswerAPI
     MainBackend --> RetrieveAPI
     MainBackend --> AnswerAPI
+    MainBackend --> DraftAPI
+
+    BeforeAPI --> BeforeStack
+    BeforeStack --> ContractPipeline
+    ContractPipeline -->|save uploads and outputs| BeforeArtifacts
+    ContractPipeline -->|OCR structured/raw_sections| VertexOCR
+    ContractPipeline -->|LLM-based content review| VertexContent
+    BeforeAPI -->|optional user_id linkage| MainDB
+
+    BridgeRunsAPI --> BridgeService
+    BridgeService -->|store safe summary + hash| MainDB
+    BridgeAnswerAPI -->|AnswerResponse-compatible| RetrievalService
+    BridgeAnswerAPI -->|user_id + source_bridge_run_id| AfterStore
+    AfterStore --> MainDB
+
     RetrieveAPI --> RetrievalService
     AnswerAPI -->|direct service call, not HTTP /retrieve| RetrievalService
     RetrievalService -->|query embedding| VertexEmbedding
     RetrievalService -->|SQL/vector search| MainDB
     AnswerAPI -->|Gemini answer generation| VertexAnswer
+    BridgeAnswerAPI -->|Gemini answer generation| VertexAnswer
     MainDB --> MainChunks
-    NextFrontend -->|After intake + legal_basis| DraftAPI
     DraftAPI --> DraftBuilder
-    DraftBuilder -->|After draft path does not call Vertex AI.| NextFrontend
+    DraftBuilder -->|After draft path does not call Vertex AI| NextFrontend
 
-    BeforeUser --> ViteFront
-    ViteFront -->|upload contract jpg/png/pdf| ApiService
-    ApiService --> ReviewJobAPI
-    ApiService --> SyncReviewAPI
-    ReviewJobAPI --> ContractPipeline
-    SyncReviewAPI --> ContractPipeline
-    ContractPipeline -->|save uploads and outputs| ArtifactStorage
-    ContractPipeline -->|OCR structured/raw_sections| VertexOCR
-    ContractPipeline -->|section compare, rules, law enrichment| BeforeAssets
-    ContractPipeline -->|LLM-based content review| VertexContent
-    ApiService -->|optional recommendation request| AccessibilityEngine
-    ViteFront -->|poll job status/result| ReviewJobAPI
-    ViteFront -->|view /artifacts outputs| ArtifactStorage
-
-    style MAIN fill:#EEF6FF,stroke:#2563EB,stroke-width:2px,color:#0F172A
-    style BEFORE fill:#FFF7ED,stroke:#EA580C,stroke-width:2px,color:#0F172A
+    style APP fill:#EEF6FF,stroke:#2563EB,stroke-width:2px,color:#0F172A
+    style SERVICES fill:#F8FAFC,stroke:#64748B,stroke-width:2px,color:#0F172A
     style FixedFixture fill:#ECFDF5,stroke:#059669,stroke-width:2px,color:#0F172A
     style DraftBuilder fill:#F8FAFC,stroke:#64748B,stroke-width:2px,color:#0F172A
     style VertexEmbedding fill:#F5F3FF,stroke:#7C3AED,stroke-width:2px,color:#0F172A
     style VertexAnswer fill:#F5F3FF,stroke:#7C3AED,stroke-width:2px,color:#0F172A
     style VertexOCR fill:#F5F3FF,stroke:#7C3AED,stroke-width:2px,color:#0F172A
     style VertexContent fill:#F5F3FF,stroke:#7C3AED,stroke-width:2px,color:#0F172A
-    style ArtifactStorage fill:#FEF2F2,stroke:#DC2626,stroke-width:2px,color:#0F172A
+    style BeforeArtifacts fill:#FEF2F2,stroke:#DC2626,stroke-width:2px,color:#0F172A

@@ -28,14 +28,15 @@
 
 ## 포함 범위
 
-현재 구현 기준일: `2026-04-22`
-MVP 범위 업데이트 기준일: `2026-04-22`
+현재 구현 기준일: `2026-04-24`
+MVP 범위 업데이트 기준일: `2026-04-24`
 
 진화 기록:
 
 - 2026-04-17에는 SCN-004 After 4-route flow, document draft backend, copy/print, manual rehearsal 완료가 기준이었다.
 - 2026-04-20에는 이 기준 위에 presentation-local preset, free-input eligibility guard, demo preflight, full 60 answer evidence report가 추가됐다.
 - 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다.
+- 2026-04-24에는 SCN-001 Phase 4/5/6A~6F와 Phase 7A~7B가 완료됐다. Vertex IAM/credential issue는 runtime resolved이며 residual runtime risk는 transient `provider_timeout`이다.
 
 ### 현재 구현된 demo scope
 
@@ -64,25 +65,35 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - Firebase uid as `provider_subject` 기반 internal `user_id` 연결
 - `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` DB schema 구현 완료
 - frontend Firebase Auth persistence는 `inMemoryPersistence` 구현값이며, `browserSessionPersistence`는 Future/Post-MVP UX tradeoff 후보
-- SCN-001 Before job/result의 internal reference 또는 safe summary를 internal `user_id`와 연결
+- SCN-001 Before job/result의 internal reference 또는 safe summary를 internal `user_id`와 연결 완료
+- protected `POST /api/v1/scn001/bridge-runs` / `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` 구현 완료
+- protected `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` 구현 완료
 - business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal `users.id`만 참조
 - Before 결과에서 raw 계약서 / OCR 전문 / full result artifact가 아니라 안전한 summary만 Bridge로 전달
-- raw `after_query_seed` persistent 저장 금지. `after_query_seed_hash`는 저장 후보/필수로 유지
-- Bridge가 SCN-001용 `after_query_seed`를 만들고 기존 After answer flow로 연결
+- raw `after_query_seed` persistent 저장 금지. `after_query_seed_hash`는 저장한다
+- raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않는다
+- Bridge-origin answer query는 displayed safe subset plus user question만 사용한다
+- Bridge-origin all-unchecked submission도 sticky `answer_origin = "bridge_handoff"`를 유지하며 answer-only / draft disabled다
+- `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary bridge_run_id이며 multi-bridge full provenance는 Post-MVP join table 후보
 - SCN-001은 우선 answer-only로 안정화
 - SCN-004 document draft flow는 로그인 없이 그대로 유지
 - SCN-004 regression이 없어야 함
 - Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지
 
-다음 구현 phase:
+현재 완료 phase:
 
 - Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
 - Phase 5: Before review user linkage
-- Phase 6: Bridge -> After answer-only handoff
-- Phase 7: `after_artifact_runs` linkage
-- Phase 8: regression / demo preflight / manual rehearsal
+- Phase 6A~6F: Bridge -> After answer-only handoff, live subset PASS with retry
+- Phase 7A: `AfterArtifactLinkage` optional persistence plumbing
+- Phase 7B: protected bridge answer endpoint
 
-아래 Before / Bridge는 제품 구조상 MVP 범위다. 다만 현재 frontend 구현은 SCN-004 After flow에 맞춰져 있으므로, Before / Bridge frontend 확장은 팀원이 작성한 Before / Bridge 코드와 contract를 확인한 뒤 별도 단계에서 진행한다. SCN-001 연결은 `/api/v1/answer`와 `/api/v1/documents/draft` contract 변경 없이 answer-only 경로부터 고정한다.
+다음 후보:
+
+- protected bridge answer frontend routing / verification
+- Phase 8 regression / demo preflight / manual rehearsal when behavior changes require it
+
+아래 Before / Bridge는 제품 구조상 MVP 범위다. 현재 frontend에는 `/before`와 SCN-001 Before -> Bridge -> After answer-only handoff가 포함되어 있다. 추가 frontend 확장, protected bridge answer frontend routing, 독립 `/bridge` route는 SCN-004 freeze를 유지한 별도 단계에서 진행한다. SCN-001 연결은 `/api/v1/answer`와 `/api/v1/documents/draft` contract 변경 없이 answer-only 경로부터 고정한다.
 
 ### Before
 
@@ -104,7 +115,7 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - 근거 기반 설명
 - 다음 행동 안내
 - 필요 증빙 항목 제시
-- SCN-001은 Bridge가 만든 `after_query_seed`를 기존 answer query boundary로 전달
+- SCN-001은 Bridge safe summary를 displayed safe subset query로 변환해 answer path에 전달. raw `after_query_seed`는 answer query에 넣지 않음
 - SCN-001 문서 초안 생성은 Minimum MVP에 포함하지 않음
 - SCN-004 문서 초안 생성:
   - 고용노동청 임금체불 진정서 초안
@@ -116,8 +127,8 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - `before_review_jobs.user_id`, `bridge_runs.user_id`, `after_artifact_runs.user_id`는 Firebase uid / Google sub가 아니라 internal user_id 참조
 - SCN-001 protected bridge flow에서 `bridge_runs.user_id`는 required. `SCN-001-BRIDGE-DEMO` presentation preset과 SCN-004 public flow는 `bridge_runs`를 만들지 않음
 - Bridge handoff에는 raw 계약서 / OCR 전문 / full result artifact가 아닌 안전한 summary, 위험 태그, 법령 label 수준 정보만 사용
-- SCN-001용 `after_query_seed` 생성
-- After answer 입력 시 handoff summary를 query seed로 사용
+- SCN-001용 transient `after_query_seed` 생성 및 hash 저장
+- After answer 입력 시 handoff summary/displayed safe subset을 query로 사용
 - “계약 단계에서 예견 가능했던 위험” 섹션 출력
 
 ---
@@ -152,6 +163,7 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - backend Firebase ID token verification
 - Firebase uid as `provider_subject` 기반 user linkage
 - SCN-001 `Before -> Bridge -> After` answer-only 연결
+- SCN-001 protected bridge answer endpoint
 - 팀원 Before / Bridge 코드 확인 후 연결되는 route와 payload adapter
 
 ### 조건부 포함
@@ -159,7 +171,7 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - JSON 응답 구조 고정
 - cited_articles 검증
 - frontend QA에서 필요한 최소 polish
-- Before / Bridge contract 확인 후 SCN-001 frontend route 확장
+- SCN-004 freeze를 유지한 SCN-001 추가 frontend route/routing 확장
 - 인증 관련 변경이 필요한 경우 SCN-004 regression checklist 통과
 
 ### 후순위
@@ -209,7 +221,7 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - full production infra를 MVP 필수 조건으로 보는 것
 - raw 계약서 / OCR 전문 / full result artifact의 사용자 이력 기본 노출
 - artifact retention / access-control 정책 확정 및 운영화
-- 팀원 Before / Bridge code / schema / API contract 확인 없는 SCN-001 frontend 확장
+- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장 또는 protected bridge answer frontend routing
 - SCN-001 문서 타입의 독단적 확장 또는 SCN-004 draft contract와 혼합 구현
 - 현재 SCN-004 demo freeze 유지 중 `/bridge` frontend 본 구현 및 `/before` 추가 기능 확장
 
@@ -250,7 +262,8 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - 관련 법령 검색 가능
 - 다음 행동 안내 가능
 - SCN-001은 answer-only로 동작
-- Bridge가 만든 `after_query_seed`가 기존 `/api/v1/answer` query boundary로 전달 가능
+- Bridge가 만든 safe summary/displayed safe subset을 answer query boundary로 전달 가능
+- raw `after_query_seed`는 `/api/v1/answer.query`에 넣지 않고 displayed safe subset plus user question만 사용
 - SCN-004 문서 초안 생성 가능하며 로그인 없이 유지
 - 검색된 legal basis 밖 조문을 초안에 새로 만들지 않음
 
@@ -260,6 +273,7 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - After answer 입력에서 handoff summary / seed 사용 가능
 - 최소 연결 메시지 출력 가능
 - SCN-001용 `after_query_seed` 생성 가능
+- all-unchecked Bridge handoff도 sticky `bridge_handoff` origin을 유지하고 answer-only / draft-disabled로 동작
 - SCN-001에서 `Before -> Bridge -> After` 연결 demo 가능
 
 #### 공통
@@ -271,7 +285,9 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 - Google `sub`는 Direct Google OAuth Alternative/Fallback subject로만 분리
 - business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal user_id만 참조
 - SCN-001 protected bridge flow에서 `bridge_runs.user_id`는 required
-- raw `after_query_seed`는 persistent 저장하지 않고 `after_query_seed_hash`를 저장 후보/필수로 유지
+- raw `after_query_seed`는 persistent 저장하지 않고 `after_query_seed_hash`를 저장
+- `after_artifact_runs.source_bridge_run_id`는 single primary bridge_run_id로 저장
+- multi-bridge full provenance는 Post-MVP join table 후보
 - email은 nullable display/contact 후보이며 primary key가 아님
 - 이메일은 primary identifier로 사용하지 않으며 phone scope를 요청하지 않음
 - OAuth access token / refresh token 장기 저장 없음
@@ -305,9 +321,10 @@ MVP 범위 업데이트 기준일: `2026-04-22`
 8. Firebase Auth Google Sign-In 기반 최소 로그인
 9. Bearer Firebase ID token + backend Firebase ID token verification
 10. Firebase uid as `provider_subject` 기반 internal `user_id` 연결
-11. Phase 4: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
-12. Phase 5: Before review user linkage
-13. Phase 6: Bridge -> After answer-only handoff
-14. Phase 7: `after_artifact_runs` linkage
-15. Phase 8: SCN-004 regression preflight / manual rehearsal 유지
-16. SCN-001 전용 문서 초안 생성 여부를 Strong MVP / optional extension으로 별도 결정
+11. Phase 4 완료: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
+12. Phase 5 완료: Before review user linkage
+13. Phase 6A~6F 완료: Bridge -> After answer-only handoff
+14. Phase 7A~7B 완료: `after_artifact_runs` linkage plumbing + protected bridge answer endpoint
+15. protected bridge answer frontend routing / verification
+16. Phase 8: SCN-004 regression preflight / manual rehearsal 유지
+17. SCN-001 전용 문서 초안 생성 여부를 Strong MVP / optional extension으로 별도 결정

@@ -1,13 +1,13 @@
 # SCN-001 Before-Bridge-After Contract Draft
 
-기준일: `2026-04-22`
+기준일: `2026-04-24`
 
-이 문서는 현재 repo 코드에 포함된 Before / Bridge / After 구현과 mock / preset / fixture를 직접 조사해, `SCN-001` Before-Bridge-After 연결을 위한 `BeforeHandoffDTO` 및 `BridgeOutputDTO` 초안을 정리한다. 구현 지시서가 아니라 contract 고정용 draft이며, 2026-04-22 현재 Phase 0~3은 구현 완료, 다음 작업은 Phase 4 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction이다.
+이 문서는 현재 repo 코드에 포함된 Before / Bridge / After 구현과 mock / preset / fixture를 직접 조사해, `SCN-001` Before-Bridge-After 연결을 위한 `BeforeHandoffDTO` 및 `BridgeOutputDTO` contract를 정리한다. 구현 지시서가 아니라 contract 고정용 문서이며, 2026-04-24 현재 Phase 0~5, Phase 6A~6F, Phase 7A~7B가 구현 완료 상태다.
 
 ## 1. Purpose
 
 - 현재 코드 기준 `SCN-001` Before-Bridge-After 연결 초안 contract를 정리한다.
-- Phase 4 전에 `BeforeHandoffDTO`, `BridgeOutputDTO`, After handoff seed의 field boundary를 고정한다.
+- `BeforeHandoffDTO`, `BridgeOutputDTO`, After handoff seed의 field boundary를 고정한다.
 - `SCN-004` demo freeze를 깨지 않도록 `/api/v1/answer`와 `/api/v1/documents/draft` contract 변경 없이 연결 방식을 검토한다.
 - 원문 계약서, OCR 전문, 사용자 진술 전문, raw answer/draft payload를 handoff DTO에 넣지 않는 privacy-first 기준을 명시한다.
 
@@ -21,7 +21,7 @@
 | `frontend/CLAUDE.md` | frontend scope와 Web Storage 금지 | doc-only | raw `user_statement`, `answer_response`, `case_intake`, `draft_response` Web Storage 저장 금지 |
 | `docs/planning/15_scn001_account_auth_spec.md` | account/auth 최소 linkage 후보 | doc-only | Firebase uid as `provider_subject`, `BeforeHandoffDTO`, `bridge_runs`, `after_query_seed`, account linkage의 상위 기준 |
 | `docs/planning/17_firebase_auth_scn001_implementation_plan.md` | Firebase Auth MVP path 기준 | doc-only | Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase ID token verification을 MVP path로 고정. Direct Google OAuth는 Alternative/Fallback |
-| `docs/planning/19_scn001_auth_integration_status.md` | Phase 4 handoff/status checkpoint | doc-only | Phase 0~3 완료 증거와 Phase 4 entry criteria 정리 |
+| `docs/planning/19_scn001_auth_integration_status.md` | auth/linkage status checkpoint | doc-only | Phase 0~7B 완료 상태, Phase 6F evidence, Phase 7 protected endpoint 정리 |
 | `docs/product/before_flow.md` | Before 제품 흐름 | doc-only | Bridge로 넘길 최소 요약 후보를 설명 |
 | `docs/product/bridge_flow.md` | Bridge 제품 흐름 | doc-only | `/bridge` route 없음, Bridge는 후속 구현이라고 명시 |
 | `docs/planning/12_scenario_expansion_plan.md` | SCN-001 시나리오와 corpus 커버 | doc-only | SCN-001 Bridge narrative와 핵심 조문 후보 제공 |
@@ -39,9 +39,9 @@
 | `backend/app/before_stack/services/llm_client.py` | Vertex/Ollama client abstraction | implemented | Before content review provider. contract DTO 직접 노출 없음 |
 | `backend/app/before_stack/services/section_comparator.py` | standard section compare | implemented | `section_check` source |
 | `backend/app/before_stack/services/accessibility_*` | disability/accessibility recommendation | implemented | SCN-001 handoff에는 직접 포함하지 않음 |
-| `backend/app/models/before_review_job.py` | `before_review_jobs` ORM model | implemented | `job_id`, nullable `user_id`, `result JSONB`, `run_directory` linkage source. Runtime user linkage는 Phase 5 범위 |
+| `backend/app/models/before_review_job.py` | `before_review_jobs` ORM model | implemented | `job_id`, nullable `user_id`, `result JSONB`, `run_directory` linkage source. Runtime user linkage는 Phase 5 완료 |
 | `backend/app/models/user.py` | `users` ORM model | implemented | `auth_provider`, `provider_subject`, display fields, timestamps. Firebase uid maps through `provider_subject` |
-| `backend/app/models/bridge_run.py` | `bridge_runs` ORM model | implemented | Phase 1 schema implemented. Protected route/service는 Phase 4 범위 |
+| `backend/app/models/bridge_run.py` | `bridge_runs` ORM model | implemented | Phase 1 schema implemented. Protected route/service는 Phase 4 완료 |
 | `frontend/src/app/before/page.tsx` | Before route page | implemented | job polling, mock path, frontend consumed fields 확인 |
 | `frontend/src/lib/before-api.ts` | Before API adapter and fixture mapper | implemented | backend `user_explanation`을 flat frontend fields로 map |
 | `frontend/src/types/before.ts` | Before frontend type | implemented | frontend-consumed `BeforeReviewResult` shape |
@@ -58,8 +58,8 @@
 | `frontend/src/lib/scn004DraftEligibility.ts` | SCN-004 draft guard | implemented | SCN-001 answer-only 유지, SCN-004 draft guard 유지 |
 | `backend/app/schemas/answer.py` | backend answer schema | implemented | `/api/v1/answer` public contract |
 | `backend/app/schemas/document_draft.py` | backend draft schema | implemented | `/api/v1/documents/draft` public contract. enum에는 SCN-001 후보가 있으나 frontend는 SCN-004만 전송 |
-| `backend/app/services/after_artifact_store.py` | answer/draft artifact persistence | implemented | `query_hash`, local artifacts. user/bridge linkage 없음 |
-| `backend/app/models/after_artifact_run.py` | `after_artifact_runs` ORM model | implemented | `run_id`, nullable `user_id`, nullable `source_bridge_run_id`, `stage`, `query_hash`, `document_type`, `artifact_root`. Runtime linkage는 Phase 7 범위 |
+| `backend/app/services/after_artifact_store.py` | answer/draft artifact persistence | implemented | `query_hash`, local artifacts, optional `AfterArtifactLinkage` metadata. Public `/api/v1/answer` persists null linkage by default; protected Bridge answer passes `user_id` / `source_bridge_run_id` |
+| `backend/app/models/after_artifact_run.py` | `after_artifact_runs` ORM model | implemented | `run_id`, nullable `user_id`, nullable `source_bridge_run_id`, `stage`, `query_hash`, `document_type`, `artifact_root`. Optional linkage plumbing은 Phase 7A 완료, protected bridge answer linkage는 Phase 7B 완료 |
 
 ## 3. Before Current Output Contract
 
@@ -130,7 +130,8 @@ Notes:
 
 ## 5. Bridge Current Code Status
 
-- Phase 4 protected Bridge route/API/service: `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` patch 기준. 독립 `/bridge` UI는 후속 범위다.
+- Phase 4 protected Bridge route/API/service 완료: `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`. 독립 `/bridge` UI는 후속 범위다.
+- Phase 7B protected Bridge answer endpoint 완료: `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`.
 - frontend route: 없음. `frontend/src/app`에는 `/before`, `/after`만 있고 `/bridge` route는 없다.
 - `SCN-001-BRIDGE-DEMO` preset: 있음. `frontend/src/lib/scenarioPresets.ts`에 `scenarioId: "SCN-001"`, `recommendedTopK: 10`, `supportsDraft: false`로 정의되어 있다.
 - `scenarioPresetAnswers.json` Bridge-like fixed answer: `SCN-001-BRIDGE-DEMO` key의 fixed fixture는 일반 `AnswerResponse` shape다.
@@ -264,7 +265,6 @@ JSON-like shape:
 ```json
 {
   "bridge_run_id": "string",
-  "user_id": "string",
   "before_review_job_id": "string | null",
   "scenario_id": "SCN-001",
   "source_scenario": "before_review | preset | mock",
@@ -297,7 +297,7 @@ JSON-like shape:
 | field | source | required | note |
 |---|---|---:|---|
 | `bridge_run_id` | new bridge adapter/service | Yes | DB row id or generated in-memory id |
-| `user_id` | auth linkage | Yes for SCN-001 protected bridge flow | Firebase uid as `provider_subject`에서 resolve한 internal `users.id`. Firebase uid / Google sub가 아님 |
+| `user_id` | auth linkage | Response field 아님 | DB `bridge_runs.user_id`에는 internal `users.id`를 저장하지만 `BridgeRunResponse`에는 노출하지 않는다. Firebase uid / Google sub가 아님 |
 | `before_review_job_id` | `BeforeHandoffDTO.before_review_job_id` | Yes for Phase 4 protected bridge flow | mock/preset path는 bridge_runs 미생성 answer-only |
 | `scenario_id` | `BeforeHandoffDTO.scenario_id` | Yes | first target `SCN-001` |
 | `source_scenario` | server-side bridge service | Yes | Phase 4 protected flow stores fixed `before_review`; preset/mock paths do not create bridge rows |
@@ -308,7 +308,7 @@ JSON-like shape:
 | `detected_issues` | `BeforeHandoffDTO.detected_issues` | No | summarized only |
 | `law_refs` | `BeforeHandoffDTO.law_refs` | No | label-level only |
 | `recommended_next_actions` | `BeforeHandoffDTO.recommended_next_actions` | No | next-step guide |
-| `after_query_seed` | bridge adapter generated | Transport TBD | raw value는 persistent 저장 금지. Phase 6 전에 response direct handoff 또는 short-lived server-side handoff 방식 결정 |
+| `after_query_seed` | bridge adapter generated | transient response only | raw value는 persistent 저장 금지. Phase 6 구현은 response direct handoff -> React memory state를 사용하며, query builder는 이 raw seed를 사용하지 않는다. |
 | `after_query_seed_hash` | hash of seed | Yes | raw seed를 저장하지 않는 path의 추적 / 중복 확인용 |
 | `artifact_refs` | Before/Bridge internal ids | No | internal only |
 | `created_at` | adapter/service time | Yes | timestamp |
@@ -317,14 +317,14 @@ JSON-like shape:
 
 - Bridge는 retrieval 결과를 만들지 않는다.
 - `grounded_context_ids`와 `retrieved_chunks`는 Bridge output에 넣지 않는다. After answer에서 `/api/v1/answer`가 새로 생성한다.
-- raw `after_query_seed` persistent 저장은 MVP에서 금지한다. exact handoff transport는 Phase 6 전에 결정하며, 우선 short-lived handoff 또는 response direct handoff를 검토한다.
+- raw `after_query_seed` persistent 저장은 MVP에서 금지한다. Phase 6 구현은 transient response direct handoff를 React memory state에 담되, `/api/v1/answer.query`에는 넣지 않는다.
 - `SCN-001`은 우선 answer-only로 둔다. SCN-001 document draft는 별도 후속 결정 전까지 열지 않는다.
 
 ## 9. Bridge -> After Mapping
 
 | BridgeOutputDTO field | After target | mapping rule |
 |---|---|---|
-| `after_query_seed` | `/after` textarea initial value or `/api/v1/answer` `query` | query seed로만 전달 |
+| `after_query_seed` | React memory handoff field | transient response field only. `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않음 |
 | `preset_id` | `selected_preset_id` | presentation path는 `SCN-001-BRIDGE-DEMO` 후보 |
 | `scenario_id` | preset metadata / analytics 후보 | current frontend `CaseIntake.scenario_id`에는 반영하지 않음 |
 | `law_refs` | query seed text enrichment | label-level 법령명만 사용 |
@@ -343,7 +343,9 @@ Fixed answer path:
 
 Live answer path:
 
-- Bridge seed가 preset query와 달라진 경우 또는 non-preset seed로 전달되는 경우, `/api/v1/answer`에 `{ query, top_k, ef_search }`만 보낸다.
+- Real Bridge handoff에서는 displayed safe subset과 사용자 질문만 조합해 answer query를 만든다.
+- raw `after_query_seed`는 `/api/v1/answer.query`에 넣지 않는다.
+- 현재 Phase 6 frontend submit routing은 public `/api/v1/answer`를 사용한다. Phase 7B protected bridge answer endpoint는 backend에 구현되어 있고 frontend protected routing은 별도 후보 작업이다.
 - preset modified path는 `top_k=10`, `ef_search=100`을 사용한다.
 - free input path는 `top_k=5`, `ef_search=100`을 사용한다.
 
@@ -351,6 +353,7 @@ Contract boundaries:
 
 - `/api/v1/answer` contract 변경 없음.
 - `/api/v1/documents/draft` contract 변경 없음.
+- Phase 7B protected bridge answer endpoint는 public `/api/v1/answer`를 확장하지 않고 `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`를 사용한다.
 - `BridgeOutputDTO`는 `/api/v1/documents/draft`의 `legal_basis`를 직접 만들지 않는다.
 - SCN-004 draft guard는 유지한다.
 - `SCN-004-DEMO-FREEZE`와 SCN-004 eligible free input만 draft flow로 간다.
@@ -363,8 +366,8 @@ Contract boundaries:
 - Google `sub`는 Direct Google OAuth Alternative/Fallback path에서의 subject로 분리한다.
 - MVP path의 `users.auth_provider` 값은 `firebase_google`이다. multi-provider / Future 확장에서는 provider 값 체계가 확장될 수 있다.
 - business table에는 Firebase uid / Google sub / email을 직접 저장하지 않고 internal `users.id`만 참조한다.
-- `before_review_jobs.user_id` nullable column은 Phase 1에서 구현 완료됐다. Phase 5에서는 로그인 사용자가 Before review/job을 실행할 때 이 column을 internal `users.id`로 채우는 runtime linkage를 구현한다.
-- Phase 5 runtime linkage는 `/api/v1/before/review/jobs` job creation에만 적용한다. no `Authorization` request는 기존처럼 허용하고 `before_review_jobs.user_id = null`로 저장한다. valid `Authorization: Bearer <Firebase ID token>` request는 Firebase token verification 후 internal `users.id`를 저장한다. invalid or malformed `Authorization`은 401이며 anonymous로 조용히 처리하지 않는다.
+- `before_review_jobs.user_id` nullable column은 Phase 1에서 구현 완료됐다. Phase 5 runtime linkage도 완료됐으며, 로그인 사용자가 Before review/job을 실행할 때 이 column을 internal `users.id`로 채운다.
+- Phase 5 runtime linkage는 `/api/v1/before/review/jobs` job creation에 적용한다. no `Authorization` request는 기존처럼 허용하고 `before_review_jobs.user_id = null`로 저장한다. valid `Authorization: Bearer <Firebase ID token>` request는 Firebase token verification 후 internal `users.id`를 저장한다. invalid or malformed `Authorization`은 401이며 anonymous로 조용히 처리하지 않는다.
 - Phase 4 bridge POST는 이미 linked 된 Before job만 bridge run으로 변환한다. `before_review_jobs.user_id = null` orphan job은 claim/link하지 않고 404로 reject한다. 로그인 후 생성한 Before job만 Bridge 연결 대상이다.
 - 비로그인 Bridge 저장/연결은 불허한다. `/api/v1/scn001/bridge-runs`는 Firebase Bearer auth를 요구하고, current internal user와 linked completed Before job owner가 일치해야 한다.
 - anonymous/orphan Before job을 나중에 계정에 붙이는 retroactive linking은 Post-MVP이며 현재 구현하지 않는다.
@@ -373,6 +376,9 @@ Contract boundaries:
 - `SCN-001-BRIDGE-DEMO` presentation preset은 `bridge_runs`를 만들지 않는 answer-only path다. SCN-004 public/login-free flow도 `bridge_runs`를 만들지 않는다.
 - `after_artifact_runs.user_id`와 `after_artifact_runs.source_bridge_run_id` nullable column은 Phase 1에서 구현 완료됐다. `after_artifact_runs.user_id`는 internal `users.id` 참조다.
 - 현재 `after_artifact_runs` implemented fields는 `run_id`, `user_id`, `source_bridge_run_id`, `stage`, `status`, `query_hash`, `document_type`, `artifact_root`, `error`, timestamps다.
+- Phase 7A는 optional `AfterArtifactLinkage` plumbing을 추가했다. Public `/api/v1/answer`는 linkage 없이 호출되어 `user_id = null`, `source_bridge_run_id = null`을 유지한다.
+- Phase 7B protected bridge answer endpoint는 `after_artifact_runs.user_id = current_user.id`, `source_bridge_run_id = bridge_run_id`를 저장한다.
+- MVP provenance는 single primary `source_bridge_run_id`만 저장한다. multi-bridge full provenance는 Post-MVP join table 후보로 둔다.
 - 현재 `after_artifact_store.py`는 answer/draft artifact에 raw `user_statement.txt`와 request/response JSON을 저장한다. 계정 이력 UI에 raw artifact를 기본 노출하면 안 된다.
 - raw artifact 계정 이력은 기본 노출 금지이며, short summary / `query_hash` / internal artifact refs 중심으로 설계해야 한다.
 - Firebase Auth 도입 전 생성된 anonymous artifact는 MVP에서 orphan 상태로 유지한다. retroactive linking은 Post-MVP다.
@@ -404,7 +410,7 @@ Contract boundaries:
 - mock/preset path에서 backend full fields가 없을 때 `scenario_tags`, `risk_summary`, `law_refs`를 어느 수준까지 infer할지 결정 필요.
 - `law_refs` 정규화 방식: full citation label 유지 vs 법령명+조문번호 label로 축약.
 - SCN-001 protected Bridge는 backend route + service 기준으로 구현한다. 독립 `/bridge` UI 또는 frontend context adapter는 후속 범위로 둔다.
-- `after_query_seed` exact handoff transport: response payload direct handoff, short-lived server-side handoff id, URL param 사용 금지/허용 범위. raw persistent 저장은 금지. Phase 6 전 결정한다.
+- `after_query_seed` exact handoff transport: Phase 6 implementation uses response direct handoff to React memory state. It remains raw persistent storage forbidden and is not placed into answer query.
 - SCN-001 document draft 후속 여부: 현재는 answer-only. `workplace_change_reason_summary` 등 draft type 활성화는 별도 review 필요.
 - 계정 연결 동의 시점: Before review 전, Bridge 생성 전, After 결과 저장 전 중 어디에서 받을지 결정 필요.
 - `bridge_runs.user_id` required, `auth_provider = "firebase_google"`, raw `after_query_seed` persistent 저장 금지는 `docs/planning/18_scn001_firebase_auth_phase0_decisions.md`에서 결정 완료.
@@ -415,8 +421,8 @@ Contract boundaries:
 
 ## 13. Recommended Next Steps
 
-1. Phase 4: linked completed Before job만 받는 `POST /api/v1/scn001/bridge-runs`와 ownership-checked `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` protected endpoint 구현
-2. `BeforeHandoffDTO` extraction rules를 이 문서의 DTO boundary에 맞춰 구현
-3. `BridgeOutputDTO` response shape를 이 문서와 맞춘다.
-4. `bridge_runs` existing schema 사용: `user_id` required, `after_query_seed_hash` 저장, raw `after_query_seed` persistent 저장 금지
+1. Phase 4/5/6A~6F와 Phase 7A~7B 구현 상태는 `docs/planning/19_scn001_auth_integration_status.md`를 기준으로 확인한다.
+2. Protected bridge answer frontend routing을 진행할 경우 `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`를 사용하고 public `/api/v1/answer` contract를 확장하지 않는다.
+3. Bridge-origin all-unchecked submission은 sticky `answer_origin = "bridge_handoff"`를 유지하고 answer-only / draft disabled를 유지한다.
+4. raw `after_query_seed` persistent 저장 금지와 answer query 제외 원칙을 유지한다.
 5. SCN-004 login-free regression checklist 유지

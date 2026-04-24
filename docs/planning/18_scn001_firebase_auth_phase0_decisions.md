@@ -1,13 +1,13 @@
 # SCN-001 Firebase Auth Phase 0 Decisions
 
-기준일: `2026-04-22`
+기준일: `2026-04-24`
 
 ## 1. Purpose
 
 - 이 문서는 Firebase Auth + SCN-001 Before-Bridge-After 연결 구현 전 Phase 0 결정 문서다.
 - `docs/planning/17_firebase_auth_scn001_implementation_plan.md`의 Open Questions를 Phase 1 구현 전에 판단 가능한 수준으로 구체화한다.
 - 코드 구현 문서가 아니며, 이 문서 작성만으로 Firebase/Auth/DB/Bridge 구현이 완료된 것이 아니다.
-- 2026-04-22 현재 Phase 0~3은 별도 커밋으로 완료됐다. 이 문서는 Phase 4 착수 전 결정 상태를 확인하는 baseline으로 유지한다.
+- 2026-04-24 현재 Phase 0~5, Phase 6A~6F, Phase 7A~7B는 별도 커밋으로 완료됐다. 이 문서는 auth/linkage 결정 baseline으로 유지한다.
 - 확정 가능한 항목은 `Decision`, 구현 전 값 또는 후속 설계가 더 필요한 항목은 `TBD`로 분리한다.
 - SCN-004 `/after` flow, `/api/v1/answer`, `/api/v1/documents/draft` public contract와 demo freeze 보호를 우선한다.
 
@@ -22,11 +22,11 @@
 | 5. Firebase Admin SDK credential strategy | Local은 ADC 우선, ignored service account path fallback. Cloud Run은 service account identity | Decided / TBD | Phase 2 | 실제 credential provisioning은 Blocking Before Phase 2 |
 | 6. Firebase Auth persistence mode | MVP는 `inMemoryPersistence` 사용 | Decided | Phase 3 | Phase 3 구현 결과와 일치. Firebase auth state / token을 browser Web Storage에 남기지 않음 |
 | 7. token refresh strategy | protected SCN-001 API 호출 직전 `getIdToken()`, 401 시 forced refresh 1회 | Decided | Phase 3 | interval polling 금지, token 장기 app state 저장 금지 |
-| 8. SCN-001 protected endpoints | `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` | Decided | Phase 4 | `GET /api/v1/scn001/runs`는 optional |
+| 8. SCN-001 protected endpoints | `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`, `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` | Decided | Phase 4 / Phase 7B | `GET /api/v1/scn001/runs`는 optional |
 | 9. `/api/v1/auth/me` path and bearer policy | `GET /api/v1/auth/me`, missing token은 `{ logged_in: false }`, invalid token은 401 | Decided | Phase 2 | Firebase uid / provider_subject는 response에 노출하지 않음 |
 | 10. CORS Authorization header allowlist | MVP Bearer path는 `Authorization` header 허용 필요, `allow_credentials=True` 필수 아님 | Decided | Phase 2 | SCN-004 public preflight regression check 필수 |
 | 11. bridge_runs.user_id required vs nullable | MVP protected `bridge_runs.user_id`는 required | Decided | Phase 1 / Phase 4 | `SCN-001-BRIDGE-DEMO`는 bridge_runs 미생성 answer-only |
-| 12. after_query_seed storage strategy | raw seed persistent 저장 금지. `after_query_seed_hash` + safe summary 중심 | Decided / TBD | Phase 1 / Phase 4 / Phase 6 | exact handoff transport는 Phase 6 전 TBD |
+| 12. after_query_seed storage strategy | raw seed persistent 저장 금지. `after_query_seed_hash` + safe summary 중심. Phase 6 uses transient response direct handoff to React memory state and excludes raw seed from answer query | Decided | Phase 1 / Phase 4 / Phase 6 | raw seed는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않음 |
 | 13. anonymous artifact handling | 기존 anonymous artifact는 orphan 유지 | Decided | Phase 5+ | Phase 4 bridge POST는 null `before_review_jobs.user_id` orphan job을 reject. retroactive linking은 Post-MVP |
 | 14. artifact retention/deletion | raw artifact는 민감 데이터로 취급. retention duration/deletion workflow는 TBD | TBD | Phase 5+ | 최소 노출 정책은 지금 적용, 운영 삭제 정책은 후속 |
 | 15. Bridge implementation location | protected flow는 backend route + service | Decided | Phase 4 | 독립 `/bridge` UI route는 후속 |
@@ -168,6 +168,7 @@ MVP protected:
 |---|---|---|---|
 | `POST` | `/api/v1/scn001/bridge-runs` | Bearer Firebase ID token required | linked Before job id에서 `BeforeHandoffDTO`를 추출해 `BridgeOutputDTO` 생성 및 저장 |
 | `GET` | `/api/v1/scn001/bridge-runs/{bridge_run_id}` | Bearer Firebase ID token required | bridge run 조회, internal user_id ownership 확인 |
+| `POST` | `/api/v1/scn001/bridge-runs/{bridge_run_id}/answer` | Bearer Firebase ID token required | Bridge-origin linked answer 생성, `AnswerResponse`-compatible response, `after_artifact_runs.user_id/source_bridge_run_id` linkage |
 
 Optional:
 
@@ -238,19 +239,19 @@ Public 유지:
 ### D-012. after_query_seed Storage Strategy
 
 - Decision: MVP에서는 raw `after_query_seed`를 DB에 persistent 저장하지 않는다.
-- Status: Decided for persistence, TBD for exact handoff transport
+- Status: Decided for persistence and handoff transport
 - Blocks: Phase 1 / Phase 4 / Phase 6
 - Rationale:
   - `after_query_seed`는 사용자 사실관계와 Before 결과 요약을 포함할 수 있어 민감 데이터로 취급해야 한다.
   - Bridge DB row에는 safe summary, normalized risk tags, label-level `law_refs`, `after_query_seed_hash` 중심으로 저장한다.
   - 중복 추적이나 debugging에는 hash와 internal ids를 우선 사용한다.
 - Implementation Notes:
-  - `bridge_runs`에는 `after_query_seed_hash`를 저장한다.
-  - raw seed 전달은 short-lived response payload 또는 server-side temporary handoff 중 하나로 Phase 6 전에 결정한다.
-  - frontend Web Storage에 raw seed, BeforeHandoffDTO, BridgeOutputDTO 전체를 저장하지 않는다.
-  - `/api/v1/answer` request는 기존 `{ query, top_k, ef_search }` contract를 유지한다.
-- Remaining TBD:
-  - `/after` initial textarea로 seed를 전달할 구체 방식: response payload direct handoff, short-lived server-side handoff id, URL param 일부 사용 금지/허용 범위.
+- `bridge_runs`에는 `after_query_seed_hash`를 저장한다.
+- raw seed 전달은 Phase 6에서 transient response payload -> React memory state 방식으로 구현됐다.
+- frontend Web Storage에 raw seed, BeforeHandoffDTO, BridgeOutputDTO 전체를 저장하지 않는다.
+- `/api/v1/answer` request는 기존 `{ query, top_k, ef_search }` contract를 유지한다.
+- raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않는다.
+- Bridge-origin answer query는 displayed safe subset plus user question만 사용한다.
 
 ### D-013. Anonymous Artifact Handling
 
@@ -326,9 +327,9 @@ Public 유지:
 | Phase 3 Frontend auth | D-004, D-006, D-007 | Completed | Firebase Web SDK, `AuthContext`, Login UI, backend verification UI, `inMemoryPersistence` implemented |
 | Phase 4 Protected bridge-runs endpoint + `BeforeHandoffDTO` extraction | D-008, D-011, D-012, D-015 | Completed | protected bridge-runs endpoint and `BeforeHandoffDTO` extraction implemented. Only linked completed Before jobs can create bridge_runs |
 | Phase 5 Before review user linkage | D-013, D-014 | Completed | `/api/v1/before/review/jobs` uses optional auth: missing auth stores `user_id = null`, valid Firebase auth stores internal `users.id`, invalid auth returns 401 |
-| Phase 6 Bridge -> After answer-only handoff | D-012 | Next | raw seed persistent 저장 금지. exact handoff transport TBD |
-| Phase 7 `after_artifact_runs` linkage | D-013, D-014 | Later | nullable `user_id` / `source_bridge_run_id` exists; runtime linkage remains |
-| Phase 8 Regression / demo preflight / manual rehearsal | all SCN-004 guards | Later | no code change phase |
+| Phase 6 Bridge -> After answer-only handoff | D-012 | Completed | Phase 6A~6F implemented. raw seed persistent 저장 금지, displayed safe subset query, sticky `bridge_handoff`, live subset PASS with retry |
+| Phase 7 `after_artifact_runs` linkage | D-013, D-014 | Phase 7A/7B Completed | optional linkage plumbing and protected bridge answer endpoint implemented. single primary `source_bridge_run_id` MVP |
+| Phase 8 Regression / demo preflight / manual rehearsal | all SCN-004 guards | Later / as-needed | no code change phase |
 | Post-MVP Artifact/account history | D-013, D-014 | No for raw artifact exposure | orphan 유지 결정은 완료. retroactive/orphan linking, retention/deletion/access-control 상세는 Post-MVP |
 | Strong MVP SCN-001 draft | D-016 | No | Minimum MVP 범위 밖. SCN-001 answer-only 안정화 후 별도 review |
 
@@ -363,10 +364,12 @@ Phase 5 policy note:
 | 실제 Firebase project id와 web app config 값 | local env/secret으로만 관리. 실제 값은 문서에 기록하지 않음 | Firebase/GCP project owner | ongoing local/prod setup |
 | local Firebase Admin credential provisioning detail | D-005 strategy는 결정됨. 개발자별 실제 ADC 또는 ignored credential path는 ops 문서 기준 | Backend owner / GCP project owner | ongoing local/prod setup |
 | `BeforeHandoffDTO` extraction source | backend full result vs frontend consumed fields의 안정 contract 확정 필요 | Before/Bridge contract owner | Phase 4 |
-| `after_query_seed` exact handoff transport | raw persistent 저장 금지는 결정됐지만 response payload vs temporary handoff id 방식은 UX/route 설계 필요 | Frontend + Backend | Phase 6 |
+| protected bridge answer frontend routing | backend Phase 7B endpoint exists; frontend submit routing remains separate candidate | Frontend + Backend | next candidate |
+| provider_timeout retry/backoff | Phase 6F live subset passed with retry; residual transient runtime risk remains | Backend / Ops | runtime hardening |
 | artifact retention duration | 민감 raw artifact 보관 기간 정책은 제품/운영 결정 필요 | Product / Ops / Backend | Phase 5+ |
 | deletion workflow | 계정 삭제, artifact 삭제, orphan 만료 삭제 구현 범위 미확정 | Product / Ops | Post-MVP or before account history |
 | account linkage consent timing | MVP는 로그인 상태에서 생성한 Before job만 연결하는 implicit login-gated consent로 수용. retroactive/orphan linking consent UX는 별도 결정 필요 | Product / UX | Post-MVP before retroactive linking |
+| multi-bridge full provenance | MVP는 single primary `source_bridge_run_id`; full provenance는 join table 후보 | Backend / Product | Post-MVP |
 | `law_refs` normalization rule | full citation label vs 법령명+조문번호 축약 기준 필요 | Backend / Legal content owner | Phase 4 / Phase 5 |
 | optional `GET /api/v1/scn001/runs` | account history가 Minimum MVP인지 미확정 | Product / Backend | Non-blocking |
 | GCS artifact access-control | signed URL vs backend auth proxy는 production storage 전환 설계 필요 | Ops / Backend | Post-MVP |
@@ -376,8 +379,8 @@ Phase 5 policy note:
 
 ## 7. Recommended Next Step
 
-1. `docs/planning/19_scn001_auth_integration_status.md`를 Phase 5 auth/linkage checkpoint로 읽는다.
-2. Phase 6에서 Bridge -> After answer-only handoff를 구현한다.
-3. `BeforeHandoffDTO` / Bridge output handoff는 raw OCR / raw contract / raw user_statement / raw `after_query_seed` persistent 저장 없이 구현한다.
+1. `docs/planning/19_scn001_auth_integration_status.md`를 current auth/linkage checkpoint로 읽는다.
+2. Protected bridge answer frontend routing을 진행할 경우 separate `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`를 사용하고 public `/api/v1/answer`를 확장하지 않는다.
+3. Bridge handoff는 raw OCR / raw contract / raw user_statement / raw `after_query_seed` persistent 저장 없이 유지한다.
 4. SCN-004 `/after`, `/api/v1/answer`, `/api/v1/documents/draft` login-free/public contract를 유지한다.
-5. Phase 7은 `after_artifact_runs` linkage로 유지한다.
+5. Multi-bridge full provenance와 SCN-001 document draft는 Post-MVP / 별도 review로 유지한다.
