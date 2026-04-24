@@ -26,7 +26,10 @@ from backend.app.services.answer_generation import (
     GroundedAnswerGenerationError,
     answer_question,
 )
-from backend.app.services.after_artifact_store import persist_answer_artifacts
+from backend.app.services.after_artifact_store import (
+    AfterArtifactLinkage,
+    persist_answer_artifacts,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["answer"])
 logger = logging.getLogger(__name__)
@@ -58,8 +61,12 @@ def grounded_generation_http_response(
     )
 
 
-@router.post("/answer", response_model=AnswerResponse)
-def answer(payload: AnswerRequest) -> AnswerResponse:
+def generate_answer_response(
+    payload: AnswerRequest,
+    *,
+    linkage: AfterArtifactLinkage | None = None,
+    fail_on_artifact_error: bool = False,
+) -> AnswerResponse:
     query = payload.query.strip()
     if not query:
         raise HTTPException(
@@ -191,12 +198,22 @@ def answer(payload: AnswerRequest) -> AnswerResponse:
     )
 
     try:
-        persist_answer_artifacts(payload, response_payload)
-    except Exception:
+        persist_answer_artifacts(payload, response_payload, linkage=linkage)
+    except Exception as exc:
         logger.exception(
             "answer.artifact_persist_failed query_hash=%s latency_ms=%d",
             query_digest,
             int((time.perf_counter() - started_at) * 1000),
         )
+        if fail_on_artifact_error:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="answer artifact store is currently unavailable",
+            ) from exc
 
     return response_payload
+
+
+@router.post("/answer", response_model=AnswerResponse)
+def answer(payload: AnswerRequest) -> AnswerResponse:
+    return generate_answer_response(payload)

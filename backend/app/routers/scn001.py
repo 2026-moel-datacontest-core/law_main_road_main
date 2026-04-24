@@ -8,8 +8,12 @@ from sqlalchemy.orm import Session
 
 from backend.app.db import get_db
 from backend.app.dependencies.auth import require_current_user
+from backend.app.models.bridge_run import BridgeRun
 from backend.app.models.user import User
+from backend.app.routers.answer import generate_answer_response
+from backend.app.schemas.answer import AnswerRequest, AnswerResponse
 from backend.app.schemas.bridge import CreateBridgeRunRequest, BridgeRunResponse
+from backend.app.services.after_artifact_store import AfterArtifactLinkage
 from backend.app.services.scn001_bridge_service import (
     BeforeHandoffExtractionError,
     BeforeReviewJobForbiddenError,
@@ -65,6 +69,41 @@ def create_bridge_run(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="bridge run store is unavailable",
         ) from exc
+
+
+@router.post(
+    "/bridge-runs/{bridge_run_id}/answer",
+    response_model=AnswerResponse,
+)
+def answer_from_bridge_run(
+    bridge_run_id: str,
+    payload: AnswerRequest,
+    current_user: Annotated[User, Depends(require_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> AnswerResponse:
+    try:
+        bridge_run = db.get(BridgeRun, bridge_run_id)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="bridge run store is unavailable",
+        ) from exc
+
+    if bridge_run is None or bridge_run.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="bridge run not found",
+        )
+
+    return generate_answer_response(
+        payload,
+        linkage=AfterArtifactLinkage(
+            user_id=current_user.id,
+            source_bridge_run_id=bridge_run.bridge_run_id,
+        ),
+        fail_on_artifact_error=True,
+    )
 
 
 @router.get(
