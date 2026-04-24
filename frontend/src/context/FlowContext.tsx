@@ -5,10 +5,13 @@ import {
   type Dispatch,
   type ReactNode,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
+  useRef,
 } from 'react';
 
+import { useAuth } from '@/context/AuthContext';
 import type { FlowAction, KLaborShieldFlowState } from '@/types/flow';
 import type { BridgeHandoffItem, BridgeHandoffState } from '@/types/bridge-handoff';
 
@@ -193,7 +196,12 @@ export function FlowProvider({ children }: FlowProviderProps) {
   const [state, dispatch] = useReducer(flowReducer, initialFlowState);
   const value = useMemo(() => ({ state, dispatch }), [state]);
 
-  return <FlowContext.Provider value={value}>{children}</FlowContext.Provider>;
+  return (
+    <FlowContext.Provider value={value}>
+      <LogoutFlowResetter dispatch={dispatch} />
+      {children}
+    </FlowContext.Provider>
+  );
 }
 
 export function useFlow() {
@@ -204,4 +212,29 @@ export function useFlow() {
   }
 
   return context;
+}
+
+interface LogoutFlowResetterProps {
+  dispatch: Dispatch<FlowAction>;
+}
+
+function LogoutFlowResetter({ dispatch }: LogoutFlowResetterProps) {
+  const { firebaseUser, isInitializing } = useAuth();
+  const wasSignedInRef = useRef(false);
+
+  useEffect(() => {
+    if (isInitializing) {
+      return;
+    }
+
+    const isSignedIn = firebaseUser !== null;
+
+    if (wasSignedInRef.current && !isSignedIn) {
+      dispatch({ type: 'RESET' });
+    }
+
+    wasSignedInRef.current = isSignedIn;
+  }, [dispatch, firebaseUser, isInitializing]);
+
+  return null;
 }
