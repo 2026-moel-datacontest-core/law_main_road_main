@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
@@ -24,8 +25,15 @@ import {
 } from 'lucide-react';
 
 import { LoginButton } from '@/components/auth/LoginButton';
+import { useAuth } from '@/context/AuthContext';
 
 import styles from './page.module.css';
+
+const BEFORE_GATE_LOGIN_MESSAGE =
+  '계약서 분석은 Google 로그인 후 사용할 수 있습니다. 먼저 로그인해 주세요.';
+const BEFORE_GATE_AUTH_CHECKING_MESSAGE = '로그인 상태를 확인하는 중입니다.';
+const BEFORE_GATE_FIREBASE_CONFIG_MESSAGE =
+  '계약서 분석을 사용하려면 Firebase public env 설정이 필요합니다.';
 
 const news = [
   {
@@ -104,7 +112,31 @@ const solutions = [
   { title: '연차 유급 휴가', subtitle: '연차 발생 기준 및 사용 권리 확인', icon: Cloud, color: 'teal' },
 ];
 
-function Navbar() {
+type BeforeGateHandler = () => void;
+
+interface BeforeGateButtonProps {
+  children: ReactNode;
+  className?: string;
+  onBeforeGate: BeforeGateHandler;
+}
+
+function BeforeGateButton({ children, className, onBeforeGate }: BeforeGateButtonProps) {
+  return (
+    <button
+      type="button"
+      className={[styles.beforeGateAction, className].filter(Boolean).join(' ')}
+      onClick={onBeforeGate}
+    >
+      {children}
+    </button>
+  );
+}
+
+interface NavbarProps {
+  onBeforeGate: BeforeGateHandler;
+}
+
+function Navbar({ onBeforeGate }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -134,9 +166,9 @@ function Navbar() {
         </div>
 
         <div className={styles.navActions}>
-          <Link href="/before" className={styles.loginButton}>
+          <BeforeGateButton className={styles.loginButton} onBeforeGate={onBeforeGate}>
             Before
-          </Link>
+          </BeforeGateButton>
           <Link href="/after" className={styles.consoleButton}>
             After
           </Link>
@@ -158,7 +190,14 @@ function Navbar() {
             <a href="#intro">소개</a>
             <a href="#services">서비스</a>
             <a href="#solutions">솔루션</a>
-            <Link href="/before">계약서 분석 시작</Link>
+            <BeforeGateButton
+              onBeforeGate={() => {
+                setIsMenuOpen(false);
+                onBeforeGate();
+              }}
+            >
+              계약서 분석 시작
+            </BeforeGateButton>
             <Link href="/after">진정서 작성 시작</Link>
           </motion.div>
         ) : null}
@@ -167,7 +206,11 @@ function Navbar() {
   );
 }
 
-function Hero() {
+interface HeroProps {
+  onBeforeGate: BeforeGateHandler;
+}
+
+function Hero({ onBeforeGate }: HeroProps) {
   return (
     <section id="intro" className={styles.hero}>
       <div className={styles.heroOverlay} />
@@ -190,9 +233,9 @@ function Hero() {
             계약서 분석부터 진정서 작성까지, 근로자의 모든 순간을 함께합니다.
           </p>
           <div className={styles.heroButtons}>
-            <Link href="/before" className={styles.heroPrimary}>
+            <BeforeGateButton className={styles.heroPrimary} onBeforeGate={onBeforeGate}>
               계약서 분석 시작
-            </Link>
+            </BeforeGateButton>
             <Link href="/after" className={styles.heroSecondary}>
               진정서 작성 시작
             </Link>
@@ -207,6 +250,12 @@ function Hero() {
       </div>
     </section>
   );
+}
+
+interface AccountReadinessSectionProps {
+  noticeMessage: string | null;
+  onFocusLoginSection: () => void;
+  sectionRef: RefObject<HTMLElement | null>;
 }
 
 function NewsSection() {
@@ -243,17 +292,45 @@ function NewsSection() {
   );
 }
 
-function AccountReadinessSection() {
+function AccountReadinessSection({
+  noticeMessage,
+  onFocusLoginSection,
+  sectionRef,
+}: AccountReadinessSectionProps) {
   return (
-    <section className={styles.accountSection} aria-label="SCN-001 계정 연결 준비">
+    <section
+      ref={sectionRef}
+      className={styles.accountSection}
+      aria-label="SCN-001 계정 연결 준비"
+      tabIndex={-1}
+    >
       <div className={styles.container}>
+        {noticeMessage ? (
+          <div className={styles.beforeGateNotice} role="alert">
+            <div className={styles.beforeGateNoticeContent}>
+              <AlertCircle className={styles.beforeGateNoticeIcon} size={20} aria-hidden="true" />
+              <p>{noticeMessage}</p>
+            </div>
+            <button
+              className={styles.beforeGateNoticeAction}
+              type="button"
+              onClick={onFocusLoginSection}
+            >
+              로그인 섹션 보기
+            </button>
+          </div>
+        ) : null}
         <LoginButton />
       </div>
     </section>
   );
 }
 
-function ServiceNav() {
+interface ServiceNavProps {
+  onBeforeGate: BeforeGateHandler;
+}
+
+function ServiceNav({ onBeforeGate }: ServiceNavProps) {
   const [active, setActive] = useState('Featured');
 
   return (
@@ -304,8 +381,8 @@ function ServiceNav() {
           <div className={styles.serviceGrid}>
             {featuredServices.map((service) => {
               const Icon = service.icon;
-              return (
-                <Link key={service.title} href={service.href} className={styles.serviceCard}>
+              const cardContent = (
+                <>
                   <div className={styles.serviceCardIcon}>
                     <Icon size={24} />
                   </div>
@@ -316,6 +393,24 @@ function ServiceNav() {
                     </h4>
                     <p>{service.desc}</p>
                   </div>
+                </>
+              );
+
+              if (service.href === '/before') {
+                return (
+                  <BeforeGateButton
+                    key={service.title}
+                    className={styles.serviceCard}
+                    onBeforeGate={onBeforeGate}
+                  >
+                    {cardContent}
+                  </BeforeGateButton>
+                );
+              }
+
+              return (
+                <Link key={service.title} href={service.href} className={styles.serviceCard}>
+                  {cardContent}
                 </Link>
               );
             })}
@@ -365,12 +460,19 @@ function SolutionCards() {
   );
 }
 
-function PromotionBanners() {
+interface PromotionBannersProps {
+  onBeforeGate: BeforeGateHandler;
+}
+
+function PromotionBanners({ onBeforeGate }: PromotionBannersProps) {
   return (
     <section className={styles.promotionSection}>
       <div className={styles.container}>
         <div className={styles.promotionGrid}>
-          <Link href="/before" className={`${styles.promoCard} ${styles.promoBlue}`}>
+          <BeforeGateButton
+            className={`${styles.promoCard} ${styles.promoBlue}`}
+            onBeforeGate={onBeforeGate}
+          >
             <h4>계약서 분석 바로가기</h4>
             <p>
               업로드 후 분석을 시작하고
@@ -378,7 +480,7 @@ function PromotionBanners() {
               위험 조항과 권리 안내를 확인하세요.
             </p>
             <ArrowRight size={20} />
-          </Link>
+          </BeforeGateButton>
           <Link href="/after" className={`${styles.promoCard} ${styles.promoDark}`}>
             <h4>진정서 작성 바로가기</h4>
             <p>
@@ -403,7 +505,11 @@ function PromotionBanners() {
   );
 }
 
-function GlobalSection() {
+interface GlobalSectionProps {
+  onBeforeGate: BeforeGateHandler;
+}
+
+function GlobalSection({ onBeforeGate }: GlobalSectionProps) {
   return (
     <section className={styles.globalSection}>
       <div className={styles.container}>
@@ -413,9 +519,9 @@ function GlobalSection() {
             <p>계약 단계의 검토와 사후 대응 흐름을 하나의 메인 페이지에서 선택할 수 있습니다.</p>
           </div>
           <div className={styles.globalActions}>
-            <Link href="/before" className={styles.globalButton}>
+            <BeforeGateButton className={styles.globalButton} onBeforeGate={onBeforeGate}>
               Before 보기
-            </Link>
+            </BeforeGateButton>
             <div className={styles.avatarRow}>
               <span />
               <span />
@@ -428,7 +534,11 @@ function GlobalSection() {
   );
 }
 
-function Footer() {
+interface FooterProps {
+  onBeforeGate: BeforeGateHandler;
+}
+
+function Footer({ onBeforeGate }: FooterProps) {
   return (
     <footer id="footer" className={styles.footer}>
       <div className={styles.container}>
@@ -460,7 +570,7 @@ function Footer() {
             <h4>Services</h4>
             <ul>
               <li>
-                <Link href="/before">계약서 분석기</Link>
+                <BeforeGateButton onBeforeGate={onBeforeGate}>계약서 분석기</BeforeGateButton>
               </li>
               <li>
                 <Link href="/after">진정서 작성기</Link>
@@ -493,7 +603,7 @@ function Footer() {
             <h4>Support</h4>
             <ul>
               <li>
-                <Link href="/before">Before 시작</Link>
+                <BeforeGateButton onBeforeGate={onBeforeGate}>Before 시작</BeforeGateButton>
               </li>
               <li>
                 <Link href="/after">After 시작</Link>
@@ -533,17 +643,69 @@ function Footer() {
 }
 
 export default function HomePage() {
+  const router = useRouter();
+  const {
+    firebaseConfigured,
+    firebaseUser,
+    isInitializing,
+    isSigningIn,
+    isCheckingBackend,
+  } = useAuth();
+  const accountSectionRef = useRef<HTMLElement | null>(null);
+  const [beforeGateMessage, setBeforeGateMessage] = useState<string | null>(null);
+  const authBusy = isInitializing || isSigningIn || isCheckingBackend;
+
+  const focusLoginSection = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      accountSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      accountSectionRef.current?.focus({ preventScroll: true });
+    });
+  }, []);
+
+  const handleBeforeGate = useCallback(() => {
+    if (!firebaseConfigured) {
+      setBeforeGateMessage(BEFORE_GATE_FIREBASE_CONFIG_MESSAGE);
+      focusLoginSection();
+      return;
+    }
+
+    if (authBusy) {
+      setBeforeGateMessage(BEFORE_GATE_AUTH_CHECKING_MESSAGE);
+      focusLoginSection();
+      return;
+    }
+
+    if (!firebaseUser) {
+      setBeforeGateMessage(BEFORE_GATE_LOGIN_MESSAGE);
+      focusLoginSection();
+      return;
+    }
+
+    setBeforeGateMessage(null);
+    router.push('/before');
+  }, [authBusy, firebaseConfigured, firebaseUser, focusLoginSection, router]);
+
+  useEffect(() => {
+    if (firebaseUser && !authBusy) {
+      setBeforeGateMessage(null);
+    }
+  }, [authBusy, firebaseUser]);
+
   return (
     <div className={styles.page}>
-      <Navbar />
-      <Hero />
-      <AccountReadinessSection />
+      <Navbar onBeforeGate={handleBeforeGate} />
+      <Hero onBeforeGate={handleBeforeGate} />
+      <AccountReadinessSection
+        noticeMessage={beforeGateMessage}
+        onFocusLoginSection={focusLoginSection}
+        sectionRef={accountSectionRef}
+      />
       <NewsSection />
-      <ServiceNav />
+      <ServiceNav onBeforeGate={handleBeforeGate} />
       <SolutionCards />
-      <PromotionBanners />
-      <GlobalSection />
-      <Footer />
+      <PromotionBanners onBeforeGate={handleBeforeGate} />
+      <GlobalSection onBeforeGate={handleBeforeGate} />
+      <Footer onBeforeGate={handleBeforeGate} />
     </div>
   );
 }
