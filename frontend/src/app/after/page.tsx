@@ -10,10 +10,12 @@ import { Notification } from '@/components/ui/Notification';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { useFlow } from '@/context/FlowContext';
 import { ApiError, fetchAnswer } from '@/lib/api';
+import { BridgeApiError, fetchBridgeAnswer } from '@/lib/bridge-api';
 import {
   buildBridgeContextQuery,
   getBridgeHandoffDisplayFields,
 } from '@/lib/bridge-handoff';
+import { getFirebaseAuth } from '@/lib/firebase';
 import {
   SCENARIO_PRESETS,
   getScenarioPreset,
@@ -37,6 +39,7 @@ interface AnswerSubmission {
   useFixedAnswer: boolean;
   statementForState: string;
   answerOrigin: AnswerOrigin;
+  primaryBridgeRunId: string | null;
 }
 
 export default function AfterPage() {
@@ -57,9 +60,10 @@ export default function AfterPage() {
 
   const bridgeItems = state.bridge_handoff.items;
   const hasBridgeHandoffItems = bridgeItems.length > 0;
-  const includedBridgeItemCount = bridgeItems.filter(
+  const includedBridgeItems = bridgeItems.filter(
     (item) => item.include_in_query,
-  ).length;
+  );
+  const includedBridgeItemCount = includedBridgeItems.length;
   const hasIncludedBridgeItems = includedBridgeItemCount > 0;
   const bridgeContextQuery = useMemo(
     () => buildBridgeContextQuery(bridgeItems, statement).trim(),
@@ -142,6 +146,9 @@ export default function AfterPage() {
             ? trimmedStatement
             : 'Before/Bridge 검토 요약 기반 질문',
         answerOrigin: 'bridge_handoff',
+        primaryBridgeRunId: hasIncludedBridgeItems
+          ? includedBridgeItems[0]?.bridge_run_id ?? ''
+          : null,
       };
     }
 
@@ -161,6 +168,7 @@ export default function AfterPage() {
       useFixedAnswer: preset !== null && trimmedStatement === preset.query,
       statementForState: trimmedStatement,
       answerOrigin: 'regular_after',
+      primaryBridgeRunId: null,
     };
   }
 
@@ -186,16 +194,12 @@ export default function AfterPage() {
       const answer =
         preset && submission.useFixedAnswer
           ? preset.fixedAnswer
-          : await fetchAnswer(submission.payload);
+          : await fetchAnswerForSubmission(submission);
 
       dispatch({ type: 'SET_ANSWER', payload: answer });
       router.push('/after/result');
     } catch (error) {
-      const message =
-        error instanceof ApiError
-          ? error.message
-          : '연결을 확인하고 다시 시도해주세요.';
-      const retryable = error instanceof ApiError ? error.retryable : true;
+      const { message, retryable } = getAnswerSubmissionError(error);
 
       setErrorState({ message, retryable, submission });
     } finally {
@@ -212,6 +216,66 @@ export default function AfterPage() {
   function handleStatementChange(value: string) {
     setStatement(value);
     setErrorState(null);
+  }
+
+  async function fetchAnswerForSubmission(submission: AnswerSubmission) {
+    if (submission.primaryBridgeRunId !== null) {
+      return fetchProtectedBridgeAnswer(
+        submission.primaryBridgeRunId,
+        submission.payload,
+      );
+    }
+
+    return fetchAnswer(submission.payload);
+  }
+
+  async function fetchProtectedBridgeAnswer(
+    bridgeRunId: string,
+    request: AnswerRequest,
+  ) {
+    const idToken = await getCurrentBridgeAnswerIdToken(false);
+
+    try {
+      return await fetchBridgeAnswer({
+        bridge_run_id: bridgeRunId,
+        idToken,
+        request,
+      });
+    } catch (error) {
+      if (error instanceof BridgeApiError && error.status === 401) {
+        const refreshedIdToken = await getCurrentBridgeAnswerIdToken(true);
+
+        return fetchBridgeAnswer({
+          bridge_run_id: bridgeRunId,
+          idToken: refreshedIdToken,
+          request,
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  async function getCurrentBridgeAnswerIdToken(forceRefresh: boolean): Promise<string> {
+    const idTokenRequest = getFirebaseAuth()?.currentUser?.getIdToken(forceRefresh);
+
+    if (!idTokenRequest) {
+      throw new BridgeApiError(
+        401,
+        'Bridge 답변 생성에는 로그인이 필요합니다. 다시 로그인한 뒤 시도해주세요.',
+        false,
+      );
+    }
+
+    try {
+      return await idTokenRequest;
+    } catch {
+      throw new BridgeApiError(
+        401,
+        '로그인 인증을 확인하지 못했습니다. 다시 로그인한 뒤 시도해주세요.',
+        false,
+      );
+    }
   }
 
   function handlePresetClick(presetId: ScenarioPresetId) {
@@ -502,4 +566,21 @@ function HandoffMetaList({ title, values }: HandoffMetaListProps) {
       </ul>
     </div>
   );
+}
+
+function getAnswerSubmissionError(error: unknown): {
+  message: string;
+  retryable: boolean;
+} {
+  if (error instanceof ApiError || error instanceof BridgeApiError) {
+    return {
+      message: error.message,
+      retryable: error.retryable,
+    };
+  }
+
+  return {
+    message: '연결을 확인하고 다시 시도해주세요.',
+    retryable: true,
+  };
 }
