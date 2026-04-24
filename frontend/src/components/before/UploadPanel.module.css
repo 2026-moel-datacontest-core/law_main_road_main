@@ -224,6 +224,48 @@
   line-height: 1.6;
 }
 
+.authNotice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 98, 254, 0.16);
+  border-radius: 18px;
+  background: #eff6ff;
+}
+
+.authNoticeText {
+  flex: 1 1 240px;
+  margin: 0;
+  color: #1849a9;
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.authNoticeAction {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 98, 254, 0.18);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f62fe;
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.authNoticeAction:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(15, 98, 254, 0.34);
+}
+
 .actionBar {
   display: grid;
   gap: 12px;
@@ -273,6 +315,7 @@
 
 .primaryAction:disabled,
 .secondaryAction:disabled,
+.authNoticeAction:disabled,
 .removeButton:disabled {
   cursor: not-allowed;
   opacity: 0.6;

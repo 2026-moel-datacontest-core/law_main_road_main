@@ -46,6 +46,13 @@ const mockLoadingSteps = [
 
 type BridgeActionStatus = 'idle' | 'loading' | 'success' | 'error';
 
+const BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE =
+  'Before 계약서 분석은 Google 로그인이 필요합니다. 로그인 후 다시 시도해주세요.';
+const BEFORE_ANALYZE_AUTH_CHECKING_MESSAGE =
+  '로그인 상태를 확인하는 중입니다. 잠시 후 다시 시도해주세요.';
+const BEFORE_ANALYZE_FIREBASE_CONFIG_MESSAGE =
+  'Before 계약서 분석에는 Firebase 설정이 필요합니다. Firebase public web config 설정 후 다시 시도해주세요.';
+
 function createMockJob(): BeforeReviewJob {
   const now = new Date().toISOString();
 
@@ -121,9 +128,14 @@ export default function BeforePage() {
   const [bridgeActionStatus, setBridgeActionStatus] = useState<BridgeActionStatus>('idle');
   const [bridgeActionMessage, setBridgeActionMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [beforeAnalyzeAuthMessage, setBeforeAnalyzeAuthMessage] = useState<string | null>(null);
   const authBusy = isInitializing || isSigningIn || isCheckingBackend;
   const hasBridgeJobId = Boolean(completedReviewJobId);
   const isBridgeAuthenticated = Boolean(firebaseUser);
+  const shouldShowBeforeAuthSignInAction =
+    beforeAnalyzeAuthMessage === BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE &&
+    firebaseConfigured &&
+    !authBusy;
 
   const overviewCards = useMemo(() => {
     if (!review) {
@@ -211,8 +223,20 @@ export default function BeforePage() {
     };
   }, [loadingJob]);
 
+  useEffect(() => {
+    if (firebaseUser) {
+      setBeforeAnalyzeAuthMessage(null);
+    }
+  }, [firebaseUser]);
+
+  function handleFilesChange(files: File[]) {
+    setSelectedFiles(files);
+    setBeforeAnalyzeAuthMessage(null);
+  }
+
   async function runMockReview(scenario: BeforeMockScenario) {
     setErrorMessage(null);
+    setBeforeAnalyzeAuthMessage(null);
     clearBridgeActionFeedback();
     setCompletedReviewJobId(null);
     setIsSubmitting(true);
@@ -252,11 +276,20 @@ export default function BeforePage() {
 
   async function handleAnalyze() {
     if (!selectedFiles.length) {
+      setBeforeAnalyzeAuthMessage(null);
       setErrorMessage('먼저 분석할 파일을 추가해 주세요.');
       return;
     }
 
+    const authGateMessage = getBeforeAnalyzeAuthGateMessage();
+    if (authGateMessage) {
+      setErrorMessage(null);
+      setBeforeAnalyzeAuthMessage(authGateMessage);
+      return;
+    }
+
     setErrorMessage(null);
+    setBeforeAnalyzeAuthMessage(null);
     clearBridgeActionFeedback();
     setIsSubmitting(true);
     setScreenState('loading');
@@ -299,7 +332,7 @@ export default function BeforePage() {
         );
       }
 
-      return startBeforeReviewJob(files);
+      throw new BeforeApiError(401, BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE);
     }
 
     const idToken = await getCurrentBeforeJobIdToken(false);
@@ -380,6 +413,7 @@ export default function BeforePage() {
     setIsSubmitting(false);
     setIsAccessibilityLoading(false);
     setIsBridgeSubmitting(false);
+    setBeforeAnalyzeAuthMessage(null);
     clearBridgeActionFeedback();
   }
 
@@ -391,6 +425,28 @@ export default function BeforePage() {
   async function handleBridgeSignIn() {
     clearBridgeActionFeedback();
     await signInWithGoogle();
+  }
+
+  async function handleBeforeSignIn() {
+    setErrorMessage(null);
+    clearBridgeActionFeedback();
+    await signInWithGoogle();
+  }
+
+  function getBeforeAnalyzeAuthGateMessage(): string | null {
+    if (!firebaseConfigured) {
+      return BEFORE_ANALYZE_FIREBASE_CONFIG_MESSAGE;
+    }
+
+    if (authBusy) {
+      return BEFORE_ANALYZE_AUTH_CHECKING_MESSAGE;
+    }
+
+    if (!firebaseUser) {
+      return BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE;
+    }
+
+    return null;
   }
 
   async function handleCreateBridgeRun() {
@@ -549,8 +605,12 @@ export default function BeforePage() {
               files={selectedFiles}
               isSubmitting={isSubmitting}
               errorMessage={errorMessage}
-              onFilesChange={setSelectedFiles}
+              authNoticeMessage={beforeAnalyzeAuthMessage}
+              showAuthSignInAction={shouldShowBeforeAuthSignInAction}
+              isAuthActionDisabled={isSubmitting || authBusy}
+              onFilesChange={handleFilesChange}
               onAnalyze={() => void handleAnalyze()}
+              onSignIn={() => void handleBeforeSignIn()}
               onLoadMock={(scenario) => void handleLoadMock(scenario)}
             />
 

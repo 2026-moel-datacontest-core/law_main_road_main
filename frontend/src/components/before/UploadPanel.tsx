@@ -10,8 +10,12 @@ interface UploadPanelProps {
   files: File[];
   isSubmitting: boolean;
   errorMessage: string | null;
+  authNoticeMessage?: string | null;
+  showAuthSignInAction?: boolean;
+  isAuthActionDisabled?: boolean;
   onFilesChange: (files: File[]) => void;
   onAnalyze: () => void;
+  onSignIn?: () => void;
   onLoadMock: (scenario: BeforeMockScenario) => void;
 }
 
@@ -40,8 +44,12 @@ export function UploadPanel({
   files,
   isSubmitting,
   errorMessage,
+  authNoticeMessage = null,
+  showAuthSignInAction = false,
+  isAuthActionDisabled = false,
   onFilesChange,
   onAnalyze,
+  onSignIn,
   onLoadMock,
 }: UploadPanelProps) {
   function handleInput(event: ChangeEvent<HTMLInputElement>) {
@@ -136,6 +144,22 @@ export function UploadPanel({
         </div>
 
         {errorMessage ? <div className={styles.errorBox}>{errorMessage}</div> : null}
+
+        {authNoticeMessage ? (
+          <div className={styles.authNotice} role="alert">
+            <p className={styles.authNoticeText}>{authNoticeMessage}</p>
+            {showAuthSignInAction && onSignIn ? (
+              <button
+                type="button"
+                className={styles.authNoticeAction}
+                onClick={onSignIn}
+                disabled={isAuthActionDisabled}
+              >
+                Google 로그인
+              </button>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className={styles.actionBar}>
           <button
