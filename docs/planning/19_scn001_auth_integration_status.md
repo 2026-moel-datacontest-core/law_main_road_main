@@ -24,7 +24,7 @@
 | Phase 7B | 완료 | `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` implemented |
 | Phase 7C~7D | 완료 | frontend `fetchBridgeAnswer` helper and checked/all-unchecked `/after` submit routing implemented while preserving SCN-004 public behavior |
 | Phase 7E | PASS | live browser/network/DB smoke passed: SCN-004 freeze paths, checked protected Bridge answer, all-unchecked public answer, and artifact linkage verified |
-| Phase 8 | pending / as-needed | broader regression / demo preflight / manual rehearsal when remaining routing or runtime hardening changes require it |
+| Phase 8 | PARTIAL | regression / demo preflight / SCN-004 manual rehearsal PASS. SCN-001 browser replay BLOCKED in Codex headless because interactive Firebase Google popup login and in-memory auth state were not available |
 
 ## Current Git History References
 
@@ -77,6 +77,21 @@ Do not record Firebase ID token, Firebase uid, Google `sub`, `provider_subject`,
 - Artifact linkage: protected checked Bridge answer latest row has `user_id = NOT NULL` and `source_bridge_run_id = NOT NULL`; public answer latest row has `user_id = NULL` and `source_bridge_run_id = NULL`.
 - Errors: `provider_timeout` NO; console/network error NO.
 - Privacy note: final evidence records no token, Firebase uid, email, provider_subject, raw query, full answer body, real bridge id, or artifact body.
+
+## Phase 8 Regression / Demo Preflight Evidence Summary
+
+2026-04-24 Phase 8 verification was run from the repo root with existing local
+backend/frontend servers available on `localhost:8000` and `localhost:5090`.
+
+- DB readiness: PASS; PostgreSQL accepting connections YES; probe result YES.
+- Demo preflight: PASS; `main == origin/main` YES; local-only dirty file allowed YES; PostgreSQL readiness PASS; conda env activation PASS; backend import PASS; document draft smoke PASS; frontend build PASS; WSL Playwright Chromium smoke PASS.
+- SCN-004 exact preset: PASS; `/api/v1/answer` call NO; `/after/result` reached YES; draft choice visible YES; draft flow enterable YES.
+- SCN-004 draft smoke: PASS; `/api/v1/documents/draft` call YES; `rendered_text` visible YES; copy button clipboard write YES; `window.print()` called YES.
+- SCN-004 modified/free input: PASS; public `/api/v1/answer` call YES; `Authorization` header ABSENT; `/after/result` reached YES.
+- SCN-001 checked Bridge handoff browser replay: BLOCKED in Codex headless; interactive Firebase Google popup login and in-memory auth state were not available. Latest full browser/network/DB evidence remains Phase 7E PASS. Sanitized DB inventory still showed protected linked rows PRESENT and mixed linkage rows ABSENT.
+- SCN-001 all-unchecked Bridge handoff browser replay: BLOCKED in Codex headless for the same auth/session reason. Latest full browser/network/DB evidence remains Phase 7E PASS. Sanitized DB inventory still showed public unlinked rows PRESENT and mixed linkage rows ABSENT.
+- SCN-004 browser console/network error: NO.
+- Privacy note: Phase 8 evidence records no token, Firebase uid, email, provider_subject, raw query, full answer body, real bridge id, or artifact body.
 
 ## Current Auth / Linkage Architecture
 
