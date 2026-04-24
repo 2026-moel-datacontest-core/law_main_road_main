@@ -52,6 +52,11 @@ const BEFORE_ANALYZE_AUTH_CHECKING_MESSAGE =
   '로그인 상태를 확인하는 중입니다. 잠시 후 다시 시도해주세요.';
 const BEFORE_ANALYZE_FIREBASE_CONFIG_MESSAGE =
   'Before 계약서 분석에는 Firebase 설정이 필요합니다. Firebase public web config 설정 후 다시 시도해주세요.';
+const BEFORE_JOB_GENERAL_FAILURE_MESSAGE =
+  '계약서 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+const BEFORE_JOB_OCR_QUOTA_FAILURE_MESSAGE =
+  'OCR 요청 한도가 일시적으로 초과되었습니다. 잠시 후 다시 시도해주세요.';
+const OCR_QUOTA_ERROR_PATTERNS = [/429/i, /resource exhausted/i, /quota/i, /rate limit/i];
 
 function createMockJob(): BeforeReviewJob {
   const now = new Date().toISOString();
@@ -186,11 +191,7 @@ export default function BeforePage() {
     }
 
     if (loadingJob.status === 'failed') {
-      setErrorMessage(loadingJob.error ?? '계약서 분석 중 문제가 발생했습니다.');
-      setScreenState('home');
-      setLoadingJob(null);
-      setCompletedReviewJobId(null);
-      setIsSubmitting(false);
+      finishFailedBeforeJob(loadingJob);
       return;
     }
 
@@ -199,6 +200,11 @@ export default function BeforePage() {
       try {
         const nextJob = await getBeforeReviewJob(loadingJob.job_id);
         if (!cancelled) {
+          if (nextJob.status === 'failed') {
+            finishFailedBeforeJob(nextJob);
+            return;
+          }
+
           setLoadingJob(nextJob);
         }
       } catch (error) {
@@ -301,6 +307,11 @@ export default function BeforePage() {
 
     try {
       const job = await startBeforeReviewJobWithOptionalAuth(selectedFiles);
+      if (job.status === 'failed') {
+        finishFailedBeforeJob(job);
+        return;
+      }
+
       setLoadingJob(job);
     } catch (error) {
       const message =
@@ -420,6 +431,14 @@ export default function BeforePage() {
   function clearBridgeActionFeedback() {
     setBridgeActionStatus('idle');
     setBridgeActionMessage(null);
+  }
+
+  function finishFailedBeforeJob(job: BeforeReviewJob) {
+    setErrorMessage(getBeforeJobFailureMessage(job));
+    setScreenState('home');
+    setLoadingJob(null);
+    setCompletedReviewJobId(null);
+    setIsSubmitting(false);
   }
 
   async function handleBridgeSignIn() {
@@ -830,4 +849,38 @@ function getBridgeActionErrorMessage(error: unknown): string {
   }
 
   return 'Bridge 연결 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+}
+
+function getBeforeJobFailureMessage(job: BeforeReviewJob): string {
+  const failedOcrStep = job.steps.find(isFailedOcrStep) ?? null;
+
+  if (
+    failedOcrStep &&
+    hasOcrQuotaErrorMessage([job.error ?? null, failedOcrStep.message ?? null])
+  ) {
+    return BEFORE_JOB_OCR_QUOTA_FAILURE_MESSAGE;
+  }
+
+  return BEFORE_JOB_GENERAL_FAILURE_MESSAGE;
+}
+
+function isFailedOcrStep(step: BeforeReviewJob['steps'][number]): boolean {
+  if (step.status !== 'failed') {
+    return false;
+  }
+
+  const key = step.key.toLowerCase();
+  const label = step.label.toLowerCase();
+
+  return key.includes('ocr') || label.includes('ocr');
+}
+
+function hasOcrQuotaErrorMessage(messages: Array<string | null>): boolean {
+  return messages.some((message) => {
+    if (!message) {
+      return false;
+    }
+
+    return OCR_QUOTA_ERROR_PATTERNS.some((pattern) => pattern.test(message));
+  });
 }
