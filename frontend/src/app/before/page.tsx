@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, RefreshCw } from 'lucide-react';
+import { ArrowRight, RefreshCw, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { AccessibilityPanel } from '@/components/before/AccessibilityPanel';
@@ -26,6 +26,8 @@ import {
 import { BridgeApiError, bridgeRunToHandoffItem, createBridgeRun } from '@/lib/bridge-api';
 import { getFirebaseAuth } from '@/lib/firebase';
 import {
+  deleteBeforeReviewJobHistory,
+  deleteBridgeRunHistory,
   fetchBeforeReviewHistory,
   fetchBridgeRunHistory,
   Scn001HistoryApiError,
@@ -57,6 +59,9 @@ const mockLoadingSteps = [
 
 type BridgeActionStatus = 'idle' | 'loading' | 'success' | 'error';
 type Scn001HistoryStatus = 'idle' | 'loading' | 'success' | 'error';
+type HistoryDeleteKind = 'before' | 'bridge';
+type HistoryDeleteTarget = { kind: HistoryDeleteKind; id: string };
+type HistoryMutationMessage = { kind: 'notice' | 'error'; message: string };
 
 const SCN001_HISTORY_LIMIT = 10;
 const BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE =
@@ -158,12 +163,16 @@ export default function BeforePage() {
   const [beforeHistory, setBeforeHistory] = useState<BeforeReviewJobHistoryItem[]>([]);
   const [bridgeHistory, setBridgeHistory] = useState<BridgeRunHistoryItem[]>([]);
   const [historyRefreshNonce, setHistoryRefreshNonce] = useState(0);
+  const [historyDeleteTarget, setHistoryDeleteTarget] = useState<HistoryDeleteTarget | null>(null);
+  const [historyMutationMessage, setHistoryMutationMessage] =
+    useState<HistoryMutationMessage | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [beforeAnalyzeAuthMessage, setBeforeAnalyzeAuthMessage] = useState<string | null>(null);
   const authBusy = isInitializing || isSigningIn || isCheckingBackend;
   const hasBridgeJobId = Boolean(completedReviewJobId);
   const isBackendAuthenticated = backendUser.logged_in;
   const isBridgeAuthenticated = isBackendAuthenticated;
+  const isHistoryDeleting = historyDeleteTarget !== null;
   const shouldShowBeforeAuthSignInAction =
     (beforeAnalyzeAuthMessage === BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE ||
       beforeAnalyzeAuthMessage === BEFORE_ANALYZE_BACKEND_AUTH_MESSAGE) &&
@@ -269,6 +278,7 @@ export default function BeforePage() {
       setHistoryErrorMessage(null);
       setBeforeHistory([]);
       setBridgeHistory([]);
+      setHistoryMutationMessage(null);
       return;
     }
 
@@ -604,6 +614,12 @@ export default function BeforePage() {
   }
 
   async function handleCreateBridgeRun() {
+    if (isHistoryDeleting) {
+      setBridgeActionStatus('error');
+      setBridgeActionMessage('기록 삭제가 끝난 뒤 After 연결을 다시 시도해주세요.');
+      return;
+    }
+
     if (!completedReviewJobId) {
       setBridgeActionStatus('error');
       setBridgeActionMessage(
@@ -684,6 +700,139 @@ export default function BeforePage() {
     }
 
     return currentUser.getIdToken(forceRefresh);
+  }
+
+  async function getCurrentScn001HistoryIdToken(forceRefresh: boolean): Promise<string> {
+    const currentUser = getFirebaseAuth()?.currentUser ?? null;
+
+    if (!currentUser) {
+      throw new Scn001HistoryApiError(
+        401,
+        '로그인 후 기록을 관리할 수 있습니다. 다시 로그인한 뒤 시도해주세요.',
+        false,
+      );
+    }
+
+    try {
+      return await currentUser.getIdToken(forceRefresh);
+    } catch {
+      throw new Scn001HistoryApiError(
+        401,
+        '로그인 인증을 확인하지 못했습니다. 다시 로그인한 뒤 시도해주세요.',
+        false,
+      );
+    }
+  }
+
+  async function handleDeleteHistoryRecord(target: HistoryDeleteTarget) {
+    if (historyDeleteTarget) {
+      return;
+    }
+
+    if (isBridgeSubmitting) {
+      setHistoryMutationMessage({
+        kind: 'error',
+        message: 'After 연결을 만드는 중에는 기록을 삭제할 수 없습니다. 잠시 후 다시 시도해주세요.',
+      });
+      return;
+    }
+
+    if (!window.confirm(getHistoryDeleteConfirmMessage(target.kind))) {
+      return;
+    }
+
+    if (!backendUser.logged_in) {
+      setHistoryMutationMessage({
+        kind: 'error',
+        message: SCN001_HISTORY_BACKEND_AUTH_MESSAGE,
+      });
+      void refreshBackendAuth({ forceRefresh: true });
+      return;
+    }
+
+    setHistoryDeleteTarget(target);
+    setHistoryMutationMessage(null);
+
+    try {
+      await deleteHistoryRecordWithCurrentToken(target, false);
+      applyLocalHistoryDeletion(target);
+      setHistoryMutationMessage({
+        kind: 'notice',
+        message: '기록을 삭제하고 목록을 새로고침했습니다.',
+      });
+      setHistoryRefreshNonce((current) => current + 1);
+    } catch (error) {
+      if (error instanceof Scn001HistoryApiError && error.status === 401) {
+        void refreshBackendAuth({ forceRefresh: true });
+      }
+
+      setHistoryMutationMessage({
+        kind: 'error',
+        message: getScn001HistoryDeleteErrorMessage(error),
+      });
+    } finally {
+      setHistoryDeleteTarget(null);
+    }
+  }
+
+  async function deleteHistoryRecordWithCurrentToken(
+    target: HistoryDeleteTarget,
+    forceRefresh: boolean,
+  ): Promise<void> {
+    const idToken = await getCurrentScn001HistoryIdToken(forceRefresh);
+
+    try {
+      if (target.kind === 'before') {
+        await deleteBeforeReviewJobHistory({
+          idToken,
+          beforeReviewJobId: target.id,
+        });
+        return;
+      }
+
+      await deleteBridgeRunHistory({
+        idToken,
+        bridgeRunId: target.id,
+      });
+    } catch (error) {
+      if (
+        error instanceof Scn001HistoryApiError &&
+        error.status === 401 &&
+        !forceRefresh
+      ) {
+        return deleteHistoryRecordWithCurrentToken(target, true);
+      }
+
+      throw error;
+    }
+  }
+
+  function applyLocalHistoryDeletion(target: HistoryDeleteTarget) {
+    if (target.kind === 'before') {
+      setBeforeHistory((current) =>
+        current.filter((job) => job.before_review_job_id !== target.id),
+      );
+      setBridgeHistory((current) =>
+        current.filter((bridgeRun) => bridgeRun.before_review_job_id !== target.id),
+      );
+
+      if (completedReviewJobId === target.id) {
+        setCompletedReviewJobId(null);
+        clearBridgeActionFeedback();
+      }
+
+      dispatch({ type: 'CLEAR_BRIDGE_HANDOFF' });
+
+      return;
+    }
+
+    setBridgeHistory((current) =>
+      current.filter((bridgeRun) => bridgeRun.bridge_run_id !== target.id),
+    );
+    dispatch({
+      type: 'REMOVE_BRIDGE_HANDOFF_ITEM',
+      payload: { bridge_run_id: target.id },
+    });
   }
 
   return (
@@ -807,12 +956,17 @@ export default function BeforePage() {
               isAuthenticated={isBackendAuthenticated}
               status={historyStatus}
               errorMessage={historyErrorMessage}
+              mutationMessage={historyMutationMessage}
               beforeJobs={beforeHistory}
               bridgeRuns={bridgeHistory}
+              deletingTarget={historyDeleteTarget}
+              deleteDisabled={isBridgeSubmitting}
               onRetry={() => {
+                setHistoryMutationMessage(null);
                 void refreshBackendAuth({ forceRefresh: true });
                 setHistoryRefreshNonce((current) => current + 1);
               }}
+              onDelete={(target) => void handleDeleteHistoryRecord(target)}
             />
           </div>
         </section>
@@ -842,7 +996,7 @@ export default function BeforePage() {
                         isAuthenticated={isBridgeAuthenticated}
                         isAuthBusy={authBusy}
                         isFirebaseConfigured={firebaseConfigured}
-                        isSubmitting={isBridgeSubmitting}
+                        isSubmitting={isBridgeSubmitting || isHistoryDeleting}
                         status={bridgeActionStatus}
                         message={bridgeActionMessage ?? authErrorMessage}
                         onCreate={() => void handleCreateBridgeRun()}
@@ -877,9 +1031,13 @@ interface Scn001HistoryPanelProps {
   isAuthenticated: boolean;
   status: Scn001HistoryStatus;
   errorMessage: string | null;
+  mutationMessage: HistoryMutationMessage | null;
   beforeJobs: BeforeReviewJobHistoryItem[];
   bridgeRuns: BridgeRunHistoryItem[];
+  deletingTarget: HistoryDeleteTarget | null;
+  deleteDisabled: boolean;
   onRetry: () => void;
+  onDelete: (target: HistoryDeleteTarget) => void;
 }
 
 function Scn001HistoryPanel({
@@ -889,9 +1047,13 @@ function Scn001HistoryPanel({
   isAuthenticated,
   status,
   errorMessage,
+  mutationMessage,
   beforeJobs,
   bridgeRuns,
+  deletingTarget,
+  deleteDisabled,
   onRetry,
+  onDelete,
 }: Scn001HistoryPanelProps) {
   const notice = getScn001HistoryNotice({
     firebaseConfigured,
@@ -900,6 +1062,7 @@ function Scn001HistoryPanel({
     isAuthenticated,
     status,
     errorMessage,
+    mutationMessage,
     beforeJobs,
     bridgeRuns,
   });
@@ -913,10 +1076,10 @@ function Scn001HistoryPanel({
             내 Before / Bridge 기록
           </h2>
           <p className={styles.historyDescription}>
-            로그인한 계정의 최근 기록을 읽기 전용으로 확인합니다.
+            로그인한 계정의 최근 기록을 확인하고 필요 없는 항목을 목록에서 삭제합니다.
           </p>
         </div>
-        <span className={styles.historyReadOnlyPill}>읽기 전용</span>
+        <span className={styles.historyReadOnlyPill}>목록 관리</span>
       </div>
 
       {notice ? (
@@ -936,8 +1099,18 @@ function Scn001HistoryPanel({
 
       {isAuthenticated && status === 'success' ? (
         <div className={styles.historyColumns}>
-          <BeforeHistoryList jobs={beforeJobs} />
-          <BridgeHistoryList bridgeRuns={bridgeRuns} />
+          <BeforeHistoryList
+            jobs={beforeJobs}
+            deletingTarget={deletingTarget}
+            deleteDisabled={deleteDisabled}
+            onDelete={onDelete}
+          />
+          <BridgeHistoryList
+            bridgeRuns={bridgeRuns}
+            deletingTarget={deletingTarget}
+            deleteDisabled={deleteDisabled}
+            onDelete={onDelete}
+          />
         </div>
       ) : null}
     </div>
@@ -951,6 +1124,7 @@ interface Scn001HistoryNoticeInput {
   isAuthenticated: boolean;
   status: Scn001HistoryStatus;
   errorMessage: string | null;
+  mutationMessage: HistoryMutationMessage | null;
   beforeJobs: BeforeReviewJobHistoryItem[];
   bridgeRuns: BridgeRunHistoryItem[];
 }
@@ -1008,6 +1182,14 @@ function getScn001HistoryNotice(input: Scn001HistoryNoticeInput): {
     };
   }
 
+  if (input.status === 'success' && input.mutationMessage) {
+    return {
+      kind: input.mutationMessage.kind,
+      message: input.mutationMessage.message,
+      canRetry: false,
+    };
+  }
+
   if (
     input.status === 'success' &&
     input.beforeJobs.length === 0 &&
@@ -1023,7 +1205,17 @@ function getScn001HistoryNotice(input: Scn001HistoryNoticeInput): {
   return null;
 }
 
-function BeforeHistoryList({ jobs }: { jobs: BeforeReviewJobHistoryItem[] }) {
+function BeforeHistoryList({
+  jobs,
+  deletingTarget,
+  deleteDisabled,
+  onDelete,
+}: {
+  jobs: BeforeReviewJobHistoryItem[];
+  deletingTarget: HistoryDeleteTarget | null;
+  deleteDisabled: boolean;
+  onDelete: (target: HistoryDeleteTarget) => void;
+}) {
   return (
     <section className={styles.historyColumn} aria-label="Before 검토 기록">
       <div className={styles.historyColumnHeader}>
@@ -1041,9 +1233,23 @@ function BeforeHistoryList({ jobs }: { jobs: BeforeReviewJobHistoryItem[] }) {
                 <strong className={styles.historyItemTitle}>
                   {formatInlineText(job.summary, '요약이 없는 Before 검토입니다.')}
                 </strong>
-                <span className={styles.historyStatusPill}>
-                  {formatBeforeJobStatus(job.status)}
-                </span>
+                <div className={styles.historyItemActions}>
+                  <span className={styles.historyStatusPill}>
+                    {formatBeforeJobStatus(job.status)}
+                  </span>
+                  <HistoryDeleteButton
+                    label="Before 기록 삭제"
+                    isDeleting={isHistoryDeletePending(
+                      deletingTarget,
+                      'before',
+                      job.before_review_job_id,
+                    )}
+                    disabled={deleteDisabled || Boolean(deletingTarget)}
+                    onDelete={() =>
+                      onDelete({ kind: 'before', id: job.before_review_job_id })
+                    }
+                  />
+                </div>
               </div>
 
               <dl className={styles.historyMetaGrid}>
@@ -1061,7 +1267,17 @@ function BeforeHistoryList({ jobs }: { jobs: BeforeReviewJobHistoryItem[] }) {
   );
 }
 
-function BridgeHistoryList({ bridgeRuns }: { bridgeRuns: BridgeRunHistoryItem[] }) {
+function BridgeHistoryList({
+  bridgeRuns,
+  deletingTarget,
+  deleteDisabled,
+  onDelete,
+}: {
+  bridgeRuns: BridgeRunHistoryItem[];
+  deletingTarget: HistoryDeleteTarget | null;
+  deleteDisabled: boolean;
+  onDelete: (target: HistoryDeleteTarget) => void;
+}) {
   return (
     <section className={styles.historyColumn} aria-label="Bridge 연결 기록">
       <div className={styles.historyColumnHeader}>
@@ -1075,9 +1291,23 @@ function BridgeHistoryList({ bridgeRuns }: { bridgeRuns: BridgeRunHistoryItem[] 
         <ol className={styles.historyList}>
           {bridgeRuns.map((bridgeRun) => (
             <li className={styles.historyItem} key={bridgeRun.bridge_run_id}>
-              <p className={styles.historyBridgeSummary}>
-                {formatInlineText(bridgeRun.user_visible_summary, 'Bridge 요약이 없습니다.')}
-              </p>
+              <div className={styles.historyItemHeader}>
+                <p className={styles.historyBridgeSummary}>
+                  {formatInlineText(bridgeRun.user_visible_summary, 'Bridge 요약이 없습니다.')}
+                </p>
+                <HistoryDeleteButton
+                  label="Bridge 기록 삭제"
+                  isDeleting={isHistoryDeletePending(
+                    deletingTarget,
+                    'bridge',
+                    bridgeRun.bridge_run_id,
+                  )}
+                  disabled={deleteDisabled || Boolean(deletingTarget)}
+                  onDelete={() =>
+                    onDelete({ kind: 'bridge', id: bridgeRun.bridge_run_id })
+                  }
+                />
+              </div>
 
               <HistoryTagList
                 label="이슈"
@@ -1111,6 +1341,31 @@ function BridgeHistoryList({ bridgeRuns }: { bridgeRuns: BridgeRunHistoryItem[] 
         </ol>
       )}
     </section>
+  );
+}
+
+function HistoryDeleteButton({
+  label,
+  isDeleting,
+  disabled,
+  onDelete,
+}: {
+  label: string;
+  isDeleting: boolean;
+  disabled: boolean;
+  onDelete: () => void;
+}) {
+  return (
+    <button
+      className={styles.historyDeleteButton}
+      type="button"
+      onClick={onDelete}
+      disabled={disabled}
+      aria-label={label}
+    >
+      <Trash2 size={15} aria-hidden="true" />
+      {isDeleting ? '삭제 중' : '삭제'}
+    </button>
   );
 }
 
@@ -1310,6 +1565,30 @@ function getScn001HistoryErrorMessage(error: unknown): string {
   }
 
   return '기록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+}
+
+function getScn001HistoryDeleteErrorMessage(error: unknown): string {
+  if (error instanceof Scn001HistoryApiError && error.status === 401) {
+    return '로그인 후 기록을 삭제할 수 있습니다. 다시 로그인한 뒤 시도해주세요.';
+  }
+
+  return '기록 삭제 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+}
+
+function getHistoryDeleteConfirmMessage(kind: HistoryDeleteKind): string {
+  if (kind === 'before') {
+    return '이 Before 기록을 목록에서 삭제할까요? 삭제 후 기록 목록과 After 연결 후보에서 보이지 않습니다.';
+  }
+
+  return '이 Bridge 기록을 목록에서 삭제할까요? 삭제 후 After 연결 후보에서 보이지 않습니다.';
+}
+
+function isHistoryDeletePending(
+  target: HistoryDeleteTarget | null,
+  kind: HistoryDeleteKind,
+  id: string,
+): boolean {
+  return target?.kind === kind && target.id === id;
 }
 
 function formatBeforeJobStatus(status: string): string {

@@ -406,13 +406,56 @@
 }
 
 .historyBridgeSummary {
+  flex: 1 1 220px;
+  min-width: 0;
   margin: 0;
+}
+
+.historyItemActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .historyStatusPill {
   padding: 5px 9px;
   background: #ecfdf3;
   color: #027a48;
+}
+
+.historyDeleteButton {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border: 1px solid #d0d5dd;
+  border-radius: var(--kl-radius-sm);
+  background: #ffffff;
+  color: #475467;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.historyDeleteButton:hover:not(:disabled) {
+  border-color: #98a2b3;
+  background: #f9fafb;
+  color: #344054;
+}
+
+.historyDeleteButton:focus-visible {
+  outline: 3px solid rgba(15, 98, 254, 0.26);
+  outline-offset: 2px;
+}
+
+.historyDeleteButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .historyMetaGrid {
