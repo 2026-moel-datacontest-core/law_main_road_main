@@ -97,7 +97,7 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 - SCN-001 Step 4 document draft design is docs-only; backend implementation remains NOT opened.
 - protected SCN-001 draft endpoint path/method/schema is not implemented and not specified.
 - SCN-001 draft generation/freeze remain NOT opened.
-- 다음 design target은 `Step 4 Bridge/query relevance guard matrix review`; Bridge는 legal grounding이 아니라 continuity 설명으로만 다룬다.
+- `Bridge/query relevance guard matrix review`는 completed/current design baseline이다. 다음 target은 `SCN-001 MVP demo frontend-only continuity panel`이며, backend implementation과 protected SCN-001 draft endpoint path/method/schema는 NOT opened 상태를 유지한다. Bridge는 legal grounding이 아니라 continuity 설명으로만 다룬다.
 - protected Bridge-origin answer는 public `/api/v1/answer`를 확장하지 않고 `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`만 사용
 - `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary bridge_run_id이며 multi-bridge full provenance는 Post-MVP join table 후보
 - `SCN-001` 문서 타입 후보는 design candidate일 뿐이며, template/type/endpoint 구현 또는 확정은 하지 않음

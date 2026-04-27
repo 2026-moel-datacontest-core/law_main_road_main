@@ -118,8 +118,12 @@ law_main_road repo root에서 작업해주세요.
   supplemental continuity context only; they do not create `cited_articles`,
   `grounded_context_ids`, legal grounding, or answer hidden grounding.
 - Bridge/query relevance guard matrix review is documented in
-  `docs/planning/22_post_phase8_scn001_extension_roadmap.md`. The next design
-  target is frontend-only continuity panel design review, not implementation.
+  `docs/planning/22_post_phase8_scn001_extension_roadmap.md` and is the current
+  design baseline. The next target is `SCN-001 MVP demo frontend-only continuity
+  panel`, not SCN-001 document draft generation.
+- SCN-001 MVP demo includes Bridge -> After answer-only continuity explanation:
+  answer remains primary, Bridge info remains supplementary, and Bridge-origin
+  draft CTA/button remains hidden.
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
@@ -382,18 +386,27 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. frontend-only continuity panel design review
-   - Step 4 SCN-001 Document Draft Design의 다음 문서-only target
-   - Bridge/query relevance guard matrix review는 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`에 문서화됨
-   - 구현이 아니라 continuity panel copy, visibility, reference-only note, unsafe hide behavior, answer-only/draft-disabled boundary만 review/refine
+1. SCN-001 MVP demo frontend-only continuity panel
+   - Step 4의 다음 target이며, SCN-001 document draft generation이 아님
+   - Bridge/query relevance guard matrix review는 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`에 completed/current design baseline으로 문서화됨
+   - Bridge -> After answer-only continuity explanation만 다룸
+   - `/after/result` 또는 Bridge-origin result 화면에만 표시
+   - Bridge handoff가 있고 included/checked Bridge context가 있을 때만 표시
+   - strong overlap이면 continuity explanation 표시
+   - weak overlap이면 reference-only note 또는 hidden
+   - no overlap / deleted-hidden / all-unchecked / answer evidence 부족이면 hidden
+   - draft CTA/button은 계속 hidden
+   - answer remains primary
+   - Bridge info remains supplementary
    - Bridge-as-Continuity, Not Grounding 유지
    - matrix의 strong/weak/no/conflicting outcome은 UI 표시 후보일 뿐 implementation scoring으로 고정하지 않음
    - Bridge overlap은 legal basis, `cited_articles`, `grounded_context_ids`를 만들 수 없음
    - SCN-001 draft affordance는 relevance guard, quality gate, document type confirmation, separate review 전 열지 않음
    - protected SCN-001 draft endpoint path/method/schema, SCN-001 draft generation, SCN-001 draft freeze는 열지 않음
+   - 이 복원 메모는 frontend implementation prompt가 아님
 2. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
    - Step 3 full retention lifecycle, artifact access/retrieval, audit/status policy review 다음의 문서-only target
-   - Step 4 frontend-only continuity panel design review 이후 별도 policy cycle로만 처리
+   - Step 4 SCN-001 MVP demo continuity panel 이후 별도 policy cycle로만 처리
    - Step 3 MVP soft-delete slice completed 상태를 유지
    - DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성, account history access-control 구현은 열지 않음
    - hard delete/file purge implementation, GCS lifecycle job, audit export endpoint, restore endpoint, account deletion UX/API, orphan cleanup job은 열지 않음
@@ -425,7 +438,9 @@ npm run dev
    - artifact retrieval UI/API, retention policy, account history access control은 별도 설계 후 진행
 10. SCN-001 document draft implementation
    - 아직 열지 않음
-   - Bridge/query relevance guard matrix review와 frontend-only continuity panel design review 후 별도 큰 phase로만 검토
+   - Bridge/query relevance guard matrix review, SCN-001 MVP demo continuity panel, SCN-001 demo rehearsal docs 이후 별도 큰 phase로만 검토
+   - 먼저 SCN-001 document draft design/type/quality gate를 재검토하고, 그 다음 live draft implementation을 별도로 연다
+   - SCN-001 draft freeze는 output quality stable 이후에만 별도 phase로 열며 `SCN-004-DEMO-FREEZE`와 분리한다
    - SCN-004 freeze 기준을 유지한 별도 설계/패치가 필요
 
 마지막 보고 형식:
@@ -452,6 +467,7 @@ Step 2B-2, Step 1.6까지 `git log` 기준 완료 상태다. 2026-04-27 기준 �
 lifecycle policy review, artifact access/retrieval policy review, audit/status
 policy review는 문서화됐지만 implementation은 NOT opened 상태다. Step 4 SCN-001
 Document Draft Design은 문서 설계로만 열렸고, Bridge/query relevance guard matrix
-review도 문서화됐다. 다음 target은 frontend-only continuity panel design review다.
+review도 completed/current design baseline으로 문서화됐다. 다음 target은 SCN-001
+MVP demo frontend-only continuity panel이다.
 SCN-001 document draft implementation, protected SCN-001 draft endpoint 확정,
 SCN-001 draft generation/freeze는 아직 열지 않는다.

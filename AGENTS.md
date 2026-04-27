@@ -36,7 +36,8 @@
 - 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history + MVP soft-delete path까지의 public contract 보호**
 - SCN-001 Step 4 document draft design is opened as docs-only design.
 - SCN-001 draft implementation/generation/freeze, protected SCN-001 draft endpoint path/method/schema, and Step 3 full retention lifecycle remain NOT opened.
-- 다음 design target은 `Step 4 Bridge/query relevance guard matrix review`이며, `Bridge-as-Continuity, Not Grounding` 정책을 유지한다.
+- `Bridge/query relevance guard matrix review`는 current Step 4 design baseline으로 정리됐다.
+- 다음 target은 `SCN-001 MVP demo frontend-only continuity panel`이며, SCN-001 document draft generation이 아니다. `Bridge-as-Continuity, Not Grounding` 정책을 유지한다.
 - `SCN-001-BRIDGE-DEMO`는 Before/Bridge handoff 설명용 answer-only preset
 - `SCN-004-DEMO-FREEZE`는 main demo / document draft freeze용 preset
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지
@@ -232,7 +233,7 @@ Implemented integration:
 * raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않는다. Bridge-origin answer query는 displayed safe subset plus user question만 사용한다.
 * `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary `bridge_run_id`만 저장한다. multi-bridge full provenance는 Post-MVP join table 후보로 둔다.
 * SCN-001 Step 4 document draft design은 docs-only로만 opened. 문서 타입 후보는 design candidate일 뿐이며, draft implementation/generation/freeze와 protected SCN-001 draft endpoint path/method/schema는 NOT opened.
-* 다음 design target은 `Step 4 Bridge/query relevance guard matrix review`이며, Bridge는 legal grounding이 아니라 continuity 설명으로만 다룬다.
+* `Bridge/query relevance guard matrix review`는 current Step 4 design baseline으로 정리됐다. 다음 target은 `SCN-001 MVP demo frontend-only continuity panel`이며, Bridge는 legal grounding이 아니라 continuity 설명으로만 다룬다.
 * Step 3 full retention lifecycle은 NOT opened. Hard delete, artifact physical deletion/file purge, retention lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes, account deletion/access-control, orphan cleanup은 후속 정책 영역으로 둔다.
 
 ## Frontend Rules
