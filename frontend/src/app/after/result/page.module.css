@@ -151,11 +151,19 @@
   gap: 10px;
 }
 
+.selectorPanel,
+.selectorPanelStatic {
+  display: grid;
+  gap: 16px;
+}
+
 .selectorPanel {
   position: sticky;
   top: calc(var(--kl-masthead-height) + 20px);
-  display: grid;
-  gap: 16px;
+}
+
+.selectorPanelStatic {
+  position: static;
 }
 
 .continuityPanel {

@@ -156,6 +156,9 @@ export default function AfterResultPage() {
     (supportsDraft || canShowScn001FrozenDraftCta);
   const statementSummary = truncateText(state.user_statement || answer.query, 100);
   const canShowAnswer = hasGrounding;
+  const selectorPanelClassName = canShowScn001FrozenDraftCta
+    ? styles.selectorPanelStatic
+    : styles.selectorPanel;
 
   function selectDocumentType(documentType: DocumentType) {
     if (!canProceedToDraftFlow) {
@@ -338,7 +341,7 @@ export default function AfterResultPage() {
           </section>
 
           <aside className={styles.selectorColumn} aria-label="문서 유형 선택 및 Bridge 연속성 안내">
-            <section className={styles.selectorPanel}>
+            <section className={selectorPanelClassName}>
               <p className={styles.eyebrow}>
                 {isBridgeHandoffAnswer
                   ? 'Answer-only'
