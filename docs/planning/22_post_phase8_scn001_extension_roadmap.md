@@ -307,6 +307,83 @@ Non-goals:
 - `/api/v1/answer` public contract 변경이 아니다.
 - `/api/v1/documents/draft` public contract 변경이 아니다.
 
+#### Retention window / cascade policy decision draft
+
+이 subsection은 retention window와 cascade policy를 구현 전 decision draft로
+좁히기 위한 문서다. Soft delete 이후 사용자-visible history에서 숨기는 방향은
+유지하되, physical hard delete / artifact file purge / background purge 구현은
+확정하지 않는다.
+
+Retention window draft:
+
+- MVP에서는 user-visible soft-deleted records를 즉시 history list/detail에서 숨긴다.
+- Physical hard delete / artifact file purge는 retention window 이후 별도 ops task
+  후보로만 둔다.
+- Retention window 기간은 아직 숫자로 확정하지 않는다.
+- 후보 window와 trade-off:
+  - 7~30 days: short local/demo retention 후보이며, cleanup 범위는 작지만
+    audit/debug 여지는 줄어든다.
+  - 30~90 days: safer audit retention 후보이며, audit/debug 여지는 넓지만
+    artifact lifecycle 미확정 상태에서 보관 기간이 길어진다.
+  - Indefinite local retention: implementation 전 MVP local default 후보이며,
+    demo 안정성과 debugging을 우선하지만 automatic cleanup을 제공하지 않는다.
+- Recommended MVP default는 구현 전까지 `no automatic hard delete / file purge` 또는
+  `indefinite local retention`이다.
+- 이유: MVP demo 안정성, audit/debug 필요성, artifact lifecycle 미확정.
+
+Cascade policy draft:
+
+- Before review job soft delete:
+  - history list/detail에서 숨긴다.
+  - linked Bridge runs는 기본적으로 history/selection에서 같이 숨기는 후보로 둔다.
+  - linked After artifacts는 직접 삭제하지 않고 visibility/linkage policy question으로
+    남긴다.
+- Bridge run soft delete:
+  - history list/detail과 future Bridge selection에서 숨긴다.
+  - linked protected After answer artifacts는 직접 삭제하지 않고 continuity/draft
+    affordance에서만 제외하는 후보로 둔다.
+- Protected linked After answer artifact soft delete:
+  - future artifact access UI가 생기면 숨긴다.
+  - source Bridge run 자체를 역방향으로 삭제하지 않는다.
+- Public unlinked After answer artifact:
+  - account-scoped deletion cascade 대상이 아니다.
+  - global retention cleanup 후보로만 둔다.
+- Orphan artifact candidate:
+  - account deletion UX와 분리한다.
+  - orphan classification/cleanup job 후보로만 둔다.
+- Already-deleted repeat action:
+  - idempotent no-op 후보로 둔다.
+  - external response는 not-found / not-owned / already-deleted와 구분하지 않는
+    방향을 유지한다.
+
+Decision table:
+
+| trigger | affected records | visibility effect | artifact file effect | reverse cascade allowed? | open question | recommended MVP default |
+|---|---|---|---|---|---|---|
+| Before review job soft delete | Before review job, linked Bridge runs, linked protected After answer artifacts as visibility/linkage policy question only | Before hidden from history; linked Bridge hidden from history/selection candidate; linked After visibility remains policy question | no immediate file deletion | no | Should linked After artifacts hide because source Before/Bridge is hidden, or only lose continuity/draft affordance? | hide Before and linked Bridge surfaces; retain linked After artifacts pending policy |
+| Bridge run soft delete | Bridge run and linked protected After answer artifacts | Bridge hidden from history and future Bridge selection; linked protected After excluded from continuity/draft affordance candidate | no immediate file deletion | no | Should linked protected After artifact row become hidden or only inaccessible from Bridge-derived surfaces? | hide Bridge surfaces; do not delete linked artifact files |
+| Protected linked After answer artifact soft delete | protected linked After answer artifact | hidden from future artifact access UI if such UI exists; not usable for continuity/draft affordance | no automatic file purge | no | What artifact access UI/API policy is required before user-facing artifact deletion exists? | hide/inaccessible candidate only; retain files until retention policy |
+| Public unlinked After answer artifact cleanup | public unlinked After answer artifact inventory | not visible in account history and not confirmed/denied by account UX | global cleanup only after retention policy | no | What global retention window and cleanup evidence are required? | no account-scoped cascade; global retention cleanup candidate |
+| Orphan artifact candidate cleanup | orphan artifact candidates | not visible in account history/selection/continuity/draft affordance | no purge until orphan classification is explicit | no | What automated or manual orphan classification checks are enough? | quarantine/inaccessible candidate; no user-triggered purge |
+| Already-deleted repeat action | already hidden/deleted candidate record | no user-visible state transition; remains absent from history/detail | no file deletion from repeat action | no | What internal status granularity is needed for idempotency without exposing state transitions? | idempotent no-op or internal status refresh candidate |
+
+Implementation non-decisions:
+
+- schema column 이름을 확정하지 않는다.
+- API method/path를 확정하지 않는다.
+- migration을 확정하지 않는다.
+- audit log table과 status column 중 어느 쪽을 쓸지 확정하지 않는다.
+- response shape/status code를 확정하지 않는다.
+- background purge job을 확정하지 않는다.
+
+Bridge policy checkpoint:
+
+- deleted/hidden record는 future Bridge selection / continuity panel / draft affordance에
+  사용하지 않는다.
+- `Bridge-as-Continuity, Not Grounding` 정책은 유지한다.
+- displayed safe subset이 query 구성에 쓰일 수 있어도 새 `cited_articles`,
+  `grounded_context_ids`, legal grounding을 만들 수 없다.
+
 Acceptance direction:
 
 - 삭제 동작은 본인 소유 record에만 적용된다.
@@ -457,11 +534,11 @@ fixture/preset 후보로 검토한다.
 ## 6. Suggested Next Prompt Target
 
 실제 브라우저 logged-in smoke는 PASS 상태다. read-only history 이후 다음 후보는
-Step 3 retention window and cascade policy decision draft다. 다만 deletion은 바로
+Step 3 retention window and cascade policy decision draft의 review/refine이다. 다만 deletion은 바로
 구현하지 않고, soft delete / hard delete / retention / artifact lifecycle /
 ownership / visibility policy를 먼저 문서로 review한다. 다음 prompt target은
-deletion API/schema 구현이 아니라 retention window와 cascade policy를 중심으로
-open policy question을 좁히는 decision draft로 제한한다.
+deletion API/schema 구현이 아니라 retention window와 cascade policy의 remaining open
+policy question 정리로 제한한다.
 
 Review focus:
 
@@ -475,6 +552,8 @@ Review focus:
   남아 있는지
 - retention window, audit log/status column, file purge job, orphan classification,
   cascade policy가 구현 확정 없이 review/refine 대상으로 남아 있는지
+- retention window와 cascade policy의 remaining open policy question이 다음 문서
+  cycle에서 정리될 수 있게 분리되어 있는지
 - deletion API, DB schema/migration, account deletion/access-control implementation을
   여전히 열지 않는지
 
@@ -484,9 +563,9 @@ Suggested prompt target:
 SCN-004 freeze와 `/api/v1/answer`, `/api/v1/documents/draft` public contract
 unchanged 상태를 유지하면서 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`
 의 Step 3 retention window and cascade policy decision draft를 review/refine한다.
-retention window, audit log/status column, file purge job, orphan classification,
-cascade policy를 open policy question으로 좁히되, 코드 구현, DB schema/migration
-확정, deletion API 구현 프롬프트 작성, account deletion/access-control
-implementation, SCN-001 document draft, SCN-001 draft freeze,
-provider_timeout/OCR retry hardening은 열지 않는다.
+그 다음 문서 cycle에서 retention window, audit log/status column, file purge job,
+orphan classification, cascade policy의 remaining open policy question을 정리한다.
+코드 구현, DB schema/migration 확정, deletion API 구현 프롬프트 작성,
+account deletion/access-control implementation, SCN-001 document draft,
+SCN-001 draft freeze, provider_timeout/OCR retry hardening은 열지 않는다.
 ```
