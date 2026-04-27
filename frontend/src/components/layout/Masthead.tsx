@@ -37,7 +37,7 @@ export function Masthead({ isLoading = false }: MastheadProps) {
             return (
               <Link
                 aria-current={isActive ? 'page' : undefined}
-                className={isActive ? styles.navLinkActive : undefined}
+                className={isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
                 href={item.href}
                 key={item.href}
               >

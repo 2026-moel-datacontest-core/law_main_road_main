@@ -14,6 +14,7 @@
   gap: var(--kl-space-3);
   height: 100%;
   max-width: var(--kl-max-width);
+  min-width: 0;
   margin: 0 auto;
   padding: 0 var(--kl-margin-mobile);
 }
@@ -34,6 +35,12 @@
 .brand:hover {
   color: var(--kl-text-on-primary);
   text-decoration: none;
+}
+
+.brand:focus-visible,
+.navLink:focus-visible {
+  outline: 3px solid rgba(95, 140, 255, 0.42);
+  outline-offset: -3px;
 }
 
 .brandText {
@@ -74,13 +81,16 @@
   align-items: center;
   gap: 2px;
   height: 100%;
+  min-width: 0;
 }
 
-.nav a {
+.navLink {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   height: 100%;
   padding: 0 var(--kl-space-3);
+  border-radius: 6px 6px 0 0;
   color: var(--kl-text-on-dark);
   font-size: var(--kl-text-body);
   line-height: var(--kl-lh-body-short);
@@ -89,13 +99,15 @@
   white-space: nowrap;
 }
 
-.nav a:hover {
+.navLink:hover {
   color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
   text-decoration: none;
 }
 
-.nav a.navLinkActive {
+.navLinkActive {
   color: #ffffff;
+  background: rgba(95, 140, 255, 0.16);
   box-shadow: inset 0 -3px 0 #5f8cff;
 }
 
@@ -164,7 +176,7 @@
     display: none;
   }
 
-  .nav a {
+  .navLink {
     padding-right: 6px;
     padding-left: 6px;
     font-size: 0.86rem;

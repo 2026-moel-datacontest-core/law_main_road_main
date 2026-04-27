@@ -164,6 +164,7 @@ export function EvidenceSection({
                 type="button"
                 onClick={() => removeTimelineEvent(index)}
                 disabled={disabled}
+                aria-label={`사건 경위 ${index + 1}행 삭제`}
               >
                 삭제
               </button>
@@ -248,6 +249,7 @@ export function EvidenceSection({
                 type="button"
                 onClick={() => removeEvidenceItem(index)}
                 disabled={disabled}
+                aria-label={`증거 ${index + 1}행 삭제`}
               >
                 삭제
               </button>
