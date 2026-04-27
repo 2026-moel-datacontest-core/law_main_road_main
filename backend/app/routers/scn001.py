@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from backend.app.db import get_db
 from backend.app.dependencies.auth import require_current_user
-from backend.app.models.bridge_run import BridgeRun
 from backend.app.models.user import User
 from backend.app.routers.answer import generate_answer_response
 from backend.app.schemas.answer import AnswerRequest, AnswerResponse
@@ -27,6 +26,11 @@ from backend.app.services.scn001_bridge_service import (
     BridgeRunNotFoundError,
     create_bridge_run_from_before_job,
     get_bridge_run_for_user,
+    get_visible_bridge_run_row_for_user,
+)
+from backend.app.services.scn001_deletion_service import (
+    hide_before_review_job_for_user,
+    hide_bridge_run_for_user,
 )
 from backend.app.services.scn001_history_service import (
     BeforeReviewJobHistoryNotFoundError,
@@ -88,6 +92,31 @@ def read_before_review_job(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="before review job store is unavailable",
         ) from exc
+
+
+@router.delete(
+    "/before-review-jobs/{before_review_job_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_before_review_job(
+    before_review_job_id: str,
+    current_user: Annotated[User, Depends(require_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    try:
+        hide_before_review_job_for_user(
+            db,
+            current_user=current_user,
+            before_review_job_id=before_review_job_id,
+        )
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="before review job store is unavailable",
+        ) from exc
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -168,19 +197,22 @@ def answer_from_bridge_run(
     db: Annotated[Session, Depends(get_db)],
 ) -> AnswerResponse:
     try:
-        bridge_run = db.get(BridgeRun, bridge_run_id)
+        bridge_run = get_visible_bridge_run_row_for_user(
+            db,
+            current_user=current_user,
+            bridge_run_id=bridge_run_id,
+        )
     except SQLAlchemyError as exc:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="bridge run store is unavailable",
         ) from exc
-
-    if bridge_run is None or bridge_run.user_id != current_user.id:
+    except BridgeRunNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="bridge run not found",
-        )
+        ) from exc
 
     return generate_answer_response(
         payload,
@@ -190,6 +222,31 @@ def answer_from_bridge_run(
         ),
         fail_on_artifact_error=True,
     )
+
+
+@router.delete(
+    "/bridge-runs/{bridge_run_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_bridge_run(
+    bridge_run_id: str,
+    current_user: Annotated[User, Depends(require_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    try:
+        hide_bridge_run_for_user(
+            db,
+            current_user=current_user,
+            bridge_run_id=bridge_run_id,
+        )
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="bridge run store is unavailable",
+        ) from exc
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(

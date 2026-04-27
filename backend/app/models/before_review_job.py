@@ -15,12 +15,25 @@ class BeforeReviewJob(Base):
         Index("idx_before_review_jobs_user_id", "user_id"),
         Index("idx_before_review_jobs_status", "status"),
         Index("idx_before_review_jobs_updated_at", "updated_at"),
+        Index("idx_before_review_jobs_user_hidden_at", "user_hidden_at"),
     )
 
     job_id: Mapped[str] = mapped_column(String(32), primary_key=True)
     user_id: Mapped[str | None] = mapped_column(
         String(36),
         ForeignKey("users.id", name="fk_before_review_jobs_user_id_users"),
+        nullable=True,
+    )
+    user_hidden_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    user_hidden_by_user_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey(
+            "users.id",
+            name="fk_before_review_jobs_user_hidden_by_user_id_users",
+        ),
         nullable=True,
     )
     status: Mapped[str] = mapped_column(String(20), nullable=False)

@@ -16,6 +16,7 @@ class BridgeRun(Base):
         Index("idx_bridge_runs_before_review_job_id", "before_review_job_id"),
         Index("idx_bridge_runs_scenario_id", "scenario_id"),
         Index("idx_bridge_runs_created_at", "created_at"),
+        Index("idx_bridge_runs_user_hidden_at", "user_hidden_at"),
     )
 
     bridge_run_id: Mapped[str] = mapped_column(String(32), primary_key=True)
@@ -23,6 +24,18 @@ class BridgeRun(Base):
         String(36),
         ForeignKey("users.id", name="fk_bridge_runs_user_id_users"),
         nullable=False,
+    )
+    user_hidden_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    user_hidden_by_user_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey(
+            "users.id",
+            name="fk_bridge_runs_user_hidden_by_user_id_users",
+        ),
+        nullable=True,
     )
     before_review_job_id: Mapped[str | None] = mapped_column(
         String(32),

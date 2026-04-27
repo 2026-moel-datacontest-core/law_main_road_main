@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, load_only
 
 from backend.app.models.before_review_job import BeforeReviewJob
@@ -47,6 +47,7 @@ def list_before_review_jobs_for_user(
             )
         )
         .where(BeforeReviewJob.user_id == current_user.id)
+        .where(BeforeReviewJob.user_hidden_at.is_(None))
         .order_by(
             BeforeReviewJob.updated_at.desc(),
             BeforeReviewJob.created_at.desc(),
@@ -88,7 +89,10 @@ def get_before_review_job_history_for_user(
                 BeforeReviewJob.result,
             )
         )
-        .where(BeforeReviewJob.job_id == before_review_job_id)
+        .where(
+            BeforeReviewJob.job_id == before_review_job_id,
+            BeforeReviewJob.user_hidden_at.is_(None),
+        )
     )
     job = db.execute(query).scalar_one_or_none()
     if job is None or job.user_id != current_user.id:
@@ -129,7 +133,13 @@ def list_bridge_runs_for_user(
                 BridgeRun.updated_at,
             )
         )
+        .outerjoin(
+            BeforeReviewJob,
+            BridgeRun.before_review_job_id == BeforeReviewJob.job_id,
+        )
         .where(BridgeRun.user_id == current_user.id)
+        .where(BridgeRun.user_hidden_at.is_(None))
+        .where(_source_before_job_is_visible_for_user(current_user))
         .order_by(
             BridgeRun.updated_at.desc(),
             BridgeRun.created_at.desc(),
@@ -155,6 +165,7 @@ def _bridge_job_ids_for_jobs(
         .where(
             BridgeRun.user_id == current_user.id,
             BridgeRun.before_review_job_id.in_(before_review_job_ids),
+            BridgeRun.user_hidden_at.is_(None),
         )
         .distinct()
     )
@@ -176,10 +187,22 @@ def _has_bridge_run_for_job(
         .where(
             BridgeRun.user_id == current_user.id,
             BridgeRun.before_review_job_id == before_review_job_id,
+            BridgeRun.user_hidden_at.is_(None),
         )
         .limit(1)
     )
     return db.execute(query).first() is not None
+
+
+def _source_before_job_is_visible_for_user(current_user: User):
+    return or_(
+        BridgeRun.before_review_job_id.is_(None),
+        and_(
+            BeforeReviewJob.job_id.is_not(None),
+            BeforeReviewJob.user_id == current_user.id,
+            BeforeReviewJob.user_hidden_at.is_(None),
+        ),
+    )
 
 
 def _before_job_history_from_row(

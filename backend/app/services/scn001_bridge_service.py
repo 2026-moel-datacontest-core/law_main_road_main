@@ -63,6 +63,7 @@ def create_bridge_run_from_before_job(
         raise BeforeReviewJobNotFoundError("before review job not found")
 
     _ensure_before_job_access(job, current_user)
+    _ensure_before_job_visible(job)
     _ensure_before_job_completed(job)
 
     handoff = extract_before_handoff(job)
@@ -110,10 +111,38 @@ def get_bridge_run_for_user(
     current_user: User,
     bridge_run_id: str,
 ) -> BridgeRunResponse:
-    bridge_run = db.get(BridgeRun, bridge_run_id)
-    if bridge_run is None or bridge_run.user_id != current_user.id:
-        raise BridgeRunNotFoundError("bridge run not found")
+    bridge_run = get_visible_bridge_run_row_for_user(
+        db,
+        current_user=current_user,
+        bridge_run_id=bridge_run_id,
+    )
     return _bridge_response_from_row(bridge_run, after_query_seed=None)
+
+
+def get_visible_bridge_run_row_for_user(
+    db: Session,
+    *,
+    current_user: User,
+    bridge_run_id: str,
+) -> BridgeRun:
+    bridge_run = db.get(BridgeRun, bridge_run_id)
+    if (
+        bridge_run is None
+        or bridge_run.user_id != current_user.id
+        or bridge_run.user_hidden_at is not None
+    ):
+        raise BridgeRunNotFoundError("bridge run not found")
+
+    if bridge_run.before_review_job_id is not None:
+        source_job = db.get(BeforeReviewJob, bridge_run.before_review_job_id)
+        if (
+            source_job is None
+            or source_job.user_id != current_user.id
+            or source_job.user_hidden_at is not None
+        ):
+            raise BridgeRunNotFoundError("bridge run not found")
+
+    return bridge_run
 
 
 def extract_before_handoff(job: BeforeReviewJob) -> BeforeHandoffDTO:
@@ -211,6 +240,11 @@ def _ensure_before_job_access(job: BeforeReviewJob, current_user: User) -> None:
         raise BeforeReviewJobForbiddenError(
             "before review job is not linked to current user"
         )
+
+
+def _ensure_before_job_visible(job: BeforeReviewJob) -> None:
+    if job.user_hidden_at is not None:
+        raise BeforeReviewJobNotFoundError("before review job not found")
 
 
 def _ensure_before_job_completed(job: BeforeReviewJob) -> None:

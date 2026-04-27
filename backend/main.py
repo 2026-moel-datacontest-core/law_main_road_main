@@ -39,7 +39,7 @@ app.add_middleware(
         r"https?://(localhost|127\.0\.0\.1):(30[0-9]{2}|5090)",
     ),
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["DELETE", "GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
 app.include_router(api_router)
