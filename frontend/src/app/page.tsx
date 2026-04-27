@@ -34,6 +34,8 @@ const BEFORE_GATE_LOGIN_MESSAGE =
 const BEFORE_GATE_AUTH_CHECKING_MESSAGE = '로그인 상태를 확인하는 중입니다.';
 const BEFORE_GATE_FIREBASE_CONFIG_MESSAGE =
   '계약서 분석을 사용하려면 Firebase public env 설정이 필요합니다.';
+const BEFORE_GATE_BACKEND_AUTH_MESSAGE =
+  '서버 인증 확인이 완료되지 않았습니다. 인증 확인 또는 다시 로그인 후 이용해 주세요.';
 
 const news = [
   {
@@ -647,6 +649,7 @@ export default function HomePage() {
   const {
     firebaseConfigured,
     firebaseUser,
+    backendUser,
     isInitializing,
     isSigningIn,
     isCheckingBackend,
@@ -681,15 +684,21 @@ export default function HomePage() {
       return;
     }
 
+    if (!backendUser.logged_in) {
+      setBeforeGateMessage(BEFORE_GATE_BACKEND_AUTH_MESSAGE);
+      focusLoginSection();
+      return;
+    }
+
     setBeforeGateMessage(null);
     router.push('/before');
-  }, [authBusy, firebaseConfigured, firebaseUser, focusLoginSection, router]);
+  }, [authBusy, backendUser.logged_in, firebaseConfigured, firebaseUser, focusLoginSection, router]);
 
   useEffect(() => {
-    if (firebaseUser && !authBusy) {
+    if (firebaseUser && backendUser.logged_in && !authBusy) {
       setBeforeGateMessage(null);
     }
-  }, [authBusy, firebaseUser]);
+  }, [authBusy, backendUser.logged_in, firebaseUser]);
 
   return (
     <div className={styles.page}>

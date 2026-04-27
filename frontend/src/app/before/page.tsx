@@ -65,6 +65,12 @@ const BEFORE_ANALYZE_AUTH_CHECKING_MESSAGE =
   '로그인 상태를 확인하는 중입니다. 잠시 후 다시 시도해주세요.';
 const BEFORE_ANALYZE_FIREBASE_CONFIG_MESSAGE =
   'Before 계약서 분석에는 Firebase 설정이 필요합니다. Firebase public web config 설정 후 다시 시도해주세요.';
+const BEFORE_ANALYZE_BACKEND_AUTH_MESSAGE =
+  '서버 인증 확인이 완료되지 않았습니다. 인증 확인 또는 다시 로그인 후 분석을 시작해주세요.';
+const SCN001_HISTORY_BACKEND_AUTH_MESSAGE =
+  '서버 인증 확인이 완료되지 않아 기록을 불러올 수 없습니다. 인증 확인 또는 다시 로그인 후 시도해주세요.';
+const BRIDGE_BACKEND_AUTH_MESSAGE =
+  '서버 인증 확인이 완료되지 않아 After 연결을 만들 수 없습니다. 인증 확인 또는 다시 로그인 후 시도해주세요.';
 const BEFORE_JOB_GENERAL_FAILURE_MESSAGE =
   '계약서 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
 const BEFORE_JOB_OCR_QUOTA_FAILURE_MESSAGE =
@@ -124,11 +130,13 @@ export default function BeforePage() {
   const {
     firebaseConfigured,
     firebaseUser,
+    backendUser,
     isInitializing,
     isSigningIn,
     isCheckingBackend,
     errorMessage: authErrorMessage,
     signInWithGoogle,
+    refreshBackendAuth,
   } = useAuth();
   const uploadRef = useRef<HTMLElement | null>(null);
   const resultRef = useRef<HTMLElement | null>(null);
@@ -154,9 +162,11 @@ export default function BeforePage() {
   const [beforeAnalyzeAuthMessage, setBeforeAnalyzeAuthMessage] = useState<string | null>(null);
   const authBusy = isInitializing || isSigningIn || isCheckingBackend;
   const hasBridgeJobId = Boolean(completedReviewJobId);
-  const isBridgeAuthenticated = Boolean(firebaseUser);
+  const isBackendAuthenticated = backendUser.logged_in;
+  const isBridgeAuthenticated = isBackendAuthenticated;
   const shouldShowBeforeAuthSignInAction =
-    beforeAnalyzeAuthMessage === BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE &&
+    (beforeAnalyzeAuthMessage === BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE ||
+      beforeAnalyzeAuthMessage === BEFORE_ANALYZE_BACKEND_AUTH_MESSAGE) &&
     firebaseConfigured &&
     !authBusy;
 
@@ -248,13 +258,13 @@ export default function BeforePage() {
   }, [loadingJob]);
 
   useEffect(() => {
-    if (firebaseUser) {
+    if (isBackendAuthenticated) {
       setBeforeAnalyzeAuthMessage(null);
     }
-  }, [firebaseUser]);
+  }, [isBackendAuthenticated]);
 
   useEffect(() => {
-    if (!firebaseConfigured || authBusy || !firebaseUser) {
+    if (!firebaseConfigured || authBusy || !firebaseUser || !isBackendAuthenticated) {
       setHistoryStatus('idle');
       setHistoryErrorMessage(null);
       setBeforeHistory([]);
@@ -330,6 +340,10 @@ export default function BeforePage() {
           return;
         }
 
+        if (error instanceof Scn001HistoryApiError && error.status === 401) {
+          void refreshBackendAuth({ forceRefresh: true });
+        }
+
         setBeforeHistory([]);
         setBridgeHistory([]);
         setHistoryErrorMessage(getScn001HistoryErrorMessage(error));
@@ -339,7 +353,14 @@ export default function BeforePage() {
     return () => {
       cancelled = true;
     };
-  }, [authBusy, firebaseConfigured, firebaseUser, historyRefreshNonce]);
+  }, [
+    authBusy,
+    firebaseConfigured,
+    firebaseUser,
+    historyRefreshNonce,
+    isBackendAuthenticated,
+    refreshBackendAuth,
+  ]);
 
   function handleFilesChange(files: File[]) {
     setSelectedFiles(files);
@@ -450,6 +471,10 @@ export default function BeforePage() {
       }
 
       throw new BeforeApiError(401, BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE);
+    }
+
+    if (!backendUser.logged_in) {
+      throw new BeforeApiError(401, BEFORE_ANALYZE_BACKEND_AUTH_MESSAGE);
     }
 
     const idToken = await getCurrentBeforeJobIdToken(false);
@@ -571,6 +596,10 @@ export default function BeforePage() {
       return BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE;
     }
 
+    if (!backendUser.logged_in) {
+      return BEFORE_ANALYZE_BACKEND_AUTH_MESSAGE;
+    }
+
     return null;
   }
 
@@ -590,6 +619,12 @@ export default function BeforePage() {
       return;
     }
 
+    if (!backendUser.logged_in) {
+      setBridgeActionStatus('error');
+      setBridgeActionMessage(BRIDGE_BACKEND_AUTH_MESSAGE);
+      return;
+    }
+
     setIsBridgeSubmitting(true);
     setBridgeActionStatus('loading');
     setBridgeActionMessage(null);
@@ -603,6 +638,10 @@ export default function BeforePage() {
       setBridgeActionMessage('Bridge 연결을 저장했습니다. After로 이동합니다.');
       router.push('/after');
     } catch (error) {
+      if (error instanceof BridgeApiError && error.status === 401) {
+        void refreshBackendAuth({ forceRefresh: true });
+      }
+
       setBridgeActionStatus('error');
       setBridgeActionMessage(getBridgeActionErrorMessage(error));
     } finally {
@@ -764,12 +803,16 @@ export default function BeforePage() {
             <Scn001HistoryPanel
               firebaseConfigured={firebaseConfigured}
               isAuthBusy={authBusy}
-              isAuthenticated={Boolean(firebaseUser)}
+              hasFirebaseSession={Boolean(firebaseUser)}
+              isAuthenticated={isBackendAuthenticated}
               status={historyStatus}
               errorMessage={historyErrorMessage}
               beforeJobs={beforeHistory}
               bridgeRuns={bridgeHistory}
-              onRetry={() => setHistoryRefreshNonce((current) => current + 1)}
+              onRetry={() => {
+                void refreshBackendAuth({ forceRefresh: true });
+                setHistoryRefreshNonce((current) => current + 1);
+              }}
             />
           </div>
         </section>
@@ -795,6 +838,7 @@ export default function BeforePage() {
                     bridgeAction={
                       <BridgeHandoffCta
                         hasJobId={hasBridgeJobId}
+                        hasFirebaseSession={Boolean(firebaseUser)}
                         isAuthenticated={isBridgeAuthenticated}
                         isAuthBusy={authBusy}
                         isFirebaseConfigured={firebaseConfigured}
@@ -829,6 +873,7 @@ export default function BeforePage() {
 interface Scn001HistoryPanelProps {
   firebaseConfigured: boolean;
   isAuthBusy: boolean;
+  hasFirebaseSession: boolean;
   isAuthenticated: boolean;
   status: Scn001HistoryStatus;
   errorMessage: string | null;
@@ -840,6 +885,7 @@ interface Scn001HistoryPanelProps {
 function Scn001HistoryPanel({
   firebaseConfigured,
   isAuthBusy,
+  hasFirebaseSession,
   isAuthenticated,
   status,
   errorMessage,
@@ -850,6 +896,7 @@ function Scn001HistoryPanel({
   const notice = getScn001HistoryNotice({
     firebaseConfigured,
     isAuthBusy,
+    hasFirebaseSession,
     isAuthenticated,
     status,
     errorMessage,
@@ -900,6 +947,7 @@ function Scn001HistoryPanel({
 interface Scn001HistoryNoticeInput {
   firebaseConfigured: boolean;
   isAuthBusy: boolean;
+  hasFirebaseSession: boolean;
   isAuthenticated: boolean;
   status: Scn001HistoryStatus;
   errorMessage: string | null;
@@ -929,6 +977,14 @@ function getScn001HistoryNotice(input: Scn001HistoryNoticeInput): {
   }
 
   if (!input.isAuthenticated) {
+    if (input.hasFirebaseSession) {
+      return {
+        kind: 'error',
+        message: SCN001_HISTORY_BACKEND_AUTH_MESSAGE,
+        canRetry: true,
+      };
+    }
+
     return {
       kind: 'notice',
       message: 'Google 로그인 후 이전 Before 검토와 Bridge 연결 기록을 볼 수 있습니다.',
@@ -1088,6 +1144,7 @@ function HistoryMeta({ label, value }: { label: string; value: string }) {
 
 interface BridgeHandoffCtaProps {
   hasJobId: boolean;
+  hasFirebaseSession: boolean;
   isAuthenticated: boolean;
   isAuthBusy: boolean;
   isFirebaseConfigured: boolean;
@@ -1100,6 +1157,7 @@ interface BridgeHandoffCtaProps {
 
 function BridgeHandoffCta({
   hasJobId,
+  hasFirebaseSession,
   isAuthenticated,
   isAuthBusy,
   isFirebaseConfigured,
@@ -1114,6 +1172,7 @@ function BridgeHandoffCta({
   const shouldShowLogin = hasJobId && isFirebaseConfigured && !isAuthenticated;
   const statusText = getBridgeCtaStatusText({
     hasJobId,
+    hasFirebaseSession,
     isAuthenticated,
     isAuthBusy,
     isFirebaseConfigured,
@@ -1167,6 +1226,7 @@ function BridgeHandoffCta({
 
 function getBridgeCtaStatusText(input: {
   hasJobId: boolean;
+  hasFirebaseSession: boolean;
   isAuthenticated: boolean;
   isAuthBusy: boolean;
   isFirebaseConfigured: boolean;
@@ -1182,6 +1242,10 @@ function getBridgeCtaStatusText(input: {
   }
 
   if (!input.isAuthenticated) {
+    if (input.hasFirebaseSession) {
+      return BRIDGE_BACKEND_AUTH_MESSAGE;
+    }
+
     return 'After 연결에는 Google 로그인이 필요합니다. 로그인 후 이 결과 화면에서 연결을 시작할 수 있습니다.';
   }
 
