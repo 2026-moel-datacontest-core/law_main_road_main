@@ -1,6 +1,6 @@
 # SCN-001 Auth Integration Status
 
-기준일: `2026-04-24`
+기준일: `2026-04-27`
 
 ## Purpose
 
@@ -25,6 +25,7 @@
 | Phase 7C~7D | 완료 | frontend `fetchBridgeAnswer` helper and checked/all-unchecked `/after` submit routing implemented while preserving SCN-004 public behavior |
 | Phase 7E | PASS | live browser/network/DB smoke passed: SCN-004 freeze paths, checked protected Bridge answer, all-unchecked public answer, and artifact linkage verified |
 | Phase 8 | PARTIAL | regression / demo preflight / SCN-004 manual rehearsal PASS. SCN-001 browser replay BLOCKED in Codex headless because interactive Firebase Google popup login and in-memory auth state were not available |
+| Post-Phase 8 logged-in smoke | PASS | actual browser Google login, backend `/api/v1/auth/me` verification, main Before CTA, history endpoints Authorization, and read-only history render passed with sanitized evidence. Frontend protected SCN-001 gates now require backend-verified `backendUser.logged_in`, not Firebase signed-in alone |
 
 ## Current Git History References
 
@@ -93,10 +94,42 @@ backend/frontend servers available on `localhost:8000` and `localhost:5090`.
 - SCN-004 browser console/network error: NO.
 - Privacy note: Phase 8 evidence records no token, Firebase uid, email, provider_subject, raw query, full answer body, real bridge id, or artifact body.
 
+## Post-Phase 8 Logged-in Browser Smoke Evidence Summary
+
+2026-04-27 actual browser smoke passed after SCN-001 frontend auth state sync
+hardening. Evidence was recorded only as PASS/PRESENT/NO signals; no token,
+Firebase uid, Google subject, raw email, raw user id, provider subject, raw
+query, full answer body, real bridge id, or artifact body was recorded.
+
+- Google login: PASS. `/api/v1/auth/me` returned HTTP 200 with `logged_in=true`;
+  `user_id`, `display_name`, and `email` were presence-checked only.
+- Backend auth state sync: PASS. The previous mismatch where Firebase showed
+  signed-in while backend verification returned 401 was resolved.
+- Main Before CTA -> `/before`: PASS. The main Before gate uses backend-verified
+  auth state, not Firebase signed-in alone.
+- History endpoints Authorization: PASS. `GET /api/v1/scn001/before-review-jobs`
+  and `GET /api/v1/scn001/bridge-runs` included Authorization headers and the
+  previous 401 was not reproduced.
+- Read-only history render: PASS. `/before` history UI rendered without auth
+  error; existing records show as list and no-record state shows as expected.
+- Console/network error: NO for the previous auth 401 path after the fix.
+- Verification: `frontend npm run build` PASS; `git diff --check` PASS.
+
+Implementation note:
+
+- Protected SCN-001 frontend gates now require backend `/api/v1/auth/me`
+  verification via `backendUser.logged_in`.
+- Main Before CTA, `/before` history, Before analysis start, and Bridge handoff
+  no longer treat Firebase signed-in alone as sufficient.
+- Protected endpoint 401 failures trigger a backend auth re-check.
+
 ## Current Auth / Linkage Architecture
 
 - MVP auth path: Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification.
 - Frontend gets Firebase ID token from Firebase SDK only when needed for protected SCN-001 requests.
+- Frontend protected SCN-001 gates use backend-verified `backendUser.logged_in`
+  state; Firebase signed-in alone is not sufficient for main Before entry,
+  `/before` history, Before analysis, or Bridge handoff.
 - Backend verifies Firebase ID token and resolves internal user from `auth_provider = "firebase_google"` + `provider_subject = Firebase uid`.
 - Business tables store internal `users.id`, not Firebase uid, Google `sub`, email, or raw token.
 - `/api/v1/auth/me` is implemented as provider-neutral auth status endpoint.
@@ -150,7 +183,7 @@ Displayed safe subset:
 
 ## Current Open / Future Items
 
-- Additional negative auth smoke for missing token / other-user `bridge_run_id` masking can be run as needed; positive Phase 7E browser/network/DB route smoke passed.
+- Additional negative auth smoke for missing token / other-user `bridge_run_id` masking can be run as needed; positive Phase 7E browser/network/DB route smoke and Post-Phase 8 actual logged-in browser smoke passed.
 - Phase 6F passed with retry, but transient `provider_timeout` remains residual runtime risk. Retry/backoff hardening is separate runtime work.
 - Full real Before/OCR completed E2E remains separate if needed; Phase 6F Bridge checked-live smoke used memory-only synthetic handoff state.
 - IndexedDB Firebase SDK persistence policy can be revisited if needed; MVP app code still uses `inMemoryPersistence` and does not store raw flow payload in Web Storage.

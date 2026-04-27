@@ -1,6 +1,6 @@
 # Post-Phase 8 SCN-001 Extension Roadmap
 
-기준일: `2026-04-24`
+기준일: `2026-04-27`
 
 이 문서는 Phase 8 이후 후속 작업 후보와 현재 완료 상태를 작고 안전한
 순서로 정리하는 post-Phase 8 roadmap이다.
@@ -37,6 +37,11 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
 - Post-Phase 8 Step 2B-1 frontend history helper/types 완료.
 - Post-Phase 8 Step 2B-2 `/before` read-only history UI 완료.
 - Post-Phase 8 Step 1.6 main page Before entry login gate 완료.
+- Post-Phase 8 actual browser logged-in smoke PASS.
+- SCN-001 protected frontend auth gate hardening 완료: Firebase signed-in 단독이
+  아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`)를
+  기준으로 main Before CTA, `/before` history, Before analysis, Bridge handoff를
+  보호한다.
 
 ## 3. Recommended Sequence
 
@@ -86,16 +91,24 @@ Acceptance direction:
 
 main page의 Before entry를 로그인 상태에 맞게 gate하는 작은 UX hardening이다.
 
-Status (2026-04-24): completed and pushed in `d7bc261`.
+Status (2026-04-27): completed. Initial main Before entry gate landed in
+`d7bc261`; backend-verified auth state hardening and actual browser smoke passed
+afterward.
 
 - 로그인 전에는 Before 진입이 보호된 경로임을 분명히 알린다.
-- 로그인 후 Before CTA는 `/before`로 이동한다.
+- backend verification 완료 후 Before CTA는 `/before`로 이동한다.
+- Firebase signed-in 단독 상태는 protected SCN-001 진입 조건으로 쓰지 않는다.
 - SCN-004 `/after` login-free path나 public answer/draft behavior에는 영향을 주지
   않는다.
 
-Pending polish candidates:
+Verified:
 
-- 실제 브라우저에서 로그인 후 Before CTA -> `/before` 이동 확인.
+- 실제 브라우저에서 Google login -> backend `/api/v1/auth/me` 200
+  `logged_in=true` -> main Before CTA -> `/before` 이동 PASS.
+- 민감값은 presence-check만 수행하고 원문을 기록하지 않음.
+
+Remaining polish candidates:
+
 - semantic/a11y polish가 필요하면 별도 작은 patch로 처리.
 
 ### Step 2. Read-only History
@@ -108,6 +121,10 @@ Step 2 status (2026-04-24):
 - Step 2A backend read-only history API slice completed and pushed in `5948b43`.
 - Step 2B-1 frontend history helper/types completed and pushed in `facb408`.
 - Step 2B-2 `/before` read-only history UI completed and pushed in `f2c463a`.
+- Actual browser read-only history smoke passed on 2026-04-27:
+  `GET /api/v1/scn001/before-review-jobs` and
+  `GET /api/v1/scn001/bridge-runs` sent Authorization headers, previous 401 was
+  not reproduced, and read-only history UI rendered without auth error.
 - Step 2B-3 is not open.
 - Deletion API, retention policy, and SCN-001 document draft remain out of scope.
 
@@ -128,12 +145,13 @@ Acceptance direction:
 - 없는 항목 또는 타인 소유 항목은 existence leak이 없도록 처리한다.
 - SCN-004 public answer/draft contract는 변경하지 않는다.
 
-Current verification caveat:
+Current verification status:
 
 - Codex headless 환경에서는 interactive Firebase Google popup + `inMemoryPersistence`
-  때문에 logged-in live smoke가 제한된다.
-- 실제 브라우저에서 `/before` logged-in history endpoints Authorization PRESENT와
-  history records read-only render를 확인하는 것이 다음 권장 작업이다.
+  때문에 logged-in live smoke가 여전히 제한된다.
+- 실제 사용자 브라우저에서는 `/before` logged-in history endpoints Authorization
+  PRESENT와 history records read-only render가 PASS 확인됐다.
+- 기록이 없을 때는 empty state가 정상 render되는 것도 PASS 범위로 본다.
 
 ### Step 3. History Deletion
 
@@ -229,15 +247,14 @@ fixture/preset 후보로 검토한다.
 
 ## 6. Suggested Next Prompt Target
 
-다음 우선 작업은 실제 브라우저 logged-in smoke다. Step 2B-3 또는 Step 3는 아직
-열지 않는다.
+실제 브라우저 logged-in smoke는 PASS 상태다. Step 2B-3 또는 Step 3는 아직 열지
+않는다.
 
 Suggested prompt target:
 
 ```text
-SCN-004 freeze를 유지하면서 실제 브라우저 logged-in smoke만 수행한다.
-main page 로그인 후 Before CTA -> /before, /before logged-in history endpoints
-Authorization PRESENT, history records read-only render를 확인하고 sanitized
-PASS/FAIL/BLOCKED 결과만 기록한다. 코드 수정, deletion/history retention,
+SCN-004 freeze를 유지하면서 Post-Phase 8 logged-in smoke PASS 상태를 보존한다.
+다음 작업이 필요하면 read-only history status/semantic polish 또는 제출 전
+preflight를 별도 작은 범위로 수행한다. Step 2B-3, history deletion/retention,
 SCN-001 document draft, provider_timeout/OCR retry hardening은 열지 않는다.
 ```

@@ -67,6 +67,10 @@
   - `/after` checked Bridge submit routing
   - live browser/network/DB smoke PASS
 - Post-Phase 8 Step 1 logout memory reset, Step 1.5 Before actual analysis login-required UX, OCR 429 friendly message, Step 2B-1 history API client/types, Step 2B-2 `/before` read-only history UI, Step 1.6 main page Before entry login gate 완료
+- Post-Phase 8 actual browser logged-in smoke PASS 및 auth state sync hardening 완료:
+  - main Before CTA는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`) 기준으로 `/before` 진입
+  - `/before` history, 분석 시작, Bridge handoff도 backend-verified 상태 기준으로 보호
+  - protected endpoint 401은 frontend backend auth re-check로 연결
 
 ## 핵심 원칙
 
@@ -93,6 +97,7 @@
 - Firebase Auth Google Sign-In 기반 최소 로그인은 프로젝트 공통 인증 capability로 허용한다. 단, 다음 제약 준수 시.
 - 실제 적용은 사용자별 상태 연결이 필요한 SCN-001 protected path로 제한한다.
 - MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이다.
+- SCN-001 protected frontend gate는 Firebase signed-in 단독이 아니라 backend-verified `backendUser.logged_in` 상태를 기준으로 한다.
 - `auth_provider = "firebase_google"`, `provider_subject = Firebase uid`에서 internal `users.id`를 resolve한다.
 - Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지한다.
 - 전화번호 scope 요청은 금지하고, 이메일은 nullable 표시 정보로만 다루며 primary identifier로 사용하지 않는다.

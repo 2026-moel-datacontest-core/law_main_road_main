@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-기준일: `2026-04-24`
+기준일: `2026-04-27`
 
 - RAG refinement landing 완료
 - SCN-004 document draft backend 완료
@@ -30,12 +30,13 @@
 - SCN-001 Phase 7A~7E 완료: `AfterArtifactLinkage` optional plumbing, protected bridge answer endpoint, frontend helper, `/after` checked Bridge submit routing, live browser/network/DB smoke PASS
 - Phase 8 regression / demo preflight / SCN-004 manual rehearsal PASS
 - Post-Phase 8 Step 1 logout memory reset, Step 1.5 Before actual analysis login-required UX, OCR 429 friendly message, Step 2A read-only history backend endpoints, Step 2B-1 frontend history API client/types, Step 2B-2 `/before` read-only history UI, Step 1.6 main page Before entry login gate 완료
+- Post-Phase 8 actual browser logged-in smoke PASS 및 auth state sync hardening 완료: protected SCN-001 frontend gates는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`)를 기준으로 동작한다.
 - recent security/history cleanup: local secret/database ignore rules hardening 완료, 문서 hash 참조는 current git history 기준으로 관리
 - 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history read-only path까지의 public contract 보호**
 - `SCN-001-BRIDGE-DEMO`는 Before/Bridge handoff 설명용 answer-only preset
 - `SCN-004-DEMO-FREEZE`는 main demo / document draft freeze용 preset
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지
-- 다음 후보 작업은 실제 브라우저 logged-in smoke이며, SCN-001 document draft와 history deletion은 열지 않는다.
+- 실제 브라우저 logged-in smoke는 PASS 상태이며, SCN-001 document draft와 history deletion은 여전히 열지 않는다.
 - 현재 source of truth는 `backend/data/law_chunks/all_chunks.json`
 - current live corpus: `1722` chunks, `selected_as_of = 2026-04-11`
 
@@ -44,7 +45,7 @@ Evolution note:
 - 2026-04-17 기준 상태는 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal 완료였다.
 - 2026-04-20에는 위 상태를 흔들지 않고 presentation-local preset, preflight, free-input guard, eval evidence report를 추가해 MVP 제출 기준을 보강했다.
 - 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, frontend persistence는 `inMemoryPersistence`다.
-- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
+- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS와 backend-verified auth gate sync hardening이 확인됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
 
 ## Read Order
 
@@ -174,9 +175,9 @@ Implemented integration:
 * `/after/result` guards draft flow when `cited_articles` or `grounded_context_ids` is empty and filters SCN-004 document types by answer evidence
 * `/after/intake` sends only `buildCaseIntake()` and `buildLegalBasis()` output to `POST /api/v1/documents/draft`
 * `/after/draft` displays `rendered_text`, `missing_fields`, `cautions`, `evidence_checklist`, `cited_articles`, source context ids, copy, and print
-* `/before` can create protected `bridge_runs` from logged-in completed Before jobs and add memory-only Bridge handoff items for `/after`
-* `/before` shows read-only SCN-001 history for logged-in users and keeps history deletion out of scope
-* main page Before entry is login-gated while SCN-004 `/after` remains login-free
+* `/before` can create protected `bridge_runs` from backend-verified logged-in completed Before jobs and add memory-only Bridge handoff items for `/after`
+* `/before` shows read-only SCN-001 history for backend-verified logged-in users and keeps history deletion out of scope
+* main page Before entry is backend-verified login-gated while SCN-004 `/after` remains login-free
 * checked Bridge handoff answers call the protected Bridge answer endpoint; all-unchecked handoff keeps sticky `answer_origin = "bridge_handoff"` and uses public answer without auth; result remains answer-only and draft disabled
 * state is React Context + `useReducer` memory state only
 

@@ -8,7 +8,7 @@
 
 ## 현재 진행 상태
 
-기준일: `2026-04-24`
+기준일: `2026-04-27`
 
 현재 `ops` 문서 기준으로 정리된 상태는 아래와 같다.
 
@@ -22,6 +22,7 @@
 - Firebase Auth Phase 2/3 로컬 설정 절차 정리 완료
 - SCN-001 Firebase Auth Phase 0~5, Phase 6A~6F, Phase 7A~7E, Phase 8 regression/demo checks 완료 상태 반영
 - Post-Phase 8 Step 1 logout memory reset, Step 1.5 Before login-required UX, OCR 429 friendly message, Step 2A read-only history backend endpoints, Step 2B-1 frontend history API client/types, Step 2B-2 `/before` read-only history UI, Step 1.6 main page Before entry login gate 반영
+- actual browser logged-in smoke PASS 및 SCN-001 backend-verified auth gate hardening 반영
 - local secret/database ignore rules hardening 반영
 
 현재 코드/구조 기준으로 반영된 주요 상태:
@@ -40,8 +41,10 @@
 - Bridge -> After answer-only handoff: Phase 6A~6F 반영 완료
 - `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`: protected Bridge answer 반영 완료
 - `GET /api/v1/scn001/before-review-jobs`, `GET /api/v1/scn001/before-review-jobs/{before_review_job_id}`, `GET /api/v1/scn001/bridge-runs`: read-only history 반영 완료
-- frontend protected Bridge answer helper, `/after` checked Bridge submit routing, `/before` read-only history UI, main Before entry login gate 반영 완료
+- frontend protected Bridge answer helper, `/after` checked Bridge submit routing, `/before` read-only history UI, backend-verified main Before entry login gate 반영 완료
+- SCN-001 protected frontend actions는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`)를 기준으로 동작
 - Phase 7E live browser/network/DB smoke PASS, Phase 8 regression / demo preflight / SCN-004 manual rehearsal PASS
+- Post-Phase 8 actual browser logged-in smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, history endpoints Authorization PRESENT, read-only history render PASS
 - `/api/v1/answer` public contract unchanged
 - `/api/v1/documents/draft` contract unchanged
 - Vertex IAM/credential issue는 runtime resolved. Residual runtime risk는 transient `provider_timeout`
@@ -208,6 +211,12 @@ Expected:
 - backend auth status가 `logged_in=true`로 표시된다.
 - internal `user_id`가 있다.
 - 같은 Google account로 반복 인증하면 같은 internal `user_id`가 유지된다.
+- main page Before CTA는 backend auth status가 `logged_in=true`인 경우에만
+  `/before`로 이동한다.
+- `/before`의 history endpoints는 Authorization header를 포함하고 401 없이
+  응답해야 한다.
+- `/before` read-only history UI는 기록 목록 또는 empty state를 인증 오류 없이
+  렌더해야 한다.
 - provider subject, Firebase uid, token은 화면/로그에 표시하지 않는다.
 - DB를 확인해야 할 때도 `provider_subject`는 masking된 형태로만 확인한다.
 - SCN-004 `/after` path는 로그인 없이 계속 동작해야 한다.
@@ -218,6 +227,10 @@ Expected:
 - Login button이 `Firebase 설정 필요` 상태로 disabled이면 `frontend/.env.local`이 없거나, public env 변경 후 Next dev server를 재시작하지 않은 경우가 많다.
 - `GOOGLE_APPLICATION_CREDENTIALS`가 Vertex AI용 credential을 가리키면 Firebase Admin SDK도 그 ADC를 우선 사용할 수 있다. Firebase Auth smoke shell에서는 Firebase Admin JSON path를 명확히 지정한다.
 - Google OAuth access token과 Firebase ID token을 혼동하지 않는다. Backend `/api/v1/auth/me`에는 Firebase ID token을 Bearer token으로 보낸다.
+- Firebase signed-in 상태인데 `/api/v1/auth/me` 또는 SCN-001 history endpoint가
+  401이면 backend-verified login으로 보지 않는다. 실행 중인 backend/frontend가
+  같은 Firebase project/env로 떠 있는지 확인하고, UI는 backend auth re-check 또는
+  재로그인을 요구해야 한다.
 - token을 채팅, 문서, log, issue에 붙이지 않는다.
 
 ## 이 디렉터리에서 먼저 볼 문서
@@ -275,9 +288,9 @@ Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서�
 
 현재 문서 정리 이후 다음 단계는 아래 순서가 적절하다.
 
-1. 실제 브라우저 logged-in smoke: main page 로그인 후 Before CTA -> `/before`, `/before` history endpoints Authorization PRESENT, history records read-only render 확인
-2. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
-3. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
+1. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
+2. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
+3. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
 4. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
 5. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
 6. `before` / `after` artifact의 향후 GCS 전환 기준 정리

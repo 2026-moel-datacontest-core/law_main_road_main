@@ -74,7 +74,7 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 - SCN-004 demo freeze와 presentation-local fixed answer frontend path 확인 완료
 - full 60 answer evidence report 기준 `FAIL=0`, citation grounding / context id clean 확인 완료
 - Phase 6F live subset PASS with retry. Vertex IAM/credential issue는 runtime resolved 상태이고 residual runtime risk는 transient `provider_timeout`이다.
-- 다음 확인 후보는 실제 브라우저 logged-in smoke에서 read-only history Authorization과 render를 확인하는 것이다. SCN-001 document draft와 history deletion은 아직 열지 않는다.
+- 2026-04-27 actual browser logged-in smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, read-only history Authorization PRESENT, read-only history render PASS. SCN-001 document draft와 history deletion은 아직 열지 않는다.
 
 ## Document Draft 규칙
 
