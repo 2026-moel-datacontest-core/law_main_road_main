@@ -4,7 +4,7 @@
 
 이 문서는 Phase 7 구현 전에 `after_artifact_runs` linkage와
 `source_bridge_run_id` provenance 정책을 확정하기 위한 설계 문서였고,
-현재는 Phase 7A~7B 구현 상태와 남은 frontend/future scope를 함께 고정한다.
+현재는 Phase 7A~7E 구현 상태와 future scope를 함께 고정한다.
 코드 수정, env 수정, DB/migration 수정, git add/commit, 서버 실행, build,
 eval은 이 문서 범위가 아니다.
 
@@ -13,6 +13,8 @@ Implementation status:
 - Phase 7 design document completed in `ab63bc3`.
 - Phase 7A `AfterArtifactLinkage` optional persistence plumbing completed in `aff0a7f`.
 - Phase 7B protected bridge answer endpoint completed in `27bf054`.
+- Phase 7C/7D frontend helper and `/after` submit routing completed in `24e1b95`.
+- Phase 7E live browser/network/DB smoke evidence recorded in `2cfaff1`.
 - Public `/api/v1/answer` contract unchanged.
 - Public `/api/v1/documents/draft` contract unchanged.
 - SCN-004 fixed/free input/draft flow unchanged.
@@ -36,7 +38,7 @@ Implementation status:
 
 | file | Phase 7 relevance |
 |---|---|
-| `AGENTS.md` | SCN-004 freeze, public contract, Web Storage 금지, Phase 7A~7B status |
+| `AGENTS.md` | SCN-004 freeze, public contract, Web Storage 금지, Phase 7A~7E status |
 | `CLAUDE.md` | SCN-001 protected path는 Firebase Bearer token, public answer/draft contract 유지 |
 | `backend/CLAUDE.md` | Firebase uid / provider_subject 노출 금지, SCN-004 public endpoints 유지 |
 | `frontend/CLAUDE.md` | `inMemoryPersistence`, raw flow payload Web Storage 저장 금지 |
@@ -352,8 +354,9 @@ Protected endpoint persistence policy:
 
 ## 10. Frontend Phase 7 Impact
 
-Backend Phase 7B endpoint exists. Frontend protected helper/routing remains a
-separate candidate, for example `fetchBridgeAnswer` or `createBridgeAnswer`.
+Phase 7C/7D frontend protected helper and submit routing are implemented.
+Checked Bridge handoff calls the protected endpoint, while all-unchecked Bridge
+handoff keeps the public answer fallback.
 
 Rules:
 
@@ -534,7 +537,7 @@ Status: PASS
 
 ## 15. Verification Plan
 
-Phase 7A/7B verification or remaining frontend routing should cover:
+Phase 7E verification covered:
 
 - Backend route smoke for `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`.
 - Missing token -> 401.
@@ -555,8 +558,7 @@ Phase 7A/7B verification or remaining frontend routing should cover:
 - Query contains displayed safe subset only.
 - Query excludes `after_query_seed`, Bridge ids, artifact refs, raw OCR, raw contract,
   provider identifiers, and token-like values.
-- `bash scripts/demo_preflight.sh` after remaining frontend routing implementation,
-  because that would touch backend answer plumbing and frontend submit routing.
+- `bash scripts/demo_preflight.sh` PASS was recorded with Phase 7E evidence.
 
 For this doc-only task:
 

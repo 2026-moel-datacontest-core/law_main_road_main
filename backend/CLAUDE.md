@@ -59,18 +59,22 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
   - `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`
 - SCN-001 Phase 5 Before review job optional auth linkage 완료
 - SCN-001 Phase 7A `AfterArtifactLinkage` optional persistence plumbing 완료
-- SCN-001 Phase 7B protected bridge answer endpoint 완료:
+- SCN-001 protected bridge answer endpoint 완료:
   - `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`
   - Firebase Bearer auth required
   - missing/unowned bridge_run -> 404 masking
   - `AnswerResponse`-compatible response
   - `after_artifact_runs.user_id` / `source_bridge_run_id` linkage
+- SCN-001 Step 2A protected read-only history endpoints 완료:
+  - `GET /api/v1/scn001/before-review-jobs`
+  - `GET /api/v1/scn001/before-review-jobs/{before_review_job_id}`
+  - `GET /api/v1/scn001/bridge-runs`
 - RAG refinement landing 완료
 - SCN-004 answer completeness 보강과 document draft smoke 통과
 - SCN-004 demo freeze와 presentation-local fixed answer frontend path 확인 완료
 - full 60 answer evidence report 기준 `FAIL=0`, citation grounding / context id clean 확인 완료
 - Phase 6F live subset PASS with retry. Vertex IAM/credential issue는 runtime resolved 상태이고 residual runtime risk는 transient `provider_timeout`이다.
-- 다음 backend 후보 작업은 SCN-004 demo freeze를 유지한 Phase 7 protected bridge answer verification / frontend routing support다.
+- 다음 확인 후보는 실제 브라우저 logged-in smoke에서 read-only history Authorization과 render를 확인하는 것이다. SCN-001 document draft와 history deletion은 아직 열지 않는다.
 
 ## Document Draft 규칙
 
@@ -78,7 +82,7 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 - request로 받은 `legal_basis.cited_articles`, `source_context_ids`, `retrieved_chunks` 안에서만 근거 사용
 - 사용자가 입력하지 않은 사실은 단정하지 않고 placeholder 또는 `missing_fields`로 남김
 - `SCN-005` 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
-- `SCN-001` Phase 4/5/6/7A/7B는 `/api/v1/answer`나 `/api/v1/documents/draft` contract를 변경하지 않음
+- `SCN-001` Phase 4/5/6/7A~7E와 Step 2A read-only history endpoints는 `/api/v1/answer`나 `/api/v1/documents/draft` contract를 변경하지 않음
 - `/api/v1/answer` public contract unchanged
 - `/api/v1/documents/draft` contract unchanged
 - protected Bridge-origin answer는 public `/api/v1/answer`를 확장하지 않고 `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`만 사용

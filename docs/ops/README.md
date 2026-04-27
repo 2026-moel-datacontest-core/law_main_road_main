@@ -20,7 +20,8 @@
 - Cloud Run 데이터 저장 구조 문서 유지 중
 - troubleshooting 문서 유지 중
 - Firebase Auth Phase 2/3 로컬 설정 절차 정리 완료
-- SCN-001 Firebase Auth Phase 0~5, Phase 6A~6F, Phase 7A~7B 완료 상태 반영
+- SCN-001 Firebase Auth Phase 0~5, Phase 6A~6F, Phase 7A~7E, Phase 8 regression/demo checks 완료 상태 반영
+- Post-Phase 8 Step 1 logout memory reset, Step 1.5 Before login-required UX, OCR 429 friendly message, Step 2A read-only history backend endpoints, Step 2B-1 frontend history API client/types, Step 2B-2 `/before` read-only history UI, Step 1.6 main page Before entry login gate 반영
 - local secret/database ignore rules hardening 반영
 
 현재 코드/구조 기준으로 반영된 주요 상태:
@@ -37,7 +38,10 @@
 - `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`: Phase 4 반영 완료
 - Before review job optional auth linkage: Phase 5 반영 완료
 - Bridge -> After answer-only handoff: Phase 6A~6F 반영 완료
-- `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`: Phase 7B 반영 완료
+- `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`: protected Bridge answer 반영 완료
+- `GET /api/v1/scn001/before-review-jobs`, `GET /api/v1/scn001/before-review-jobs/{before_review_job_id}`, `GET /api/v1/scn001/bridge-runs`: read-only history 반영 완료
+- frontend protected Bridge answer helper, `/after` checked Bridge submit routing, `/before` read-only history UI, main Before entry login gate 반영 완료
+- Phase 7E live browser/network/DB smoke PASS, Phase 8 regression / demo preflight / SCN-004 manual rehearsal PASS
 - `/api/v1/answer` public contract unchanged
 - `/api/v1/documents/draft` contract unchanged
 - Vertex IAM/credential issue는 runtime resolved. Residual runtime risk는 transient `provider_timeout`
@@ -271,12 +275,15 @@ Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서�
 
 현재 문서 정리 이후 다음 단계는 아래 순서가 적절하다.
 
-1. protected bridge answer frontend routing을 구현하는 경우 `/api/v1/scn001/bridge-runs/{bridge_run_id}/answer` smoke 절차 추가
-2. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
-3. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
-4. `before` artifact의 GCS 전환 설계 구체화
-5. `after` artifact의 향후 GCS 전환 기준 정리
-6. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
+1. 실제 브라우저 logged-in smoke: main page 로그인 후 Before CTA -> `/before`, `/before` history endpoints Authorization PRESENT, history records read-only render 확인
+2. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
+3. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
+4. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
+5. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
+6. `before` / `after` artifact의 향후 GCS 전환 기준 정리
+7. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
+
+Step 2B-3, history deletion/retention, SCN-001 document draft는 아직 열지 않는다.
 
 ## 현재 남아 있는 큰 기술 작업
 

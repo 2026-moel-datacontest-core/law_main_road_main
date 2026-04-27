@@ -60,8 +60,13 @@
   - `/after` Bridge summary cards, include checkbox, displayed safe subset query builder 구현
   - Bridge-origin result는 answer-only / draft disabled
   - Phase 6F live subset PASS with retry; Vertex IAM resolved, residual runtime risk는 transient `provider_timeout`
-- SCN-001 Phase 7 설계 문서 완료, Phase 7A backend linkage plumbing과 Phase 7B protected bridge answer endpoint 완료
-- protected bridge answer endpoint frontend helper/routing은 별도 후보 작업이다.
+- SCN-001 Phase 7A~7E 완료:
+  - backend linkage plumbing
+  - protected bridge answer endpoint
+  - frontend protected answer helper
+  - `/after` checked Bridge submit routing
+  - live browser/network/DB smoke PASS
+- Post-Phase 8 Step 1 logout memory reset, Step 1.5 Before actual analysis login-required UX, OCR 429 friendly message, Step 2B-1 history API client/types, Step 2B-2 `/before` read-only history UI, Step 1.6 main page Before entry login gate 완료
 
 ## 핵심 원칙
 
@@ -132,7 +137,7 @@
 - PDF 다운로드 / 실제 제출 기능
 - 현재 SCN-004 demo freeze 유지 작업과 SCN-005 문서 타입 확장을 한 패치에 혼합
 - SCN-005 API / schema 검토 없는 독단적 문서 타입 확장
-- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장. protected bridge answer frontend routing이나 독립 `/bridge` 확장은 별도 범위에서만 검토
+- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장. SCN-001 document draft, history deletion, 독립 `/bridge` 확장은 별도 범위에서만 검토
 
 ## Do Not
 

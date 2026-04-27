@@ -9,17 +9,23 @@ law_main_road repo root에서 작업해주세요.
 - 2026-04-24
 
 현재 git / 제출 기준 상태:
-- main 기준 최신 상태입니다.
-- 사용자가 push 완료를 보고했습니다.
-- 새 세션 시작 직후 `git status -sb`와 `git log --oneline -8`로 origin/main 동기화와 clean/dirty 상태를 먼저 확인하세요.
+- 이번 복원 메모 정리 시작 시점의 `git status -sb`: `## main...origin/main`.
+- 이번 복원 메모 정리 시작 시점의 `git status --short`: clean.
+- 새 세션 시작 직후 `git status -sb`, `git status --short`, `git log --oneline -12`로 origin/main 동기화와 clean/dirty 상태를 다시 확인하세요.
+- 이 복원 메모 정리는 문서 수정만 수행했고, 별도 add/commit/push는 하지 않는 작업 범위였다.
 - 최근 중요 커밋:
+  - d7bc261 fix(frontend): gate main Before entry behind login
+  - f2c463a feat(frontend): show read-only SCN-001 history on Before
+  - facb408 feat(frontend): add SCN-001 history API client
+  - d1bc27b fix(frontend): show friendly OCR quota failure message
+  - 7466f2a fix(frontend): require login before actual Before analysis
+  - d182ccd docs(scn-001): update post Phase 8 extension roadmap
+  - 5948b43 feat(scn-001): add protected read-only history endpoints
+  - 030e7ac fix(frontend): reset flow memory on logout
+  - 122b8c9 docs(scn-001): outline post Phase 8 extension roadmap
+  - 09b6952 docs(scn-001): record Phase 8 rehearsal status
+  - e84bfe2 docs(scn-001): record Phase 8 rehearsal status
   - 2cfaff1 docs(scn-001): record Phase 7C~7E completion and local env inventory
-  - 24e1b95 feat(scn-001): add Phase 7C/7D protected bridge answer routing
-  - a059b08 docs: synchronize Phase 6 and Phase 7 implementation status
-  - 27bf054 feat(scn-001): add protected bridge answer endpoint
-  - aff0a7f feat(scn-001): add Phase 7A answer artifact linkage plumbing
-  - ab63bc3 docs(scn-001): plan Phase 7 after artifact provenance linkage
-  - 8f07a98 docs(scn-001): record Phase 6F live handoff smoke evidence
 
 현재 상태 요약:
 - SCN-004 demo freeze 유지 완료.
@@ -52,10 +58,20 @@ law_main_road repo root에서 작업해주세요.
 - Vertex IAM/credential issue는 runtime resolved 상태입니다.
 - Phase 7E 기준 `provider_timeout`: NO.
 - Phase 7E 기준 console/network error: NO.
+- Post-Phase 8 Step 1 logout memory reset 완료: 로그아웃 시 SCN-001 memory flow가 남지 않도록 정리됨.
+- Post-Phase 8 Step 1.5 Before actual analysis login-required UX 완료: 로그인 없이 protected Before action을 시작하면 로그인 필요 메시지를 표시함.
+- OCR provider 429 frontend friendly message 완료: quota/rate failure를 사용자 친화 문구로 처리함.
+- Post-Phase 8 Step 2A protected read-only history backend endpoints 완료.
+- Post-Phase 8 Step 2B-1 frontend history API client/types 완료.
+- Post-Phase 8 Step 2B-2 `/before` read-only history UI 완료. `git log` 기준 `f2c463a`로 확인됨.
+- Post-Phase 8 Step 1.6 main page Before entry login gate 완료. `git log` 기준 `d7bc261`로 확인됨.
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
+- `GET /api/v1/scn001/before-review-jobs`
+- `GET /api/v1/scn001/before-review-jobs/{before_review_job_id}`
 - `POST /api/v1/scn001/bridge-runs`
+- `GET /api/v1/scn001/bridge-runs`
 - `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`
 - `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`
 - `POST /api/v1/retrieve`
@@ -70,6 +86,7 @@ law_main_road repo root에서 작업해주세요.
 - SCN-004 fixed/free input/draft flow를 SCN-001 linkage 작업과 섞지 마세요.
 - SCN-001 document draft는 아직 열지 않습니다.
 - SCN-005는 현재 frontend preset UI에서 제외되어 있고, 후속 확장 후보로만 유지합니다.
+- `data/legalize-kr/` 및 `backend/data/law_chunks/`는 직접 수정하지 않습니다.
 
 현재 frontend presentation preset:
 - Source of truth: `frontend/src/lib/scenarioPresets.ts`
@@ -129,6 +146,14 @@ Phase 8 verification 결과:
 - SCN-001 all-unchecked Bridge browser replay: BLOCKED in Codex headless. Use Phase 7E PASS as latest evidence unless user reruns an interactive browser login rehearsal.
 - Sanitized DB linkage inventory: protected linked rows PRESENT; public unlinked rows PRESENT; mixed linkage rows ABSENT.
 - Phase 8 evidence hygiene maintained: no token, Firebase uid, email, provider_subject, raw query, full answer body, real bridge id, or artifact body recorded.
+
+Post-Phase 8 runtime caveats:
+- Codex headless 환경에서는 interactive Firebase Google popup + `inMemoryPersistence` 때문에 logged-in live smoke가 제한됩니다.
+- 실제 브라우저에서 확인할 항목:
+  - main page 로그인 후 Before CTA -> `/before`
+  - `/before` logged-in history endpoints Authorization PRESENT
+  - history records read-only render
+- OCR provider 429는 frontend friendly message로 처리됐지만, backend retry/backoff/hard-timeout은 아직 별도 runtime hardening 후보입니다.
 
 SCN-004 freeze 기준:
 - `SCN-004-DEMO-FREEZE` exact preset path는 `/api/v1/answer`를 호출하지 않고 fixed `AnswerResponse` fixture를 사용합니다.
@@ -242,18 +267,22 @@ npm run dev
 - http://127.0.0.1:5090은 Next dev HMR cross-origin warning 이력이 있어 QA 기준 URL로 쓰지 않음
 
 새 세션에서 먼저 해야 할 일:
-1. `git status -sb`와 `git log --oneline -8`로 origin/main과 clean/dirty 상태를 확인하세요.
+1. `git status -sb`, `git status --short`, `git log --oneline -12`로 origin/main과 clean/dirty 상태를 확인하세요.
 2. `AGENTS.md`, `CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md`를 읽고 freeze/금지 범위를 확인하세요.
 3. `docs/planning/19_scn001_auth_integration_status.md`를 읽고 Phase 7C~7E 완료와 sanitized live smoke evidence를 확인하세요.
-4. `docs/planning/21_scn001_phase7_after_artifact_linkage_plan.md`를 읽고 Phase 7A~7E contract와 future scope를 확인하세요.
-5. `docs/ops/README.md`를 읽고 local env inventory, smoke, secret hygiene, residual runtime risk를 확인하세요.
-6. 발표/제출 전이면 `README.md`, `docs/demo/demo_scenario.md`, `docs/demo/presentation_notes.md`, `eval/README.md`, `eval/reports/answer_evidence_2026-04-20.summary.md`도 확인하세요.
+4. `docs/planning/22_post_phase8_scn001_extension_roadmap.md`를 읽고 Post-Phase 8 완료/pending step을 확인하세요.
+5. `docs/planning/21_scn001_phase7_after_artifact_linkage_plan.md`를 읽고 Phase 7A~7E contract와 future scope를 확인하세요.
+6. `docs/ops/README.md`를 읽고 local env inventory, smoke, secret hygiene, residual runtime risk를 확인하세요.
+7. 발표/제출 전이면 `README.md`, `docs/demo/demo_scenario.md`, `docs/demo/presentation_notes.md`, `eval/README.md`, `eval/reports/answer_evidence_2026-04-20.summary.md`도 확인하세요.
 
 절대 하지 말 것:
 - SCN-004 freeze 기준을 흔드는 변경 금지.
 - SCN-001 document draft를 열지 마세요.
 - SCN-005를 바로 구현하지 마세요. 사용자가 명시적으로 요청하면 별도 패치로만 진행하세요.
 - `/bridge`, Recovery 본 구현 금지.
+- Step 2B-3 또는 Step 3를 현재 상태에서 바로 열지 마세요.
+- deletion/history retention을 read-only history와 섞지 마세요.
+- provider_timeout/OCR retry hardening을 UI polish와 섞지 마세요.
 - backend API contract 임의 변경 금지.
 - `/api/v1/answer` public contract 변경 금지.
 - `/api/v1/documents/draft` contract 변경 금지.
@@ -268,27 +297,39 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. optional final interactive SCN-001 browser replay
-   - 사용자가 실제 브라우저에서 Google login 가능한 상태로 checked/all-unchecked Bridge handoff를 재실행
-   - sanitized 결과만 기록: PASS/FAIL/BLOCKED, PRESENT/ABSENT, NULL/NOT NULL
-2. submission/final demo preflight 재실행 및 presentation rehearsal
+1. 실제 브라우저 logged-in smoke
+   - Google login 가능한 브라우저에서 main page 로그인 후 Before CTA -> `/before` 확인
+   - `/before` history endpoints Authorization PRESENT 확인
+   - history records read-only render 확인
+   - sanitized 결과만 기록: PASS/FAIL/BLOCKED, PRESENT/ABSENT
+2. history status pill color polish
+   - read-only history UI의 status pill 색상/상태 표시만 작은 patch로 다룸
+   - deletion, retention, artifact body 노출과 섞지 않음
+3. main Before gate semantic/a11y polish
+   - Step 1.6 구현을 유지하면서 semantic/a11y만 필요한 경우 최소 보강
+   - SCN-004 `/after` login-free path는 건드리지 않음
+4. submission/final demo preflight 재실행 및 presentation rehearsal
    - `bash scripts/demo_preflight.sh`
    - 필요 시 backend/frontend 수동 실행 후 `http://localhost:5090/after`에서 SCN-004-DEMO-FREEZE dry-run
    - SCN-004 exact preset no public answer call, result, draft choices 확인
    - SCN-004 modified/free input public answer without auth 확인
    - SCN-001 checked Bridge protected answer routing 확인
    - SCN-001 all-unchecked Bridge public answer + sticky bridge_handoff 확인
-3. optional Phase 8 regression/manual evidence polish
+5. optional Phase 8 regression/manual evidence polish
    - 이미 PASS한 Phase 7E evidence를 깨지 않는 범위에서만 보강
    - 필요한 경우 negative auth smoke나 sanitized checklist를 추가
-4. provider_timeout retry/backoff hardening
+6. provider_timeout / OCR retry/backoff/hard-timeout hardening
    - 별도 runtime hardening 후보
    - SCN-004 freeze와 public contract 보호를 전제로 분리 작업
-5. artifact retention/deletion/account history access control
+7. Step 2B-3 또는 Step 3
+   - 아직 열지 않음
+   - read-only history와 deletion/history retention을 한 patch에 섞지 않음
+8. artifact retention/deletion/account history access control
    - Post-MVP
    - artifact retrieval UI/API, retention policy, account history access control은 별도 설계 후 진행
-6. SCN-001 document draft
+9. SCN-001 document draft
    - 아직 열지 않음
+   - Bridge/query matching guard 설계 후 별도 큰 phase로만 검토
    - SCN-004 freeze 기준을 유지한 별도 설계/패치가 필요
 
 마지막 보고 형식:
@@ -308,4 +349,6 @@ npm run dev
 MVP 제출 기준으로는 SCN-004 freeze, SCN-001 protected Bridge answer routing,
 Phase 7E live smoke PASS, Phase 8 regression/preflight/SCN-004 rehearsal PASS,
 sanitized evidence hygiene, full 60 eval evidence, demo preflight PASS가 정리된 상태다.
-다음 큰 작업은 제출 전 리허설/최종 preflight이며, SCN-001 document draft는 아직 열지 않는다.
+Post-Phase 8 Step 1, 1.5, OCR 429 friendly message, Step 2A, Step 2B-1,
+Step 2B-2, Step 1.6까지 `git log` 기준 완료 상태다. 다음 우선 작업은 실제
+브라우저 logged-in smoke이며, SCN-001 document draft는 아직 열지 않는다.

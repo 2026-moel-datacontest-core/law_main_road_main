@@ -2,8 +2,8 @@
 
 기준일: `2026-04-24`
 
-이 문서는 Phase 8 이후 후속 작업 후보를 작고 안전한 순서로 정리하는
-post-Phase 8 candidate roadmap이다.
+이 문서는 Phase 8 이후 후속 작업 후보와 현재 완료 상태를 작고 안전한
+순서로 정리하는 post-Phase 8 roadmap이다.
 
 구현 확정 설계가 아니며, API schema, DB schema, frontend route, document
 template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별도 코드/문서
@@ -29,12 +29,20 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
 - Bridge-origin result는 현재 answer-only / draft disabled 정책을 유지한다.
 - `/api/v1/answer` public contract는 unchanged 상태다.
 - `/api/v1/documents/draft` public contract는 unchanged 상태다.
+- `data/legalize-kr/` 및 `backend/data/law_chunks/` 직접 수정 금지는 유지한다.
+- Post-Phase 8 Step 1 logout memory reset 완료.
+- Post-Phase 8 Step 1.5 Before login-required UX 완료.
+- OCR provider 429 frontend friendly message 완료.
+- Post-Phase 8 Step 2A protected read-only history backend endpoints 완료.
+- Post-Phase 8 Step 2B-1 frontend history helper/types 완료.
+- Post-Phase 8 Step 2B-2 `/before` read-only history UI 완료.
+- Post-Phase 8 Step 1.6 main page Before entry login gate 완료.
 
 ## 3. Recommended Sequence
 
 ### Step 1. Logout Memory State Clear
 
-다음 구현 후보로 가장 작고 안전하다.
+Status (2026-04-24): completed and pushed in `030e7ac`.
 
 - 로그아웃 시 `FlowContext`, Before local state, Bridge handoff memory state를
   초기화한다.
@@ -54,8 +62,9 @@ Acceptance direction:
 ### Step 1.5. Before Login-required UX Message
 
 Before action 시작 시 로그인 없이 진행하려는 사용자가 왜 진행할 수 없는지
-명확히 알려주는 작은 UX polish 후보다. Step 2 history UI 전에 별도 patch로
-검토할 수 있다.
+명확히 알려주는 작은 UX polish다.
+
+Status (2026-04-24): completed and pushed in `7466f2a`.
 
 - protected Before action 진입 시 logged-out 상태면 "로그인이 필요합니다" 문구를
   명확히 노출하는 방향을 검토한다.
@@ -73,14 +82,34 @@ Acceptance direction:
   있다.
 - 로그인 후 동일 action을 다시 시작할 수 있는 UX path가 유지된다.
 
+### Step 1.6. Main Before Entry Login Gate
+
+main page의 Before entry를 로그인 상태에 맞게 gate하는 작은 UX hardening이다.
+
+Status (2026-04-24): completed and pushed in `d7bc261`.
+
+- 로그인 전에는 Before 진입이 보호된 경로임을 분명히 알린다.
+- 로그인 후 Before CTA는 `/before`로 이동한다.
+- SCN-004 `/after` login-free path나 public answer/draft behavior에는 영향을 주지
+  않는다.
+
+Pending polish candidates:
+
+- 실제 브라우저에서 로그인 후 Before CTA -> `/before` 이동 확인.
+- semantic/a11y polish가 필요하면 별도 작은 patch로 처리.
+
 ### Step 2. Read-only History
 
-로그인 사용자가 이전 Before review jobs / Bridge runs를 조회하는 후보 phase다.
-먼저 read-only list/detail만 검토한다.
+로그인 사용자가 이전 Before review jobs / Bridge runs를 조회하는 read-only phase다.
+현재는 list/detail 조회와 `/before` read-only render까지만 완료했다.
 
-Step 2A status (2026-04-24): backend read-only history API slice implemented.
-Frontend UI, deletion API, retention policy, and SCN-001 document draft remain out of
-scope.
+Step 2 status (2026-04-24):
+
+- Step 2A backend read-only history API slice completed and pushed in `5948b43`.
+- Step 2B-1 frontend history helper/types completed and pushed in `facb408`.
+- Step 2B-2 `/before` read-only history UI completed and pushed in `f2c463a`.
+- Step 2B-3 is not open.
+- Deletion API, retention policy, and SCN-001 document draft remain out of scope.
 
 - 삭제, 수정, artifact body 노출 없이 목록/상세 조회만 고려한다.
 - internal user linkage로 ownership을 확인한다.
@@ -88,14 +117,23 @@ scope.
   않는다.
 - raw Before result, raw contract/OCR, raw query, full answer body, artifact body는
   기본 노출하지 않는다.
-- optional `GET /api/v1/scn001/runs` 또는 별도 read-only endpoint는 착수 전
-  contract review가 필요하다.
+- implemented read-only endpoints:
+  - `GET /api/v1/scn001/before-review-jobs`
+  - `GET /api/v1/scn001/before-review-jobs/{before_review_job_id}`
+  - `GET /api/v1/scn001/bridge-runs`
 
 Acceptance direction:
 
 - 로그인 사용자는 본인 소유의 Before/Bridge history만 조회한다.
 - 없는 항목 또는 타인 소유 항목은 existence leak이 없도록 처리한다.
 - SCN-004 public answer/draft contract는 변경하지 않는다.
+
+Current verification caveat:
+
+- Codex headless 환경에서는 interactive Firebase Google popup + `inMemoryPersistence`
+  때문에 logged-in live smoke가 제한된다.
+- 실제 브라우저에서 `/before` logged-in history endpoints Authorization PRESENT와
+  history records read-only render를 확인하는 것이 다음 권장 작업이다.
 
 ### Step 3. History Deletion
 
@@ -157,12 +195,14 @@ fixture/preset 후보로 검토한다.
 - logout clear와 history API를 한 patch에 섞지 않는다.
 - Before login-required UX polish와 Step 2A history API 구현을 한 patch에 섞지
   않는다.
-- read-only history와 history deletion을 한 patch에 섞지 않는다.
 - history deletion과 artifact retention/access-control 정책 확정을 한 patch에서
   무리하게 닫지 않는다.
 - SCN-001 draft와 SCN-004 freeze QA를 한 patch에 섞지 않는다.
 - SCN-001 draft와 provider_timeout retry/backoff hardening을 섞지 않는다.
+- provider_timeout/OCR retry/backoff/hard-timeout hardening을 UI polish와 섞지
+  않는다.
 - SCN-001 draft와 SCN-005 document type 확장을 섞지 않는다.
+- read-only history와 deletion/history retention을 한 patch에 섞지 않는다.
 - `/api/v1/answer` public contract 변경과 SCN-001 protected extension을 섞지 않는다.
 - `/api/v1/documents/draft` public contract 변경을 SCN-001 draft 편의를 위해
   끼워 넣지 않는다.
@@ -187,14 +227,17 @@ fixture/preset 후보로 검토한다.
 - RAG / answer / retrieval behavior 또는 API response contract 변경이 없으면 broad
   full eval을 실행하지 않는다.
 
-## 6. Suggested First Implementation Prompt Target
+## 6. Suggested Next Prompt Target
 
-다음 구현 후보는 Step 1 logout memory state clear다.
+다음 우선 작업은 실제 브라우저 logged-in smoke다. Step 2B-3 또는 Step 3는 아직
+열지 않는다.
 
 Suggested prompt target:
 
 ```text
-SCN-004 freeze를 유지하면서 로그아웃 시 FlowContext, Before local state,
-Bridge handoff memory state를 초기화한다. Web Storage는 사용하지 않고,
-SCN-004 login-free /after path와 public answer/draft contract는 그대로 유지한다.
+SCN-004 freeze를 유지하면서 실제 브라우저 logged-in smoke만 수행한다.
+main page 로그인 후 Before CTA -> /before, /before logged-in history endpoints
+Authorization PRESENT, history records read-only render를 확인하고 sanitized
+PASS/FAIL/BLOCKED 결과만 기록한다. 코드 수정, deletion/history retention,
+SCN-001 document draft, provider_timeout/OCR retry hardening은 열지 않는다.
 ```
