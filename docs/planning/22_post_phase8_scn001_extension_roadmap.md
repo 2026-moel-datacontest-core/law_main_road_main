@@ -327,7 +327,7 @@ Retention window draft:
     artifact lifecycle 미확정 상태에서 보관 기간이 길어진다.
   - Indefinite local retention: implementation 전 MVP local default 후보이며,
     demo 안정성과 debugging을 우선하지만 automatic cleanup을 제공하지 않는다.
-- Recommended MVP default는 구현 전까지 `no automatic hard delete / file purge` 또는
+- Recommended MVP default candidate는 구현 전까지 `no automatic hard delete / file purge` 또는
   `indefinite local retention`이다.
 - 이유: MVP demo 안정성, audit/debug 필요성, artifact lifecycle 미확정.
 
@@ -358,14 +358,61 @@ Cascade policy draft:
 
 Decision table:
 
-| trigger | affected records | visibility effect | artifact file effect | reverse cascade allowed? | open question | recommended MVP default |
+| trigger | affected records | visibility effect | artifact file effect | reverse cascade allowed? | open question | recommended MVP default candidate |
 |---|---|---|---|---|---|---|
-| Before review job soft delete | Before review job, linked Bridge runs, linked protected After answer artifacts as visibility/linkage policy question only | Before hidden from history; linked Bridge hidden from history/selection candidate; linked After visibility remains policy question | no immediate file deletion | no | Should linked After artifacts hide because source Before/Bridge is hidden, or only lose continuity/draft affordance? | hide Before and linked Bridge surfaces; retain linked After artifacts pending policy |
-| Bridge run soft delete | Bridge run and linked protected After answer artifacts | Bridge hidden from history and future Bridge selection; linked protected After excluded from continuity/draft affordance candidate | no immediate file deletion | no | Should linked protected After artifact row become hidden or only inaccessible from Bridge-derived surfaces? | hide Bridge surfaces; do not delete linked artifact files |
-| Protected linked After answer artifact soft delete | protected linked After answer artifact | hidden from future artifact access UI if such UI exists; not usable for continuity/draft affordance | no automatic file purge | no | What artifact access UI/API policy is required before user-facing artifact deletion exists? | hide/inaccessible candidate only; retain files until retention policy |
+| Before review job soft delete | Before review job, linked Bridge runs, linked protected After answer artifacts as visibility/linkage policy question only | Before hidden from history; linked Bridge hidden from history/selection candidate; linked After visibility remains policy question | no immediate file deletion | no | Should linked After artifacts hide because source Before/Bridge is hidden, or only lose continuity/draft affordance? | hide Before and linked Bridge surfaces; retain linked After artifacts pending policy candidate |
+| Bridge run soft delete | Bridge run and linked protected After answer artifacts | Bridge hidden from history and future Bridge selection; linked protected After excluded from continuity/draft affordance candidate | no immediate file deletion | no | Should linked protected After artifact row become hidden or only inaccessible from Bridge-derived surfaces? | hide Bridge surfaces; do not delete linked artifact files candidate |
+| Protected linked After answer artifact soft delete | protected linked After answer artifact | hidden from future artifact access UI if such UI exists; not usable for continuity/draft affordance | no automatic file purge | no | What artifact access UI/API policy is required before user-facing artifact deletion exists? | hide/inaccessible candidate only; retain files until retention policy candidate |
 | Public unlinked After answer artifact cleanup | public unlinked After answer artifact inventory | not visible in account history and not confirmed/denied by account UX | global cleanup only after retention policy | no | What global retention window and cleanup evidence are required? | no account-scoped cascade; global retention cleanup candidate |
-| Orphan artifact candidate cleanup | orphan artifact candidates | not visible in account history/selection/continuity/draft affordance | no purge until orphan classification is explicit | no | What automated or manual orphan classification checks are enough? | quarantine/inaccessible candidate; no user-triggered purge |
+| Orphan artifact candidate cleanup | orphan artifact candidates | not visible in account history/selection/continuity/draft affordance | no purge until orphan classification is explicit | no | What automated or manual orphan classification checks are enough? | quarantine/inaccessible candidate; no user-triggered purge candidate |
 | Already-deleted repeat action | already hidden/deleted candidate record | no user-visible state transition; remains absent from history/detail | no file deletion from repeat action | no | What internal status granularity is needed for idempotency without exposing state transitions? | idempotent no-op or internal status refresh candidate |
+
+#### Remaining open policy questions decision draft
+
+이 subsection은 Step 3 retention/cascade policy의 remaining open policy questions를
+구현 전 decision candidate로 좁히는 문서다. 아래 표는 implementation handoff가
+아니며, DB schema, migration, API method/path, response shape, status code, actual
+retention day count, hard delete, file purge, account deletion/access-control 구현을
+확정하지 않는다. SCN-004 freeze, `/api/v1/answer` public contract,
+`/api/v1/documents/draft` public contract, `Bridge-as-Continuity, Not Grounding`
+정책은 그대로 유지한다.
+
+| question | candidate options | recommended MVP default candidate | rationale | still not decided | implementation guardrail |
+|---|---|---|---|---|---|
+| exact retention window | indefinite local retention until explicit ops policy; 30~90 day audit retention; 7~30 day demo/local cleanup | indefinite local retention / no automatic hard delete or file purge 후보 | SCN-004/SCN-001 demo 안정성, audit/debug 가능성, artifact lifecycle 미확정 상태를 우선한다. | Cloud/production 전환 시 실제 retention window와 ops ownership을 재검토한다. Actual day count는 확정하지 않는다. | 즉시 history hide만 후보로 둔다. Automatic hard delete, scheduled file purge, background cleanup 구현은 열지 않는다. |
+| audit log vs status column | status column only; separate audit log table; status column + minimal transition metadata | status column + minimal transition metadata 후보 | idempotency와 내부 audit/debug에 필요한 최소 상태는 남기되, full audit log table은 MVP 복잡도를 키운다. | column/table 이름, metadata field, audit table 여부, retention 대상은 확정하지 않는다. | external provider identifiers, contact fields, credentials, expanded case/input/output payloads, file contents를 deletion metadata에 저장하지 않는다. Internal user linkage만 후보로 둔다. |
+| file purge job | no purge job in MVP; manual/ops cleanup only; scheduled purge after retention window | no automatic purge job in MVP 후보 | Soft delete 성공 조건을 파일 삭제에 묶지 않아 demo 안정성과 artifact lifecycle 검토 여지를 유지한다. | manual/ops cleanup 절차, scheduled purge 필요성, cleanup evidence format은 Post-MVP ops policy로 남긴다. | artifact file은 soft delete 때 즉시 삭제하지 않는다. File purge는 retention/audit/artifact lifecycle review 이후 별도 작업으로만 검토한다. |
+| orphan classification | classify only by explicit missing linkage; classify by inaccessible/hidden parent record; defer classification until cleanup job exists | defer orphan cleanup/classification; do not expose in account history 후보 | linkage가 숨김 처리된 것과 실제 orphan은 다르므로 irreversible cleanup 전 classification 기준이 필요하다. | automated/manual orphan classification checks, quarantine 기준, cleanup trigger는 확정하지 않는다. | hidden source Bridge가 있는 linked After answer artifact를 자동 orphan으로 단정하지 않는다. Account history UX에서 orphan 존재 여부를 확인하거나 부정하지 않는다. |
+| cascade linkage behavior | shallow hide only selected record; forward visibility hide linked descendants; hard cascade delete | forward visibility hide for user-facing history/selection only; no hard cascade 후보 | user-facing history와 future Bridge selection에서 숨김 일관성을 확보하되, protected linked After artifact lifecycle은 별도 policy로 남긴다. | linked After answer artifact row visibility, artifact access UI/API policy, future draft affordance linkage는 확정하지 않는다. | Before hide는 linked Bridge visibility를 숨기는 후보로 둔다. Bridge hide는 future Bridge selection/continuity/draft affordance에서 제외한다. Linked After answer artifacts는 직접 삭제하지 않는다. reverse cascade는 하지 않으며 no hard cascade를 유지한다. |
+
+Recommended MVP default candidates:
+
+- exact retention window candidate: indefinite local retention / no automatic hard
+  delete or file purge.
+- audit log vs status column: status column + minimal transition metadata 후보,
+  without fixing names or table shape.
+- file purge job candidate: no automatic purge job in MVP.
+- orphan classification candidate: defer cleanup/classification and keep orphan
+  candidates out of account history.
+- cascade linkage behavior candidate: forward visibility hide for user-facing
+  history/selection only, no hard cascade, no reverse cascade.
+
+Strong non-decisions:
+
+- DB schema/migration은 확정하지 않는다.
+- API method/path/response shape/status code는 확정하지 않는다.
+- actual retention day count는 확정하지 않는다.
+- hard delete/file purge 실행은 확정하지 않는다.
+- account deletion/access-control 구현은 확정하지 않는다.
+- SCN-001 document draft는 열지 않는다.
+
+Bridge policy retained:
+
+- deleted/hidden record는 future Bridge selection / continuity panel / draft
+  affordance에 사용하지 않는다.
+- `Bridge-as-Continuity, Not Grounding` 정책은 유지한다.
+- displayed safe subset이 query 구성에 쓰일 수 있어도 새 `cited_articles`,
+  `grounded_context_ids`, legal grounding을 만들 수 없다.
 
 Implementation non-decisions:
 
