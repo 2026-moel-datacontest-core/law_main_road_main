@@ -155,21 +155,70 @@ Current verification status:
 
 ### Step 3. History Deletion
 
-삭제는 read-only history 이후 별도 phase로 검토한다.
+삭제는 read-only history 이후의 다음 설계 후보로 검토한다. 이 문서 업데이트는
+history deletion을 코드로 열지 않고, 구현 전에 정해야 할 정책 범위를 고정한다.
+DB schema, API contract, migration은 아직 확정하지 않는다.
 
-- soft delete를 우선 검토한다.
-- hard delete는 retention, audit, artifact file lifecycle 검토 후에만 고려한다.
+- soft delete 우선으로 설계한다.
+- hard delete는 Post-MVP 또는 별도 retention / artifact lifecycle / audit 정책
+  확정 이후에만 후보로 둔다.
 - `before_review_jobs`, `bridge_runs`, `after_artifact_runs`, artifact files 사이의
-  관계 정책이 먼저 필요하다.
-- orphan artifact, linked artifact, public unlinked artifact의 삭제/보관 정책을
-  구분해야 한다.
+  ownership, visibility, retention, artifact lifecycle 정책이 먼저 필요하다.
+- deleted/hidden record는 history list/detail, Bridge selection, Step 4가 열린다면
+  future continuity panel / future draft affordance에 노출하지 않는다.
+- deletion ownership check는 internal user linkage 기준으로 유지한다.
+- deletion 후보 조회는 existence leak 방지를 기본 원칙으로 둔다. not-found /
+  not-owned / already-deleted는 외부 응답에서 구분하지 않는 방향을 우선 검토한다.
+- deletion event/status를 남기는 경우에도 Firebase uid, provider_subject, email이
+  아니라 internal user linkage 기준만 사용한다.
+- artifact files는 바로 삭제하지 않고 retention / artifact lifecycle 정책 전까지
+  보존 또는 inaccessible 처리 후보로 둔다.
+- 삭제/보관/접근 정책은 최소한 protected linked artifacts, public unlinked after
+  artifacts, orphan artifacts를 구분해야 한다.
 - 삭제 UI/API는 account history access control과 같은 patch에 섞지 않는다.
+
+Artifact category definitions:
+
+| category | definition / policy question |
+|---|---|
+| protected linked artifacts | `after_artifact_runs`가 internal user linkage 또는 primary `source_bridge_run_id`와 연결된 artifact 후보 |
+| public unlinked after artifacts | public `/api/v1/answer` 경로처럼 `user_id`와 `source_bridge_run_id`가 없는 after artifact 후보 |
+| orphan artifacts | linkage가 끊겼거나 관련 job/run row가 삭제/비가시 처리되어 직접 owner/context를 확정하기 어려운 artifact 후보 |
+
+Step 3 soft delete policy matrix candidate:
+
+이 매트릭스는 구현 지시가 아니라 삭제/보관 정책 review의 기준안이다. `deleted`,
+`hidden`, `retained`, `inaccessible` 같은 상태 이름, DB column, migration, API
+response shape은 아직 확정하지 않는다.
+
+| record/artifact category | history list/detail visibility | future Bridge selection visibility | future continuity panel/draft affordance visibility | soft delete behavior | hard delete eligibility | retention/audit note | artifact file lifecycle |
+|---|---|---|---|---|---|---|---|
+| owned `before_review_jobs` row | hidden after user deletion | hidden after user deletion | hidden if Step 4 opens | mark hidden/deleted candidate owned by internal `users.id` | only after separate retention/audit policy | keep minimal internal deletion status; never store Firebase uid/provider_subject/email | no direct after artifact file unless linked through later flow |
+| owned `bridge_runs` row | hidden after user deletion | hidden after user deletion | hidden if Step 4 opens | mark hidden/deleted candidate owned by internal `users.id` | only after linked artifact and provenance policy review | preserve enough internal linkage to avoid orphan ambiguity while hiding from user history | no file delete by this row alone; linked after artifact lifecycle decides files |
+| protected linked after artifacts | hidden from user history when source owner deletes related history or artifact view | hidden from Bridge reuse | hidden if Step 4 opens | make inaccessible to the user-facing history/artifact surface while preserving internal linkage | only after artifact retention, audit, and linked row lifecycle are approved | internal `user_id` / primary `source_bridge_run_id` remain the ownership/provenance basis; no provider identifiers | retain files or make inaccessible until lifecycle policy approves delete |
+| public unlinked after artifacts | not visible in account history by default | not selectable | not eligible | no user deletion action unless a future ownership/access model is designed | separate retention cleanup candidate, not account deletion behavior | no owner can be inferred from null linkage; avoid retroactive user assignment | retain or cleanup only under global public artifact retention policy |
+| orphan artifact candidates | not visible | not selectable | not eligible | do not expose as user-owned; quarantine/inaccessible candidate until lifecycle review | only after orphan classification and retention policy review | orphan means owner/context is uncertain, not proven ownerless; avoid irreversible assumptions | retain or make inaccessible first; hard delete only after explicit orphan lifecycle criteria |
+| deletion event/status metadata | not shown as normal history content | not selectable | not eligible | record only minimal status needed for idempotency and audit | retention of event metadata is separate from artifact hard delete | use internal user linkage and status only; do not record raw query/body/provider identifiers | no artifact body duplication |
+
+Deletion response checkpoint:
+
+- Missing record, other-user record, and already-hidden/deleted record should remain
+  indistinguishable to the caller on the protected deletion path.
+- The response should not reveal whether a `before_review_job_id`, `bridge_run_id`,
+  or artifact row exists.
+- User-facing history refresh can show the absence of the item, but should not expose
+  a different message for not-found, not-owned, or already-deleted cases.
+- Any future deletion endpoint must verify ownership before changing visibility, and
+  must not generate or persist new answer/draft artifacts as part of deletion.
 
 Acceptance direction:
 
 - 삭제 동작은 본인 소유 record에만 적용된다.
-- 삭제된 record가 history list/detail에 다시 노출되지 않는다.
-- 관련 artifact file 처리 정책이 문서화된 뒤 구현된다.
+- 삭제 또는 hidden 처리된 record가 history list/detail, Bridge selection, Step 4가
+  열린다면 future continuity panel / future draft affordance에 다시 노출되지 않는다.
+- 관련 artifact lifecycle / retention / visibility policy가 문서화된 뒤 구현된다.
+- deletion은 아직 코드 구현으로 열지 않고 위 policy matrix와 response checkpoint
+  review까지만 진행한다.
 
 ### Step 4. SCN-001 Document Draft
 
@@ -180,18 +229,67 @@ SCN-001 Bridge checked answer에서 문서 초안을 제공하는 후보 phase�
 - SCN-004 document draft freeze와 같은 patch에 섞지 않는다.
 - public `/api/v1/documents/draft` contract를 변경하지 않는 방향을 우선 검토한다.
 - protected SCN-001 draft endpoint 또는 별도 contract가 필요한지 검토한다.
-- Bridge result ↔ After query relevance/matching guard를 둔 뒤에만 오른쪽 추가
-  설명 또는 문서 초안 affordance를 여는 방향을 후보로 검토한다.
+
+#### Bridge-as-Continuity, Not Grounding
+
+이 정책은 Step 4만의 UI 표현이 아니라 Bridge 전반의 grounding 경계다.
+
+- 사용자의 현재 query에 대한 answer는 기본 answer처럼 유지하고, Bridge 정보를
+  answer의 숨은 문맥으로 강하게 섞지 않는다.
+- future Step 4 scope에서 Bridge 정보를 노출한다면 우측 문서초안 영역 아래 또는
+  별도 보조 패널에서 "이전 검토와 이번 질문이 어떻게 이어질 수 있는지"를 설명하는
+  continuity / side explanation으로만 사용한다.
+- Bridge와 현재 query 사이에 겹치는 issue / law / action이 있을 때만 "이어질 수
+  있음"을 표시한다.
+- 관련성이 약하면 Bridge 설명을 숨기거나 "이번 답변의 법적 근거로 사용하지 않은
+  참고용 이전 기록" 수준으로 제한한다.
+- Bridge 설명은 cited_articles / grounded_context_ids를 새로 만들지 않는다.
 - Bridge checked answer의 cited_articles / grounded_context_ids / displayed safe subset
-  boundary를 기준으로 draft eligibility를 검토한다.
-- raw Before/Bridge payload, after_query_seed, token을 저장하지 않는다.
+  boundary를 기준으로 draft eligibility 후보를 검토하되, Bridge 설명 자체를
+  grounding source로 승격하지 않는다.
+- Phase 7 displayed safe subset may still be used to build the Bridge-origin answer
+  query as already implemented, but it must not create new `cited_articles`,
+  `grounded_context_ids`, or legal grounding outside retrieved answer evidence.
+- Bridge continuity / SCN-001 draft extension은 raw Before/Bridge payload, raw
+  `after_query_seed`, token, Firebase uid, provider_subject, email의 신규 저장을
+  추가하지 않는다.
+- raw query, full answer body, artifact body는 docs/logs/UI/commits/issues/chat에
+  기록하지 않는다. 기존 answer/draft artifact persistence는 `after_artifact_runs`
+  retention / access-control 정책에서 별도로 다룬다.
 - 검색/답변 결과에 없는 법령 근거를 draft에 새로 만들지 않는다.
+
+#### Relevance/matching guard candidates
+
+이 매트릭스는 Step 4/5 전제 조건 후보이며, 단독으로 legal grounding을 만들지
+않는다.
+
+| candidate signal | positive use | weak/no overlap behavior | citation boundary |
+|---|---|---|---|
+| overlap on `issue_categories` / `risk_tags` | 같은 이슈 범주가 이어지는지 판단 | hide continuity panel or show reference-only note | never use overlap alone to create legal citations |
+| overlap on `law_refs` / `cited_articles` | 기존 Bridge law hint와 현재 answer evidence가 겹치는지 확인 | hide continuity panel or show reference-only note | never use overlap alone to create legal citations |
+| overlap on `recommended_next_actions` | 다음 행동 흐름이 이어질 수 있는지 판단 | hide continuity panel or show reference-only note | never use overlap alone to create legal citations |
+
+Step 4 implementation handoff checkpoint:
+
+- A future SCN-001 draft or continuity implementation plan must explicitly state which
+  fields are continuity-only and which fields come from retrieved answer evidence.
+- Only the current answer evidence may populate legal basis fields, `cited_articles`,
+  `grounded_context_ids`, or draft eligibility.
+- Bridge displayed safe subset may shape the Bridge-origin query text, but cannot be
+  described in UI, docs, or code comments as legal grounding by itself.
+- If relevance/matching is weak or absent, the continuity panel and draft affordance
+  should stay closed rather than showing a low-confidence bridge explanation.
+- Any future draft endpoint proposal must preserve SCN-004 login-free draft behavior
+  and keep public `/api/v1/documents/draft` unchanged unless a separate backend/schema
+  review explicitly changes that contract.
 
 Open design questions:
 
 - SCN-001에서 어떤 document type이 필요한가.
 - draft request는 protected SCN-001 endpoint로 분리할지, 별도 contract를 둘지.
 - Bridge result와 현재 After query의 관련성/정합성은 어떤 기준으로 판단할지.
+- continuity / side explanation은 어떤 field subset으로 구성하고, 관련성이 약한
+  경우 어떤 UI 상태로 숨길지.
 - `after_artifact_runs.source_bridge_run_id` 단일 provenance로 충분한지, draft
   provenance에는 별도 linkage가 필요한지.
 - SCN-001 draft result의 quality gate와 manual rehearsal 기준은 무엇인지.
@@ -205,6 +303,8 @@ fixture/preset 후보로 검토한다.
 - SCN-001 draft freeze는 별도 preset/fixture 이름과 별도 eligibility guard를 둔다.
 - fixed fixture는 demo stability 목적이며 live retrieval/answer evidence와 혼용하지
   않는다.
+- freeze 전에는 `Bridge-as-Continuity, Not Grounding` 정책과 Bridge-query
+  relevance/matching guard가 먼저 고정되어야 한다.
 - freeze 전에는 SCN-001 draft live quality, citation grounding, document output을
   별도 evidence로 확인한다.
 
@@ -215,6 +315,7 @@ fixture/preset 후보로 검토한다.
   않는다.
 - history deletion과 artifact retention/access-control 정책 확정을 한 patch에서
   무리하게 닫지 않는다.
+- history deletion 설계와 deletion API/code implementation을 한 patch에 섞지 않는다.
 - SCN-001 draft와 SCN-004 freeze QA를 한 patch에 섞지 않는다.
 - SCN-001 draft와 provider_timeout retry/backoff hardening을 섞지 않는다.
 - provider_timeout/OCR retry/backoff/hard-timeout hardening을 UI polish와 섞지
@@ -240,6 +341,16 @@ fixture/preset 후보로 검토한다.
   user linkage만 사용한다.
 - SCN-001 draft affordance는 Bridge result와 After query의 relevance/matching guard
   없이 열지 않는다.
+- `Bridge-as-Continuity, Not Grounding`은 Bridge 전반 정책이다. Bridge displayed
+  safe subset은 query 구성에는 쓰일 수 있지만, 검색/답변 evidence 밖의
+  `cited_articles` 또는 `grounded_context_ids`를 만들 수 없다.
+- Bridge는 answer/query/draft의 grounding source가 아니라 continuity 설명으로만
+  사용한다.
+- Bridge continuity 설명은 cited_articles / grounded_context_ids를 새로 만들지
+  않는다.
+- 검색/답변 결과에 없는 법령 근거를 Bridge 설명이나 draft에 새로 만들지 않는다.
+- deleted/hidden history는 history list/detail, Bridge selection, continuity panel,
+  draft affordance에 노출하지 않는다.
 - `data/legalize-kr/` 직접 수정 금지.
 - `backend/data/law_chunks/` 직접 수정 금지.
 - RAG / answer / retrieval behavior 또는 API response contract 변경이 없으면 broad
@@ -247,14 +358,30 @@ fixture/preset 후보로 검토한다.
 
 ## 6. Suggested Next Prompt Target
 
-실제 브라우저 logged-in smoke는 PASS 상태다. Step 2B-3 또는 Step 3는 아직 열지
-않는다.
+실제 브라우저 logged-in smoke는 PASS 상태다. read-only history 이후 다음 후보는
+Step 3 history deletion 설계다. 다만 deletion은 바로 구현하지 않고, soft delete /
+hard delete / retention / artifact lifecycle / ownership / visibility policy를 먼저
+문서로 review한다. 다음 prompt target은 deletion API/schema 구현이 아니라 이 문서의
+Step 3 soft delete policy matrix 검토/보완으로 제한한다.
+
+Review focus:
+
+- protected linked artifacts / public unlinked after artifacts / orphan artifact
+  candidates 구분이 account history와 artifact lifecycle에 충분한지
+- not-found / not-owned / already-deleted 외부 응답 동일 원칙이 existence leak을
+  줄이기에 충분한지
+- future Bridge selection, continuity panel, draft affordance visibility가 Step 4
+  open 여부에 맞게 조건부로 닫혀 있는지
+- hard delete eligibility가 retention/audit/artifact lifecycle review 이후 후보로만
+  남아 있는지
 
 Suggested prompt target:
 
 ```text
-SCN-004 freeze를 유지하면서 Post-Phase 8 logged-in smoke PASS 상태를 보존한다.
-다음 작업이 필요하면 read-only history status/semantic polish 또는 제출 전
-preflight를 별도 작은 범위로 수행한다. Step 2B-3, history deletion/retention,
-SCN-001 document draft, provider_timeout/OCR retry hardening은 열지 않는다.
+SCN-004 freeze와 `/api/v1/answer`, `/api/v1/documents/draft` public contract
+unchanged 상태를 유지하면서 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`
+의 Step 3 soft delete policy matrix와 deletion response checkpoint를 review한다.
+코드 구현, DB schema/migration 확정, deletion API 구현 프롬프트 작성, SCN-001
+document draft, SCN-001 draft freeze, provider_timeout/OCR retry hardening은 열지
+않는다.
 ```

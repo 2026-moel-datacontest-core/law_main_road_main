@@ -289,7 +289,8 @@ npm run dev
 - SCN-001 document draft를 열지 마세요.
 - SCN-005를 바로 구현하지 마세요. 사용자가 명시적으로 요청하면 별도 패치로만 진행하세요.
 - `/bridge`, Recovery 본 구현 금지.
-- Step 2B-3 또는 Step 3를 현재 상태에서 바로 열지 마세요.
+- Step 2B-3 또는 Step 3 deletion implementation을 현재 상태에서 바로 열지 마세요.
+- Step 3은 history deletion design doc review / policy planning 수준으로만 허용합니다.
 - deletion/history retention을 read-only history와 섞지 마세요.
 - provider_timeout/OCR retry hardening을 UI polish와 섞지 마세요.
 - backend API contract 임의 변경 금지.
@@ -306,32 +307,37 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. history status pill color polish
+1. Step 3 history deletion policy review
+   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 soft delete policy matrix / deletion response checkpoint review만 수행
+   - DB schema/migration 확정, deletion API 구현 프롬프트 작성, account history access-control 구현은 열지 않음
+   - protected linked artifacts / public unlinked after artifacts / orphan artifact 구분과 not-found/not-owned/already-deleted masking 원칙을 검토
+2. history status pill color polish
    - read-only history UI의 status pill 색상/상태 표시만 작은 patch로 다룸
    - deletion, retention, artifact body 노출과 섞지 않음
-2. main Before gate semantic/a11y polish
+3. main Before gate semantic/a11y polish
    - Step 1.6 구현을 유지하면서 semantic/a11y만 필요한 경우 최소 보강
    - SCN-004 `/after` login-free path는 건드리지 않음
-3. submission/final demo preflight 재실행 및 presentation rehearsal
+4. submission/final demo preflight 재실행 및 presentation rehearsal
    - `bash scripts/demo_preflight.sh`
    - 필요 시 backend/frontend 수동 실행 후 `http://localhost:5090/after`에서 SCN-004-DEMO-FREEZE dry-run
    - SCN-004 exact preset no public answer call, result, draft choices 확인
    - SCN-004 modified/free input public answer without auth 확인
    - SCN-001 checked Bridge protected answer routing 확인
    - SCN-001 all-unchecked Bridge public answer + sticky bridge_handoff 확인
-4. optional Phase 8 regression/manual evidence polish
+5. optional Phase 8 regression/manual evidence polish
    - 이미 PASS한 Phase 7E evidence를 깨지 않는 범위에서만 보강
    - 필요한 경우 negative auth smoke나 sanitized checklist를 추가
-5. provider_timeout / OCR retry/backoff/hard-timeout hardening
+6. provider_timeout / OCR retry/backoff/hard-timeout hardening
    - 별도 runtime hardening 후보
    - SCN-004 freeze와 public contract 보호를 전제로 분리 작업
-6. Step 2B-3 또는 Step 3
-   - 아직 열지 않음
+7. Step 2B-3 또는 deletion implementation
+   - Step 2B-3와 deletion implementation은 아직 열지 않음
+   - Step 3은 위 1번의 deletion policy/design doc review 수준으로만 허용
    - read-only history와 deletion/history retention을 한 patch에 섞지 않음
-7. artifact retention/deletion/account history access control
+8. artifact retention/deletion/account history access control
    - Post-MVP
    - artifact retrieval UI/API, retention policy, account history access control은 별도 설계 후 진행
-8. SCN-001 document draft
+9. SCN-001 document draft
    - 아직 열지 않음
    - Bridge/query matching guard 설계 후 별도 큰 phase로만 검토
    - SCN-004 freeze 기준을 유지한 별도 설계/패치가 필요

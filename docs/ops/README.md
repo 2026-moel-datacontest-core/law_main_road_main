@@ -286,17 +286,26 @@ Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서�
 
 ## 앞으로의 우선 작업
 
-현재 문서 정리 이후 다음 단계는 아래 순서가 적절하다.
+현재 문서 정리 이후 다음 design review target은 history deletion policy review다.
+코드 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의
+Step 3 soft delete policy matrix와 deletion response checkpoint를 보완하는
+범위로 제한한다.
 
-1. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
-2. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
-3. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
-4. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
-5. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
-6. `before` / `after` artifact의 향후 GCS 전환 기준 정리
-7. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
+별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-Step 2B-3, history deletion/retention, SCN-001 document draft는 아직 열지 않는다.
+1. Step 3 history deletion policy matrix / response checkpoint review
+2. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
+3. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
+4. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
+5. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
+6. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
+7. `before` / `after` artifact의 향후 GCS 전환 기준 정리
+8. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
+
+Step 2B-3, history deletion implementation, SCN-001 document draft는 아직 열지
+않는다. History deletion은 soft delete / hard delete / retention / artifact
+lifecycle / ownership / visibility policy를 먼저 문서로 review하는 수준까지만
+허용한다.
 
 ## 현재 남아 있는 큰 기술 작업
 
