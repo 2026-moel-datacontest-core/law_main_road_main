@@ -74,10 +74,17 @@
   gap: 18px;
 }
 
+.selectorColumn {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
 .answerBlock,
 .section,
 .cautionSection,
-.selectorPanel {
+.selectorPanel,
+.continuityPanel {
   padding: 24px;
   border: 1px solid rgba(162, 181, 208, 0.24);
   border-radius: 24px;
@@ -149,6 +156,64 @@
   top: calc(var(--kl-masthead-height) + 20px);
   display: grid;
   gap: 16px;
+}
+
+.continuityPanel {
+  display: grid;
+  gap: 16px;
+  border-color: rgba(37, 99, 235, 0.22);
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.98), rgba(248, 250, 252, 0.98));
+}
+
+.continuityText,
+.continuityBoundary {
+  margin: 0;
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.72;
+  overflow-wrap: anywhere;
+}
+
+.continuityBoundary {
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.32);
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.continuityGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.continuityGroupTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.continuityList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.continuityList li {
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid rgba(96, 165, 250, 0.32);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1e3a8a;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .radioGroup {

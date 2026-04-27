@@ -1,6 +1,6 @@
 'use client';
 
-import { KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Masthead } from '@/components/layout/Masthead';
@@ -11,8 +11,10 @@ import { Notification } from '@/components/ui/Notification';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { useFlow } from '@/context/FlowContext';
 import { hasDraftGrounding } from '@/lib/api';
+import { getBridgeHandoffDisplayFields } from '@/lib/bridge-handoff';
 import { getScn004DraftEligibility } from '@/lib/scn004DraftEligibility';
 import { getScenarioPreset } from '@/lib/scenarioPresets';
+import type { BridgeHandoffItem } from '@/types/bridge-handoff';
 import type { DocumentType } from '@/types/api';
 
 import styles from './page.module.css';
@@ -37,6 +39,13 @@ const DOCUMENT_TYPES: Array<{
   },
 ];
 
+type ContinuityPanelModel = {
+  strength: 'strong' | 'weak';
+  issueLabels: string[];
+  lawRefs: string[];
+  recommendedNextActions: string[];
+};
+
 export default function AfterResultPage() {
   const router = useRouter();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -50,6 +59,20 @@ export default function AfterResultPage() {
     state.selected_document_type,
   );
   const [isNavigating, setIsNavigating] = useState(false);
+  const hasCitedArticles = answer ? answer.cited_articles.length > 0 : false;
+  const hasGrounding = answer ? hasDraftGrounding(answer) : false;
+  const continuityPanel = useMemo(
+    () =>
+      answer
+        ? getBridgeContinuityPanel({
+            isBridgeHandoffAnswer,
+            hasGrounding,
+            citedArticles: answer.cited_articles,
+            bridgeItems: state.bridge_handoff.items,
+          })
+        : null,
+    [answer, hasGrounding, isBridgeHandoffAnswer, state.bridge_handoff.items],
+  );
 
   useEffect(() => {
     if (!answer) {
@@ -79,8 +102,6 @@ export default function AfterResultPage() {
     );
   }
 
-  const hasCitedArticles = answer.cited_articles.length > 0;
-  const hasGrounding = hasDraftGrounding(answer);
   const eligibility = supportsDraft
     ? getScn004DraftEligibility(answer)
     : {
@@ -257,7 +278,7 @@ export default function AfterResultPage() {
             <DisclaimerBanner />
           </section>
 
-          <aside className={styles.selectorColumn} aria-labelledby="document-type-title">
+          <aside className={styles.selectorColumn} aria-label="문서 유형 선택 및 Bridge 연속성 안내">
             <section className={styles.selectorPanel}>
               <p className={styles.eyebrow}>
                 {isBridgeHandoffAnswer ? 'Answer-only' : '문서 유형'}
@@ -338,11 +359,170 @@ export default function AfterResultPage() {
                 처음으로 돌아가기
               </Button>
             </section>
+
+            {continuityPanel ? (
+              <BridgeContinuityPanel model={continuityPanel} />
+            ) : null}
           </aside>
         </div>
       </main>
     </>
   );
+}
+
+function BridgeContinuityPanel({ model }: { model: ContinuityPanelModel }) {
+  const isStrong = model.strength === 'strong';
+
+  return (
+    <section className={styles.continuityPanel} aria-labelledby="bridge-continuity-title">
+      <p className={styles.eyebrow}>Bridge-as-Continuity / Not Grounding</p>
+      <h2 id="bridge-continuity-title" className={styles.selectorTitle}>
+        이전 검토와 이번 질문이 이어질 수 있는 지점
+      </h2>
+      <p className={styles.continuityText}>
+        {isStrong
+          ? '이전 검토의 표시된 쟁점과 이번 답변의 인용 조문이 일부 이어질 수 있습니다. 아래 내용은 연결 지점 설명이며, 현재 답변의 법적 근거는 인용 조문 영역에서 확인하세요.'
+          : '이전 검토의 법령 후보가 이번 답변의 인용 조문과 일부 겹칩니다. 이 Bridge 정보는 이번 답변의 법적 근거로 사용되지 않았습니다.'}
+      </p>
+
+      {model.issueLabels.length > 0 ? (
+        <ContinuityList title="표시된 쟁점" values={model.issueLabels} />
+      ) : null}
+      {model.lawRefs.length > 0 ? (
+        <ContinuityList title="현재 인용과 겹친 Bridge 법령 후보" values={model.lawRefs} />
+      ) : null}
+      {model.recommendedNextActions.length > 0 ? (
+        <ContinuityList
+          title="이어볼 수 있는 다음 행동"
+          values={model.recommendedNextActions}
+        />
+      ) : null}
+
+      <p className={styles.continuityBoundary}>
+        Bridge 내용은 보조 설명이며 새 인용 조문이나 근거 컨텍스트를 만들지 않습니다.
+      </p>
+    </section>
+  );
+}
+
+function ContinuityList({ title, values }: { title: string; values: string[] }) {
+  return (
+    <div className={styles.continuityGroup}>
+      <h3 className={styles.continuityGroupTitle}>{title}</h3>
+      <ul className={styles.continuityList}>
+        {values.map((value) => (
+          <li key={value}>{value}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function getBridgeContinuityPanel({
+  isBridgeHandoffAnswer,
+  hasGrounding,
+  citedArticles,
+  bridgeItems,
+}: {
+  isBridgeHandoffAnswer: boolean;
+  hasGrounding: boolean;
+  citedArticles: string[];
+  bridgeItems: BridgeHandoffItem[];
+}): ContinuityPanelModel | null {
+  if (!isBridgeHandoffAnswer || !hasGrounding || citedArticles.length === 0) {
+    return null;
+  }
+
+  const includedItems = bridgeItems.filter((item) => item.include_in_query);
+
+  if (includedItems.length === 0) {
+    return null;
+  }
+
+  const citedArticleKeys = citedArticles.map(normalizeContinuityText);
+  const issueLabels = new UniqueTextList();
+  const recommendedNextActions = new UniqueTextList();
+  const overlappingLawRefs = new UniqueTextList();
+
+  includedItems.forEach((item) => {
+    const displayFields = getBridgeHandoffDisplayFields(item);
+
+    displayFields.issueLabels.forEach((value) => issueLabels.add(value));
+    displayFields.recommendedNextActions.forEach((value) =>
+      recommendedNextActions.add(value),
+    );
+    displayFields.lawRefs
+      .filter((lawRef) => hasLawRefOverlap(lawRef, citedArticleKeys))
+      .forEach((lawRef) => overlappingLawRefs.add(lawRef));
+  });
+
+  const lawRefs = overlappingLawRefs.values();
+
+  if (lawRefs.length === 0) {
+    return null;
+  }
+
+  const hasContinuityContext =
+    issueLabels.size > 0 || recommendedNextActions.size > 0;
+
+  return {
+    strength: hasContinuityContext ? 'strong' : 'weak',
+    issueLabels: issueLabels.values(4),
+    lawRefs: lawRefs.slice(0, 5),
+    recommendedNextActions: recommendedNextActions.values(3),
+  };
+}
+
+function hasLawRefOverlap(lawRef: string, citedArticleKeys: string[]): boolean {
+  const lawRefKey = normalizeContinuityText(lawRef);
+
+  if (lawRefKey.length < 4) {
+    return false;
+  }
+
+  return citedArticleKeys.some(
+    (citedArticleKey) =>
+      citedArticleKey.length > 0 &&
+      (citedArticleKey.includes(lawRefKey) || lawRefKey.includes(citedArticleKey)),
+  );
+}
+
+function normalizeContinuityText(value: string): string {
+  return value
+    .normalize('NFKC')
+    .replace(/\s+/g, '')
+    .replace(/[(){}\[\]〈〉《》「」『』.,·:;'"“”‘’]/g, '')
+    .toLowerCase();
+}
+
+class UniqueTextList {
+  private readonly seen = new Set<string>();
+  private readonly items: string[] = [];
+
+  get size() {
+    return this.items.length;
+  }
+
+  add(value: string) {
+    const trimmed = value.trim();
+
+    if (trimmed.length === 0) {
+      return;
+    }
+
+    const key = normalizeContinuityText(trimmed);
+
+    if (this.seen.has(key)) {
+      return;
+    }
+
+    this.seen.add(key);
+    this.items.push(trimmed);
+  }
+
+  values(maxItems?: number) {
+    return typeof maxItems === 'number' ? this.items.slice(0, maxItems) : [...this.items];
+  }
 }
 
 function truncateText(value: string, maxLength: number): string {
