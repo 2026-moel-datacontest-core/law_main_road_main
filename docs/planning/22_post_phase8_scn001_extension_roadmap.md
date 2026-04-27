@@ -16,7 +16,8 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
 - SCN-004 main demo freeze를 유지하면서 후속 작업의 안전한 순서를 제안한다.
 - Phase 7/8 evidence/status 문서를 다시 고치지 않고, 다음 후보의 우선순위와
   guardrail만 별도 문서로 분리한다.
-- SCN-001 document draft는 아직 구현 확정이 아니라 별도 큰 phase 후보로만 둔다.
+- SCN-001 document draft는 Step 4 design으로만 열고, 구현 확정이나 API/schema
+  확정은 별도 phase 후보로 둔다.
 
 ## 2. Current Baseline
 
@@ -48,6 +49,10 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
   - browser smoke passed with sanitized PASS/PRESENT/NO signals
   - Step 3 full retention lifecycle is NOT opened.
   - SCN-004 freeze impact: NO.
+- Step 4 SCN-001 Document Draft Design is opened only as design:
+  - SCN-001 draft implementation is NOT opened.
+  - protected SCN-001 draft endpoint path/method/schema is NOT decided.
+  - Bridge-as-Continuity, Not Grounding is the policy boundary.
 
 ## 3. Recommended Sequence
 
@@ -133,7 +138,7 @@ Step 2 status (2026-04-24):
   not reproduced, and read-only history UI rendered without auth error.
 - Step 2B-3 is not open.
 - Step 3 MVP soft-delete slice completed separately after Step 2. Step 3 full
-  retention lifecycle, SCN-001 document draft, hard delete, file purge, and
+  retention lifecycle, SCN-001 document draft implementation, hard delete, file purge, and
   artifact lifecycle remain out of scope.
 
 - 삭제, 수정, artifact body 노출 없이 목록/상세 조회만 고려한다.
@@ -220,7 +225,7 @@ Remaining boundary:
 - auth persistence changes remain out of scope.
 - account deletion/access-control remains out of scope.
 - orphan cleanup remains out of scope.
-- SCN-001 document draft remains out of scope.
+- SCN-001 document draft implementation remains out of scope.
 - SCN-005 remains out of scope.
 - provider_timeout/OCR retry hardening remains out of scope.
 
@@ -269,7 +274,7 @@ Scope boundary:
 - Artifact retrieval UI/API is NOT opened.
 - Hard delete, file purge, GCS lifecycle, audit export, undo/restore, account
   deletion/access-control, and orphan cleanup are NOT opened.
-- SCN-001 document draft is NOT opened.
+- SCN-001 document draft implementation is NOT opened.
 - SCN-004 freeze remains unchanged.
 - `/api/v1/answer` public contract remains unchanged.
 - `/api/v1/documents/draft` public contract remains unchanged.
@@ -352,7 +357,7 @@ Scope boundary:
 - No user-facing audit export endpoint is opened.
 - Artifact access policy remains a metadata-only candidate, and user-facing
   retrieval is NOT opened.
-- SCN-001 document draft is NOT opened.
+- SCN-001 document draft implementation is NOT opened.
 - SCN-004 freeze remains unchanged.
 - `/api/v1/answer` public contract remains unchanged.
 - `/api/v1/documents/draft` public contract remains unchanged.
@@ -392,7 +397,7 @@ Audit/export non-goals:
 - No admin audit UI.
 - No raw artifact body export.
 - No secret, credential, provider identifier, or contact-field export.
-- No SCN-001 document draft linkage changes.
+- No SCN-001 document draft implementation or linkage changes.
 
 Relationship to artifact access policy:
 
@@ -425,11 +430,12 @@ Decision table:
 | internal retention lifecycle audit | internal-only lifecycle review metadata/status; sanitized PASS/PRESENT/NO evidence style | candidate input to future retention review, not a shipped feature | helps decide when hard delete/file purge is safe without exposing deletion state | audit row/table choice, retention window, cleanup evidence format | before cloud/GCS lifecycle, orphan cleanup, hard delete, or file purge policy |
 | artifact access status | source visibility status, linked artifact visibility candidate, orphan/public-unlinked classification marker | metadata-only policy candidate; no user-facing retrieval | helps future artifact access decide visibility while blocking hidden/deleted sources | artifact status marker, retrieval API behavior, storage path exposure | if artifact retrieval or cloud storage lifecycle policy is reopened |
 
-Recommended next policy target after this review:
+Retention-stream future policy target after this review:
 
 - Cloud storage / GCS lifecycle policy review or orphan classification/cleanup
-  policy review.
-- This is not implementation.
+  policy review remains a later policy candidate for the Step 3 retention stream.
+- The current global next prompt target is Step 4 Bridge/query relevance guard
+  matrix review, not this retention-stream policy work.
 
 Recommended sequencing:
 
@@ -465,14 +471,15 @@ Do-not-open checklist:
 - account deletion UX/API
 - orphan cleanup job
 - auth persistence change
-- SCN-001 document draft
+- SCN-001 document draft implementation
 
-Next prompt target:
+Retention-stream note:
 
-- If continuing after this audit/status policy review, the next policy review
-  should be cloud storage / GCS lifecycle policy review or orphan
-  classification/cleanup policy review.
-- It should not be implementation yet.
+- If the work later returns to Step 3 retention policy, cloud storage / GCS
+  lifecycle policy review or orphan classification/cleanup policy review remains
+  the next retention-stream candidate.
+- The active next target for this roadmap is Step 4 Bridge/query relevance guard
+  matrix review, and it should not be implementation.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
 new implementation instructions for this completed MVP soft-delete slice.
@@ -621,7 +628,7 @@ Non-goals:
 - Additional deletion API 또는 full retention lifecycle 구현이 아니다.
 - DB schema/migration 확정이 아니다.
 - account deletion/access-control 구현이 아니다.
-- SCN-001 document draft가 아니다.
+- SCN-001 document draft implementation이 아니다.
 - SCN-004 freeze 변경이 아니다.
 - `/api/v1/answer` public contract 변경이 아니다.
 - `/api/v1/documents/draft` public contract 변경이 아니다.
@@ -723,7 +730,7 @@ Strong non-decisions:
 - actual retention day count는 확정하지 않는다.
 - hard delete/file purge 실행은 확정하지 않는다.
 - account deletion/access-control 구현은 확정하지 않는다.
-- SCN-001 document draft는 열지 않는다.
+- SCN-001 document draft implementation은 열지 않는다.
 
 Bridge policy retained:
 
@@ -763,77 +770,163 @@ Acceptance direction:
 
 ### Step 4. SCN-001 Document Draft
 
-SCN-001 Bridge checked answer에서 문서 초안을 제공하는 후보 phase다.
-현재 SCN-001 answer-only 정책을 바꾸는 별도 큰 phase로 취급한다.
+Step 4는 SCN-001 document draft와 Bridge/query relevance guard를 설계 단계로만
+연다. 현재 산출물은 구현 계획이 아니라 SCN-001 document draft + Bridge/query
+relevance guard design이다.
 
-- SCN-001 전용 document type, template, eligibility guard가 필요하다.
-- SCN-004 document draft freeze와 같은 patch에 섞지 않는다.
-- public `/api/v1/documents/draft` contract를 변경하지 않는 방향을 우선 검토한다.
-- protected SCN-001 draft endpoint 또는 별도 contract가 필요한지 검토한다.
+#### SCN-001 Document Draft Design
 
-#### Bridge-as-Continuity, Not Grounding
+##### 1. Scope boundary
 
-이 정책은 Step 4만의 UI 표현이 아니라 Bridge 전반의 grounding 경계다.
+- Step 4 design only.
+- SCN-001 draft implementation is NOT opened.
+- SCN-004 `/api/v1/documents/draft` public contract unchanged.
+- SCN-004 `/api/v1/answer` public contract unchanged.
+- SCN-004 `/after` login-free draft flow unchanged.
+- SCN-004 fixed/free input/draft behavior remains separated from this design.
+- No SCN-005.
+- No independent `/bridge` route or Recovery implementation.
+- No DB schema/migration, endpoint path/method/schema, document template, or QA
+  fixture is finalized here.
 
-- 사용자의 현재 query에 대한 answer는 기본 answer처럼 유지하고, Bridge 정보를
-  answer의 숨은 문맥으로 강하게 섞지 않는다.
-- future Step 4 scope에서 Bridge 정보를 노출한다면 우측 문서초안 영역 아래 또는
-  별도 보조 패널에서 "이전 검토와 이번 질문이 어떻게 이어질 수 있는지"를 설명하는
-  continuity / side explanation으로만 사용한다.
-- Bridge와 현재 query 사이에 겹치는 issue / law / action이 있을 때만 "이어질 수
-  있음"을 표시한다.
-- 관련성이 약하면 Bridge 설명을 숨기거나 "이번 답변의 법적 근거로 사용하지 않은
-  참고용 이전 기록" 수준으로 제한한다.
-- Bridge 설명은 cited_articles / grounded_context_ids를 새로 만들지 않는다.
-- Bridge checked answer의 cited_articles / grounded_context_ids / displayed safe subset
-  boundary를 기준으로 draft eligibility 후보를 검토하되, Bridge 설명 자체를
-  grounding source로 승격하지 않는다.
-- Phase 7 displayed safe subset may still be used to build the Bridge-origin answer
-  query as already implemented, but it must not create new `cited_articles`,
-  `grounded_context_ids`, or legal grounding outside retrieved answer evidence.
-- Bridge continuity / SCN-001 draft extension은 raw Before/Bridge payload, raw
-  `after_query_seed`, token, Firebase uid, provider_subject, email의 신규 저장을
-  추가하지 않는다.
-- raw query, full answer body, artifact body는 docs/logs/UI/commits/issues/chat에
-  기록하지 않는다. 기존 answer/draft artifact persistence는 `after_artifact_runs`
-  retention / access-control 정책에서 별도로 다룬다.
-- 검색/답변 결과에 없는 법령 근거를 draft에 새로 만들지 않는다.
+##### 2. Bridge usage policy
 
-#### Relevance/matching guard candidates
+Bridge policy: **Bridge-as-Continuity, Not Grounding**.
 
-이 매트릭스는 Step 4/5 전제 조건 후보이며, 단독으로 legal grounding을 만들지
-않는다.
+- The current query answer stays primary and should behave like the existing
+  answer flow.
+- Bridge cards must not be treated as hidden grounding/source material for the
+  answer.
+- Bridge cards may become supplemental continuity context only.
+- If shown, the Bridge continuity panel appears as additional explanation, not
+  legal basis.
+- Candidate placement remains the result screen right-side document
+  draft/support area below the current document draft/auxiliary panel.
+- Bridge continuity should explain only "이전 검토와 이번 질문이 이어질 수 있는
+  지점".
+- Bridge information must not create `cited_articles`, `grounded_context_ids`, or
+  legal grounding.
+- Bridge information must not be used to cite law that the current answer did not
+  retrieve or cite.
+- Deleted/hidden Before/Bridge history must not appear in Bridge selection,
+  continuity panel, or draft affordance.
+- Raw Before/Bridge payload, raw `after_query_seed`, token, Firebase uid,
+  provider_subject, email, raw query, full answer body, and artifact body must not
+  be written into docs, UI, logs, commits, issues, chat, or a future continuity
+  payload.
 
-| candidate signal | positive use | weak/no overlap behavior | citation boundary |
+##### 3. Bridge/query relevance guard
+
+The guard is a relevance/matching gate for whether continuity UI or a future
+SCN-001 draft affordance can open. Overlap alone does not create legal grounding.
+
+Candidate overlap dimensions:
+
+- `issue_categories` / `risk_tags` overlap: checks whether the prior review and
+  current query share the same issue category.
+- `law_refs` overlap with answer `cited_articles` or retrieved law references:
+  checks whether the Bridge law hints align with current answer evidence.
+- `recommended_next_actions` overlap: checks whether the next-action path can
+  continue from the prior review into the current question.
+- `user_visible_summary` text similarity: weak signal only, useful for ranking or
+  explanation copy, not legal basis.
+
+Guard outcomes:
+
+| outcome | candidate condition | UI / draft behavior | grounding boundary |
 |---|---|---|---|
-| overlap on `issue_categories` / `risk_tags` | 같은 이슈 범주가 이어지는지 판단 | hide continuity panel or show reference-only note | never use overlap alone to create legal citations |
-| overlap on `law_refs` / `cited_articles` | 기존 Bridge law hint와 현재 answer evidence가 겹치는지 확인 | hide continuity panel or show reference-only note | never use overlap alone to create legal citations |
-| overlap on `recommended_next_actions` | 다음 행동 흐름이 이어질 수 있는지 판단 | hide continuity panel or show reference-only note | never use overlap alone to create legal citations |
+| strong overlap | issue/law/action overlap is clear and current answer has answer evidence | show continuity explanation candidate; future draft affordance still requires quality gate, document type confirmation, and separate review | current answer evidence only can supply legal basis, `cited_articles`, and `grounded_context_ids` |
+| weak overlap | only weak summary similarity or one low-confidence label overlap exists | show reference-only note or hide the continuity panel | note must say the prior record was not used as this answer's legal basis |
+| no overlap | no meaningful issue, law, action, or summary relation | hide Bridge continuity panel and keep answer-only | no draft affordance from Bridge |
+| conflicting/unsafe | Bridge hints conflict with current answer evidence, source state is hidden/deleted, or sensitive/raw fields would be needed | hide and do not use for draft | never use Bridge to repair or replace missing answer evidence |
 
-Step 4 implementation handoff checkpoint:
+Relevance guard requirements:
 
-- A future SCN-001 draft or continuity implementation plan must explicitly state which
-  fields are continuity-only and which fields come from retrieved answer evidence.
-- Only the current answer evidence may populate legal basis fields, `cited_articles`,
-  `grounded_context_ids`, or draft eligibility.
-- Bridge displayed safe subset may shape the Bridge-origin query text, but cannot be
-  described in UI, docs, or code comments as legal grounding by itself.
-- If relevance/matching is weak or absent, the continuity panel and draft affordance
-  should stay closed rather than showing a low-confidence bridge explanation.
-- Any future draft endpoint proposal must preserve SCN-004 login-free draft behavior
-  and keep public `/api/v1/documents/draft` unchanged unless a separate backend/schema
-  review explicitly changes that contract.
+- The continuity panel must not appear merely because a Bridge card exists.
+- The SCN-001 draft affordance must not open before the guard passes.
+- Guard output is presentation eligibility only; it is not citation generation.
+- `issue_categories`, `risk_tags`, `law_refs`, `recommended_next_actions`, and
+  `user_visible_summary` are continuity candidates, not legal basis fields.
+- If the guard is weak, absent, or unsafe, keep the result answer-only.
 
-Open design questions:
+##### 4. Draft affordance policy
 
-- SCN-001에서 어떤 document type이 필요한가.
-- draft request는 protected SCN-001 endpoint로 분리할지, 별도 contract를 둘지.
-- Bridge result와 현재 After query의 관련성/정합성은 어떤 기준으로 판단할지.
-- continuity / side explanation은 어떤 field subset으로 구성하고, 관련성이 약한
-  경우 어떤 UI 상태로 숨길지.
-- `after_artifact_runs.source_bridge_run_id` 단일 provenance로 충분한지, draft
-  provenance에는 별도 linkage가 필요한지.
-- SCN-001 draft result의 quality gate와 manual rehearsal 기준은 무엇인지.
+- SCN-001 draft affordance must not open before the Bridge/query relevance guard
+  passes.
+- SCN-001 draft affordance must stay separate from the SCN-004 document draft
+  path.
+- Draft must not use raw Before/Bridge payload.
+- Draft must not use raw `after_query_seed`.
+- Draft must use answer evidence and user-confirmed facts only.
+- Answer evidence means current answer `cited_articles`, `grounded_context_ids`,
+  and answer-linked retrieved chunks; Bridge overlap does not add legal basis.
+- If Bridge is used, it is a continuity note / context summary, not legal basis.
+- User-confirmed facts must remain distinct from inferred continuity. Missing
+  facts stay placeholders or `missing_fields`.
+- Existing SCN-004 `/after/result -> /after/intake -> /after/draft` behavior stays
+  unchanged and login-free.
+
+##### 5. Endpoint/contract candidate review
+
+This review compares candidates only. It does not decide path, method, schema,
+status codes, DB columns, migrations, or implementation prompts.
+
+| candidate | review | current recommendation |
+|---|---|---|
+| Reuse public `/api/v1/documents/draft` | Not recommended for SCN-001 protected draft because it risks the SCN-004 public contract/freeze and mixes protected Bridge continuity into a public draft surface. | Do not reuse as the first SCN-001 protected draft path. |
+| Add protected SCN-001 draft endpoint | Candidate only, not implementation. It may be needed later if SCN-001 draft requires auth, ownership, artifact linkage, or separate templates. | Defer until document type, template, QA criteria, and relevance guard are defined. |
+| Frontend-only continuity panel without draft endpoint | Possible first MVP extension because it can validate Bridge-as-Continuity and the relevance guard without opening draft generation. | Recommended candidate starting point. |
+
+Recommendation candidate:
+
+- Start with frontend-only continuity panel + relevance guard design.
+- Defer protected SCN-001 draft endpoint until document type/template/QA criteria
+  are defined.
+- Do not finalize any SCN-001 draft endpoint path/method/schema in this Step 4
+  design.
+- Keep `/api/v1/answer` and `/api/v1/documents/draft` public contracts unchanged.
+
+##### 6. SCN-001 document type candidates
+
+These are document type candidates only. Do not claim SCN-001 draft type is
+implemented.
+
+- labor office complaint supplement
+- evidence summary / issue chronology
+- consultation memo
+
+Avoid finalizing a legal filing template until a quality gate exists. A future
+document type decision must define user-confirmed fact requirements, answer
+evidence requirements, missing-field handling, and manual rehearsal criteria
+before any endpoint or UI implementation starts.
+
+##### 7. Quality gate / QA criteria
+
+Candidate quality gate for a future design review:
+
+- citations only from answer evidence.
+- no generated facts not provided by the user.
+- missing facts remain placeholders or `missing_fields`.
+- Bridge continuity note is separated from legal basis.
+- Bridge continuity note does not create `cited_articles` or
+  `grounded_context_ids`.
+- Bridge/query relevance guard matrix is reviewed before any draft affordance.
+- manual browser rehearsal is required before treating SCN-001 draft as demo-ready.
+- no broad eval unless retrieval/answer behavior or API response contract changes.
+- SCN-004 exact preset, SCN-004 free input, and SCN-004 login-free draft flow must
+  remain regression checkpoints.
+- Sensitive-data hygiene must be verified with no raw Before/Bridge payload, raw
+  `after_query_seed`, token, Firebase uid, provider_subject, email, raw query,
+  full answer body, or artifact body recorded.
+
+##### 8. Suggested next prompt target
+
+Next target: Step 4 Bridge/query relevance guard matrix review.
+
+The next prompt should refine the guard matrix and outcome rules only. It should
+not implement a continuity panel, code an endpoint, finalize schema/migration,
+generate SCN-001 draft documents, open SCN-001 draft freeze, open SCN-005, or
+change SCN-004 public answer/draft behavior.
 
 ### Step 5. SCN-001 Draft Freeze
 
@@ -903,45 +996,50 @@ fixture/preset 후보로 검토한다.
 soft-delete slice completed 상태이며, full retention lifecycle implementation은
 NOT opened 상태를 유지한다. Full retention lifecycle policy review, artifact
 access/retrieval policy review, audit/status policy review는 Step 3 아래에
-문서화되어 있고, 다음 prompt target은 추가 deletion API/schema 구현이 아니라
-cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup
-policy review로 제한한다.
+문서화되어 있다.
+
+Step 4는 SCN-001 Document Draft Design으로만 열렸다. 다음 prompt target은 구현이
+아니라 Bridge/query relevance guard matrix review로 제한한다.
 
 Review focus:
 
-- cloud storage / GCS lifecycle 또는 orphan classification/cleanup 중 어느 정책
-  review를 먼저 다룰지
-- protected linked artifacts / public unlinked After answer artifacts / orphan
-  artifact candidates 구분이 storage lifecycle과 cleanup classification에 충분한지
-- not-found / not-owned / already-hidden 외부 응답 동일 원칙이 existence leak을
-  줄이기에 충분한지
-- audit/status policy가 internal visibility, idempotent delete, ownership masking,
-  future retention lifecycle review까지만 다루고 user-facing audit/export를 열지
-  않는지
-- hard delete eligibility가 retention/audit/artifact lifecycle review 이후 후보로만
-  남아 있는지
-- retention window, file purge job, orphan classification, cascade policy가 구현 확정
-  없이 review/refine 대상으로 남아 있는지
-- artifact access/retrieval policy가 metadata-only candidate로 정리되어 있고
-  user-facing retrieval을 열지 않는지
-- additional deletion API, DB schema/migration, account deletion/access-control
-  implementation을 여전히 열지 않는지
-- auth persistence changes, undo/restore, hard delete, file purge, artifact physical
-  deletion, GCS lifecycle, audit/export, orphan cleanup, SCN-001 document draft,
-  SCN-005, provider_timeout/OCR retry hardening을 여전히 열지 않는지
+- `issue_categories` / `risk_tags` overlap 기준이 strong/weak/no/conflicting
+  outcome을 나누기에 충분한지
+- `law_refs` overlap을 answer `cited_articles` 또는 retrieved law references와만
+  비교하도록 제한했는지
+- `recommended_next_actions` overlap이 continuity 설명 후보일 뿐 legal basis가
+  아닌지
+- `user_visible_summary` text similarity가 weak signal only로 남아 있는지
+- strong overlap에서도 Bridge가 `cited_articles`, `grounded_context_ids`, legal
+  grounding을 새로 만들지 않는지
+- weak/no/conflicting outcome에서 continuity panel을 숨기거나 reference-only note로
+  제한하는지
+- SCN-001 draft affordance가 relevance guard 통과 전 열리지 않는지
+- frontend-only continuity panel + relevance guard design을 먼저 검토하고,
+  protected SCN-001 draft endpoint는 document type/template/QA criteria 전까지
+  defer하는지
+- `/api/v1/answer`와 `/api/v1/documents/draft` public contract unchanged, SCN-004
+  login-free draft flow unchanged 상태를 유지하는지
+- raw Before/Bridge payload, raw `after_query_seed`, token, Firebase uid,
+  provider_subject, email, raw query, full answer body, artifact body를 문서/코드/UI에
+  쓰거나 노출하지 않는지
+- Step 3 full retention lifecycle implementation, hard delete, file purge, GCS
+  lifecycle, audit/export, undo/restore, account deletion/access-control, orphan
+  cleanup, SCN-005, provider_timeout/OCR retry hardening을 여전히 열지 않는지
 
 Suggested prompt target:
 
 ```text
 SCN-004 freeze와 `/api/v1/answer`, `/api/v1/documents/draft` public contract
 unchanged 상태를 유지하면서 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`
-의 Step 3 MVP soft-delete slice completed 상태와 full retention lifecycle
-implementation NOT opened 상태를 유지한다.
-Artifact access/retrieval policy review와 audit/status policy review가 문서화된
-상태에서, 다음 문서 cycle은 cloud storage / GCS lifecycle policy review 또는
-orphan classification/cleanup policy review로 제한한다.
-코드 구현, DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성,
-account deletion/access-control implementation, SCN-001 document draft,
-SCN-001 draft freeze, GCS lifecycle job, orphan cleanup job,
-provider_timeout/OCR retry hardening은 열지 않는다.
+의 Step 4 SCN-001 Document Draft Design을 구현이 아닌 design review로만 이어간다.
+다음 문서 cycle은 Bridge/query relevance guard matrix review로 제한한다.
+Bridge는 Bridge-as-Continuity, Not Grounding 정책을 유지하고, issue/law/action
+overlap과 `user_visible_summary` weak signal이 continuity panel 후보를 어떻게
+여닫는지만 검토한다.
+코드 구현, DB schema/migration 확정, protected SCN-001 draft endpoint path/method/schema
+확정, API 구현 프롬프트 작성, SCN-001 draft generation, SCN-001 draft freeze,
+SCN-005, Step 3 full retention lifecycle implementation, hard delete/file purge,
+GCS lifecycle job, orphan cleanup job, provider_timeout/OCR retry hardening은 열지
+않는다.
 ```

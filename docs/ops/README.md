@@ -25,6 +25,9 @@
 - actual browser logged-in smoke PASS 및 SCN-001 backend-verified auth gate hardening 반영
 - Step 3 MVP soft-delete slice completed 반영: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
 - Step 3 full retention lifecycle, artifact access/retrieval, audit/status policy review 반영. Implementation은 NOT opened.
+- Step 4 SCN-001 Document Draft Design 반영: Bridge/query relevance guard design만
+  열고, SCN-001 document draft implementation과 protected SCN-001 draft endpoint
+  확정은 NOT opened.
 - local secret/database ignore rules hardening 반영
 
 현재 코드/구조 기준으로 반영된 주요 상태:
@@ -291,29 +294,32 @@ Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서�
 ## 앞으로의 우선 작업
 
 현재 문서 정리 이후 Step 3 full retention lifecycle policy review, artifact
-access/retrieval policy review, audit/status policy review는
+access/retrieval policy review, audit/status policy review와 Step 4 SCN-001
+Document Draft Design은
 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`에 문서화된 상태다.
 Step 3 MVP soft-delete slice completed 상태를 유지하고, full retention lifecycle
 implementation, artifact retrieval UI/API, audit export/admin UI는 NOT opened
-상태로 둔다. 다음 design review target은 추가 코드 구현이 아니라 cloud storage /
-GCS lifecycle policy review 또는 orphan classification/cleanup policy review로
-제한한다.
+상태로 둔다. 다음 design review target은 추가 코드 구현이 아니라 Bridge/query
+relevance guard matrix review로 제한한다.
 
 별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-1. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
-2. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
-3. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
-4. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
-5. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
-6. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
-7. `before` / `after` artifact의 향후 GCS 전환 기준 정리
-8. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
+1. Step 4 Bridge/query relevance guard matrix review
+2. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
+3. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
+4. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
+5. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
+6. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
+7. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
+8. `before` / `after` artifact의 향후 GCS 전환 기준 정리
+9. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
 
-Step 2B-3, Step 3 full retention lifecycle implementation, SCN-001 document draft는
-아직 열지 않는다. Hard delete, artifact physical deletion/file purge, retention
-lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes,
-account deletion/access-control, orphan cleanup은 후속 정책 영역으로 유지한다.
+Step 2B-3, Step 3 full retention lifecycle implementation, SCN-001 document draft
+implementation은 아직 열지 않는다. Protected SCN-001 draft endpoint path/method/schema,
+SCN-001 draft generation, SCN-001 draft freeze, hard delete, artifact physical
+deletion/file purge, retention lifecycle, GCS lifecycle, audit/export, undo/restore,
+auth persistence changes, account deletion/access-control, orphan cleanup은 후속
+정책 영역으로 유지한다.
 
 ## 현재 남아 있는 큰 기술 작업
 

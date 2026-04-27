@@ -9,8 +9,8 @@ law_main_road repo root에서 작업해주세요.
 - 2026-04-27
 
 현재 git / 제출 기준 상태:
-- 2026-04-27 audit/status policy review 시작 시점의 `git status -sb`: `## main...origin/main`.
-- 2026-04-27 audit/status policy review 시작 시점의 `git status --short`: clean.
+- 2026-04-27 Step 4 SCN-001 Document Draft Design 시작 시점의 `git status -sb`: `## main...origin/main`.
+- 2026-04-27 Step 4 SCN-001 Document Draft Design 시작 시점의 `git status --short`: clean.
 - 문서 업데이트 후 commit 전이면 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`, `next_prompt.md`, `docs/ops/README.md`도 modified일 수 있다.
 - 새 세션 시작 직후 `git status -sb`, `git status --short`, `git log --oneline -12`로 origin/main 동기화와 clean/dirty 상태를 다시 확인하세요.
 - 이번 문서 업데이트는 별도 add/commit/push를 하지 않는 작업 범위였다.
@@ -101,12 +101,20 @@ law_main_road repo root에서 작업해주세요.
   UI/API, retrieval implementation, API path/method, DB schema/migration, signed
   URL, file streaming, inline body, hard delete, file purge, GCS lifecycle,
   audit export, undo/restore, account deletion/access-control, orphan cleanup,
-  and SCN-001 document draft are NOT opened.
+  and SCN-001 document draft implementation are NOT opened.
 - Audit/status policy review is documented in
   `docs/planning/22_post_phase8_scn001_extension_roadmap.md`; audit log table
   implementation, status column names/schema, transition metadata schema, DB
   migration, API path/method/response shape, audit export endpoint, admin audit UI,
-  artifact retrieval UI/API, and SCN-001 document draft are NOT opened.
+  and artifact retrieval UI/API are NOT opened.
+- Step 4 SCN-001 Document Draft Design is opened only as document design in
+  `docs/planning/22_post_phase8_scn001_extension_roadmap.md`.
+- SCN-001 document draft implementation, protected SCN-001 draft endpoint
+  path/method/schema, DB schema/migration, API implementation prompt, SCN-001 draft
+  generation, and SCN-001 draft freeze are NOT opened.
+- Current Step 4 policy: Bridge-as-Continuity, Not Grounding. Bridge cards are
+  supplemental continuity context only; they do not create `cited_articles`,
+  `grounded_context_ids`, legal grounding, or answer hidden grounding.
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
@@ -128,7 +136,8 @@ law_main_road repo root에서 작업해주세요.
 - `/api/v1/documents/draft` contract unchanged.
 - SCN-004 `/after`, `/after/result`, `/after/intake`, `/after/draft`는 로그인 없이 계속 동작해야 합니다.
 - SCN-004 fixed/free input/draft flow를 SCN-001 linkage 작업과 섞지 마세요.
-- SCN-001 document draft는 아직 열지 않습니다.
+- SCN-001 document draft는 Step 4 design으로만 열려 있습니다. 구현, endpoint,
+  schema, migration, draft generation, draft freeze는 열지 않습니다.
 - Step 3 full retention lifecycle은 아직 열지 않습니다.
 - hard delete, artifact physical deletion/file purge, retention lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes, account deletion/access-control, orphan cleanup은 후속 정책 영역입니다.
 - SCN-005는 현재 frontend preset UI에서 제외되어 있고, 후속 확장 후보로만 유지합니다.
@@ -337,13 +346,16 @@ npm run dev
 
 절대 하지 말 것:
 - SCN-004 freeze 기준을 흔드는 변경 금지.
-- SCN-001 document draft를 열지 마세요.
+- SCN-001 document draft implementation을 열지 마세요. 현재는 Step 4 design만
+  열려 있습니다.
 - SCN-005를 바로 구현하지 마세요. 사용자가 명시적으로 요청하면 별도 패치로만 진행하세요.
 - `/bridge`, Recovery 본 구현 금지.
 - Step 2B-3 또는 Step 3 full retention lifecycle implementation을 현재 상태에서 바로 열지 마세요.
 - Step 3 MVP soft-delete slice는 completed 상태입니다. 추가 deletion/history retention 구현은 열지 마세요.
 - full retention lifecycle은 policy review 수준으로만 허용합니다.
 - artifact retrieval UI/API, artifact body retrieval, signed URL, file streaming, inline body는 아직 열지 마세요.
+- protected SCN-001 draft endpoint path/method/schema, SCN-001 draft generation,
+  SCN-001 draft freeze, API implementation prompt는 열지 마세요.
 - provider_timeout/OCR retry hardening을 UI polish와 섞지 마세요.
 - backend API contract 임의 변경 금지.
 - `/api/v1/answer` public contract 변경 금지.
@@ -365,41 +377,49 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
+1. Step 4 Bridge/query relevance guard matrix review
+   - Step 4 SCN-001 Document Draft Design의 다음 문서-only target
+   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 relevance guard matrix만 review/refine
+   - Bridge-as-Continuity, Not Grounding 유지
+   - `issue_categories` / `risk_tags`, `law_refs`, `recommended_next_actions`, `user_visible_summary` 후보 signal과 strong/weak/no/conflicting outcome만 검토
+   - Bridge overlap은 legal basis, `cited_articles`, `grounded_context_ids`를 만들 수 없음
+   - SCN-001 draft affordance는 relevance guard 통과 전 열지 않음
+   - protected SCN-001 draft endpoint path/method/schema, SCN-001 draft generation, SCN-001 draft freeze는 열지 않음
+2. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
    - Step 3 full retention lifecycle, artifact access/retrieval, audit/status policy review 다음의 문서-only target
-   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 storage lifecycle 또는 orphan classification 정책만 정리
+   - Step 4 guard matrix review 이후 별도 policy cycle로만 처리
    - Step 3 MVP soft-delete slice completed 상태를 유지
    - DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성, account history access-control 구현은 열지 않음
    - hard delete/file purge implementation, GCS lifecycle job, audit export endpoint, restore endpoint, account deletion UX/API, orphan cleanup job은 열지 않음
-2. history status pill color polish
+3. history status pill color polish
    - read-only history UI의 status pill 색상/상태 표시만 작은 patch로 다룸
    - deletion, retention, artifact body 노출과 섞지 않음
-3. main Before gate semantic/a11y polish
+4. main Before gate semantic/a11y polish
    - Step 1.6 구현을 유지하면서 semantic/a11y만 필요한 경우 최소 보강
    - SCN-004 `/after` login-free path는 건드리지 않음
-4. submission/final demo preflight 재실행 및 presentation rehearsal
+5. submission/final demo preflight 재실행 및 presentation rehearsal
    - `bash scripts/demo_preflight.sh`
    - 필요 시 backend/frontend 수동 실행 후 `http://localhost:5090/after`에서 SCN-004-DEMO-FREEZE dry-run
    - SCN-004 exact preset no public answer call, result, draft choices 확인
    - SCN-004 modified/free input public answer without auth 확인
    - SCN-001 checked Bridge protected answer routing 확인
    - SCN-001 all-unchecked Bridge public answer + sticky bridge_handoff 확인
-5. optional Phase 8 regression/manual evidence polish
+6. optional Phase 8 regression/manual evidence polish
    - 이미 PASS한 Phase 7E evidence를 깨지 않는 범위에서만 보강
    - 필요한 경우 negative auth smoke나 sanitized checklist를 추가
-6. provider_timeout / OCR retry/backoff/hard-timeout hardening
+7. provider_timeout / OCR retry/backoff/hard-timeout hardening
    - 별도 runtime hardening 후보
    - SCN-004 freeze와 public contract 보호를 전제로 분리 작업
-7. Step 2B-3 또는 full retention lifecycle implementation
+8. Step 2B-3 또는 full retention lifecycle implementation
    - Step 2B-3와 Step 3 full retention lifecycle implementation은 아직 열지 않음
    - Step 3 MVP soft-delete slice completed 상태를 유지하고, policy/design doc review 수준으로만 허용
    - hard delete, file purge, artifact physical deletion, auth persistence changes, undo/restore, account deletion/access-control, orphan cleanup을 열지 않음
-8. artifact retention/deletion/account history access control
+9. artifact retention/deletion/account history access control
    - Post-MVP
    - artifact retrieval UI/API, retention policy, account history access control은 별도 설계 후 진행
-9. SCN-001 document draft
+10. SCN-001 document draft implementation
    - 아직 열지 않음
-   - Bridge/query matching guard 설계 후 별도 큰 phase로만 검토
+   - Bridge/query relevance guard matrix review 후 별도 큰 phase로만 검토
    - SCN-004 freeze 기준을 유지한 별도 설계/패치가 필요
 
 마지막 보고 형식:
@@ -424,6 +444,7 @@ Step 2B-2, Step 1.6까지 `git log` 기준 완료 상태다. 2026-04-27 기준 �
 브라우저 logged-in smoke PASS와 backend-verified auth gate sync hardening도
 확인됐다. Step 3 MVP soft-delete slice completed 상태이며, Step 3 full retention
 lifecycle policy review, artifact access/retrieval policy review, audit/status
-policy review는 문서화됐지만 implementation은 NOT opened 상태다. 다음 target은
-cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup
-policy review다. SCN-001 document draft도 아직 열지 않는다.
+policy review는 문서화됐지만 implementation은 NOT opened 상태다. Step 4 SCN-001
+Document Draft Design은 문서 설계로만 열렸고, 다음 target은 Bridge/query relevance
+guard matrix review다. SCN-001 document draft implementation, protected SCN-001
+draft endpoint 확정, SCN-001 draft generation/freeze는 아직 열지 않는다.
