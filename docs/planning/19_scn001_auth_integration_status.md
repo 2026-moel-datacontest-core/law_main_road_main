@@ -4,7 +4,7 @@
 
 ## Purpose
 
-이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 repo 기준으로 Firebase Auth Phase 0~5, Phase 6A~6F Bridge -> After answer-only handoff, Phase 7A~7E after artifact linkage/protected bridge answer endpoint/frontend routing verification, Post-Phase 8 Step 3 MVP soft-delete slice, SCN-001 fixed-preset frozen draft/continuity panel, SCN-004 freeze guard, residual runtime risk, current git history hash를 한 곳에 고정한다.
+이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 repo 기준으로 Firebase Auth Phase 0~5, Phase 6A~6F Bridge -> After answer-only handoff, Phase 7A~7E after artifact linkage/protected bridge answer endpoint/frontend routing verification, Post-Phase 8 Step 3 MVP soft-delete slice, `/after` saved Before/Bridge history selector, SCN-001 fixed-preset frozen draft/continuity panel, SCN-004 freeze guard, residual runtime risk, current git history hash를 한 곳에 고정한다.
 
 ## Current Status by Phase
 
@@ -30,6 +30,7 @@
 | Before OCR stale-job guard | completed | `c6c3ed0` fails stale/running OCR review jobs. This is a narrow Before runtime guard outside public `/api/v1/answer`, public `/api/v1/documents/draft`, and SCN-004 frontend flow |
 | SCN-001 fixed-preset frozen draft | completed | `667a1bd` adds exact `SCN-001-BRIDGE-DEMO` frozen draft flow for `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안. It is frontend fixture/deterministic template based, reflects user intake, and does not call backend/LLM or `/api/v1/documents/draft` |
 | SCN-001 continuity panel | completed | `f574e6b` adds continuity panel on `/after/result` and `/after/draft`. It preserves Bridge-as-Continuity, Not Grounding and does not create or modify legal basis, citations, source/grounded context ids, or retrieved chunks |
+| `/after` saved history selector | completed | `2ec5488` shows saved Before/Bridge history on `/after` for backend-verified logged-in users. The section is collapsible, saved Bridge selection uses only the displayed safe subset for Bridge handoff memory state, Before/Bridge soft-delete uses existing protected DELETE helpers, exact preset submit keeps fixed answer priority, and SCN-004 public flow remains unchanged |
 
 ## Current Git History References
 
@@ -61,6 +62,7 @@ Recent relevant commits after history rewrite:
 - `667a1bd` feat(frontend): add frozen SCN-001 draft flow
 - `c6c3ed0` fix(before): fail stale OCR review jobs
 - `f574e6b` feat(frontend): add SCN-001 continuity panel
+- `2ec5488` feat(frontend): show SCN-001 history on After
 
 ## Phase 6F Evidence Summary
 
@@ -186,6 +188,42 @@ Out of scope remains:
   provider_timeout retry/backoff hardening are not opened. Before OCR timeout
   and stale job failure guard are a narrow runtime guard, not a retry/backoff phase.
 
+## `/after` Saved History Selector Status
+
+2026-04-27 `/after` saved Before/Bridge history selector completed in `2ec5488`.
+This is a frontend SCN-001 protected-history usability slice and does not change
+public `/api/v1/answer`, public `/api/v1/documents/draft`, or SCN-004 login-free
+behavior.
+
+Implemented behavior:
+
+- Backend-verified logged-in users can open a collapsible saved history section
+  on `/after`.
+- Saved Bridge selection adds only the displayed safe subset to Bridge handoff
+  memory state.
+- Raw `after_query_seed`, raw Bridge payload, token, Firebase uid,
+  provider_subject, email, raw query, full answer body, artifact body, and real
+  bridge id are not exposed in UI/query/storage/docs.
+- `/after` saved history list provides Before/Bridge soft-delete affordances.
+- Delete uses the existing protected DELETE helper.
+- Delete success refreshes/local-cleans the history list and selected handoff
+  state.
+- Before delete removes linked Bridge visible path.
+- Bridge context/history does not hide SCN-001/SCN-004 preset buttons.
+- Exact preset submit keeps fixed answer path priority:
+  `SCN-001-BRIDGE-DEMO` exact -> fixed answer -> frozen draft flow;
+  `SCN-004-DEMO-FREEZE` exact -> fixed answer -> existing SCN-004 draft flow.
+- Preset unselected + included Bridge context keeps the existing protected
+  Bridge answer path.
+- Logged-out users can still use `/after` public preset/free input flows.
+- SCN-004 public flow unchanged.
+
+Evidence hygiene:
+
+- Record only PASS/PRESENT/ABSENT/NO-level evidence.
+- Do not record token, Firebase uid, provider_subject, email, raw query, full
+  answer body, artifact body, or real bridge id.
+
 ## Current Auth / Linkage Architecture
 
 - MVP auth path: Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification.
@@ -212,6 +250,10 @@ Out of scope remains:
 - SCN-001 frozen draft flow does not call `/api/v1/documents/draft`; SCN-004
   public draft flow continues to use `/api/v1/documents/draft` unchanged.
 - SCN-004 fixed/free input/draft flow unchanged.
+- `/after` saved history selector must not require login for SCN-004 public
+  preset/free input users; the saved history section is an additive
+  backend-verified logged-in SCN-001 surface.
+- Bridge context/history must not override exact preset fixed answer priority.
 - SCN-001 live/backend draft generation and protected SCN-001 draft endpoint are
   not activated.
 
@@ -261,8 +303,9 @@ Displayed safe subset:
   lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes,
   account deletion/access-control, orphan cleanup, live/backend SCN-001 document draft,
   SCN-005, and provider_timeout retry/backoff hardening remain future/out of scope.
-  SCN-001-BRIDGE-DEMO exact fixed preset frozen draft and continuity panel are
-  completed frontend-local demo paths, not live/backend draft generation.
+  SCN-001-BRIDGE-DEMO exact fixed preset frozen draft, continuity panel, and
+  `/after` saved history selector are completed frontend-local/protected-history
+  paths, not live/backend draft generation.
 
 ## Do Not Mix
 

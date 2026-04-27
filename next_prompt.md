@@ -16,6 +16,7 @@ law_main_road repo root에서 작업해주세요.
 - 새 세션 시작 직후 `git status -sb`, `git status --short`, `git log --oneline -12`로 origin/main 동기화와 clean/dirty 상태를 다시 확인하세요.
 - 이번 문서 업데이트는 별도 add/commit/push를 하지 않는 작업 범위였다.
 - 최근 중요 커밋:
+  - 2ec5488 feat(frontend): show SCN-001 history on After
   - f574e6b feat(frontend): add SCN-001 continuity panel
   - c6c3ed0 fix(before): fail stale OCR review jobs
   - 667a1bd feat(frontend): add frozen SCN-001 draft flow
@@ -134,10 +135,21 @@ law_main_road repo root에서 작업해주세요.
   answer remains primary, Bridge info remains supplementary, and the panel does
   not create/modify legal_basis, citations, source/grounded context ids, or
   retrieved chunks.
+- `/after` saved Before/Bridge history selector is completed:
+  - `git log` 기준 `2ec5488 feat(frontend): show SCN-001 history on After`
+  - backend-verified logged-in user can open a collapsible saved history section on `/after`
+  - saved Bridge selection adds only the displayed safe subset to Bridge handoff memory state
+  - raw `after_query_seed`, raw Bridge payload, token, Firebase uid, provider_subject, email, raw query, full answer body, artifact body, and real bridge id are not exposed in UI/query/storage/docs
+  - `/after` history list supports Before/Bridge soft-delete affordance using the existing protected DELETE helper
+  - delete success refreshes/local-cleans the history list and selected handoff state
+  - Before delete removes linked Bridge visible path
+  - Bridge context/history does not hide SCN-001/SCN-004 preset buttons
+  - exact preset submit keeps fixed answer path priority
 - Current next target candidates:
-  - SCN-001 frozen draft + continuity panel browser rehearsal/evidence finalization
-  - docs sync/release readiness
-  - optional live Bridge handoff continuity smoke using existing completed history
+  - final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved history selector
+  - docs release readiness
+  - optional logged-in saved history smoke
+  - cleanup of unrelated `frontend/src/app/globals.css`
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
@@ -179,11 +191,13 @@ law_main_road repo root에서 작업해주세요.
   - frozen draft는 frontend fixture + deterministic template 기반이며 사용자 intake 값을 반영
   - backend/LLM 호출 없음, `/api/v1/documents/draft` 호출 없음
   - modified/live SCN-001 and Bridge-origin paths는 answer-only / draft disabled 유지
+  - Bridge context/history가 있어도 exact fixed preset submit은 fixed answer -> frozen draft flow가 우선
 - `SCN-004-DEMO-FREEZE`
   - scenarioId: SCN-004
   - supportsDraft: true
   - main demo / document draft freeze용 preset
   - fixed/live 여부와 관계없이 SCN-004 draft eligibility 적용
+  - Bridge context/history가 있어도 exact fixed preset submit은 fixed answer -> existing SCN-004 draft flow가 우선
 - SCN-005
   - 현재 frontend UI preset에서 제외
   - 후속 확장 후보로만 유지
@@ -290,6 +304,23 @@ SCN-001 protected Bridge answer routing 기준:
 - Bridge-origin answer query는 displayed safe subset plus user question만 사용합니다.
 - MVP provenance는 single primary `source_bridge_run_id`입니다.
 - Multi-bridge full provenance는 Post-MVP join table 후보입니다.
+
+SCN-001 `/after` saved history selector 기준:
+- Backend-verified logged-in user can view saved Before/Bridge history on `/after`.
+- The saved history section is collapsible/fold UI.
+- Selecting a saved Bridge record adds only the displayed safe subset to Bridge handoff memory state.
+- Raw `after_query_seed`, raw Bridge payload, token, Firebase uid, provider_subject, email, raw query, full answer body, artifact body, and real bridge id must not be exposed in UI/query/storage/docs.
+- `/after` history list provides Before/Bridge soft-delete affordances.
+- Delete uses the existing protected DELETE helper.
+- Delete success cleans local list state and selected handoff state.
+- Before delete removes linked Bridge visible path.
+- Bridge context/history must not hide SCN-001/SCN-004 preset buttons.
+- Exact preset submit keeps fixed answer priority:
+  - `SCN-001-BRIDGE-DEMO` exact -> fixed answer -> frozen draft flow.
+  - `SCN-004-DEMO-FREEZE` exact -> fixed answer -> existing SCN-004 draft flow.
+- Preset unselected + included Bridge context keeps the existing protected Bridge answer path.
+- Logged-out users can still use `/after` public preset/free input flows.
+- SCN-004 public flow remains unchanged.
 
 Free input 정책:
 - preset 없음 + 직접 입력:
@@ -406,13 +437,17 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. SCN-001 frozen draft + continuity panel browser rehearsal/evidence finalization
-   - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은 completed 상태
+1. Final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved history selector
+   - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity panel, and `/after` saved history selector are completed 상태
    - `/after -> /after/result -> /after/intake -> /after/draft`
    - `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안
    - frontend fixture + deterministic template 기반이며 사용자 intake 값을 반영
    - backend/LLM 호출 없음, `/api/v1/documents/draft` 호출 없음
    - `/after/result`와 `/after/draft` continuity panel 확인
+   - `/after` collapsible saved history selector 확인
+   - saved Bridge selection이 displayed safe subset만 handoff memory state에 넣는지 확인
+   - `/after` Before/Bridge soft-delete success 후 local list/selected handoff state 정리 확인
+   - Bridge context가 있어도 SCN-001/SCN-004 preset buttons와 exact fixed answer priority 유지 확인
    - continuity panel은 Bridge-as-Continuity, Not Grounding 유지
    - legal_basis, `cited_articles`, `source_context_ids`, `grounded_context_ids`, `retrieved_chunks`를 만들거나 수정하지 않음
    - evidence는 PASS/PRESENT/ABSENT 수준만 기록
@@ -483,8 +518,9 @@ policy review는 문서화됐지만 implementation은 NOT opened 상태다. Step
 Document Draft Design은 live/backend docs-only baseline으로 유지되고,
 Bridge/query relevance guard matrix review도 completed/current design baseline으로
 문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, stale OCR
-review job guard, SCN-001 continuity panel은 completed 상태다. 다음 target 후보는
-SCN-001 frozen draft + continuity panel browser rehearsal/evidence finalization,
-docs sync/release readiness, optional live Bridge handoff continuity smoke다.
+review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history
+selector는 completed 상태다. 다음 target 후보는 final browser rehearsal/evidence,
+docs release readiness, optional logged-in saved history smoke, 또는 unrelated
+`frontend/src/app/globals.css` cleanup이다.
 live/backend SCN-001 document draft implementation, protected SCN-001 draft endpoint
 확정, live SCN-001 draft generation/freeze는 아직 열지 않는다.

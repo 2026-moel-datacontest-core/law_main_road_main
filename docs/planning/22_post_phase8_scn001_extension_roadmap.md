@@ -21,6 +21,9 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은
   frontend-local demo path로 completed 상태이며, live/backend draft generation으로
   취급하지 않는다.
+- `/after` saved Before/Bridge history selector는 protected-history frontend path로
+  completed 상태이며, SCN-004 public flow나 live/backend SCN-001 draft generation으로
+  취급하지 않는다.
 
 ## 2. Current Baseline
 
@@ -41,6 +44,10 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
 - Post-Phase 8 Step 2A protected read-only history backend endpoints 완료.
 - Post-Phase 8 Step 2B-1 frontend history helper/types 완료.
 - Post-Phase 8 Step 2B-2 `/before` read-only history UI 완료.
+- Post-Phase 8 `/after` saved Before/Bridge history selector completed in
+  `2ec5488`: backend-verified logged-in users can open a collapsible saved
+  history section on `/after`, select saved Bridge records using only the
+  displayed safe subset, and soft-delete Before/Bridge history from that list.
 - Post-Phase 8 Step 1.6 main page Before entry login gate 완료.
 - Post-Phase 8 actual browser logged-in smoke PASS.
 - SCN-001 protected frontend auth gate hardening 완료: Firebase signed-in 단독이
@@ -71,9 +78,9 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
   - SCN-001 MVP demo includes fixed-preset frozen draft continuity explanation
     and Bridge-origin answer-only continuity explanation where eligible.
   - Bridge-as-Continuity, Not Grounding is the policy boundary.
-  - Current next target candidates are frozen draft + continuity panel browser
-    rehearsal/evidence finalization, docs sync/release readiness, or optional live
-    Bridge handoff continuity smoke using existing completed history.
+  - Current next target candidates are final browser rehearsal/evidence, docs
+    release readiness, optional logged-in saved history smoke, or cleanup of
+    unrelated `frontend/src/app/globals.css`.
 
 ## 3. Recommended Sequence
 
@@ -148,16 +155,19 @@ Remaining polish candidates:
 로그인 사용자가 이전 Before review jobs / Bridge runs를 조회하는 read-only phase다.
 현재는 list/detail 조회와 `/before` read-only render까지만 완료했다.
 
-Step 2 status (2026-04-24):
+Step 2 status (2026-04-27):
 
 - Step 2A backend read-only history API slice completed and pushed in `5948b43`.
 - Step 2B-1 frontend history helper/types completed and pushed in `facb408`.
 - Step 2B-2 `/before` read-only history UI completed and pushed in `f2c463a`.
+- `/after` saved Before/Bridge history selector completed and pushed in
+  `2ec5488`.
 - Actual browser read-only history smoke passed on 2026-04-27:
   `GET /api/v1/scn001/before-review-jobs` and
   `GET /api/v1/scn001/bridge-runs` sent Authorization headers, previous 401 was
   not reproduced, and read-only history UI rendered without auth error.
-- Step 2B-3 is not open.
+- Step 2B-3 is represented by the completed `/after` saved history selector; any
+  larger retention/artifact/history lifecycle expansion remains not open.
 - Step 3 MVP soft-delete slice completed separately after Step 2. Step 3 full
   retention lifecycle, live/backend SCN-001 document draft implementation, hard delete, file purge, and
   artifact lifecycle remain out of scope.
@@ -186,6 +196,44 @@ Current verification status:
 - 실제 사용자 브라우저에서는 `/before` logged-in history endpoints Authorization
   PRESENT와 history records read-only render가 PASS 확인됐다.
 - 기록이 없을 때는 empty state가 정상 render되는 것도 PASS 범위로 본다.
+
+### Step 2B-3. `/after` Saved History Selector
+
+Status (2026-04-27): completed and pushed in `2ec5488`.
+
+This is a protected-history frontend usability slice. It does not open
+live/backend SCN-001 document draft generation, protected SCN-001 draft endpoint
+path/method/schema, Step 3 full retention lifecycle, or SCN-004 public contract
+changes.
+
+Completed behavior:
+
+- Backend-verified logged-in users can view a collapsible saved Before/Bridge
+  history section on `/after`.
+- Selecting a saved Bridge record adds only the displayed safe subset to Bridge
+  handoff memory state.
+- Raw `after_query_seed`, raw Bridge payload, token, Firebase uid,
+  provider_subject, email, raw query, full answer body, artifact body, and real
+  bridge id are not exposed in UI/query/storage/docs.
+- `/after` history list provides Before/Bridge soft-delete affordances.
+- Delete uses the existing protected DELETE helper.
+- Delete success refreshes/local-cleans the history list and selected handoff
+  state.
+- Before delete removes linked Bridge visible path.
+- Bridge context/history does not hide SCN-001/SCN-004 preset buttons.
+- Exact preset submit keeps fixed answer path priority:
+  `SCN-001-BRIDGE-DEMO` exact -> fixed answer -> frozen draft flow;
+  `SCN-004-DEMO-FREEZE` exact -> fixed answer -> existing SCN-004 draft flow.
+- Preset unselected + included Bridge context keeps the existing protected
+  Bridge answer path.
+- Logged-out users can still use `/after` public preset/free input flows.
+- SCN-004 public flow unchanged.
+
+Evidence hygiene:
+
+- Record only PASS/PRESENT/ABSENT/NO-level evidence.
+- Do not record token, Firebase uid, provider_subject, email, raw query, full
+  answer body, artifact body, or real bridge id.
 
 ### Step 3. History Deletion
 
@@ -456,10 +504,11 @@ Retention-stream future policy target after this review:
 
 - Cloud storage / GCS lifecycle policy review or orphan classification/cleanup
   policy review remains a later policy candidate for the Step 3 retention stream.
-- The current global next prompt target candidates are SCN-001 frozen draft +
-  continuity panel browser rehearsal/evidence finalization, docs sync/release
-  readiness, or optional live Bridge handoff continuity smoke using existing
-  completed history, not this retention-stream policy work.
+- The current global next prompt target candidates are final browser
+  rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after`
+  saved history selector, docs release readiness, optional logged-in saved
+  history smoke, or cleanup of unrelated `frontend/src/app/globals.css`, not
+  this retention-stream policy work.
 
 Recommended sequencing:
 
@@ -502,10 +551,11 @@ Retention-stream note:
 - If the work later returns to Step 3 retention policy, cloud storage / GCS
   lifecycle policy review or orphan classification/cleanup policy review remains
   the next retention-stream candidate.
-- The active next target candidates for this roadmap are frozen draft + continuity
-  panel browser rehearsal/evidence finalization, docs sync/release readiness, or
-  optional live Bridge handoff continuity smoke. They should not open live/backend
-  SCN-001 draft generation or protected SCN-001 draft endpoint work.
+- The active next target candidates for this roadmap are final browser
+  rehearsal/evidence for frozen draft + continuity panel + `/after` saved history
+  selector, docs release readiness, optional logged-in saved history smoke, or
+  cleanup of unrelated `frontend/src/app/globals.css`. They should not open
+  live/backend SCN-001 draft generation or protected SCN-001 draft endpoint work.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
 new implementation instructions for this completed MVP soft-delete slice.
@@ -803,8 +853,9 @@ draft flow와 continuity panel이 completed 상태가 됐다.
 
 현재 산출물은 SCN-001 live/backend document draft boundary +
 Bridge/query relevance guard + completed frontend-local frozen draft/continuity
-panel scope sync다. Protected SCN-001 draft endpoint, live draft generation, live
-draft freeze는 열지 않는다.
+panel scope sync다. `/after` saved history selector is completed as a separate
+protected-history frontend surface. Protected SCN-001 draft endpoint, live draft
+generation, live draft freeze는 열지 않는다.
 
 #### SCN-001 Document Draft Design
 
@@ -816,6 +867,9 @@ draft freeze는 열지 않는다.
 - The frozen draft is frontend fixture + deterministic template based, reflects
   user intake, and does not call backend/LLM or `/api/v1/documents/draft`.
 - SCN-001 continuity panel is completed on `/after/result` and `/after/draft`.
+- `/after` saved Before/Bridge history selector is completed in `2ec5488` as a
+  protected-history frontend surface and remains separate from live/backend draft
+  generation.
 - SCN-001 live/backend draft implementation is NOT opened.
 - SCN-004 `/api/v1/documents/draft` public contract unchanged.
 - SCN-004 `/api/v1/answer` public contract unchanged.
@@ -825,9 +879,9 @@ draft freeze는 열지 않는다.
 - No independent `/bridge` route or Recovery implementation.
 - No live/backend DB schema/migration, protected endpoint path/method/schema, live
   document template, or live QA fixture is finalized here.
-- Current next target candidates are frozen draft + continuity panel browser
-  rehearsal/evidence finalization, docs sync/release readiness, or optional live
-  Bridge handoff continuity smoke using existing completed history.
+- Current next target candidates are final browser rehearsal/evidence, docs
+  release readiness, optional logged-in saved history smoke, or cleanup of
+  unrelated `frontend/src/app/globals.css`.
 
 ##### 2. Bridge usage policy
 
@@ -853,9 +907,13 @@ Bridge policy: **Bridge-as-Continuity, Not Grounding**.
 - Deleted/hidden Before/Bridge history must not appear in Bridge selection,
   continuity panel, or draft affordance.
 - Raw Before/Bridge payload, raw `after_query_seed`, token, Firebase uid,
-  provider_subject, email, raw query, full answer body, and artifact body must not
-  be written into docs, UI, logs, commits, issues, chat, or a future continuity
-  payload.
+  provider_subject, email, raw query, full answer body, artifact body, and real
+  bridge id must not be written into docs, UI, logs, commits, issues, chat, or a
+  future continuity payload.
+- `/after` saved history selector may put only the displayed safe subset into
+  Bridge handoff memory state.
+- Bridge context/history must not hide SCN-001/SCN-004 preset buttons or override
+  exact preset fixed answer priority.
 
 ##### 3. Frontend-local continuity panel scope
 
@@ -1031,12 +1089,13 @@ not a request to run broad eval now.
 
 ###### Next target
 
-The previous frontend-only continuity panel target is completed. Current next
-target candidates are SCN-001 frozen draft + continuity panel browser
-rehearsal/evidence finalization, docs sync/release readiness, or optional live
-Bridge handoff continuity smoke using existing completed history. These targets
-do not finalize protected SCN-001 draft endpoint path/method/schema, open
-live/backend SCN-001 draft generation, or open SCN-001 live draft freeze.
+The previous frontend-only continuity panel target and `/after` saved history
+selector target are completed. Current next target candidates are final browser
+rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved
+history selector, docs release readiness, optional logged-in saved history smoke,
+or cleanup of unrelated `frontend/src/app/globals.css`. These targets do not
+finalize protected SCN-001 draft endpoint path/method/schema, open live/backend
+SCN-001 draft generation, or open SCN-001 live draft freeze.
 
 ##### 5. Draft affordance policy
 
@@ -1122,9 +1181,11 @@ Candidate quality gate for a future design review:
 
 Current next target candidates:
 
-1. SCN-001 frozen draft + continuity panel browser rehearsal/evidence finalization.
-2. docs sync/release readiness.
-3. optional live Bridge handoff continuity smoke using existing completed history.
+1. Final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel
+   + `/after` saved history selector.
+2. docs release readiness.
+3. optional logged-in saved history smoke.
+4. cleanup of unrelated `frontend/src/app/globals.css`.
 
 These targets should not code a backend endpoint, finalize schema/migration, open
 live/backend SCN-001 draft generation, open protected SCN-001 draft endpoint
@@ -1133,7 +1194,8 @@ SCN-004 public answer/draft behavior.
 
 Later SCN-001 draft/freeze sequence:
 
-1. Finalize SCN-001 frozen draft + continuity panel browser evidence.
+1. Finalize SCN-001 frozen draft + continuity panel + `/after` saved history
+   selector browser evidence.
 2. Document SCN-001 MVP demo rehearsal evidence.
 3. Revisit live/backend SCN-001 document draft design, document type, and quality gate.
 4. Open live SCN-001 draft implementation only after the above review.
@@ -1177,6 +1239,9 @@ freeze fixture/preset 후보로 검토한다.
 - `/api/v1/documents/draft` public contract unchanged.
 - SCN-004 freeze 유지.
 - SCN-004 `/after`, `/after/result`, `/after/intake`, `/after/draft`는 login-free 유지.
+- `/after` saved history selector는 backend-verified logged-in user에게만 추가로
+  보이는 SCN-001 protected-history surface이며, logged-out SCN-004 public
+  preset/free input flow를 막지 않는다.
 - Web Storage에 raw payload, raw answer/draft body, raw flow data, auth state, token
   저장 금지.
 - Firebase uid, provider_subject, email, token 노출 금지.
@@ -1211,15 +1276,22 @@ access/retrieval policy review, audit/status policy review는 Step 3 아래에
 
 Step 4는 live/backend SCN-001 Document Draft Design baseline으로 유지한다.
 Bridge/query relevance guard matrix review는 completed/current design baseline으로
-문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity
-panel은 completed 상태다. 다음 target 후보는 SCN-001 frozen draft + continuity
-panel browser rehearsal/evidence finalization, docs sync/release readiness, optional
-live Bridge handoff continuity smoke using existing completed history다.
+문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity
+panel, `/after` saved Before/Bridge history selector는 completed 상태다. 다음
+target 후보는 final browser rehearsal/evidence, docs release readiness, optional
+logged-in saved history smoke, 또는 unrelated `frontend/src/app/globals.css`
+cleanup이다.
 
 Review focus:
 
 - continuity panel이 `/after/result`와 `/after/draft`에서 "이전 검토와 이번 질문이
   이어질 수 있는 지점"만 설명하는지
+- `/after` saved history selector가 collapsible UI이고 saved Bridge 선택 시 displayed
+  safe subset만 Bridge handoff memory state에 넣는지
+- `/after` Before/Bridge soft-delete success 후 local list와 selected handoff state를
+  정리하고, Before delete가 linked Bridge visible path를 제거하는지
+- Bridge context/history가 있어도 SCN-001/SCN-004 preset buttons와 exact fixed
+  answer priority가 유지되는지
 - fixed SCN-001 frozen draft path가 `workplace_change_reason_summary` / 사업장 변경
   사유 정리서 초안만 제공하고 backend/LLM 또는 `/api/v1/documents/draft`를 호출하지
   않는지
@@ -1252,10 +1324,10 @@ Current prompt target summary:
 - Bridge/query relevance guard matrix review는 completed/current design
   baseline이다.
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은
-  completed 상태다.
-- 다음 target 후보는 frozen draft + continuity panel browser rehearsal/evidence
-  finalization, docs sync/release readiness, optional live Bridge handoff continuity
-  smoke다.
+  completed 상태이며 `/after` saved history selector도 completed 상태다.
+- 다음 target 후보는 final browser rehearsal/evidence, docs release readiness,
+  optional logged-in saved history smoke, unrelated `frontend/src/app/globals.css`
+  cleanup이다.
 - Continuity panel은 Bridge -> After answer-only continuity explanation과 fixed
   frozen draft continuity explanation이며, Bridge-as-Continuity, Not Grounding
   정책을 유지한다.

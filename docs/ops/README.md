@@ -30,6 +30,10 @@
   preset frozen draft flow와 SCN-001 continuity panel은 completed 상태다.
   SCN-001 live/backend draft generation과 protected SCN-001 draft endpoint
   path/method/schema는 NOT opened.
+- `/after` saved Before/Bridge history selector 반영: backend-verified logged-in
+  user는 collapsible saved history section에서 saved Bridge를 선택할 수 있고,
+  displayed safe subset만 Bridge handoff memory state에 추가된다. `/after` history
+  list의 Before/Bridge soft-delete는 기존 protected DELETE helper를 사용한다.
 - Before OCR stale/running review job failure guard 반영: stale OCR review jobs는
   failed 처리된다. Retry/backoff/full provider hardening은 별도 future runtime 후보다.
 - local secret/database ignore rules hardening 반영
@@ -59,10 +63,20 @@
 - SCN-001 continuity panel 반영 완료: `/after/result`와 `/after/draft`에 표시되며
   Bridge-as-Continuity, Not Grounding 정책을 유지하고 legal basis/citations/context
   ids/retrieved chunks를 만들거나 수정하지 않음
+- `/after` saved history selector 반영 완료: backend-verified logged-in user 대상
+  collapsible saved Before/Bridge history UI, saved Bridge safe displayed subset
+  handoff memory 추가, raw `after_query_seed`/raw Bridge payload/internal
+  ids/token/provider identifiers/email 비노출, `/after` Before/Bridge
+  soft-delete, delete success local list/selected handoff cleanup, Before delete
+  linked Bridge visible path removal
 - SCN-001 protected frontend actions는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`)를 기준으로 동작
 - Phase 7E live browser/network/DB smoke PASS, Phase 8 regression / demo preflight / SCN-004 manual rehearsal PASS
 - Post-Phase 8 actual browser logged-in smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, history endpoints Authorization PRESENT, read-only history render PASS
 - Step 3 MVP soft-delete browser smoke PASS: delete UI visible, confirm/cancel, DELETE Authorization PRESENT, item disappears after confirm, Before delete hides/removes linked Bridge visible path, SCN-004 freeze impact NO
+- `/after` saved history selector keeps SCN-001/SCN-004 preset buttons visible even
+  when Bridge context/history exists. Exact preset submit keeps fixed answer
+  priority: `SCN-001-BRIDGE-DEMO` exact -> fixed answer -> frozen draft flow;
+  `SCN-004-DEMO-FREEZE` exact -> fixed answer -> existing SCN-004 draft flow.
 - `/api/v1/answer` public contract unchanged
 - `/api/v1/documents/draft` contract unchanged
 - Vertex IAM/credential issue는 runtime resolved. Residual runtime risk는 transient `provider_timeout`
@@ -312,15 +326,17 @@ Step 3 MVP soft-delete slice completed 상태를 유지하고, full retention li
 implementation, artifact retrieval UI/API, audit export/admin UI는 NOT opened
 상태로 둔다. Step 4는 docs-only design baseline으로 유지하며, Bridge/query
 relevance guard matrix review도 completed/current design baseline으로 문서화됐다.
-SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은
-completed 상태다. SCN-001 live/backend draft generation과 protected SCN-001 draft
-endpoint path/method/schema는 NOT opened 상태로 둔다.
+SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity panel, and
+`/after` saved history selector are completed 상태다. SCN-001 live/backend draft
+generation과 protected SCN-001 draft endpoint path/method/schema는 NOT opened
+상태로 둔다.
 
 현재 next target 후보:
 
-1. SCN-001 frozen draft + continuity panel browser rehearsal/evidence finalization
-2. docs sync/release readiness
-3. optional live Bridge handoff continuity smoke using existing completed history
+1. final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved history selector
+2. docs release readiness
+3. optional logged-in saved history smoke
+4. cleanup of unrelated `frontend/src/app/globals.css`
 
 Continuity panel scope:
 
@@ -336,7 +352,7 @@ Continuity panel scope:
 
 별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-1. SCN-001 frozen draft + continuity panel browser rehearsal/evidence finalization
+1. SCN-001 frozen draft + continuity panel + `/after` saved history selector browser rehearsal/evidence finalization
 2. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
 3. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
 4. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리

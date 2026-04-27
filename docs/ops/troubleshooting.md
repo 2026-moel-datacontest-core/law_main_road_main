@@ -533,6 +533,46 @@ backend code 기준:
 - OCR live upload smoke에는 provider/runtime risk가 있었으며, retry/backoff/full
   provider hardening은 별도 future runtime 후보로 둔다.
 
+## 2026-04-27 `/after` Saved History Selector Notes
+
+목적:
+
+- `2ec5488` 기준 `/after`에서 backend-verified logged-in user가 saved
+  Before/Bridge history를 collapsible section으로 볼 수 있다.
+- saved Bridge 선택은 displayed safe subset만 Bridge handoff memory state에
+  추가한다.
+- 이 기능은 SCN-001 protected-history frontend surface이며 SCN-004 public flow,
+  `/api/v1/answer`, `/api/v1/documents/draft` contract를 변경하지 않는다.
+
+확인 포인트:
+
+- Logged-out user도 `/after` public preset/free input을 계속 사용할 수 있어야 한다.
+- Bridge context/history가 있어도 SCN-001/SCN-004 preset buttons는 계속 표시되어야
+  한다.
+- Exact preset submit은 fixed answer path가 우선이다.
+  - `SCN-001-BRIDGE-DEMO` exact -> fixed answer -> frozen draft flow.
+  - `SCN-004-DEMO-FREEZE` exact -> fixed answer -> existing SCN-004 draft flow.
+- Preset 미선택 + included Bridge context는 기존 protected Bridge answer path를
+  유지한다.
+- `/after` history list delete는 기존 protected DELETE helper를 사용한다.
+- Delete success 후 local list와 selected handoff state가 정리되어야 한다.
+- Before delete는 linked Bridge visible path를 제거해야 한다.
+
+Evidence hygiene:
+
+- PASS/PRESENT/ABSENT/NO 수준만 기록한다.
+- token, Firebase uid, provider_subject, email, raw query, full answer body,
+  artifact body, real bridge id를 문서/로그/채팅/git에 기록하지 않는다.
+- raw `after_query_seed`, raw Bridge payload, internal ids, auth/provider
+  identifiers를 UI/query/storage에 노출하지 않는다.
+
+주의:
+
+- 이 selector는 live/backend SCN-001 draft generation이나 protected SCN-001 draft
+  endpoint를 열지 않는다.
+- Step 3 full retention lifecycle, hard delete, file purge, artifact retrieval
+  UI/API도 열지 않는다.
+
 ## 2026-04-20 Demo / QA Troubleshooting
 
 ### 1. Non-interactive shell에서 `conda activate` 실패

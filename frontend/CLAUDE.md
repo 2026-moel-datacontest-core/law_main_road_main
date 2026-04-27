@@ -80,6 +80,16 @@
   - Before delete hides/removes linked Bridge visible path
   - memory-only Bridge handoff clear so deleted Before cannot seed `/after`
   - Step 3 full retention lifecycle is NOT opened
+- SCN-001 `/after` saved Before/Bridge history selector 완료:
+  - completed in `2ec5488`
+  - backend-verified logged-in user는 `/after`에서 collapsible saved history section을 열 수 있음
+  - saved Bridge 선택은 displayed safe subset만 Bridge handoff memory state에 추가
+  - raw `after_query_seed`, raw Bridge payload, token, Firebase uid, provider_subject, email, real bridge id는 UI/query/storage에 노출하지 않음
+  - `/after` history list에서 Before/Bridge soft-delete affordance 제공
+  - 기존 protected DELETE helper 사용, success 시 local list와 selected handoff state 정리
+  - Before delete 시 linked Bridge visible path 제거
+  - Bridge context/history가 있어도 SCN-001/SCN-004 preset buttons는 계속 표시
+  - exact preset submit은 fixed answer path가 우선
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow 완료:
   - `/after -> /after/result -> /after/intake -> /after/draft`
   - document type: `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안
@@ -93,7 +103,7 @@
 - SCN-001 live/backend draft generation and protected SCN-001 draft endpoint path/method/schema remain NOT opened:
   - SCN-004 `/after` draft behavior unchanged
   - SCN-004 public `/api/v1/documents/draft` flow unchanged
-  - next target is frozen draft + continuity panel browser rehearsal/evidence finalization, docs sync/release readiness, or optional live Bridge handoff continuity smoke
+  - next target is final browser rehearsal/evidence, docs release readiness, optional logged-in saved history smoke, or cleanup of unrelated `frontend/src/app/globals.css`
 
 ## 핵심 원칙
 
@@ -111,6 +121,7 @@
 - 현재 SCN-004 flow는 React Context + useReducer 메모리 상태만 사용
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`를 sessionStorage/localStorage에 저장하지 않음
 - raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않음
+- `/after` saved history selector도 raw Bridge payload, internal ids, token, Firebase uid, provider_subject, email, raw query를 Web Storage, UI, answer query에 넣지 않음
 - 증거 체크리스트 상태는 화면 내 로컬 상태만 허용
 
 ## 계정 / OAuth 정책
@@ -137,6 +148,9 @@
 - 검색되지 않은 조문 인용 금지
 - presentation preset exact path는 fixed answer fixture를 사용하므로 `/api/v1/answer`를 호출하지 않음
 - presentation preset modified path는 `top_k=10`, 일반 자유 입력은 `top_k=5`, 항상 `ef_search=100`
+- Bridge context/history가 있어도 SCN-001/SCN-004 preset buttons는 계속 표시한다.
+- Exact preset submit은 fixed answer path가 우선된다: `SCN-001-BRIDGE-DEMO` exact는 fixed answer -> frozen draft flow, `SCN-004-DEMO-FREEZE` exact는 fixed answer -> existing SCN-004 draft flow.
+- Preset 미선택 + included Bridge context는 기존 protected Bridge answer path를 유지한다.
 - SCN-004 범위 밖 자유 입력은 answer-only로 처리하고 document draft UI를 열지 않음
 - `/api/v1/documents/draft`에는 SCN-004 public draft flow에서만 `buildCaseIntake()`와 `buildLegalBasis()` 결과를 보냄. SCN-001-BRIDGE-DEMO exact fixed frozen draft path는 frontend-local deterministic draft를 만들고 이 endpoint를 호출하지 않음
 - `/api/v1/answer` public contract unchanged
