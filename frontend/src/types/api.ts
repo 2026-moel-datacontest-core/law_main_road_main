@@ -1,8 +1,9 @@
 export type DocumentType =
   | 'labor_office_wage_complaint'
-  | 'labor_commission_unfair_dismissal_brief';
+  | 'labor_commission_unfair_dismissal_brief'
+  | 'workplace_change_reason_summary';
 
-export type ScenarioId = 'SCN-004';
+export type ScenarioId = 'SCN-001' | 'SCN-004';
 export type DraftLanguage = 'ko' | 'en';
 
 export type EvidenceStatus = 'available' | 'needs_collection' | 'unknown';
@@ -26,6 +27,8 @@ export type WageType =
   | 'piece_rate'
   | 'other'
   | 'unknown';
+
+export type WorkplaceChangeSelectValue = 'yes' | 'no' | 'unknown';
 
 export type Claim =
   | 'unfair_dismissal'
@@ -133,6 +136,26 @@ export interface UnpaidWageInfo {
   days_since_separation_over_14?: boolean | null;
 }
 
+export interface WorkplaceChangeInfo {
+  worker_name_or_alias?: string | null;
+  nationality_or_language?: string | null;
+  job_duties?: string | null;
+  company_name?: string | null;
+  workplace_location?: string | null;
+  manager_info?: string | null;
+  standard_contract_used?: WorkplaceChangeSelectValue | null;
+  dormitory_cost_disclosed_in_contract?: WorkplaceChangeSelectValue | null;
+  actual_dormitory_deduction?: string | null;
+  dormitory_environment_issue?: boolean | null;
+  excessive_dormitory_deduction?: boolean | null;
+  verbal_abuse_or_discrimination?: boolean | null;
+  contract_actual_difference?: boolean | null;
+  contract_actual_difference_detail?: string | null;
+  other_reason?: string | null;
+  reason_summary_request?: string | null;
+  pre_consultation_check_request?: string | null;
+}
+
 export interface TimelineEvent {
   date?: string | null;
   event: string;
@@ -213,6 +236,7 @@ export interface CaseIntakeFormValues {
   employment_info?: EmploymentInfo | null;
   dismissal_info?: DismissalInfo | null;
   unpaid_wage_info?: UnpaidWageInfo | null;
+  workplace_change_info?: WorkplaceChangeInfo | null;
   intake_notes?: string | null;
 }
 

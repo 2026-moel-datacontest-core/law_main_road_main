@@ -10,9 +10,13 @@ import { DisclaimerBanner } from '@/components/ui/DisclaimerBanner';
 import { Notification } from '@/components/ui/Notification';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { useFlow } from '@/context/FlowContext';
-import { hasDraftGrounding } from '@/lib/api';
+import { buildLegalBasis, hasDraftGrounding } from '@/lib/api';
 import { getBridgeHandoffDisplayFields } from '@/lib/bridge-handoff';
 import { getScn004DraftEligibility } from '@/lib/scn004DraftEligibility';
+import {
+  SCN001_FROZEN_DRAFT_DOCUMENT_TYPE,
+  isScn001FrozenDraftPath,
+} from '@/lib/scenarioPresetDrafts';
 import { getScenarioPreset } from '@/lib/scenarioPresets';
 import type { BridgeHandoffItem } from '@/types/bridge-handoff';
 import type { DocumentType } from '@/types/api';
@@ -39,6 +43,15 @@ const DOCUMENT_TYPES: Array<{
   },
 ];
 
+const SCN001_DOCUMENT_TYPES: typeof DOCUMENT_TYPES = [
+  {
+    value: SCN001_FROZEN_DRAFT_DOCUMENT_TYPE,
+    title: '사업장 변경 사유 정리서 초안',
+    subtitle: 'Workplace change reason summary',
+    body: '계약서 검토 결과와 실제 근무 중 발생한 숙소비 공제, 기숙사 환경, 차별·폭언 등 사업장 변경 사유를 정리합니다.',
+  },
+];
+
 type ContinuityPanelModel = {
   strength: 'strong' | 'weak';
   issueLabels: string[];
@@ -54,13 +67,20 @@ export default function AfterResultPage() {
   const activePreset = getScenarioPreset(state.selected_preset_id);
   const isBridgeHandoffAnswer = state.answer_origin === 'bridge_handoff';
   const supportsDraft = !isBridgeHandoffAnswer && (activePreset?.supportsDraft ?? true);
-  const canRenderDraftCta = !isBridgeHandoffAnswer;
+  const canRenderScn004DraftCta = supportsDraft;
   const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(
     state.selected_document_type,
   );
   const [isNavigating, setIsNavigating] = useState(false);
   const hasCitedArticles = answer ? answer.cited_articles.length > 0 : false;
   const hasGrounding = answer ? hasDraftGrounding(answer) : false;
+  const canShowScn001FrozenDraftCta = isScn001FrozenDraftPath({
+    answer,
+    selectedPresetId: state.selected_preset_id,
+    userStatement: state.user_statement,
+    answerOrigin: state.answer_origin,
+  });
+  const canRenderDraftCta = canRenderScn004DraftCta || canShowScn001FrozenDraftCta;
   const continuityPanel = useMemo(
     () =>
       answer
@@ -109,22 +129,38 @@ export default function AfterResultPage() {
         documentTypes: {
           labor_office_wage_complaint: false,
           labor_commission_unfair_dismissal_brief: false,
+          workplace_change_reason_summary: false,
         },
       };
-  const availableDocumentTypes = DOCUMENT_TYPES.filter(
-    (documentType) => eligibility.documentTypes[documentType.value],
-  );
+  const availableDocumentTypes = canShowScn001FrozenDraftCta
+    ? SCN001_DOCUMENT_TYPES
+    : DOCUMENT_TYPES.filter((documentType) => eligibility.documentTypes[documentType.value]);
   const hasAvailableDocumentTypes = availableDocumentTypes.length > 0;
   const selectedDocumentTypeIsAvailable =
-    supportsDraft &&
     selectedDocumentType !== null &&
-    eligibility.documentTypes[selectedDocumentType];
-  const canProceedToDraftFlow = supportsDraft && hasGrounding && hasAvailableDocumentTypes;
+    (canShowScn001FrozenDraftCta
+      ? selectedDocumentType === SCN001_FROZEN_DRAFT_DOCUMENT_TYPE
+      : supportsDraft && eligibility.documentTypes[selectedDocumentType]);
+  const canProceedToDraftFlow =
+    hasGrounding &&
+    hasAvailableDocumentTypes &&
+    (supportsDraft || canShowScn001FrozenDraftCta);
   const statementSummary = truncateText(state.user_statement || answer.query, 100);
   const canShowAnswer = hasGrounding;
 
   function selectDocumentType(documentType: DocumentType) {
-    if (!supportsDraft || !canProceedToDraftFlow || !eligibility.documentTypes[documentType]) {
+    if (!canProceedToDraftFlow) {
+      return;
+    }
+
+    if (
+      canShowScn001FrozenDraftCta &&
+      documentType !== SCN001_FROZEN_DRAFT_DOCUMENT_TYPE
+    ) {
+      return;
+    }
+
+    if (!canShowScn001FrozenDraftCta && !eligibility.documentTypes[documentType]) {
       return;
     }
 
@@ -143,11 +179,22 @@ export default function AfterResultPage() {
   }
 
   function handleNextClick() {
-    if (!selectedDocumentTypeIsAvailable || !canProceedToDraftFlow || isNavigating) {
+    if (
+      selectedDocumentType === null ||
+      !selectedDocumentTypeIsAvailable ||
+      !canProceedToDraftFlow ||
+      isNavigating
+    ) {
       return;
     }
 
     setIsNavigating(true);
+    dispatch({ type: 'SET_DOCUMENT_TYPE', payload: selectedDocumentType });
+
+    if (answer && canShowScn001FrozenDraftCta) {
+      dispatch({ type: 'SET_LEGAL_BASIS', payload: buildLegalBasis(answer) });
+    }
+
     router.push('/after/intake');
   }
 
@@ -240,11 +287,14 @@ export default function AfterResultPage() {
               )}
             </section>
 
-            {hasGrounding && activePreset && !activePreset.supportsDraft ? (
-              <Notification variant="warning" title="답변 확인 전용 프리셋">
+            {hasGrounding &&
+            activePreset &&
+            !activePreset.supportsDraft &&
+            !canShowScn001FrozenDraftCta ? (
+              <Notification variant="info" title="고정 프리셋 초안만 지원">
                 <p>
-                  이 프리셋은 현재 답변 확인 전용입니다. SCN-004 문서 초안 선택지는
-                  표시하지 않습니다.
+                  이 프리셋의 문서 초안은 고정 입력과 고정 답변이 그대로 일치할 때만
+                  표시합니다. 수정 입력 또는 live 답변 경로에서는 조문 확인만 제공합니다.
                 </p>
               </Notification>
             ) : null}
@@ -252,8 +302,8 @@ export default function AfterResultPage() {
             {hasGrounding && isBridgeHandoffAnswer ? (
               <Notification variant="warning" title="Bridge 검토 답변 확인 전용">
                 <p>
-                  이 답변은 Before/Bridge 검토에서 이어진 조문 확인용입니다. SCN-001 문서
-                  초안 생성은 MVP 범위가 아닙니다.
+                  이 답변은 Before/Bridge 검토에서 이어진 조문 확인용입니다. Bridge handoff
+                  경로에서는 문서 초안을 열지 않습니다.
                 </p>
               </Notification>
             ) : null}
@@ -281,11 +331,17 @@ export default function AfterResultPage() {
           <aside className={styles.selectorColumn} aria-label="문서 유형 선택 및 Bridge 연속성 안내">
             <section className={styles.selectorPanel}>
               <p className={styles.eyebrow}>
-                {isBridgeHandoffAnswer ? 'Answer-only' : '문서 유형'}
+                {isBridgeHandoffAnswer
+                  ? 'Answer-only'
+                  : canShowScn001FrozenDraftCta
+                  ? '고정 초안'
+                  : '문서 유형'}
               </p>
               <h2 id="document-type-title" className={styles.selectorTitle}>
                 {isBridgeHandoffAnswer
                   ? '문서 초안 없이 조문만 확인합니다'
+                  : canShowScn001FrozenDraftCta
+                  ? '사업장 변경 사유 정리서 초안을 확인하세요'
                   : '다음 단계에서 만들 문서를 선택하세요'}
               </h2>
               {canProceedToDraftFlow ? (
@@ -324,7 +380,7 @@ export default function AfterResultPage() {
                     isBridgeHandoffAnswer
                       ? 'Bridge 검토 답변 확인 전용'
                       : activePreset && !activePreset.supportsDraft
-                      ? '답변 확인 전용 프리셋'
+                      ? '고정 프리셋 초안만 지원'
                       : hasGrounding
                       ? '현재 문서 초안 지원 범위 밖'
                       : '문서 초안 진행 불가'
@@ -332,9 +388,9 @@ export default function AfterResultPage() {
                 >
                   <p>
                     {isBridgeHandoffAnswer
-                      ? '이 답변은 Before/Bridge 검토에서 이어진 조문 확인용입니다. SCN-001 문서 초안 생성은 MVP 범위가 아닙니다.'
+                      ? '이 답변은 Before/Bridge 검토에서 이어진 조문 확인용입니다. Bridge handoff 경로에서는 문서 초안을 열지 않습니다.'
                       : activePreset && !activePreset.supportsDraft
-                      ? '이 프리셋은 현재 답변 확인 전용입니다.'
+                      ? '고정 입력과 고정 답변이 그대로 일치할 때만 초안 보기를 표시합니다.'
                       : hasGrounding
                       ? '이 답변은 확인할 수 있지만 SCN-004 문서 초안으로 이어지지 않습니다.'
                       : '인용된 법 조문 또는 근거 컨텍스트가 확인되지 않아 문서 유형을 선택할 수 없습니다.'}

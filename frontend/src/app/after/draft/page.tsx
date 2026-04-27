@@ -21,6 +21,7 @@ import styles from './page.module.css';
 const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   labor_office_wage_complaint: '고용노동청 임금체불 진정서 초안',
   labor_commission_unfair_dismissal_brief: '노동위원회 부당해고 구제신청 이유서 초안',
+  workplace_change_reason_summary: '사업장 변경 사유 정리서 초안',
 };
 
 const COPY_DISCLAIMER =
@@ -106,6 +107,8 @@ export default function AfterDraftPage() {
 
   const renderedText = draft.rendered_text;
   const hasRenderedText = renderedText.trim().length > 0;
+  const isFrozenScn001Draft =
+    draft.document_type === 'workplace_change_reason_summary';
   const copyStatusMessage =
     copyFeedback === 'success'
       ? '초안이 클립보드에 복사되었습니다.'
@@ -249,11 +252,17 @@ export default function AfterDraftPage() {
         <div className={styles.actionBar}>
           <div className={styles.actionInner}>
             <Button type="button" onClick={returnToDocumentTypeSelection}>
-              다른 문서 타입으로 생성하기
+              {isFrozenScn001Draft ? '답변으로 돌아가기' : '다른 문서 타입으로 생성하기'}
             </Button>
-            <Button type="button" variant="ghost" onClick={returnToIntake}>
-              사건 정보 수정하기
-            </Button>
+            {isFrozenScn001Draft ? (
+              <Button type="button" variant="ghost" onClick={returnToIntake}>
+                사건 정보 수정하기
+              </Button>
+            ) : (
+              <Button type="button" variant="ghost" onClick={returnToIntake}>
+                사건 정보 수정하기
+              </Button>
+            )}
             <Button type="button" variant="ghost" onClick={resetFlow}>
               처음으로 돌아가기
             </Button>

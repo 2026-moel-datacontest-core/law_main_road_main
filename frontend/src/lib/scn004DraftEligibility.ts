@@ -75,6 +75,7 @@ export function getScn004DraftEligibility(
     documentTypes: {
       labor_office_wage_complaint: hasWageMatch,
       labor_commission_unfair_dismissal_brief: hasDismissalMatch,
+      workplace_change_reason_summary: false,
     },
   };
 }

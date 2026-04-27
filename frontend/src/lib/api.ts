@@ -384,6 +384,10 @@ function buildClaims(documentType: DocumentType): Claim[] {
     return ['unpaid_final_wages', 'unpaid_severance_pay', 'delay_interest_possible'];
   }
 
+  if (documentType === 'workplace_change_reason_summary') {
+    return [];
+  }
+
   return [
     'unfair_dismissal',
     'no_written_dismissal_notice',
@@ -397,6 +401,10 @@ function buildRequestedActions(documentType: DocumentType): string[] {
       '미지급 임금 및 퇴직금 지급을 요청합니다.',
       '근로기준법상 금품청산 의무와 지연이자 검토를 요청합니다.',
     ];
+  }
+
+  if (documentType === 'workplace_change_reason_summary') {
+    return [];
   }
 
   return [
