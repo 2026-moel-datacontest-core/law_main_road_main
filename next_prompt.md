@@ -9,12 +9,13 @@ law_main_road repo root에서 작업해주세요.
 - 2026-04-27
 
 현재 git / 제출 기준 상태:
-- 2026-04-27 artifact access/retrieval policy review 시작 시점의 `git status -sb`: `## main...origin/main`.
-- 2026-04-27 artifact access/retrieval policy review 시작 시점의 `git status --short`: clean.
+- 2026-04-27 audit/status policy review 시작 시점의 `git status -sb`: `## main...origin/main`.
+- 2026-04-27 audit/status policy review 시작 시점의 `git status --short`: clean.
 - 문서 업데이트 후 commit 전이면 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`, `next_prompt.md`, `docs/ops/README.md`도 modified일 수 있다.
 - 새 세션 시작 직후 `git status -sb`, `git status --short`, `git log --oneline -12`로 origin/main 동기화와 clean/dirty 상태를 다시 확인하세요.
 - 이번 문서 업데이트는 별도 add/commit/push를 하지 않는 작업 범위였다.
 - 최근 중요 커밋:
+  - 6d6360e docs(scn-001): document artifact access policy review
   - 180d81c docs(scn-001): document Step 3 retention policy review
   - 83508dc docs(scn-001): record Step 3 MVP deletion completion
   - 50c279f feat(frontend): add SCN-001 history delete UI
@@ -101,6 +102,11 @@ law_main_road repo root에서 작업해주세요.
   URL, file streaming, inline body, hard delete, file purge, GCS lifecycle,
   audit export, undo/restore, account deletion/access-control, orphan cleanup,
   and SCN-001 document draft are NOT opened.
+- Audit/status policy review is documented in
+  `docs/planning/22_post_phase8_scn001_extension_roadmap.md`; audit log table
+  implementation, status column names/schema, transition metadata schema, DB
+  migration, API path/method/response shape, audit export endpoint, admin audit UI,
+  artifact retrieval UI/API, and SCN-001 document draft are NOT opened.
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
@@ -359,9 +365,9 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. audit/status policy review
-   - Step 3 full retention lifecycle policy review와 artifact access/retrieval policy review 다음의 문서-only target
-   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 audit/status 정책만 정리
+1. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
+   - Step 3 full retention lifecycle, artifact access/retrieval, audit/status policy review 다음의 문서-only target
+   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 storage lifecycle 또는 orphan classification 정책만 정리
    - Step 3 MVP soft-delete slice completed 상태를 유지
    - DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성, account history access-control 구현은 열지 않음
    - hard delete/file purge implementation, GCS lifecycle job, audit export endpoint, restore endpoint, account deletion UX/API, orphan cleanup job은 열지 않음
@@ -386,7 +392,7 @@ npm run dev
    - SCN-004 freeze와 public contract 보호를 전제로 분리 작업
 7. Step 2B-3 또는 full retention lifecycle implementation
    - Step 2B-3와 Step 3 full retention lifecycle implementation은 아직 열지 않음
-   - Step 3 MVP soft-delete slice completed 상태를 유지하고, 위 1번의 policy/design doc review 수준으로만 허용
+   - Step 3 MVP soft-delete slice completed 상태를 유지하고, policy/design doc review 수준으로만 허용
    - hard delete, file purge, artifact physical deletion, auth persistence changes, undo/restore, account deletion/access-control, orphan cleanup을 열지 않음
 8. artifact retention/deletion/account history access control
    - Post-MVP
@@ -417,6 +423,7 @@ Post-Phase 8 Step 1, 1.5, OCR 429 friendly message, Step 2A, Step 2B-1,
 Step 2B-2, Step 1.6까지 `git log` 기준 완료 상태다. 2026-04-27 기준 실제
 브라우저 logged-in smoke PASS와 backend-verified auth gate sync hardening도
 확인됐다. Step 3 MVP soft-delete slice completed 상태이며, Step 3 full retention
-lifecycle policy review와 artifact access/retrieval policy review는 문서화됐지만
-implementation은 NOT opened 상태다. 다음 target은 audit/status policy review다.
-SCN-001 document draft도 아직 열지 않는다.
+lifecycle policy review, artifact access/retrieval policy review, audit/status
+policy review는 문서화됐지만 implementation은 NOT opened 상태다. 다음 target은
+cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup
+policy review다. SCN-001 document draft도 아직 열지 않는다.

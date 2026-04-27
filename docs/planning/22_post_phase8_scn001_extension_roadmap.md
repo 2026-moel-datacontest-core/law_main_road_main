@@ -334,10 +334,101 @@ Decision table:
 | Orphan artifact candidates | not visible and not user-retrievable | quarantine/classification metadata candidate after orphan policy | ownership/context uncertain until classification policy exists | remain inaccessible; hidden parent state alone does not prove orphan status | metadata-only internal classification candidate; no user-facing body | What automated/manual checks can classify an artifact without irreversible assumptions? | orphan cleanup job, user-triggered purge, account history disclosure |
 | Already-hidden/deleted record artifacts | hidden from history/detail/Bridge selection; no artifact access | idempotent internal status candidate only | internal linkage if inspectable internally, never provider identifiers | remain not user-facing retrievable; repeated access should look absent/hidden | no user-facing body; minimal internal status only | What status granularity supports idempotency without exposing state transitions? | restore/undo, hard delete, file purge triggered by repeated access |
 
+#### Audit / status policy review
+
+This is policy review only. Audit log table, status columns, and transition
+metadata schema are NOT opened for implementation. This subsection does not
+decide DB migration, API path/method/response shape/status code, export endpoint,
+admin UI, or implementation prompt.
+
+Scope boundary:
+
+- Audit/status policy review is documentation only.
+- Audit log table implementation is NOT opened.
+- Status column names/schema are NOT opened.
+- Transition metadata schema is NOT opened.
+- No DB migration is decided or implied.
+- No API path/method/response shape/status code is decided or implied.
+- No user-facing audit export endpoint is opened.
+- Artifact access policy remains a metadata-only candidate, and user-facing
+  retrieval is NOT opened.
+- SCN-001 document draft is NOT opened.
+- SCN-004 freeze remains unchanged.
+- `/api/v1/answer` public contract remains unchanged.
+- `/api/v1/documents/draft` public contract remains unchanged.
+
+Audit/status purposes:
+
+- support internal visibility and debug review without exposing raw artifacts.
+- support idempotent delete behavior.
+- support ownership masking for not-found / not-owned / already-hidden cases.
+- support future retention lifecycle review before hard delete or file purge.
+- not support user-facing audit/export in MVP.
+
+Candidate approaches:
+
+- Status fields only: simple visibility/status flags on relevant rows.
+- Separate audit log table: richer append-only internal trail, higher complexity.
+- Status fields plus minimal transition metadata: enough internal state for
+  idempotency/debug while keeping MVP complexity bounded.
+- Recommended MVP candidate: status fields plus minimal transition metadata, but
+  names, tables, columns, and schema are not decided.
+
+Minimal transition metadata candidate:
+
+- `hidden_at` / `hidden_by` internal user id already exists for the Before/Bridge
+  MVP soft-delete slice.
+- Possible future status marker may be needed for artifact access lifecycle, but
+  marker names/schema are not decided.
+- Do not store provider identifiers, contact fields, or credential material in
+  audit/status metadata.
+- Do not store raw query text, full answer body, or artifact body in
+  audit/status metadata.
+- Keep internal user linkage only.
+
+Audit/export non-goals:
+
+- No user-facing audit export.
+- No admin audit UI.
+- No raw artifact body export.
+- No secret, credential, provider identifier, or contact-field export.
+- No SCN-001 document draft linkage changes.
+
+Relationship to artifact access policy:
+
+- Metadata-only artifact retrieval candidate must not expose audit internals.
+- Audit/status should help decide visibility, not expose raw artifact content.
+- Hidden/deleted source Before/Bridge state should block future user-facing
+  artifact retrieval.
+- Public unlinked artifacts and orphan candidates remain outside account-history
+  retrieval.
+- Artifact access status remains a future policy candidate; no retrieval UI/API is
+  opened here.
+
+Relationship to deletion masking:
+
+- not-found / not-owned / already-hidden remain externally indistinguishable.
+- Audit/status may internally preserve state transition, but response must remain
+  a generic response.
+- No response body should expose deletion state.
+- Repeated delete/access attempts should not reveal whether a row exists, belongs
+  to another user, or was already hidden.
+
+Decision table:
+
+| topic | candidate options | recommended MVP candidate | rationale | non-decision now | future trigger |
+|---|---|---|---|---|---|
+| status fields only | row-level visible/hidden/status markers only; no separate audit log table | not the preferred standalone candidate | simple, but may be too thin for retention lifecycle/debug decisions | column names, status values, table coverage, migration | if implementation risk requires the smallest possible state model |
+| separate audit log table | append-only internal audit log; event table; richer transition history | defer as Post-MVP candidate | useful for operations, but adds schema, retention, and access-control complexity | audit log table, event names, payload shape, retention of audit rows | if legal/ops review requires durable internal audit history |
+| status + transition metadata | row status plus minimal transition metadata such as existing `hidden_at` / `hidden_by` internal user linkage | recommended MVP candidate, without fixing names/schema | supports idempotent delete, internal visibility, and ownership masking with bounded complexity | exact columns, marker values, artifact status fields, migration | before hard delete/file purge or artifact retrieval implementation is considered |
+| user-facing audit/export | export endpoint, account audit download, admin-facing export surface | not opened for MVP | user-facing audit/export risks exposing sensitive state and raw artifact context | endpoint, response shape, file format, UI, status code | only after explicit legal/product need and redaction policy |
+| internal retention lifecycle audit | internal-only lifecycle review metadata/status; sanitized PASS/PRESENT/NO evidence style | candidate input to future retention review, not a shipped feature | helps decide when hard delete/file purge is safe without exposing deletion state | audit row/table choice, retention window, cleanup evidence format | before cloud/GCS lifecycle, orphan cleanup, hard delete, or file purge policy |
+| artifact access status | source visibility status, linked artifact visibility candidate, orphan/public-unlinked classification marker | metadata-only policy candidate; no user-facing retrieval | helps future artifact access decide visibility while blocking hidden/deleted sources | artifact status marker, retrieval API behavior, storage path exposure | if artifact retrieval or cloud storage lifecycle policy is reopened |
+
 Recommended next policy target after this review:
 
-- If artifact access/retrieval policy is accepted, the next target should be
-  audit/status policy review.
+- Cloud storage / GCS lifecycle policy review or orphan classification/cleanup
+  policy review.
 - This is not implementation.
 
 Recommended sequencing:
@@ -378,8 +469,9 @@ Do-not-open checklist:
 
 Next prompt target:
 
-- If continuing after this artifact access/retrieval policy review, the next
-  policy review should be audit/status policy review.
+- If continuing after this audit/status policy review, the next policy review
+  should be cloud storage / GCS lifecycle policy review or orphan
+  classification/cleanup policy review.
 - It should not be implementation yet.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
@@ -809,24 +901,29 @@ fixture/preset 후보로 검토한다.
 
 실제 브라우저 logged-in history deletion smoke는 PASS 상태다. Step 3 MVP
 soft-delete slice completed 상태이며, full retention lifecycle implementation은
-NOT opened 상태를 유지한다. Full retention lifecycle policy review와 artifact
-access/retrieval policy review는 Step 3 아래에 문서화되어 있고, 다음 prompt target은
-추가 deletion API/schema 구현이 아니라 audit/status policy review로 제한한다.
+NOT opened 상태를 유지한다. Full retention lifecycle policy review, artifact
+access/retrieval policy review, audit/status policy review는 Step 3 아래에
+문서화되어 있고, 다음 prompt target은 추가 deletion API/schema 구현이 아니라
+cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup
+policy review로 제한한다.
 
 Review focus:
 
-- protected linked artifacts / public unlinked After answer artifacts / orphan artifact
-  candidates 구분이 account history와 artifact lifecycle에 충분한지
-- not-found / not-owned / already-deleted 외부 응답 동일 원칙이 existence leak을
+- cloud storage / GCS lifecycle 또는 orphan classification/cleanup 중 어느 정책
+  review를 먼저 다룰지
+- protected linked artifacts / public unlinked After answer artifacts / orphan
+  artifact candidates 구분이 storage lifecycle과 cleanup classification에 충분한지
+- not-found / not-owned / already-hidden 외부 응답 동일 원칙이 existence leak을
   줄이기에 충분한지
-- future Bridge selection은 항상 닫히고, future continuity panel과 future draft
-  affordance는 Step 4가 열려도 닫히는지
+- audit/status policy가 internal visibility, idempotent delete, ownership masking,
+  future retention lifecycle review까지만 다루고 user-facing audit/export를 열지
+  않는지
 - hard delete eligibility가 retention/audit/artifact lifecycle review 이후 후보로만
   남아 있는지
-- retention window, audit log/status column, file purge job, orphan classification,
-  cascade policy가 구현 확정 없이 review/refine 대상으로 남아 있는지
-- artifact access/retrieval policy가 implementation 없이 정리되어 있고, 다음
-  audit/status policy cycle과 분리되어 있는지
+- retention window, file purge job, orphan classification, cascade policy가 구현 확정
+  없이 review/refine 대상으로 남아 있는지
+- artifact access/retrieval policy가 metadata-only candidate로 정리되어 있고
+  user-facing retrieval을 열지 않는지
 - additional deletion API, DB schema/migration, account deletion/access-control
   implementation을 여전히 열지 않는지
 - auth persistence changes, undo/restore, hard delete, file purge, artifact physical
@@ -840,9 +937,11 @@ SCN-004 freeze와 `/api/v1/answer`, `/api/v1/documents/draft` public contract
 unchanged 상태를 유지하면서 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`
 의 Step 3 MVP soft-delete slice completed 상태와 full retention lifecycle
 implementation NOT opened 상태를 유지한다.
-Artifact access/retrieval policy review가 문서화된 상태에서, 다음 문서 cycle은
-audit/status policy review로 제한한다.
+Artifact access/retrieval policy review와 audit/status policy review가 문서화된
+상태에서, 다음 문서 cycle은 cloud storage / GCS lifecycle policy review 또는
+orphan classification/cleanup policy review로 제한한다.
 코드 구현, DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성,
 account deletion/access-control implementation, SCN-001 document draft,
-SCN-001 draft freeze, provider_timeout/OCR retry hardening은 열지 않는다.
+SCN-001 draft freeze, GCS lifecycle job, orphan cleanup job,
+provider_timeout/OCR retry hardening은 열지 않는다.
 ```

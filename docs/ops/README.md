@@ -24,6 +24,7 @@
 - Post-Phase 8 Step 1 logout memory reset, Step 1.5 Before login-required UX, OCR 429 friendly message, Step 2A read-only history backend endpoints, Step 2B-1 frontend history API client/types, Step 2B-2 `/before` read-only history UI, Step 1.6 main page Before entry login gate 반영
 - actual browser logged-in smoke PASS 및 SCN-001 backend-verified auth gate hardening 반영
 - Step 3 MVP soft-delete slice completed 반영: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
+- Step 3 full retention lifecycle, artifact access/retrieval, audit/status policy review 반영. Implementation은 NOT opened.
 - local secret/database ignore rules hardening 반영
 
 현재 코드/구조 기준으로 반영된 주요 상태:
@@ -289,16 +290,18 @@ Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서�
 
 ## 앞으로의 우선 작업
 
-현재 문서 정리 이후 Step 3 full retention lifecycle policy review와 artifact
-access/retrieval policy review는
+현재 문서 정리 이후 Step 3 full retention lifecycle policy review, artifact
+access/retrieval policy review, audit/status policy review는
 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`에 문서화된 상태다.
 Step 3 MVP soft-delete slice completed 상태를 유지하고, full retention lifecycle
-implementation과 artifact retrieval UI/API는 NOT opened 상태로 둔다. 다음 design
-review target은 추가 코드 구현이 아니라 audit/status policy review로 제한한다.
+implementation, artifact retrieval UI/API, audit export/admin UI는 NOT opened
+상태로 둔다. 다음 design review target은 추가 코드 구현이 아니라 cloud storage /
+GCS lifecycle policy review 또는 orphan classification/cleanup policy review로
+제한한다.
 
 별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-1. audit/status policy review
+1. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
 2. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
 3. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
 4. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
