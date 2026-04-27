@@ -163,8 +163,8 @@ Current verification status:
 
 ### Step 3. History Deletion
 
-Status (2026-04-27): Step 3 MVP soft-delete slice completed. This is not Step 3
-full lifecycle completion.
+Status (2026-04-27): Step 3 MVP soft-delete slice completed. Step 3 full
+retention lifecycle remains NOT opened.
 
 Completed backend slice:
 
@@ -223,6 +223,80 @@ Remaining boundary:
 - SCN-001 document draft remains out of scope.
 - SCN-005 remains out of scope.
 - provider_timeout/OCR retry hardening remains out of scope.
+
+#### Full retention lifecycle policy review
+
+Scope boundary:
+
+- Step 3 MVP soft-delete slice completed 상태를 유지한다.
+- Full retention lifecycle is NOT opened for implementation.
+- This review only identifies future policy decisions.
+- 이 subsection은 API/schema/migration/path/status code를 확정하지 않는다.
+- Auth persistence changes are explicitly out of scope and are not part of the
+  deletion lifecycle.
+
+Full lifecycle areas for future policy review:
+
+- hard delete eligibility
+- artifact physical deletion / file purge
+- GCS lifecycle / cloud storage retention
+- audit/export policy
+- undo/restore
+- account deletion/access-control
+- orphan cleanup
+- auth persistence changes: explicitly out of scope, not a deletion lifecycle area
+
+Lifecycle decision table:
+
+| area | current MVP status | future decision needed | dependency | recommended timing | explicit non-goal now |
+|---|---|---|---|---|---|
+| hard delete | no automatic hard delete; user-facing history hides soft-deleted records | eligibility rules, retention window, and evidence required before irreversible removal | artifact lifecycle, audit/status policy, ownership masking policy | after artifact access/retrieval policy and audit/status policy are reviewed | hard delete implementation |
+| artifact physical deletion / file purge | no artifact physical deletion or file purge; files remain under current local/dev storage policy | whether physical purge is manual ops, scheduled cleanup, or deferred indefinitely | artifact access/retrieval policy, storage inventory, audit/status policy | after cloud storage/GCS lifecycle policy is reviewed | file purge job |
+| GCS lifecycle | not opened; local/dev artifact retention remains the safe default | cloud storage retention classes, lifecycle ownership, and deletion evidence | cloud migration/storage policy, ops ownership, artifact classification | before any production cloud storage cleanup policy | GCS lifecycle job |
+| audit/export | no user-facing audit/export surface; evidence remains sanitized PASS/PRESENT/NO level | whether internal status is enough or separate audit/export policy is needed | minimal status policy, evidence hygiene, sensitive value non-exposure rules | before hard delete/file purge decisions | audit export endpoint |
+| undo/restore | not opened; hidden records stay inaccessible in user-facing history/Bridge/draft affordance | whether product needs a restore window or whether hide-first is final for MVP history UX | product need, audit/status policy, masking policy | only if a clear user-facing recovery need appears | restore endpoint |
+| account deletion/access-control | separate from history item deletion; not opened in Step 3 | account-level lifecycle, ownership model, and access-control policy | auth/account policy, history/artifact visibility policy, legal/ops review | separate phase after history item policy stabilizes | account deletion UX/API |
+| orphan cleanup | not opened; orphan candidates remain inaccessible/classification candidates | classification criteria, quarantine rules, cleanup evidence, and manual review need | artifact linkage review, storage inventory, audit/status policy | after artifact access/retrieval and cloud storage policy are reviewed | orphan cleanup job |
+
+Recommended sequencing:
+
+1. artifact access/retrieval policy
+2. audit/status policy
+3. cloud storage/GCS lifecycle policy
+4. orphan classification/cleanup policy
+5. hard delete/file purge implementation
+6. undo/restore only if product need is clear
+
+Do not jump from MVP soft-delete directly to hard delete. Account
+deletion/access-control should be separate from history item deletion.
+
+Current safe default:
+
+- Keep no automatic hard delete/file purge.
+- Keep hidden records inaccessible in user-facing history/Bridge/draft affordance.
+- Keep artifact files retained under current local/dev storage until separate ops
+  policy.
+- Keep SCN-004 freeze unchanged.
+- Keep `/api/v1/answer` public contract unchanged.
+- Keep `/api/v1/documents/draft` public contract unchanged.
+
+Do-not-open checklist:
+
+- hard delete implementation
+- file purge job
+- GCS lifecycle job
+- audit export endpoint
+- restore endpoint
+- account deletion UX/API
+- orphan cleanup job
+- auth persistence change
+- SCN-001 document draft
+
+Next prompt target:
+
+- If continuing, the next policy review should be either artifact access/retrieval
+  policy review or audit/status policy review.
+- It should not be implementation yet.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
 new implementation instructions for this completed MVP soft-delete slice.
@@ -650,11 +724,10 @@ fixture/preset 후보로 검토한다.
 ## 6. Suggested Next Prompt Target
 
 실제 브라우저 logged-in history deletion smoke는 PASS 상태다. Step 3 MVP
-soft-delete slice completed 상태에서 다음 후보는 Step 3 full retention lifecycle
-policy review다. 이미 완료된 MVP soft-delete UI/API를 확장 구현하지 않고, hard
-delete / retention / artifact lifecycle / ownership / visibility policy를 문서로
-review한다. 다음 prompt target은 추가 deletion API/schema 구현이 아니라 retention
-window와 cascade policy의 remaining open policy question 정리로 제한한다.
+soft-delete slice completed 상태이며, full retention lifecycle implementation은
+NOT opened 상태를 유지한다. Full retention lifecycle policy review는 Step 3 아래에
+문서화되어 있고, 다음 prompt target은 추가 deletion API/schema 구현이 아니라
+artifact access/retrieval policy review 또는 audit/status policy review로 제한한다.
 
 Review focus:
 
@@ -668,8 +741,8 @@ Review focus:
   남아 있는지
 - retention window, audit log/status column, file purge job, orphan classification,
   cascade policy가 구현 확정 없이 review/refine 대상으로 남아 있는지
-- retention window와 cascade policy의 remaining open policy question이 다음 문서
-  cycle에서 정리될 수 있게 분리되어 있는지
+- artifact access/retrieval policy와 audit/status policy가 다음 문서 cycle에서
+  implementation 없이 정리될 수 있게 분리되어 있는지
 - additional deletion API, DB schema/migration, account deletion/access-control
   implementation을 여전히 열지 않는지
 - auth persistence changes, undo/restore, hard delete, file purge, artifact physical
@@ -681,9 +754,10 @@ Suggested prompt target:
 ```text
 SCN-004 freeze와 `/api/v1/answer`, `/api/v1/documents/draft` public contract
 unchanged 상태를 유지하면서 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`
-의 Step 3 full retention lifecycle policy 후보를 review/refine한다.
-그 다음 문서 cycle에서 retention window, audit log/status column, file purge job,
-orphan classification, cascade policy의 remaining open policy question을 정리한다.
+의 Step 3 MVP soft-delete slice completed 상태와 full retention lifecycle
+implementation NOT opened 상태를 유지한다.
+다음 문서 cycle은 artifact access/retrieval policy review 또는 audit/status policy
+review 중 하나로 제한한다.
 코드 구현, DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성,
 account deletion/access-control implementation, SCN-001 document draft,
 SCN-001 draft freeze, provider_timeout/OCR retry hardening은 열지 않는다.

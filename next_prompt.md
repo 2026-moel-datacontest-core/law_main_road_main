@@ -90,6 +90,9 @@ law_main_road repo root에서 작업해주세요.
   - Before delete hides/removes linked Bridge from visible history/selection path
   - memory-only Bridge handoff cleared so deleted Before cannot seed `/after`
   - Step 3 full retention lifecycle is NOT opened
+- Step 3 full retention lifecycle policy review is documented in
+  `docs/planning/22_post_phase8_scn001_extension_roadmap.md`; this is policy
+  review only, not implementation.
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
@@ -347,11 +350,12 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. Step 3 full retention lifecycle policy review
-   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 retention window / cascade / artifact lifecycle / masking guardrail review만 수행
+1. Artifact access/retrieval policy review 또는 audit/status policy review
+   - Step 3 full retention lifecycle policy review 다음의 문서-only target
+   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 artifact access/retrieval 또는 audit/status 정책만 정리
    - Step 3 MVP soft-delete slice completed 상태를 유지
    - DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성, account history access-control 구현은 열지 않음
-   - protected linked artifacts / public unlinked after artifacts / orphan artifact 구분과 not-found/not-owned/already-deleted masking 원칙을 검토
+   - hard delete/file purge implementation, GCS lifecycle job, audit export endpoint, restore endpoint, account deletion UX/API, orphan cleanup job은 열지 않음
 2. history status pill color polish
    - read-only history UI의 status pill 색상/상태 표시만 작은 patch로 다룸
    - deletion, retention, artifact body 노출과 섞지 않음
@@ -404,4 +408,5 @@ Post-Phase 8 Step 1, 1.5, OCR 429 friendly message, Step 2A, Step 2B-1,
 Step 2B-2, Step 1.6까지 `git log` 기준 완료 상태다. 2026-04-27 기준 실제
 브라우저 logged-in smoke PASS와 backend-verified auth gate sync hardening도
 확인됐다. Step 3 MVP soft-delete slice completed 상태이며, Step 3 full retention
-lifecycle과 SCN-001 document draft는 아직 열지 않는다.
+lifecycle policy review는 문서화됐지만 implementation은 NOT opened 상태다.
+SCN-001 document draft도 아직 열지 않는다.
