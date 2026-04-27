@@ -1,5 +1,8 @@
-import Link from 'next/link';
+'use client';
+
 import { Gavel } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import styles from './Masthead.module.css';
 
@@ -7,7 +10,15 @@ interface MastheadProps {
   isLoading?: boolean;
 }
 
+const navigationItems = [
+  { href: '/history', label: 'History' },
+  { href: '/before', label: 'Before' },
+  { href: '/after', label: 'After' },
+] as const;
+
 export function Masthead({ isLoading = false }: MastheadProps) {
+  const pathname = usePathname();
+
   return (
     <header className={styles.masthead}>
       <div className={styles.inner}>
@@ -20,8 +31,20 @@ export function Masthead({ isLoading = false }: MastheadProps) {
           </span>
         </Link>
         <nav className={styles.nav} aria-label="주요 화면">
-          <Link href="/before">Before</Link>
-          <Link href="/after">After</Link>
+          {navigationItems.map((item) => {
+            const isActive = isActiveRoute(pathname, item.href);
+
+            return (
+              <Link
+                aria-current={isActive ? 'page' : undefined}
+                className={isActive ? styles.navLinkActive : undefined}
+                href={item.href}
+                key={item.href}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
       <div
@@ -30,4 +53,8 @@ export function Masthead({ isLoading = false }: MastheadProps) {
       />
     </header>
   );
+}
+
+function isActiveRoute(pathname: string | null, href: string): boolean {
+  return pathname === href || Boolean(pathname?.startsWith(`${href}/`));
 }

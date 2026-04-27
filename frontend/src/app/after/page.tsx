@@ -18,6 +18,7 @@ import {
   getBridgeHandoffDisplayFields,
 } from '@/lib/bridge-handoff';
 import { getFirebaseAuth } from '@/lib/firebase';
+import { filterVisibleScn001History } from '@/lib/scn001-history-display';
 import {
   SCENARIO_PRESETS,
   getScenarioPreset,
@@ -202,8 +203,9 @@ export default function AfterPage() {
           return;
         }
 
-        setBeforeHistory(beforeJobs);
-        setBridgeHistory(bridgeRuns);
+        const visibleHistory = filterVisibleScn001History({ beforeJobs, bridgeRuns });
+        setBeforeHistory(visibleHistory.beforeJobs);
+        setBridgeHistory(visibleHistory.bridgeRuns);
         setHistoryStatus('success');
       })
       .catch((error: unknown) => {
@@ -602,6 +604,7 @@ export default function AfterPage() {
       setBridgeHistory((current) =>
         current.filter((bridgeRun) => bridgeRun.before_review_job_id !== target.id),
       );
+      // Only remove Bridge handoff items linked to the delete target.
       linkedBridgeRunIds.forEach((bridgeRunId) => {
         dispatch({
           type: 'REMOVE_BRIDGE_HANDOFF_ITEM',
@@ -1099,7 +1102,10 @@ function BridgeHistoryList({
                       </p>
                     </div>
                     <HistoryDeleteButton
-                      label="Bridge 기록 삭제"
+                      label={`Bridge 기록 삭제: ${formatInlineText(
+                        displayFields.userVisibleSummary,
+                        formatHistoryDateTime(bridgeRun.created_at),
+                      )}`}
                       isDeleting={isHistoryDeletePending(
                         deletingTarget,
                         'bridge',
@@ -1181,7 +1187,10 @@ function BeforeHistoryList({
                       </strong>
                     </div>
                     <HistoryDeleteButton
-                      label="Before 기록 삭제"
+                      label={`Before 기록 삭제: ${formatInlineText(
+                        job.summary,
+                        formatHistoryDateTime(job.created_at),
+                      )}`}
                       isDeleting={isHistoryDeletePending(
                         deletingTarget,
                         'before',

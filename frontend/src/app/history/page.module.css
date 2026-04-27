@@ -1,0 +1,79 @@
+.main {
+  min-height: calc(100vh - var(--kl-masthead-height));
+  background:
+    radial-gradient(circle at top left, rgba(15, 98, 254, 0.14), transparent 28%),
+    linear-gradient(180deg, #050c18 0%, #091326 26%, #f5f7fb 26.1%, #f5f7fb 100%);
+}
+
+.heroSection,
+.historySection {
+  padding-right: var(--kl-margin-mobile);
+  padding-left: var(--kl-margin-mobile);
+}
+
+.heroSection {
+  padding-top: 48px;
+  padding-bottom: 70px;
+  color: var(--kl-text-on-primary);
+}
+
+.historySection {
+  margin-top: -38px;
+  padding-bottom: 48px;
+}
+
+.sectionInner,
+.historySurface {
+  max-width: var(--kl-max-width);
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.62);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.title {
+  max-width: 760px;
+  margin: 0;
+  color: var(--kl-text-on-primary);
+  font-size: 2.2rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.lead {
+  max-width: 700px;
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.historySurface {
+  padding: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: var(--kl-radius-xl);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--kl-shadow-soft);
+}
+
+@media (min-width: 672px) {
+  .heroSection,
+  .historySection {
+    padding-right: var(--kl-margin-desktop);
+    padding-left: var(--kl-margin-desktop);
+  }
+
+  .historySurface {
+    padding: 28px;
+  }
+
+  .title {
+    font-size: 3.2rem;
+  }
+}

@@ -232,6 +232,66 @@
   box-shadow: var(--kl-shadow-soft);
 }
 
+.historyShortcut {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: var(--kl-radius-xl);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--kl-shadow-soft);
+}
+
+.historyShortcutEyebrow {
+  margin: 0 0 8px;
+  color: #475467;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.historyShortcutTitle {
+  margin: 0;
+  color: #101828;
+  font-size: 1.12rem;
+  line-height: 1.25;
+}
+
+.historyShortcutBody {
+  max-width: 680px;
+  margin: 7px 0 0;
+  color: #667085;
+  font-size: 0.94rem;
+  line-height: 1.7;
+}
+
+.historyShortcutLink {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(15, 98, 254, 0.28);
+  border-radius: var(--kl-radius-sm);
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.historyShortcutLink:hover {
+  background: #dbeafe;
+  color: #1e40af;
+  text-decoration: none;
+}
+
 .historyHeader {
   display: flex;
   flex-wrap: wrap;
