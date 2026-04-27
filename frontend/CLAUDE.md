@@ -90,6 +90,13 @@
   - Before delete 시 linked Bridge visible path 제거
   - Bridge context/history가 있어도 SCN-001/SCN-004 preset buttons는 계속 표시
   - exact preset submit은 fixed answer path가 우선
+- SCN-001 frontend history/After polish 완료:
+  - `/after` saved history cards clarify Before situation summary and Bridge law/risk explanation using only displayed safe fields
+  - SCN-001 fixed frozen draft selector on `/after/result` is no longer sticky; SCN-004 selector behavior remains intact
+  - `/history` page hierarchy, empty/error/loading states, and soft-delete copy are denser and clearer
+  - Masthead active/focus states and intake row delete labels are more accessible
+  - stale `/before` embedded-history CSS was removed after history moved to `/history`
+  - frontend-only; no backend contract, auth persistence, Web Storage, or SCN-004 freeze change
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow 완료:
   - `/after -> /after/result -> /after/intake -> /after/draft`
   - document type: `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안
@@ -103,7 +110,7 @@
 - SCN-001 live/backend draft generation and protected SCN-001 draft endpoint path/method/schema remain NOT opened:
   - SCN-004 `/after` draft behavior unchanged
   - SCN-004 public `/api/v1/documents/draft` flow unchanged
-  - next target is final browser rehearsal/evidence, docs release readiness, optional logged-in saved history smoke, or cleanup of unrelated `frontend/src/app/globals.css`
+  - next target is final browser rehearsal/evidence, docs release readiness, or optional logged-in saved history smoke
 
 ## 핵심 원칙
 

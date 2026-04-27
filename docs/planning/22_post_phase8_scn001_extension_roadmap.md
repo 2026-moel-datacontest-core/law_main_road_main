@@ -48,6 +48,19 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
   `2ec5488`: backend-verified logged-in users can open a collapsible saved
   history section on `/after`, select saved Bridge records using only the
   displayed safe subset, and soft-delete Before/Bridge history from that list.
+- SCN-001 frontend history/After polish completed on
+  `experiment/frontend-polish-history-after`:
+  - `/after` saved history cards now separate Before situation summary from
+    Bridge law/risk explanation using only displayed safe fields.
+  - SCN-001 fixed frozen draft selector on `/after/result` is no longer sticky;
+    SCN-004 document selection UX remains unchanged.
+  - `/history` has clearer Before/Bridge hierarchy, empty/loading/error states,
+    and non-destructive soft-delete wording.
+  - Masthead active/focus states and intake row delete labels are clearer.
+  - stale `/before` embedded-history CSS was removed.
+  - This did not open backend API/schema changes, Web Storage persistence,
+    live/backend SCN-001 draft generation, protected SCN-001 draft endpoint,
+    SCN-005, or Step 3 full retention lifecycle.
 - Post-Phase 8 Step 1.6 main page Before entry login gate 완료.
 - Post-Phase 8 actual browser logged-in smoke PASS.
 - SCN-001 protected frontend auth gate hardening 완료: Firebase signed-in 단독이
@@ -79,8 +92,7 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
     and Bridge-origin answer-only continuity explanation where eligible.
   - Bridge-as-Continuity, Not Grounding is the policy boundary.
   - Current next target candidates are final browser rehearsal/evidence, docs
-    release readiness, optional logged-in saved history smoke, or cleanup of
-    unrelated `frontend/src/app/globals.css`.
+    release readiness, or optional logged-in saved history smoke.
 
 ## 3. Recommended Sequence
 
@@ -506,9 +518,8 @@ Retention-stream future policy target after this review:
   policy review remains a later policy candidate for the Step 3 retention stream.
 - The current global next prompt target candidates are final browser
   rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after`
-  saved history selector, docs release readiness, optional logged-in saved
-  history smoke, or cleanup of unrelated `frontend/src/app/globals.css`, not
-  this retention-stream policy work.
+  saved history selector, docs release readiness, or optional logged-in saved
+  history smoke, not this retention-stream policy work.
 
 Recommended sequencing:
 
@@ -553,9 +564,9 @@ Retention-stream note:
   the next retention-stream candidate.
 - The active next target candidates for this roadmap are final browser
   rehearsal/evidence for frozen draft + continuity panel + `/after` saved history
-  selector, docs release readiness, optional logged-in saved history smoke, or
-  cleanup of unrelated `frontend/src/app/globals.css`. They should not open
-  live/backend SCN-001 draft generation or protected SCN-001 draft endpoint work.
+  selector, docs release readiness, or optional logged-in saved history smoke.
+  They should not open live/backend SCN-001 draft generation or protected
+  SCN-001 draft endpoint work.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
 new implementation instructions for this completed MVP soft-delete slice.
@@ -880,8 +891,7 @@ generation, live draft freeze는 열지 않는다.
 - No live/backend DB schema/migration, protected endpoint path/method/schema, live
   document template, or live QA fixture is finalized here.
 - Current next target candidates are final browser rehearsal/evidence, docs
-  release readiness, optional logged-in saved history smoke, or cleanup of
-  unrelated `frontend/src/app/globals.css`.
+  release readiness, or optional logged-in saved history smoke.
 
 ##### 2. Bridge usage policy
 
@@ -1089,11 +1099,11 @@ not a request to run broad eval now.
 
 ###### Next target
 
-The previous frontend-only continuity panel target and `/after` saved history
-selector target are completed. Current next target candidates are final browser
-rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved
-history selector, docs release readiness, optional logged-in saved history smoke,
-or cleanup of unrelated `frontend/src/app/globals.css`. These targets do not
+The previous frontend-only continuity panel target, `/after` saved history
+selector target, and frontend history/After polish target are completed. Current
+next target candidates are final browser rehearsal/evidence for SCN-001 frozen
+draft + continuity panel + `/after` saved history selector, docs release
+readiness, or optional logged-in saved history smoke. These targets do not
 finalize protected SCN-001 draft endpoint path/method/schema, open live/backend
 SCN-001 draft generation, or open SCN-001 live draft freeze.
 
@@ -1185,7 +1195,6 @@ Current next target candidates:
    + `/after` saved history selector.
 2. docs release readiness.
 3. optional logged-in saved history smoke.
-4. cleanup of unrelated `frontend/src/app/globals.css`.
 
 These targets should not code a backend endpoint, finalize schema/migration, open
 live/backend SCN-001 draft generation, open protected SCN-001 draft endpoint
@@ -1277,10 +1286,9 @@ access/retrieval policy review, audit/status policy review는 Step 3 아래에
 Step 4는 live/backend SCN-001 Document Draft Design baseline으로 유지한다.
 Bridge/query relevance guard matrix review는 completed/current design baseline으로
 문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity
-panel, `/after` saved Before/Bridge history selector는 completed 상태다. 다음
-target 후보는 final browser rehearsal/evidence, docs release readiness, optional
-logged-in saved history smoke, 또는 unrelated `frontend/src/app/globals.css`
-cleanup이다.
+panel, `/after` saved Before/Bridge history selector, frontend history/After
+polish는 completed 상태다. 다음 target 후보는 final browser rehearsal/evidence,
+docs release readiness, optional logged-in saved history smoke이다.
 
 Review focus:
 
@@ -1326,8 +1334,7 @@ Current prompt target summary:
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은
   completed 상태이며 `/after` saved history selector도 completed 상태다.
 - 다음 target 후보는 final browser rehearsal/evidence, docs release readiness,
-  optional logged-in saved history smoke, unrelated `frontend/src/app/globals.css`
-  cleanup이다.
+  optional logged-in saved history smoke이다.
 - Continuity panel은 Bridge -> After answer-only continuity explanation과 fixed
   frozen draft continuity explanation이며, Bridge-as-Continuity, Not Grounding
   정책을 유지한다.

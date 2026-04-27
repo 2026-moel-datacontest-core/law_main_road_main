@@ -9,13 +9,17 @@ law_main_road repo root에서 작업해주세요.
 - 2026-04-27
 
 현재 git / 제출 기준 상태:
-- 2026-04-27 docs sync 시작 시점의 `git status -sb`: `## main...origin/main`.
-- 2026-04-27 docs sync 시작 시점의 `git status --short`: ` M frontend/src/app/globals.css`.
-- `frontend/src/app/globals.css`가 남아 있으면 unrelated `::selection` 변경으로 보고, docs-only 작업에서 수정/정리/stage하지 않는다.
-- 문서 업데이트 후 commit 전이면 docs 파일들이 modified일 수 있다.
-- 새 세션 시작 직후 `git status -sb`, `git status --short`, `git log --oneline -12`로 origin/main 동기화와 clean/dirty 상태를 다시 확인하세요.
-- 이번 문서 업데이트는 별도 add/commit/push를 하지 않는 작업 범위였다.
+- 2026-04-27 frontend polish/docs sync 기준 branch: `experiment/frontend-polish-history-after`.
+- 새 세션 시작 직후 `git status -sb`, `git status --short`, `git branch --show-current`, `git log --oneline -12`로 branch와 clean/dirty 상태를 다시 확인하세요.
+- 작업 branch가 `experiment/frontend-polish-history-after`가 아니거나 `main`이면 중단하고 보고하세요.
+- push는 수행하지 않는다.
 - 최근 중요 커밋:
+  - 1a57601 refactor(frontend): remove stale Before history styles
+  - 903ec4f fix(frontend): improve navigation and delete accessibility
+  - d8ea907 feat(frontend): polish SCN-001 history page
+  - 3822da2 fix(frontend): adjust SCN-001 result panel scrolling
+  - f38aea6 feat(frontend): refine After history cards
+  - 81262c0 feat(frontend): add SCN-001 history page
   - 2ec5488 feat(frontend): show SCN-001 history on After
   - f574e6b feat(frontend): add SCN-001 continuity panel
   - c6c3ed0 fix(before): fail stale OCR review jobs
@@ -145,11 +149,22 @@ law_main_road repo root에서 작업해주세요.
   - Before delete removes linked Bridge visible path
   - Bridge context/history does not hide SCN-001/SCN-004 preset buttons
   - exact preset submit keeps fixed answer path priority
+- SCN-001 frontend history/After polish is completed on
+  `experiment/frontend-polish-history-after`:
+  - `/after` saved history cards clarify Before situation summary and Bridge
+    law/risk explanation using only safe displayed subset fields
+  - SCN-001 fixed frozen draft selector/result panel is no longer sticky, while
+    SCN-004 document selection remains unchanged
+  - `/history` scanning hierarchy, empty/loading/error states, and soft-delete
+    copy are polished
+  - Masthead active/focus states and intake delete aria labels are clearer
+  - stale `/before` embedded-history CSS was removed
+  - frontend-only; no backend API contract, auth persistence, Web Storage, or
+    SCN-004 freeze behavior changed
 - Current next target candidates:
   - final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved history selector
   - docs release readiness
   - optional logged-in saved history smoke
-  - cleanup of unrelated `frontend/src/app/globals.css`
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
@@ -505,7 +520,8 @@ npm run dev
 
 ## 참고
 
-이 프롬프트는 현재 main 기준 새 세션을 빠르게 시작하기 위한 복원 메모다.
+이 프롬프트는 현재 `experiment/frontend-polish-history-after` 기준 새 세션을
+빠르게 시작하기 위한 복원 메모다.
 MVP 제출 기준으로는 SCN-004 freeze, SCN-001 protected Bridge answer routing,
 Phase 7E live smoke PASS, Phase 8 regression/preflight/SCN-004 rehearsal PASS,
 sanitized evidence hygiene, full 60 eval evidence, demo preflight PASS가 정리된 상태다.
@@ -519,8 +535,8 @@ Document Draft Design은 live/backend docs-only baseline으로 유지되고,
 Bridge/query relevance guard matrix review도 completed/current design baseline으로
 문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, stale OCR
 review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history
-selector는 completed 상태다. 다음 target 후보는 final browser rehearsal/evidence,
-docs release readiness, optional logged-in saved history smoke, 또는 unrelated
-`frontend/src/app/globals.css` cleanup이다.
+selector, SCN-001 frontend history/After polish는 completed 상태다. 다음 target
+후보는 final browser rehearsal/evidence, docs release readiness, optional
+logged-in saved history smoke이다.
 live/backend SCN-001 document draft implementation, protected SCN-001 draft endpoint
 확정, live SCN-001 draft generation/freeze는 아직 열지 않는다.

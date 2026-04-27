@@ -326,17 +326,16 @@ Step 3 MVP soft-delete slice completed 상태를 유지하고, full retention li
 implementation, artifact retrieval UI/API, audit export/admin UI는 NOT opened
 상태로 둔다. Step 4는 docs-only design baseline으로 유지하며, Bridge/query
 relevance guard matrix review도 completed/current design baseline으로 문서화됐다.
-SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity panel, and
-`/after` saved history selector are completed 상태다. SCN-001 live/backend draft
-generation과 protected SCN-001 draft endpoint path/method/schema는 NOT opened
-상태로 둔다.
+SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity panel,
+`/after` saved history selector, and frontend history/After polish are completed
+상태다. SCN-001 live/backend draft generation과 protected SCN-001 draft endpoint
+path/method/schema는 NOT opened 상태로 둔다.
 
 현재 next target 후보:
 
 1. final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved history selector
 2. docs release readiness
 3. optional logged-in saved history smoke
-4. cleanup of unrelated `frontend/src/app/globals.css`
 
 Continuity panel scope:
 

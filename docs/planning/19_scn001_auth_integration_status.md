@@ -31,6 +31,7 @@
 | SCN-001 fixed-preset frozen draft | completed | `667a1bd` adds exact `SCN-001-BRIDGE-DEMO` frozen draft flow for `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안. It is frontend fixture/deterministic template based, reflects user intake, and does not call backend/LLM or `/api/v1/documents/draft` |
 | SCN-001 continuity panel | completed | `f574e6b` adds continuity panel on `/after/result` and `/after/draft`. It preserves Bridge-as-Continuity, Not Grounding and does not create or modify legal basis, citations, source/grounded context ids, or retrieved chunks |
 | `/after` saved history selector | completed | `2ec5488` shows saved Before/Bridge history on `/after` for backend-verified logged-in users. The section is collapsible, saved Bridge selection uses only the displayed safe subset for Bridge handoff memory state, Before/Bridge soft-delete uses existing protected DELETE helpers, exact preset submit keeps fixed answer priority, and SCN-004 public flow remains unchanged |
+| SCN-001 history/After frontend polish | completed | `f38aea6` clarifies `/after` saved history cards, `3822da2` makes the SCN-001 fixed-draft result panel non-sticky while preserving SCN-004 selector behavior, `d8ea907` polishes `/history`, `903ec4f` improves nav/delete accessibility, and `1a57601` removes stale `/before` embedded-history CSS. Frontend-only; public API contracts, auth persistence, storage policy, and SCN-004 freeze remain unchanged |
 
 ## Current Git History References
 
@@ -63,6 +64,11 @@ Recent relevant commits after history rewrite:
 - `c6c3ed0` fix(before): fail stale OCR review jobs
 - `f574e6b` feat(frontend): add SCN-001 continuity panel
 - `2ec5488` feat(frontend): show SCN-001 history on After
+- `f38aea6` feat(frontend): refine After history cards
+- `3822da2` fix(frontend): adjust SCN-001 result panel scrolling
+- `d8ea907` feat(frontend): polish SCN-001 history page
+- `903ec4f` fix(frontend): improve navigation and delete accessibility
+- `1a57601` refactor(frontend): remove stale Before history styles
 
 ## Phase 6F Evidence Summary
 

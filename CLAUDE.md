@@ -38,6 +38,7 @@
 - SCN-001 Step 3 MVP soft-delete slice completed: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
 - SCN-001 `/after` saved Before/Bridge history selector completed in `2ec5488`: backend-verified logged-in users can open a collapsible saved history section on `/after`, select saved Bridge records into Bridge handoff memory state using only the displayed safe subset, and soft-delete Before/Bridge records from the `/after` history list.
 - `/after` saved history selector does not expose raw `after_query_seed`, raw Bridge payload, token, Firebase uid, provider_subject, email, or real bridge id in UI/query/storage. Delete success refreshes/local-cleans the history list and selected handoff state; Before delete removes the linked Bridge visible path.
+- SCN-001 frontend history/After polish completed on `experiment/frontend-polish-history-after`: `/after` saved history cards clarified (`f38aea6`), SCN-001 result fixed-draft panel no longer sticky (`3822da2`), `/history` hierarchy/delete copy polished (`d8ea907`), Masthead/intake delete accessibility polished (`903ec4f`), and stale `/before` embedded-history CSS removed (`1a57601`). This was frontend-only and did not change public API contracts, auth persistence, storage policy, or SCN-004 freeze behavior.
 - recent security/history cleanup: local secret/database ignore rules hardening 완료, 문서 hash 참조는 current git history 기준으로 관리
 - 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history, `/after` saved history selector, MVP soft-delete, SCN-001 fixed-preset frozen draft path까지의 public contract 보호**
 - SCN-001 Step 4 document draft design은 docs-only baseline으로 유지한다.
@@ -47,7 +48,7 @@
 - `Bridge/query relevance guard matrix review`는 current Step 4 design baseline으로 정리됐고, SCN-001 continuity panel은 `/after/result`와 `/after/draft`에 completed 상태다.
 - Continuity panel은 `Bridge-as-Continuity, Not Grounding` 정책을 유지하며 `legal_basis`, `cited_articles`, `source_context_ids`, `grounded_context_ids`, `retrieved_chunks`를 생성/수정하지 않는다.
 - Before OCR stale/running job failure guard completed. OCR live upload smoke에는 provider/runtime risk가 있었으며 retry/backoff/full provider hardening은 future runtime 후보로 유지한다.
-- 다음 target은 SCN-001 frozen draft + continuity panel + `/after` saved history selector completed 상태를 기준으로 final browser rehearsal/evidence, docs release readiness, optional logged-in saved history smoke, 또는 unrelated `frontend/src/app/globals.css` cleanup 중에서 선택한다.
+- 다음 target은 SCN-001 frozen draft + continuity panel + `/after` saved history selector + frontend polish completed 상태를 기준으로 final browser rehearsal/evidence, docs release readiness, optional logged-in saved history smoke 중에서 선택한다.
 - `SCN-001-BRIDGE-DEMO` exact fixed preset은 frozen draft flow를 제공하며, Bridge-origin/live modified SCN-001 paths는 answer-only / draft disabled 정책을 유지한다.
 - `SCN-004-DEMO-FREEZE`는 main demo / document draft freeze용 preset
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지
@@ -60,7 +61,7 @@ Evolution note:
 - 2026-04-17 기준 상태는 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal 완료였다.
 - 2026-04-20에는 위 상태를 흔들지 않고 presentation-local preset, preflight, free-input guard, eval evidence report를 추가해 MVP 제출 기준을 보강했다.
 - 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, frontend persistence는 `inMemoryPersistence`다.
-- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 docs-only design baseline, SCN-001-BRIDGE-DEMO frozen draft flow, stale OCR review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history selector completed 상태가 확인됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
+- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 docs-only design baseline, SCN-001-BRIDGE-DEMO frozen draft flow, stale OCR review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history selector, frontend history/After polish completed 상태가 확인됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
 
 ## Structure
 
