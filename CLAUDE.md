@@ -38,10 +38,13 @@
 - SCN-001 Step 3 MVP soft-delete slice completed: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
 - recent security/history cleanup: local secret/database ignore rules hardening 완료, 문서 hash 참조는 current git history 기준으로 관리
 - 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history + MVP soft-delete path까지의 public contract 보호**
+- SCN-001 Step 4 document draft design is opened as docs-only design.
+- SCN-001 draft implementation/generation/freeze, protected SCN-001 draft endpoint path/method/schema, and Step 3 full retention lifecycle remain NOT opened.
+- 다음 design target은 `Step 4 Bridge/query relevance guard matrix review`이며, `Bridge-as-Continuity, Not Grounding` 정책을 유지한다.
 - `SCN-001-BRIDGE-DEMO`는 Before/Bridge handoff 설명용 answer-only preset
 - `SCN-004-DEMO-FREEZE`는 main demo / document draft freeze용 preset
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지
-- 실제 브라우저 logged-in/history deletion smoke는 PASS 상태이며, SCN-001 document draft와 Step 3 full retention lifecycle은 여전히 열지 않는다.
+- 실제 브라우저 logged-in/history deletion smoke는 PASS 상태이며, SCN-001 document draft는 Step 4 docs-only design으로만 opened 상태다.
 - 현재 source of truth는 `backend/data/law_chunks/all_chunks.json`
 - current live corpus: `1722` chunks, `selected_as_of = 2026-04-11`
 
@@ -50,7 +53,7 @@ Evolution note:
 - 2026-04-17 기준 상태는 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal 완료였다.
 - 2026-04-20에는 위 상태를 흔들지 않고 presentation-local preset, preflight, free-input guard, eval evidence report를 추가해 MVP 제출 기준을 보강했다.
 - 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, frontend persistence는 `inMemoryPersistence`다.
-- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed 상태가 확인됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
+- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 document draft docs-only design opened 상태가 확인됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
 
 ## Structure
 
@@ -101,7 +104,7 @@ Evolution note:
 - access token / refresh token 장기 저장 금지
 - Kakao OAuth는 첫 구현 범위에서 제외하고 후속 provider 후보로만 문서화
 - SCN-004 freeze 기준을 깨는 신규 기능 추가 금지
-- 실제 브라우저 logged-in/history deletion smoke는 SCN-004 demo freeze를 유지한 상태로 PASS 확인됐으며, SCN-001 document draft와 Step 3 full retention lifecycle은 아직 열지 않음
+- 실제 브라우저 logged-in/history deletion smoke는 SCN-004 demo freeze를 유지한 상태로 PASS 확인됐으며, SCN-001 document draft는 Step 4 docs-only design으로만 opened. draft implementation/generation/freeze, protected SCN-001 draft endpoint path/method/schema, Step 3 full retention lifecycle은 NOT opened.
 - 제출 안정성 우선. 막히면 범위 축소 허용
 - API contract 임의 변경 금지
 - 하위 디렉토리 작업 시 해당 디렉토리 `CLAUDE.md` 우선 확인
@@ -166,7 +169,8 @@ Evolution note:
 - `/api/v1/documents/draft` contract unchanged
 - raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않음
 - `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary `bridge_run_id`만 저장하며, multi-bridge full provenance는 Post-MVP join table 후보
-- SCN-001 문서 타입 확장은 팀원 Before / Bridge 코드와 contract 확인 후 별도 단계에서만 검토
+- SCN-001 Step 4 document draft design은 docs-only로만 opened. 문서 타입 후보는 design candidate일 뿐이며, draft implementation/generation/freeze와 protected SCN-001 draft endpoint path/method/schema는 NOT opened.
+- 다음 design target은 `Step 4 Bridge/query relevance guard matrix review`이며, Bridge는 legal grounding이 아니라 continuity 설명으로만 다룬다.
 
 ### `frontend/`
 - 한국어 메인 / 영어 보조

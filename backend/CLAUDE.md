@@ -82,7 +82,8 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
   - hidden Before blocks Bridge creation
   - hidden Bridge / hidden-source-Before blocks protected Bridge answer before generation
   - no `after_artifact_runs` deletion, no hard delete, no file purge
-- 2026-04-27 actual browser logged-in/history deletion smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, read-only history Authorization PRESENT, read-only history render PASS, deletion smoke PASS/PRESENT/NO. SCN-001 document draft와 Step 3 full retention lifecycle은 아직 열지 않는다.
+- 2026-04-27 actual browser logged-in/history deletion smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, read-only history Authorization PRESENT, read-only history render PASS, deletion smoke PASS/PRESENT/NO.
+- SCN-001 Step 4 document draft design is opened as docs-only design. Backend implementation, draft generation/freeze, protected SCN-001 draft endpoint path/method/schema, and Step 3 full retention lifecycle remain NOT opened.
 
 ## Document Draft 규칙
 
@@ -93,9 +94,13 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 - `SCN-001` Phase 4/5/6/7A~7E, Step 2A read-only history endpoints, Step 3 MVP soft-delete slice는 `/api/v1/answer`나 `/api/v1/documents/draft` contract를 변경하지 않음
 - `/api/v1/answer` public contract unchanged
 - `/api/v1/documents/draft` contract unchanged
+- SCN-001 Step 4 document draft design is docs-only; backend implementation remains NOT opened.
+- protected SCN-001 draft endpoint path/method/schema is not implemented and not specified.
+- SCN-001 draft generation/freeze remain NOT opened.
+- 다음 design target은 `Step 4 Bridge/query relevance guard matrix review`; Bridge는 legal grounding이 아니라 continuity 설명으로만 다룬다.
 - protected Bridge-origin answer는 public `/api/v1/answer`를 확장하지 않고 `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`만 사용
 - `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary bridge_run_id이며 multi-bridge full provenance는 Post-MVP join table 후보
-- `SCN-001` 문서 타입 확장은 팀원 Before / Bridge code / contract 확인 전 추가하지 않음
+- `SCN-001` 문서 타입 후보는 design candidate일 뿐이며, template/type/endpoint 구현 또는 확정은 하지 않음
 - presentation fixed answer fixture는 frontend code에 있으며 backend API contract를 변경하지 않는다.
 
 ## Firebase Auth / SCN-001 규칙
