@@ -164,8 +164,10 @@ DB schema, API contract, migration은 아직 확정하지 않는다.
   확정 이후에만 후보로 둔다.
 - `before_review_jobs`, `bridge_runs`, `after_artifact_runs`, artifact files 사이의
   ownership, visibility, retention, artifact lifecycle 정책이 먼저 필요하다.
-- deleted/hidden record는 history list/detail, Bridge selection, Step 4가 열린다면
-  future continuity panel / future draft affordance에 노출하지 않는다.
+- deleted/hidden record는 history list/detail과 future Bridge selection에서 항상
+  숨긴다.
+- Step 4가 열린 경우에도 future continuity panel / future draft affordance에
+  노출하지 않는다.
 - deletion ownership check는 internal user linkage 기준으로 유지한다.
 - deletion 후보 조회는 existence leak 방지를 기본 원칙으로 둔다. not-found /
   not-owned / already-deleted는 외부 응답에서 구분하지 않는 방향을 우선 검토한다.
@@ -173,8 +175,8 @@ DB schema, API contract, migration은 아직 확정하지 않는다.
   아니라 internal user linkage 기준만 사용한다.
 - artifact files는 바로 삭제하지 않고 retention / artifact lifecycle 정책 전까지
   보존 또는 inaccessible 처리 후보로 둔다.
-- 삭제/보관/접근 정책은 최소한 protected linked artifacts, public unlinked after
-  artifacts, orphan artifacts를 구분해야 한다.
+- 삭제/보관/접근 정책은 최소한 protected linked artifacts, public unlinked After
+  answer artifacts, orphan artifact candidates를 구분해야 한다.
 - 삭제 UI/API는 account history access control과 같은 patch에 섞지 않는다.
 
 Artifact category definitions:
@@ -182,8 +184,8 @@ Artifact category definitions:
 | category | definition / policy question |
 |---|---|
 | protected linked records/artifacts | internal user linkage로 owner를 확인할 수 있는 `before_review_jobs`, `bridge_runs`, 또는 linked `after_artifact_runs` 후보 |
-| public unlinked after artifacts | public `/api/v1/answer` 경로처럼 account owner를 확정할 linkage가 없는 after artifact 후보 |
-| orphan artifacts | artifact 관점의 분류다. linkage가 끊겼거나 관련 job/run row가 삭제/비가시 처리되어 owner/context를 확정하기 어려운 artifact 후보 |
+| public unlinked After answer artifacts | public `/api/v1/answer` 경로처럼 account owner를 확정할 linkage가 없는 after artifact 후보 |
+| orphan artifact candidates | artifact 관점의 분류다. linkage가 끊겼거나 관련 job/run row가 삭제/비가시 처리되어 owner/context를 확정하기 어려운 artifact 후보 |
 | already-deleted records | record/state 관점의 idempotent deletion 분류다. soft delete 또는 hidden 처리 후보 상태가 이미 적용되어 user-facing history에서 제외된 record 후보 |
 
 Boundary clarifications:
@@ -225,11 +227,93 @@ Deletion response checkpoint:
 - Any future deletion endpoint must verify ownership before changing visibility, and
   must not generate or persist new answer/draft artifacts as part of deletion.
 
+#### Retention / audit / artifact lifecycle policy draft
+
+이 subsection은 Step 3 deletion 개발 전 policy draft다. DB schema, migration,
+API path/method, deletion endpoint response shape, batch job 구현, hard delete
+window를 확정하지 않는다. MVP deletion은 soft delete / hide-first 방향을 우선
+검토하고, hard delete와 artifact file purge는 별도 retention policy와 ops review
+이후 후보로 둔다.
+
+Retention tiers:
+
+| tier | draft retention direction |
+|---|---|
+| protected linked records/artifacts | internal user linkage로 owner를 확인할 수 있는 Before / Bridge / linked After record 후보는 account history에서 hide-first 처리하고, retention / audit / artifact lifecycle policy가 확정될 때까지 최소 내부 상태와 linkage 후보만 유지한다. |
+| public unlinked After answer artifacts | protected linkage가 없는 public After answer artifact 후보는 account-scoped deletion 대상이 아니라 global retention cleanup 후보로 둔다. 계정 history UX에서 존재 여부를 확인하거나 부정하지 않는다. |
+| orphan artifact candidates | owner/context 확인이 어려운 artifact 후보이며 account deletion UX와 섞지 않는다. orphan cleanup은 별도 classification, retention, audit 기준이 정해진 뒤 background/ops task 후보로만 둔다. |
+| already-deleted records | already-deleted records는 user-visible history에서 계속 숨기고, repeat action은 idempotent no-op 또는 내부 status refresh 후보로만 검토한다. external response에서는 not-found / not-owned / already-deleted를 구분하지 않는 방향을 우선 검토한다. |
+
+Audit principle:
+
+- MVP에서는 최소 내부 상태 추적 후보만 문서화한다. 예: visible/hidden/deleted
+  candidate 같은 상태 분류가 필요한지 검토하되, 상태 이름이나 column은 확정하지
+  않는다.
+- 사용자-visible response, UI, history state에는 deletion state transition을 노출하지
+  않는다.
+- Firebase uid, provider_subject, email, token은 audit 문서, response, UI, log에
+  노출하지 않는다.
+- Audit 후보 metadata는 internal user linkage와 idempotency 판단에 필요한 최소
+  상태로 제한하고, raw query, full answer body, artifact body를 deletion metadata로
+  복제하지 않는다.
+
+Artifact lifecycle:
+
+- Soft delete는 DB visibility/status 중심으로 검토한다. 파일 삭제 자체를 soft delete
+  성공 조건으로 두지 않는다.
+- Artifact files는 즉시 삭제하지 않는다. 숨김 또는 inaccessible 처리 후보를 먼저
+  검토한다.
+- Hard delete / file purge는 Post-MVP 또는 별도 retention policy 이후에만 후보로
+  둔다.
+- Protected linked artifact lifecycle과 public unlinked artifact lifecycle을 구분한다.
+  protected linked artifact는 internal user linkage와 source linkage를 기준으로
+  visibility를 결정하고, public unlinked artifact는 account-scoped deletion이 아니라
+  global retention cleanup 후보로 다룬다.
+- Orphan cleanup은 account deletion UX와 분리한다. orphan artifact candidates는
+  owner/context 확인이 어려운 후보일 뿐이며, 사용자 삭제 action의 직접 결과로
+  분류하거나 purge하지 않는다.
+
+Visibility after soft delete:
+
+- History list/detail에서는 soft-deleted 또는 hidden record를 숨긴다.
+- Future Bridge selection에서는 Step 4 개방 여부와 관계없이 deleted/hidden record를
+  숨긴다.
+- Step 4가 열린 경우에도 future continuity panel과 future draft affordance에서는
+  deleted/hidden record를 숨긴다.
+- External response에서는 not-found / not-owned / already-deleted를 구분하지 않는
+  방향을 우선 검토해 existence leak을 줄인다.
+- `Bridge-as-Continuity, Not Grounding` 정책은 유지한다. Deleted/hidden record는
+  future continuity panel이나 draft affordance에 사용하지 않는다.
+- Phase 7 displayed safe subset이 query 구성에 쓰일 수 있어도, deleted/hidden record나
+  Bridge 설명 자체는 새 `cited_articles`, `grounded_context_ids`, legal grounding을
+  만들 수 없다.
+
+Open policy questions:
+
+- Retention window를 며칠 또는 얼마나 둘지는 미정이다.
+- Audit log table을 둘지, 기존/후보 status column만 둘지는 미정이다.
+- Artifact file purge를 batch/job으로 둘지, 수동 ops cleanup으로 둘지는 미정이다.
+- Orphan classification job 또는 manual review 절차가 필요한지는 미정이다.
+- Cascade policy는 미정이다. Before hide가 Bridge visibility와 linked After artifact
+  visibility에 미치는 영향을 아직 확정하지 않는다.
+
+Non-goals:
+
+- Deletion API 구현이 아니다.
+- DB schema/migration 확정이 아니다.
+- account deletion/access-control 구현이 아니다.
+- SCN-001 document draft가 아니다.
+- SCN-004 freeze 변경이 아니다.
+- `/api/v1/answer` public contract 변경이 아니다.
+- `/api/v1/documents/draft` public contract 변경이 아니다.
+
 Acceptance direction:
 
 - 삭제 동작은 본인 소유 record에만 적용된다.
-- 삭제 또는 hidden 처리된 record가 history list/detail, Bridge selection, Step 4가
-  열린다면 future continuity panel / future draft affordance에 다시 노출되지 않는다.
+- 삭제 또는 hidden 처리된 record가 history list/detail과 Bridge selection에 다시
+  노출되지 않는다.
+- Step 4가 열린 경우에도 deleted/hidden record는 future continuity panel / future
+  draft affordance에 다시 노출되지 않는다.
 - 관련 artifact lifecycle / retention / visibility policy가 문서화된 뒤 구현된다.
 - deletion은 아직 코드 구현으로 열지 않고 위 policy matrix와 response checkpoint
   review까지만 진행한다.
@@ -373,29 +457,36 @@ fixture/preset 후보로 검토한다.
 ## 6. Suggested Next Prompt Target
 
 실제 브라우저 logged-in smoke는 PASS 상태다. read-only history 이후 다음 후보는
-Step 3 history deletion 설계다. 다만 deletion은 바로 구현하지 않고, soft delete /
-hard delete / retention / artifact lifecycle / ownership / visibility policy를 먼저
-문서로 review한다. 다음 prompt target은 deletion API/schema 구현이 아니라 이 문서의
-Step 3 soft delete policy matrix 검토/보완으로 제한한다.
+Step 3 retention window and cascade policy decision draft다. 다만 deletion은 바로
+구현하지 않고, soft delete / hard delete / retention / artifact lifecycle /
+ownership / visibility policy를 먼저 문서로 review한다. 다음 prompt target은
+deletion API/schema 구현이 아니라 retention window와 cascade policy를 중심으로
+open policy question을 좁히는 decision draft로 제한한다.
 
 Review focus:
 
-- protected linked artifacts / public unlinked after artifacts / orphan artifact
+- protected linked artifacts / public unlinked After answer artifacts / orphan artifact
   candidates 구분이 account history와 artifact lifecycle에 충분한지
 - not-found / not-owned / already-deleted 외부 응답 동일 원칙이 existence leak을
   줄이기에 충분한지
-- future Bridge selection, continuity panel, draft affordance visibility가 Step 4
-  open 여부에 맞게 조건부로 닫혀 있는지
+- future Bridge selection은 항상 닫히고, future continuity panel과 future draft
+  affordance는 Step 4가 열려도 닫히는지
 - hard delete eligibility가 retention/audit/artifact lifecycle review 이후 후보로만
   남아 있는지
+- retention window, audit log/status column, file purge job, orphan classification,
+  cascade policy가 구현 확정 없이 review/refine 대상으로 남아 있는지
+- deletion API, DB schema/migration, account deletion/access-control implementation을
+  여전히 열지 않는지
 
 Suggested prompt target:
 
 ```text
 SCN-004 freeze와 `/api/v1/answer`, `/api/v1/documents/draft` public contract
 unchanged 상태를 유지하면서 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`
-의 Step 3 soft delete policy matrix와 deletion response checkpoint를 review한다.
-코드 구현, DB schema/migration 확정, deletion API 구현 프롬프트 작성, SCN-001
-document draft, SCN-001 draft freeze, provider_timeout/OCR retry hardening은 열지
-않는다.
+의 Step 3 retention window and cascade policy decision draft를 review/refine한다.
+retention window, audit log/status column, file purge job, orphan classification,
+cascade policy를 open policy question으로 좁히되, 코드 구현, DB schema/migration
+확정, deletion API 구현 프롬프트 작성, account deletion/access-control
+implementation, SCN-001 document draft, SCN-001 draft freeze,
+provider_timeout/OCR retry hardening은 열지 않는다.
 ```
