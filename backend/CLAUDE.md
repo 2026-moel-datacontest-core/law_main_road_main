@@ -74,7 +74,15 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 - SCN-004 demo freeze와 presentation-local fixed answer frontend path 확인 완료
 - full 60 answer evidence report 기준 `FAIL=0`, citation grounding / context id clean 확인 완료
 - Phase 6F live subset PASS with retry. Vertex IAM/credential issue는 runtime resolved 상태이고 residual runtime risk는 transient `provider_timeout`이다.
-- 2026-04-27 actual browser logged-in smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, read-only history Authorization PRESENT, read-only history render PASS. SCN-001 document draft와 history deletion은 아직 열지 않는다.
+- SCN-001 Step 3 MVP soft-delete backend foundation 완료:
+  - `before_review_jobs`, `bridge_runs` soft-delete visibility fields
+  - protected `DELETE /api/v1/scn001/before-review-jobs/{before_review_job_id}`
+  - protected `DELETE /api/v1/scn001/bridge-runs/{bridge_run_id}`
+  - hidden records filtered from history
+  - hidden Before blocks Bridge creation
+  - hidden Bridge / hidden-source-Before blocks protected Bridge answer before generation
+  - no `after_artifact_runs` deletion, no hard delete, no file purge
+- 2026-04-27 actual browser logged-in/history deletion smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, read-only history Authorization PRESENT, read-only history render PASS, deletion smoke PASS/PRESENT/NO. SCN-001 document draft와 Step 3 full retention lifecycle은 아직 열지 않는다.
 
 ## Document Draft 규칙
 
@@ -82,7 +90,7 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 - request로 받은 `legal_basis.cited_articles`, `source_context_ids`, `retrieved_chunks` 안에서만 근거 사용
 - 사용자가 입력하지 않은 사실은 단정하지 않고 placeholder 또는 `missing_fields`로 남김
 - `SCN-005` 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
-- `SCN-001` Phase 4/5/6/7A~7E와 Step 2A read-only history endpoints는 `/api/v1/answer`나 `/api/v1/documents/draft` contract를 변경하지 않음
+- `SCN-001` Phase 4/5/6/7A~7E, Step 2A read-only history endpoints, Step 3 MVP soft-delete slice는 `/api/v1/answer`나 `/api/v1/documents/draft` contract를 변경하지 않음
 - `/api/v1/answer` public contract unchanged
 - `/api/v1/documents/draft` contract unchanged
 - protected Bridge-origin answer는 public `/api/v1/answer`를 확장하지 않고 `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`만 사용
@@ -98,6 +106,7 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 - Firebase token은 SCN-001 protected endpoint에만 요구한다. SCN-004 `/api/v1/answer`와 `/api/v1/documents/draft`는 public contract를 유지한다.
 - raw OCR, raw contract, raw user_statement, raw `after_query_seed` persistent 저장을 DTO/DB에 추가하지 않는다.
 - raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않는다. Bridge-origin query는 displayed safe subset plus user question만 사용한다.
+- Step 3 full retention lifecycle, hard delete, artifact physical deletion/file purge, retention lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes, account deletion/access-control, orphan cleanup은 후속 정책 영역으로만 유지한다.
 
 ## 환경변수
 

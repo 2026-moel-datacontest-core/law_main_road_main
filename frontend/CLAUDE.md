@@ -71,6 +71,15 @@
   - main Before CTA는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`) 기준으로 `/before` 진입
   - `/before` history, 분석 시작, Bridge handoff도 backend-verified 상태 기준으로 보호
   - protected endpoint 401은 frontend backend auth re-check로 연결
+- SCN-001 Step 3 MVP soft-delete slice frontend 완료:
+  - `/before` read-only history delete affordance
+  - confirmation/cancel
+  - SCN-001 protected DELETE Authorization PRESENT
+  - 204/masked result generic UX
+  - success refresh / local hide
+  - Before delete hides/removes linked Bridge visible path
+  - memory-only Bridge handoff clear so deleted Before cannot seed `/after`
+  - Step 3 full retention lifecycle is NOT opened
 
 ## 핵심 원칙
 
@@ -142,7 +151,7 @@
 - PDF 다운로드 / 실제 제출 기능
 - 현재 SCN-004 demo freeze 유지 작업과 SCN-005 문서 타입 확장을 한 패치에 혼합
 - SCN-005 API / schema 검토 없는 독단적 문서 타입 확장
-- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장. SCN-001 document draft, history deletion, 독립 `/bridge` 확장은 별도 범위에서만 검토
+- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장. SCN-001 document draft, Step 3 full retention lifecycle, 독립 `/bridge` 확장은 별도 범위에서만 검토
 
 ## Do Not
 
@@ -151,3 +160,4 @@
 - 직접 식별정보 수집 기능 추가. Firebase Auth Google Sign-In은 위 계정 / OAuth 정책의 공통 capability와 제약 안에서만 사용
 - SCN-004 freeze 기준을 깨는 신규 대형 기능 추가
 - 문서 범위를 넘는 독단적 화면 확장
+- Step 3 full retention lifecycle, hard delete, artifact physical deletion/file purge, undo/restore, auth persistence changes, account deletion/access-control, orphan cleanup은 후속 정책 영역으로만 유지

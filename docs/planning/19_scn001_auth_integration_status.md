@@ -4,7 +4,7 @@
 
 ## Purpose
 
-이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 repo 기준으로 Firebase Auth Phase 0~5, Phase 6A~6F Bridge -> After answer-only handoff, Phase 7A~7E after artifact linkage/protected bridge answer endpoint/frontend routing verification, SCN-004 freeze guard, residual runtime risk, current git history hash를 한 곳에 고정한다.
+이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 repo 기준으로 Firebase Auth Phase 0~5, Phase 6A~6F Bridge -> After answer-only handoff, Phase 7A~7E after artifact linkage/protected bridge answer endpoint/frontend routing verification, Post-Phase 8 Step 3 MVP soft-delete slice, SCN-004 freeze guard, residual runtime risk, current git history hash를 한 곳에 고정한다.
 
 ## Current Status by Phase
 
@@ -26,6 +26,7 @@
 | Phase 7E | PASS | live browser/network/DB smoke passed: SCN-004 freeze paths, checked protected Bridge answer, all-unchecked public answer, and artifact linkage verified |
 | Phase 8 | PARTIAL | regression / demo preflight / SCN-004 manual rehearsal PASS. SCN-001 browser replay BLOCKED in Codex headless because interactive Firebase Google popup login and in-memory auth state were not available |
 | Post-Phase 8 logged-in smoke | PASS | actual browser Google login, backend `/api/v1/auth/me` verification, main Before CTA, history endpoints Authorization, and read-only history render passed with sanitized evidence. Frontend protected SCN-001 gates now require backend-verified `backendUser.logged_in`, not Firebase signed-in alone |
+| Step 3 MVP soft-delete slice | completed | backend history soft-delete foundation completed in `e6f17eb`; frontend `/before` delete UI/client completed in `50c279f`; browser deletion smoke PASS with sanitized PASS/PRESENT/NO signals. Step 3 full retention lifecycle is NOT opened |
 
 ## Current Git History References
 
@@ -52,6 +53,8 @@ Recent relevant commits after history rewrite:
 - `aff0a7f` feat(scn-001): add Phase 7A answer artifact linkage plumbing
 - `27bf054` feat(scn-001): add protected bridge answer endpoint
 - `9287281` chore(gitignore): harden local secret and database ignore rules
+- `e6f17eb` feat(scn-001): add backend history soft delete
+- `50c279f` feat(frontend): add SCN-001 history delete UI
 
 ## Phase 6F Evidence Summary
 
@@ -123,6 +126,58 @@ Implementation note:
   no longer treat Firebase signed-in alone as sufficient.
 - Protected endpoint 401 failures trigger a backend auth re-check.
 
+## Step 3 MVP Soft-delete Slice Evidence Summary
+
+2026-04-27 Step 3 MVP soft-delete slice completed after backend `e6f17eb` and
+frontend `50c279f`. This is not Step 3 full retention lifecycle completion.
+Evidence was recorded only as PASS/PRESENT/NO signals; no token, Firebase uid,
+Google subject, raw email, raw user id, provider subject, raw query, full answer
+body, real bridge id, or artifact body was recorded.
+
+Backend completed:
+
+- `before_review_jobs` and `bridge_runs` soft-delete visibility fields completed.
+- Protected `DELETE /api/v1/scn001/before-review-jobs/{before_review_job_id}`
+  and `DELETE /api/v1/scn001/bridge-runs/{bridge_run_id}` completed.
+- Hidden records are filtered from history list/detail.
+- Hidden Before jobs block Bridge creation.
+- Hidden Bridge runs and hidden-source-Before Bridge runs block protected Bridge
+  answer before generation.
+- No `after_artifact_runs` deletion, no hard delete, and no file purge were opened.
+
+Frontend completed:
+
+- `/before` read-only history delete affordance completed.
+- Confirmation/cancel completed.
+- SCN-001 protected DELETE request Authorization PRESENT.
+- 204 and masked results use generic user-facing UX.
+- Success path refreshes history and locally hides the item.
+- Before delete hides/removes linked Bridge records from visible history and
+  selection path.
+- Memory-only Bridge handoff is cleared so deleted Before cannot seed `/after`.
+
+Browser smoke:
+
+- logged-in history load PASS.
+- delete UI visible PASS.
+- confirm/cancel PASS.
+- DELETE request Authorization PRESENT.
+- item disappears from history after confirm PASS.
+- Before delete hides/removes linked Bridge visible path PASS.
+- Before/Bridge count mismatch is expected because Bridge is created only after
+  explicit handoff.
+- Refresh logout is expected because Firebase Auth MVP uses `inMemoryPersistence`.
+- Session extension was NOT changed for MVP.
+- SCN-004 freeze impact: NO.
+
+Out of scope remains:
+
+- Step 3 full retention lifecycle is NOT opened.
+- hard delete, artifact physical deletion, file purge, retention lifecycle, GCS
+  lifecycle, audit/export, undo/restore, auth persistence changes, account
+  deletion/access-control, orphan cleanup, SCN-001 document draft, SCN-005, and
+  provider_timeout/OCR retry hardening are not opened.
+
 ## Current Auth / Linkage Architecture
 
 - MVP auth path: Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification.
@@ -188,7 +243,11 @@ Displayed safe subset:
 - Full real Before/OCR completed E2E remains separate if needed; Phase 6F Bridge checked-live smoke used memory-only synthetic handoff state.
 - IndexedDB Firebase SDK persistence policy can be revisited if needed; MVP app code still uses `inMemoryPersistence` and does not store raw flow payload in Web Storage.
 - Retroactive linking for existing null orphan Before jobs is Post-MVP.
-- Artifact retention/deletion/account history access control remains Post-MVP.
+- Step 3 MVP soft-delete slice completed, but full retention lifecycle remains
+  NOT opened. Hard delete, artifact physical deletion/file purge, retention
+  lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes,
+  account deletion/access-control, orphan cleanup, SCN-001 document draft,
+  SCN-005, and provider_timeout/OCR retry hardening remain future/out of scope.
 
 ## Do Not Mix
 

@@ -35,12 +35,13 @@
 - Phase 8 regression / demo preflight / SCN-004 manual rehearsal PASS
 - Post-Phase 8 Step 1 logout memory reset, Step 1.5 Before actual analysis login-required UX, OCR 429 friendly message, Step 2A read-only history backend endpoints, Step 2B-1 frontend history API client/types, Step 2B-2 `/before` read-only history UI, Step 1.6 main page Before entry login gate 완료
 - Post-Phase 8 actual browser logged-in smoke PASS 및 auth state sync hardening 완료: protected SCN-001 frontend gates는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`)를 기준으로 동작한다.
+- SCN-001 Step 3 MVP soft-delete slice completed: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
 - recent security/history cleanup: local secret/database ignore rules hardening 완료, 문서 hash 참조는 current git history 기준으로 관리
-- 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history read-only path까지의 public contract 보호**
+- 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history + MVP soft-delete path까지의 public contract 보호**
 - `SCN-001-BRIDGE-DEMO`는 Before/Bridge handoff 설명용 answer-only preset
 - `SCN-004-DEMO-FREEZE`는 main demo / document draft freeze용 preset
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지
-- 실제 브라우저 logged-in smoke는 PASS 상태이며, SCN-001 document draft와 history deletion은 여전히 열지 않는다.
+- 실제 브라우저 logged-in/history deletion smoke는 PASS 상태이며, SCN-001 document draft와 Step 3 full retention lifecycle은 여전히 열지 않는다.
 - 현재 source of truth는 `backend/data/law_chunks/all_chunks.json`
 - current live corpus: `1722` chunks, `selected_as_of = 2026-04-11`
 
@@ -49,7 +50,7 @@ Evolution note:
 - 2026-04-17 기준 상태는 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal 완료였다.
 - 2026-04-20에는 위 상태를 흔들지 않고 presentation-local preset, preflight, free-input guard, eval evidence report를 추가해 MVP 제출 기준을 보강했다.
 - 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, frontend persistence는 `inMemoryPersistence`다.
-- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS와 backend-verified auth gate sync hardening이 확인됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
+- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed 상태가 확인됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
 
 ## Structure
 
@@ -100,7 +101,7 @@ Evolution note:
 - access token / refresh token 장기 저장 금지
 - Kakao OAuth는 첫 구현 범위에서 제외하고 후속 provider 후보로만 문서화
 - SCN-004 freeze 기준을 깨는 신규 기능 추가 금지
-- 실제 브라우저 logged-in smoke는 SCN-004 demo freeze를 유지한 상태로 PASS 확인됐으며, SCN-001 document draft와 history deletion은 아직 열지 않음
+- 실제 브라우저 logged-in/history deletion smoke는 SCN-004 demo freeze를 유지한 상태로 PASS 확인됐으며, SCN-001 document draft와 Step 3 full retention lifecycle은 아직 열지 않음
 - 제출 안정성 우선. 막히면 범위 축소 허용
 - API contract 임의 변경 금지
 - 하위 디렉토리 작업 시 해당 디렉토리 `CLAUDE.md` 우선 확인
@@ -149,6 +150,7 @@ Evolution note:
 - `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` 구현 완료
 - `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` 구현 완료. Firebase Bearer auth, missing/unowned bridge_run 404 masking, `AnswerResponse`-compatible response, `after_artifact_runs.user_id/source_bridge_run_id` linkage를 사용한다.
 - `GET /api/v1/scn001/before-review-jobs`, `GET /api/v1/scn001/before-review-jobs/{before_review_job_id}` 구현 완료
+- `DELETE /api/v1/scn001/before-review-jobs/{before_review_job_id}`, `DELETE /api/v1/scn001/bridge-runs/{bridge_run_id}` 구현 완료. Firebase Bearer auth, 204/masked generic UX, `before_review_jobs`/`bridge_runs` MVP soft-delete visibility fields를 사용한다.
 - 일반 `/api/v1/retrieve`와 `/api/v1/answer` 기본값은 `top_k=5`, `ef_search=100`
 - SCN demo / scenario smoke는 `top_k=10`, `ef_search=100` 명시
 - HIGH/MEDIUM 민감 작업은 local LLM 우선
@@ -159,7 +161,7 @@ Evolution note:
 - draft service는 retrieval / answer_generation service를 직접 호출하지 않음
 - 사용자가 입력하지 않은 사실은 단정하지 않고 placeholder 또는 `missing_fields`로 남김
 - SCN-005 After 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
-- SCN-001 Phase 4/5/6/7A~7E와 Step 2A read-only history endpoints는 `/api/v1/answer`와 `/api/v1/documents/draft` public contract를 변경하지 않고 구현됨
+- SCN-001 Phase 4/5/6/7A~7E, Step 2A read-only history endpoints, Step 3 MVP soft-delete slice는 `/api/v1/answer`와 `/api/v1/documents/draft` public contract를 변경하지 않고 구현됨
 - `/api/v1/answer` public contract unchanged
 - `/api/v1/documents/draft` contract unchanged
 - raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않음
@@ -175,7 +177,7 @@ Evolution note:
 - 현재 SCN-004 demo freeze 유지 작업과 SCN-005 문서 타입 frontend 확장을 한 패치에 섞지 않음
 - SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
 - SCN-001 `Before -> Bridge -> After` answer-only handoff는 checked Bridge submit의 protected answer path와 all-unchecked public answer fallback까지 구현되어 있다.
-- Firebase Auth Google Sign-In 기반 최소 로그인의 현재 구현 적용 범위는 SCN-001 protected path다. Phase 4/5/6A~6F, Phase 7A~7E, read-only history UI, backend-verified main Before login gate까지 완료됐다.
+- Firebase Auth Google Sign-In 기반 최소 로그인의 현재 구현 적용 범위는 SCN-001 protected path다. Phase 4/5/6A~6F, Phase 7A~7E, read-only history UI, backend-verified main Before login gate, Step 3 MVP soft-delete UI/API까지 완료됐다.
 - Firebase Auth MVP frontend persistence는 `inMemoryPersistence`; token/auth state와 raw flow payload는 Web Storage에 저장하지 않는다.
 - `browserSessionPersistence`는 MVP default가 아니라 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`는 Web Storage에 저장하지 않음

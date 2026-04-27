@@ -23,6 +23,7 @@
 - SCN-001 Firebase Auth Phase 0~5, Phase 6A~6F, Phase 7A~7E, Phase 8 regression/demo checks 완료 상태 반영
 - Post-Phase 8 Step 1 logout memory reset, Step 1.5 Before login-required UX, OCR 429 friendly message, Step 2A read-only history backend endpoints, Step 2B-1 frontend history API client/types, Step 2B-2 `/before` read-only history UI, Step 1.6 main page Before entry login gate 반영
 - actual browser logged-in smoke PASS 및 SCN-001 backend-verified auth gate hardening 반영
+- Step 3 MVP soft-delete slice completed 반영: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
 - local secret/database ignore rules hardening 반영
 
 현재 코드/구조 기준으로 반영된 주요 상태:
@@ -41,10 +42,12 @@
 - Bridge -> After answer-only handoff: Phase 6A~6F 반영 완료
 - `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`: protected Bridge answer 반영 완료
 - `GET /api/v1/scn001/before-review-jobs`, `GET /api/v1/scn001/before-review-jobs/{before_review_job_id}`, `GET /api/v1/scn001/bridge-runs`: read-only history 반영 완료
+- `DELETE /api/v1/scn001/before-review-jobs/{before_review_job_id}`, `DELETE /api/v1/scn001/bridge-runs/{bridge_run_id}`: MVP soft-delete 반영 완료. Protected DELETE Authorization PRESENT, 204/masked generic UX, no hard delete, no file purge.
 - frontend protected Bridge answer helper, `/after` checked Bridge submit routing, `/before` read-only history UI, backend-verified main Before entry login gate 반영 완료
 - SCN-001 protected frontend actions는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`)를 기준으로 동작
 - Phase 7E live browser/network/DB smoke PASS, Phase 8 regression / demo preflight / SCN-004 manual rehearsal PASS
 - Post-Phase 8 actual browser logged-in smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, history endpoints Authorization PRESENT, read-only history render PASS
+- Step 3 MVP soft-delete browser smoke PASS: delete UI visible, confirm/cancel, DELETE Authorization PRESENT, item disappears after confirm, Before delete hides/removes linked Bridge visible path, SCN-004 freeze impact NO
 - `/api/v1/answer` public contract unchanged
 - `/api/v1/documents/draft` contract unchanged
 - Vertex IAM/credential issue는 runtime resolved. Residual runtime risk는 transient `provider_timeout`
@@ -286,14 +289,14 @@ Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서�
 
 ## 앞으로의 우선 작업
 
-현재 문서 정리 이후 다음 design review target은 history deletion policy review다.
-코드 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의
-Step 3 soft delete policy matrix와 deletion response checkpoint를 보완하는
-범위로 제한한다.
+현재 문서 정리 이후 다음 design review target은 Step 3 full retention lifecycle
+policy review다. 이미 Step 3 MVP soft-delete slice completed 상태이므로 추가 코드
+구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 retention
+window, cascade, artifact lifecycle, masking guardrail을 보완하는 범위로 제한한다.
 
 별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-1. Step 3 history deletion policy matrix / response checkpoint review
+1. Step 3 full retention lifecycle policy review
 2. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
 3. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
 4. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
@@ -302,10 +305,10 @@ Step 3 soft delete policy matrix와 deletion response checkpoint를 보완하는
 7. `before` / `after` artifact의 향후 GCS 전환 기준 정리
 8. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
 
-Step 2B-3, history deletion implementation, SCN-001 document draft는 아직 열지
-않는다. History deletion은 soft delete / hard delete / retention / artifact
-lifecycle / ownership / visibility policy를 먼저 문서로 review하는 수준까지만
-허용한다.
+Step 2B-3, Step 3 full retention lifecycle implementation, SCN-001 document draft는
+아직 열지 않는다. Hard delete, artifact physical deletion/file purge, retention
+lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes,
+account deletion/access-control, orphan cleanup은 후속 정책 영역으로 유지한다.
 
 ## 현재 남아 있는 큰 기술 작업
 

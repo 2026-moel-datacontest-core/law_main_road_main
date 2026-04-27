@@ -42,6 +42,12 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
   아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`)를
   기준으로 main Before CTA, `/before` history, Before analysis, Bridge handoff를
   보호한다.
+- Step 3 MVP soft-delete slice completed:
+  - backend history soft-delete foundation completed in `e6f17eb`
+  - frontend `/before` delete UI/client completed in `50c279f`
+  - browser smoke passed with sanitized PASS/PRESENT/NO signals
+  - Step 3 full retention lifecycle is NOT opened.
+  - SCN-004 freeze impact: NO.
 
 ## 3. Recommended Sequence
 
@@ -126,7 +132,9 @@ Step 2 status (2026-04-24):
   `GET /api/v1/scn001/bridge-runs` sent Authorization headers, previous 401 was
   not reproduced, and read-only history UI rendered without auth error.
 - Step 2B-3 is not open.
-- Deletion API, retention policy, and SCN-001 document draft remain out of scope.
+- Step 3 MVP soft-delete slice completed separately after Step 2. Step 3 full
+  retention lifecycle, SCN-001 document draft, hard delete, file purge, and
+  artifact lifecycle remain out of scope.
 
 - 삭제, 수정, artifact body 노출 없이 목록/상세 조회만 고려한다.
 - internal user linkage로 ownership을 확인한다.
@@ -155,9 +163,69 @@ Current verification status:
 
 ### Step 3. History Deletion
 
-삭제는 read-only history 이후의 다음 설계 후보로 검토한다. 이 문서 업데이트는
-history deletion을 코드로 열지 않고, 구현 전에 정해야 할 정책 범위를 고정한다.
-DB schema, API contract, migration은 아직 확정하지 않는다.
+Status (2026-04-27): Step 3 MVP soft-delete slice completed. This is not Step 3
+full lifecycle completion.
+
+Completed backend slice:
+
+- `before_review_jobs`, `bridge_runs` soft-delete visibility fields completed.
+- Protected delete endpoints completed:
+  - `DELETE /api/v1/scn001/before-review-jobs/{before_review_job_id}`
+  - `DELETE /api/v1/scn001/bridge-runs/{bridge_run_id}`
+- Hidden records are filtered from history list/detail.
+- Hidden Before jobs block Bridge creation.
+- Hidden Bridge runs and hidden-source-Before Bridge runs block protected Bridge
+  answer before generation.
+- Missing, other-user, and already-hidden records are masked through the
+  protected deletion path.
+- No `after_artifact_runs` deletion was opened.
+- No hard delete was opened.
+- No artifact physical deletion or file purge was opened.
+
+Completed frontend slice:
+
+- `/before` read-only history includes delete affordances for Before and Bridge
+  records.
+- Delete flow includes browser confirmation and cancel.
+- SCN-001 protected DELETE requests send Authorization; browser smoke confirmed
+  Authorization PRESENT.
+- 204 and masked results use generic user-facing UX.
+- Successful delete refreshes history and locally hides the item.
+- Before delete hides/removes linked Bridge records from visible history and
+  selection path.
+- Memory-only Bridge handoff is cleared so a deleted Before cannot seed `/after`.
+
+Browser smoke result:
+
+- logged-in history load PASS.
+- delete UI visible PASS.
+- confirm/cancel PASS.
+- DELETE request Authorization PRESENT.
+- item disappears from history after confirm PASS.
+- Before delete hides/removes linked Bridge visible path PASS.
+- Before/Bridge count mismatch is expected because Bridge is created only after
+  explicit handoff.
+- Refresh logout is expected because Firebase Auth MVP uses `inMemoryPersistence`.
+- Session extension was NOT changed for MVP.
+- SCN-004 freeze impact: NO.
+
+Remaining boundary:
+
+- Step 3 full retention lifecycle is NOT opened.
+- hard delete remains out of scope.
+- artifact physical deletion and file purge remain out of scope.
+- retention lifecycle and GCS lifecycle remain out of scope.
+- audit/export remains out of scope.
+- undo/restore remains out of scope.
+- auth persistence changes remain out of scope.
+- account deletion/access-control remains out of scope.
+- orphan cleanup remains out of scope.
+- SCN-001 document draft remains out of scope.
+- SCN-005 remains out of scope.
+- provider_timeout/OCR retry hardening remains out of scope.
+
+The policy notes below remain guardrails for future lifecycle work; they are not
+new implementation instructions for this completed MVP soft-delete slice.
 
 - soft delete 우선으로 설계한다.
 - hard delete는 Post-MVP 또는 별도 retention / artifact lifecycle / audit 정책
@@ -229,11 +297,12 @@ Deletion response checkpoint:
 
 #### Retention / audit / artifact lifecycle policy draft
 
-이 subsection은 Step 3 deletion 개발 전 policy draft다. DB schema, migration,
-API path/method, deletion endpoint response shape, batch job 구현, hard delete
-window를 확정하지 않는다. MVP deletion은 soft delete / hide-first 방향을 우선
-검토하고, hard delete와 artifact file purge는 별도 retention policy와 ops review
-이후 후보로 둔다.
+이 subsection은 Step 3 MVP soft-delete slice 완료 이후의 full retention lifecycle
+policy review draft다. DB schema, migration, 추가 API path/method, deletion
+endpoint response shape 확장, batch job 구현, hard delete window를 확정하지
+않는다. 완료된 MVP deletion은 soft-delete / hide-first 범위로 제한하고, hard
+delete와 artifact file purge는 별도 retention policy와 ops review 이후 후보로
+둔다.
 
 Retention tiers:
 
@@ -299,7 +368,7 @@ Open policy questions:
 
 Non-goals:
 
-- Deletion API 구현이 아니다.
+- Additional deletion API 또는 full retention lifecycle 구현이 아니다.
 - DB schema/migration 확정이 아니다.
 - account deletion/access-control 구현이 아니다.
 - SCN-001 document draft가 아니다.
@@ -439,8 +508,8 @@ Acceptance direction:
 - Step 4가 열린 경우에도 deleted/hidden record는 future continuity panel / future
   draft affordance에 다시 노출되지 않는다.
 - 관련 artifact lifecycle / retention / visibility policy가 문서화된 뒤 구현된다.
-- deletion은 아직 코드 구현으로 열지 않고 위 policy matrix와 response checkpoint
-  review까지만 진행한다.
+- 추가 deletion API와 full retention lifecycle 구현은 아직 열지 않고 위 policy
+  matrix와 response checkpoint review까지만 진행한다.
 
 ### Step 4. SCN-001 Document Draft
 
@@ -580,12 +649,12 @@ fixture/preset 후보로 검토한다.
 
 ## 6. Suggested Next Prompt Target
 
-실제 브라우저 logged-in smoke는 PASS 상태다. read-only history 이후 다음 후보는
-Step 3 retention window and cascade policy decision draft의 review/refine이다. 다만 deletion은 바로
-구현하지 않고, soft delete / hard delete / retention / artifact lifecycle /
-ownership / visibility policy를 먼저 문서로 review한다. 다음 prompt target은
-deletion API/schema 구현이 아니라 retention window와 cascade policy의 remaining open
-policy question 정리로 제한한다.
+실제 브라우저 logged-in history deletion smoke는 PASS 상태다. Step 3 MVP
+soft-delete slice completed 상태에서 다음 후보는 Step 3 full retention lifecycle
+policy review다. 이미 완료된 MVP soft-delete UI/API를 확장 구현하지 않고, hard
+delete / retention / artifact lifecycle / ownership / visibility policy를 문서로
+review한다. 다음 prompt target은 추가 deletion API/schema 구현이 아니라 retention
+window와 cascade policy의 remaining open policy question 정리로 제한한다.
 
 Review focus:
 
@@ -601,18 +670,21 @@ Review focus:
   cascade policy가 구현 확정 없이 review/refine 대상으로 남아 있는지
 - retention window와 cascade policy의 remaining open policy question이 다음 문서
   cycle에서 정리될 수 있게 분리되어 있는지
-- deletion API, DB schema/migration, account deletion/access-control implementation을
-  여전히 열지 않는지
+- additional deletion API, DB schema/migration, account deletion/access-control
+  implementation을 여전히 열지 않는지
+- auth persistence changes, undo/restore, hard delete, file purge, artifact physical
+  deletion, GCS lifecycle, audit/export, orphan cleanup, SCN-001 document draft,
+  SCN-005, provider_timeout/OCR retry hardening을 여전히 열지 않는지
 
 Suggested prompt target:
 
 ```text
 SCN-004 freeze와 `/api/v1/answer`, `/api/v1/documents/draft` public contract
 unchanged 상태를 유지하면서 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`
-의 Step 3 retention window and cascade policy decision draft를 review/refine한다.
+의 Step 3 full retention lifecycle policy 후보를 review/refine한다.
 그 다음 문서 cycle에서 retention window, audit log/status column, file purge job,
 orphan classification, cascade policy의 remaining open policy question을 정리한다.
-코드 구현, DB schema/migration 확정, deletion API 구현 프롬프트 작성,
+코드 구현, DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성,
 account deletion/access-control implementation, SCN-001 document draft,
 SCN-001 draft freeze, provider_timeout/OCR retry hardening은 열지 않는다.
 ```

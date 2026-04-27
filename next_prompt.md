@@ -9,12 +9,17 @@ law_main_road repo root에서 작업해주세요.
 - 2026-04-27
 
 현재 git / 제출 기준 상태:
-- 2026-04-27 문서 업데이트 시작 시점의 `git status -sb`: `## main...origin/main`.
-- 2026-04-27 문서 업데이트 시작 시점의 `git status --short`: `frontend/src/app/before/page.tsx`, `frontend/src/app/page.tsx` modified.
+- 2026-04-27 Step 3 MVP soft-delete docs sync 시작 시점의 `git status -sb`: `## main...origin/main`.
+- 2026-04-27 Step 3 MVP soft-delete docs sync 시작 시점의 `git status --short`: clean.
 - 문서 업데이트 후 commit 전이면 `AGENTS.md`, `CLAUDE.md`, `frontend/CLAUDE.md`, `docs/ops/README.md`, `docs/planning/19_scn001_auth_integration_status.md`, `docs/planning/22_post_phase8_scn001_extension_roadmap.md`, `next_prompt.md`도 modified일 수 있다.
 - 새 세션 시작 직후 `git status -sb`, `git status --short`, `git log --oneline -12`로 origin/main 동기화와 clean/dirty 상태를 다시 확인하세요.
 - 이번 문서 업데이트는 별도 add/commit/push를 하지 않는 작업 범위였다.
 - 최근 중요 커밋:
+  - 50c279f feat(frontend): add SCN-001 history delete UI
+  - e6f17eb feat(scn-001): add backend history soft delete
+  - 591ca11 docs(scn-001): refine deletion policy candidates
+  - 4073846 docs(scn-001): draft deletion cascade policy
+  - e840c44 docs(scn-001): draft deletion retention policy
   - d7bc261 fix(frontend): gate main Before entry behind login
   - f2c463a feat(frontend): show read-only SCN-001 history on Before
   - facb408 feat(frontend): add SCN-001 history API client
@@ -71,14 +76,30 @@ law_main_road repo root에서 작업해주세요.
   - main Before CTA는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`) 기준으로 `/before` 진입
   - `/before` history, 분석 시작, Bridge handoff도 backend-verified 상태 기준으로 보호
   - protected endpoint 401은 frontend backend auth re-check로 연결
+- Step 3 MVP soft-delete slice completed:
+  - Backend soft-delete foundation completed in `e6f17eb`
+  - Frontend `/before` delete UI/client completed in `50c279f`
+  - `before_review_jobs`, `bridge_runs` soft-delete visibility fields
+  - protected delete endpoints
+  - hidden records filtered from history
+  - hidden Before blocks Bridge creation
+  - hidden Bridge / hidden-source-Before blocks protected Bridge answer before generation
+  - no after_artifact deletion, no hard delete, no file purge
+  - `/before` read-only history delete affordance, confirmation/cancel, success refresh/local hide
+  - DELETE Authorization PRESENT for SCN-001 protected history endpoints
+  - Before delete hides/removes linked Bridge from visible history/selection path
+  - memory-only Bridge handoff cleared so deleted Before cannot seed `/after`
+  - Step 3 full retention lifecycle is NOT opened
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
 - `GET /api/v1/scn001/before-review-jobs`
 - `GET /api/v1/scn001/before-review-jobs/{before_review_job_id}`
+- `DELETE /api/v1/scn001/before-review-jobs/{before_review_job_id}`
 - `POST /api/v1/scn001/bridge-runs`
 - `GET /api/v1/scn001/bridge-runs`
 - `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`
+- `DELETE /api/v1/scn001/bridge-runs/{bridge_run_id}`
 - `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`
 - `POST /api/v1/retrieve`
 - `POST /api/v1/answer`
@@ -91,6 +112,8 @@ law_main_road repo root에서 작업해주세요.
 - SCN-004 `/after`, `/after/result`, `/after/intake`, `/after/draft`는 로그인 없이 계속 동작해야 합니다.
 - SCN-004 fixed/free input/draft flow를 SCN-001 linkage 작업과 섞지 마세요.
 - SCN-001 document draft는 아직 열지 않습니다.
+- Step 3 full retention lifecycle은 아직 열지 않습니다.
+- hard delete, artifact physical deletion/file purge, retention lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes, account deletion/access-control, orphan cleanup은 후속 정책 영역입니다.
 - SCN-005는 현재 frontend preset UI에서 제외되어 있고, 후속 확장 후보로만 유지합니다.
 - `data/legalize-kr/` 및 `backend/data/law_chunks/`는 직접 수정하지 않습니다.
 
@@ -161,6 +184,17 @@ Post-Phase 8 runtime caveats:
   - `/before` history endpoints Authorization: PRESENT, previous 401 not reproduced
   - read-only history render: PASS
   - console/network auth error: NO after fix
+- Step 3 MVP soft-delete browser smoke도 PASS 확인됐습니다:
+  - logged-in history load: PASS
+  - delete UI visible: PASS
+  - confirm/cancel: PASS
+  - DELETE request Authorization: PRESENT
+  - item disappears from history after confirm: PASS
+  - Before delete hides/removes linked Bridge visible path: PASS
+  - Before/Bridge count mismatch: expected because Bridge is created only after explicit handoff
+  - refresh logout: expected because Firebase Auth MVP uses `inMemoryPersistence`
+  - session extension: NOT changed for MVP
+  - SCN-004 freeze impact: NO
 - 민감값 기록 없이 presence/PASS/PRESENT 수준으로만 evidence를 남깁니다.
 - OCR provider 429는 frontend friendly message로 처리됐지만, backend retry/backoff/hard-timeout은 아직 별도 runtime hardening 후보입니다.
 
@@ -289,13 +323,19 @@ npm run dev
 - SCN-001 document draft를 열지 마세요.
 - SCN-005를 바로 구현하지 마세요. 사용자가 명시적으로 요청하면 별도 패치로만 진행하세요.
 - `/bridge`, Recovery 본 구현 금지.
-- Step 2B-3 또는 Step 3 deletion implementation을 현재 상태에서 바로 열지 마세요.
-- Step 3은 history deletion design doc review / policy planning 수준으로만 허용합니다.
-- deletion/history retention을 read-only history와 섞지 마세요.
+- Step 2B-3 또는 Step 3 full retention lifecycle implementation을 현재 상태에서 바로 열지 마세요.
+- Step 3 MVP soft-delete slice는 completed 상태입니다. 추가 deletion/history retention 구현은 열지 마세요.
+- full retention lifecycle은 policy review 수준으로만 허용합니다.
 - provider_timeout/OCR retry hardening을 UI polish와 섞지 마세요.
 - backend API contract 임의 변경 금지.
 - `/api/v1/answer` public contract 변경 금지.
 - `/api/v1/documents/draft` contract 변경 금지.
+- hard delete/file purge 구현 금지.
+- artifact physical deletion 구현 금지.
+- undo/restore 구현 금지.
+- auth persistence 변경 금지.
+- account deletion/access-control 구현 금지.
+- orphan cleanup 구현 금지.
 - retrieval/answer behavior 변경은 regression/evidence 계획 없이 금지.
 - `scripts/demo_preflight.sh`에 full 60 eval 추가 금지.
 - `data/legalize-kr/` 수정 금지.
@@ -307,9 +347,10 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. Step 3 history deletion policy review
-   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 soft delete policy matrix / deletion response checkpoint review만 수행
-   - DB schema/migration 확정, deletion API 구현 프롬프트 작성, account history access-control 구현은 열지 않음
+1. Step 3 full retention lifecycle policy review
+   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 retention window / cascade / artifact lifecycle / masking guardrail review만 수행
+   - Step 3 MVP soft-delete slice completed 상태를 유지
+   - DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성, account history access-control 구현은 열지 않음
    - protected linked artifacts / public unlinked after artifacts / orphan artifact 구분과 not-found/not-owned/already-deleted masking 원칙을 검토
 2. history status pill color polish
    - read-only history UI의 status pill 색상/상태 표시만 작은 patch로 다룸
@@ -330,10 +371,10 @@ npm run dev
 6. provider_timeout / OCR retry/backoff/hard-timeout hardening
    - 별도 runtime hardening 후보
    - SCN-004 freeze와 public contract 보호를 전제로 분리 작업
-7. Step 2B-3 또는 deletion implementation
-   - Step 2B-3와 deletion implementation은 아직 열지 않음
-   - Step 3은 위 1번의 deletion policy/design doc review 수준으로만 허용
-   - read-only history와 deletion/history retention을 한 patch에 섞지 않음
+7. Step 2B-3 또는 full retention lifecycle implementation
+   - Step 2B-3와 Step 3 full retention lifecycle implementation은 아직 열지 않음
+   - Step 3 MVP soft-delete slice completed 상태를 유지하고, 위 1번의 policy/design doc review 수준으로만 허용
+   - hard delete, file purge, artifact physical deletion, auth persistence changes, undo/restore, account deletion/access-control, orphan cleanup을 열지 않음
 8. artifact retention/deletion/account history access control
    - Post-MVP
    - artifact retrieval UI/API, retention policy, account history access control은 별도 설계 후 진행
@@ -362,4 +403,5 @@ sanitized evidence hygiene, full 60 eval evidence, demo preflight PASS가 정리
 Post-Phase 8 Step 1, 1.5, OCR 429 friendly message, Step 2A, Step 2B-1,
 Step 2B-2, Step 1.6까지 `git log` 기준 완료 상태다. 2026-04-27 기준 실제
 브라우저 logged-in smoke PASS와 backend-verified auth gate sync hardening도
-확인됐다. SCN-001 document draft는 아직 열지 않는다.
+확인됐다. Step 3 MVP soft-delete slice completed 상태이며, Step 3 full retention
+lifecycle과 SCN-001 document draft는 아직 열지 않는다.
