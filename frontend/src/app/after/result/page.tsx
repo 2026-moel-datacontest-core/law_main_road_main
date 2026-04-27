@@ -3,6 +3,7 @@
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { Scn001ContinuityPanel } from '@/components/continuity/Scn001ContinuityPanel';
 import { Masthead } from '@/components/layout/Masthead';
 import { Button } from '@/components/ui/Button';
 import { CitationPill } from '@/components/ui/CitationPill';
@@ -13,6 +14,7 @@ import { useFlow } from '@/context/FlowContext';
 import { buildLegalBasis, hasDraftGrounding } from '@/lib/api';
 import { getBridgeHandoffDisplayFields } from '@/lib/bridge-handoff';
 import { getScn004DraftEligibility } from '@/lib/scn004DraftEligibility';
+import { shouldShowScn001FixedPresetResultContinuityPanel } from '@/lib/scn001ContinuityPanel';
 import {
   SCN001_FROZEN_DRAFT_DOCUMENT_TYPE,
   isScn001FrozenDraftPath,
@@ -80,6 +82,13 @@ export default function AfterResultPage() {
     userStatement: state.user_statement,
     answerOrigin: state.answer_origin,
   });
+  const canShowScn001FixedPresetContinuityPanel =
+    shouldShowScn001FixedPresetResultContinuityPanel({
+      answer,
+      selectedPresetId: state.selected_preset_id,
+      userStatement: state.user_statement,
+      answerOrigin: state.answer_origin,
+    });
   const canRenderDraftCta = canRenderScn004DraftCta || canShowScn001FrozenDraftCta;
   const continuityPanel = useMemo(
     () =>
@@ -415,6 +424,10 @@ export default function AfterResultPage() {
                 처음으로 돌아가기
               </Button>
             </section>
+
+            {canShowScn001FixedPresetContinuityPanel ? (
+              <Scn001ContinuityPanel titleId="scn001-result-continuity-title" />
+            ) : null}
 
             {continuityPanel ? (
               <BridgeContinuityPanel model={continuityPanel} />

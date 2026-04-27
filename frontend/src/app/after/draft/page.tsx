@@ -3,16 +3,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { Masthead } from '@/components/layout/Masthead';
+import { Scn001ContinuityPanel } from '@/components/continuity/Scn001ContinuityPanel';
 import { CautionsPanel } from '@/components/draft/CautionsPanel';
 import { DocumentPreview } from '@/components/draft/DocumentPreview';
 import { EvidenceChecklist } from '@/components/draft/EvidenceChecklist';
 import { LegalBasisPanel } from '@/components/draft/LegalBasisPanel';
 import { MissingFieldsPanel } from '@/components/draft/MissingFieldsPanel';
+import { Masthead } from '@/components/layout/Masthead';
 import { Button } from '@/components/ui/Button';
 import { DisclaimerBanner } from '@/components/ui/DisclaimerBanner';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { useFlow } from '@/context/FlowContext';
+import { shouldShowScn001FixedPresetDraftContinuityPanel } from '@/lib/scn001ContinuityPanel';
 import type { DocumentType } from '@/types/api';
 import type { FlowAction } from '@/types/flow';
 
@@ -37,6 +39,14 @@ export default function AfterDraftPage() {
   const [copyFeedback, setCopyFeedback] = useState<CopyFeedbackState>('idle');
   const { state, dispatch } = useFlow();
   const draft = state.draft_response;
+  const canShowScn001FixedPresetContinuityPanel =
+    shouldShowScn001FixedPresetDraftContinuityPanel({
+      answer: state.answer_response,
+      draft,
+      selectedPresetId: state.selected_preset_id,
+      userStatement: state.user_statement,
+      answerOrigin: state.answer_origin,
+    });
 
   function clearCopyFeedbackTimer() {
     if (copyFeedbackTimerRef.current !== null) {
@@ -246,6 +256,9 @@ export default function AfterDraftPage() {
               sourceContextIds={draft.source_context_ids}
               missingLegalBasis={draft.missing_legal_basis}
             />
+            {canShowScn001FixedPresetContinuityPanel ? (
+              <Scn001ContinuityPanel titleId="scn001-draft-continuity-title" />
+            ) : null}
           </aside>
         </div>
 
