@@ -434,8 +434,8 @@ Retention-stream future policy target after this review:
 
 - Cloud storage / GCS lifecycle policy review or orphan classification/cleanup
   policy review remains a later policy candidate for the Step 3 retention stream.
-- The current global next prompt target is Step 4 Bridge/query relevance guard
-  matrix review, not this retention-stream policy work.
+- The current global next prompt target is frontend-only continuity panel design
+  review, not this retention-stream policy work.
 
 Recommended sequencing:
 
@@ -478,8 +478,8 @@ Retention-stream note:
 - If the work later returns to Step 3 retention policy, cloud storage / GCS
   lifecycle policy review or orphan classification/cleanup policy review remains
   the next retention-stream candidate.
-- The active next target for this roadmap is Step 4 Bridge/query relevance guard
-  matrix review, and it should not be implementation.
+- The active next target for this roadmap is frontend-only continuity panel design
+  review, and it should not be implementation.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
 new implementation instructions for this completed MVP soft-delete slice.
@@ -815,39 +815,154 @@ Bridge policy: **Bridge-as-Continuity, Not Grounding**.
   be written into docs, UI, logs, commits, issues, chat, or a future continuity
   payload.
 
-##### 3. Bridge/query relevance guard
+##### 3. Bridge/query relevance guard matrix review
 
-The guard is a relevance/matching gate for whether continuity UI or a future
-SCN-001 draft affordance can open. Overlap alone does not create legal grounding.
+This review defines the design boundary for a future Bridge/query relevance
+guard. It is not an implementation plan and does not define a numeric score,
+ranking algorithm, endpoint path/method/schema, DB schema/migration, document
+type, document template, or draft generation flow.
 
-Candidate overlap dimensions:
+###### Scope boundary
 
-- `issue_categories` / `risk_tags` overlap: checks whether the prior review and
-  current query share the same issue category.
-- `law_refs` overlap with answer `cited_articles` or retrieved law references:
-  checks whether the Bridge law hints align with current answer evidence.
-- `recommended_next_actions` overlap: checks whether the next-action path can
-  continue from the prior review into the current question.
-- `user_visible_summary` text similarity: weak signal only, useful for ranking or
-  explanation copy, not legal basis.
+- Design review only.
+- No implementation.
+- No endpoint/schema/document type finalization.
+- No draft generation/freeze.
+- No public contract changes.
+- `/api/v1/answer` public contract remains unchanged.
+- `/api/v1/documents/draft` public contract remains unchanged.
+- SCN-004 fixed/free input/draft behavior remains unchanged and login-free.
+- Bridge cards remain supplemental continuity context only. They are not hidden
+  answer grounding/source material.
+- Overlap between Bridge and the current answer cannot create legal basis,
+  `cited_articles`, `grounded_context_ids`, or answer evidence.
 
-Guard outcomes:
+###### Guard input signals
 
-| outcome | candidate condition | UI / draft behavior | grounding boundary |
-|---|---|---|---|
-| strong overlap | issue/law/action overlap is clear and current answer has answer evidence | show continuity explanation candidate; future draft affordance still requires quality gate, document type confirmation, and separate review | current answer evidence only can supply legal basis, `cited_articles`, and `grounded_context_ids` |
-| weak overlap | only weak summary similarity or one low-confidence label overlap exists | show reference-only note or hide the continuity panel | note must say the prior record was not used as this answer's legal basis |
-| no overlap | no meaningful issue, law, action, or summary relation | hide Bridge continuity panel and keep answer-only | no draft affordance from Bridge |
-| conflicting/unsafe | Bridge hints conflict with current answer evidence, source state is hidden/deleted, or sensitive/raw fields would be needed | hide and do not use for draft | never use Bridge to repair or replace missing answer evidence |
+Candidate signals only:
 
-Relevance guard requirements:
+- `issue_categories` overlap.
+- `risk_tags` overlap.
+- `law_refs` overlap with current answer `cited_articles` or current retrieved
+  law references.
+- `recommended_next_actions` overlap.
+- `user_visible_summary` similarity as weak signal only.
+- explicit user question terms overlap as weak support only.
 
-- The continuity panel must not appear merely because a Bridge card exists.
-- The SCN-001 draft affordance must not open before the guard passes.
-- Guard output is presentation eligibility only; it is not citation generation.
+Excluded signals:
+
+- raw `after_query_seed`.
+- raw Before/Bridge payload.
+- internal ids.
+- artifact refs.
+- token/auth/provider identifiers.
+- raw OCR/contract.
+- full answer/draft/artifact body.
+
+Input interpretation rules:
+
 - `issue_categories`, `risk_tags`, `law_refs`, `recommended_next_actions`, and
   `user_visible_summary` are continuity candidates, not legal basis fields.
-- If the guard is weak, absent, or unsafe, keep the result answer-only.
+- `law_refs` can support continuity only when they align with the current answer
+  evidence. They do not add new citations.
+- Summary similarity and explicit user question term overlap are weak support
+  signals. They cannot open legal grounding or draft affordance by themselves.
+- Deleted/hidden Bridge records or hidden source Before jobs are treated as
+  unsafe for user-facing continuity surfaces.
+
+###### Scoring / decision matrix
+
+The matrix below is a qualitative review tool. It intentionally avoids numeric
+weights or implementation thresholds.
+
+| signal pattern | examples | outcome | UI behavior | draft affordance implication | legal grounding rule | notes |
+|---|---|---|---|---|---|---|
+| strong issue + law overlap | `issue_categories` or `risk_tags` match the current question, and Bridge `law_refs` also overlap current answer `cited_articles` or retrieved law references | show continuity explanation | Show a Korean continuity panel framed as "이전 검토와 이번 질문이 이어질 수 있는 지점". | Relevance guard may pass, but draft affordance still needs quality gate, document type confirmation, and separate review. | Current answer evidence only supplies legal basis, `cited_articles`, and `grounded_context_ids`. | Strong does not mean Bridge grounded the answer. |
+| issue overlap only | prior and current issue labels both point to the same broad topic, but law/action overlap is absent | show reference-only note or hide continuity panel | If shown, say the prior review appears related but was not used as legal basis. | Keep answer-only unless a separate quality gate later approves more. | No new legal basis from Bridge. | Treat as weak unless answer evidence independently supports the same issue. |
+| law overlap only | Bridge `law_refs` mention a law also found in current answer evidence, but issue/action context differs | show reference-only note | Prefer a short note; avoid implying the same legal problem. | Keep answer-only. | Existing answer citations remain unchanged. | Same law can apply to different issues, so do not infer continuity too strongly. |
+| action overlap only | both mention consultation, document collection, workplace-change preparation, or complaint preparation, but issue/law overlap is absent | show reference-only note or hide continuity panel | Use action-continuity wording only if not misleading. | Keep answer-only. | Action overlap is not legal grounding. | Helpful for UX continuity, not for legal reasoning. |
+| summary similarity only | `user_visible_summary` text is similar, or explicit user question terms overlap, but no safe label/law/action match exists | hide continuity panel or show minimal reference-only note | If shown, explicitly state Bridge is not used as legal basis for the current answer. | Block draft affordance. | No citations or context ids from Bridge. | Similar wording can be accidental; treat as weak. |
+| no overlap | no safe displayed subset overlap across issue/risk, law, action, summary, or current question terms | hide continuity panel | Result remains normal answer view. | Block draft affordance. | Bridge contributes no legal basis. | Do not explain sensitive mismatch details. |
+| conflicting/unsafe signal | Bridge suggests a different issue, law, or next action than current answer; or continuity would depend on hidden/raw/internal data | hide continuity panel | Prefer silent hiding over mismatch explanation. | Block draft affordance and require separate quality gate review before any future reopening. | Never use Bridge to repair or replace missing answer evidence. | Treat hidden/raw/internal dependency as unsafe even if labels look related. |
+| missing answer evidence | current answer has no `cited_articles` or no `grounded_context_ids` | hide continuity panel and keep answer-only guard active | Existing "근거 확인 필요" / draft-blocking behavior remains primary. | Block draft affordance. | Bridge cannot create missing citations or grounded context ids. | Current answer quality gate comes before Bridge continuity. |
+| all Bridge cards unchecked | user excludes all cards from the current query | keep answer-only | Sticky `answer_origin = "bridge_handoff"` behavior remains; no continuity panel from unchecked cards. | Block draft affordance. | Unchecked Bridge cards provide no grounding or continuity input. | User question may still receive a public answer, but not a Bridge-derived draft path. |
+| deleted/hidden Bridge or source Before | Bridge run is hidden, source Before is hidden, or visible history no longer exposes the item | hide continuity panel | Do not show the record or explain hidden/deleted state details. | Block draft affordance. | Hidden/deleted records cannot create legal basis, `cited_articles`, or `grounded_context_ids`. | Preserve existence-leak masking and Step 3 soft-delete policy. |
+
+###### Strong / weak / no / conflicting definitions
+
+- Strong: at least issue/risk overlap plus law or action overlap, with current
+  answer evidence present.
+- Weak: one signal only, or no direct match to current answer evidence.
+- No overlap: no overlap in the safe displayed subset.
+- Conflicting/unsafe: Bridge suggests a different issue, law, or action than the
+  current answer, or continuity depends on hidden, deleted, raw, or internal
+  data.
+
+Definition guardrails:
+
+- Strong is a UI/design classification, not a legal conclusion.
+- Weak is not enough to open draft affordance.
+- No overlap should keep the Bridge panel hidden.
+- Conflicting/unsafe should hide rather than explain sensitive mismatch details.
+
+###### UI copy policy
+
+- Korean primary, English secondary only if needed.
+- Avoid claiming legal causation.
+- Preferred framing: "이전 검토와 이번 질문이 이어질 수 있는 지점".
+- Reference-only note should say Bridge is not used as legal basis for the
+  current answer.
+- Hide the panel when unsafe rather than explaining sensitive mismatch details.
+- Avoid wording such as "이전 검토 때문에 이 조문이 적용됩니다" or "Bridge가 근거를
+  보강했습니다".
+- Keep citations and grounded context display tied to the current answer only.
+
+Candidate copy direction:
+
+- Continuity explanation: "이전 검토의 쟁점과 이번 질문의 답변 근거가 일부 이어질
+  수 있습니다. 아래 내용은 연결 지점 설명이며, 현재 답변의 법적 근거는 인용 조문
+  영역에서 확인하세요."
+- Reference-only note: "이전 검토와 일부 표현이 비슷하지만, 이 Bridge 정보는 이번
+  답변의 법적 근거로 사용되지 않았습니다."
+
+###### Draft affordance gate
+
+- Relevance guard pass alone does not open draft.
+- Draft affordance remains subject to quality gate, document type confirmation,
+  and separate review.
+- No SCN-001 draft generation now.
+- No protected SCN-001 draft endpoint now.
+- No protected SCN-001 draft endpoint path/method/schema is decided here.
+- Bridge overlap must not add answer evidence, legal basis, or user-confirmed
+  facts.
+- If the current answer lacks `cited_articles` or `grounded_context_ids`, Bridge
+  continuity cannot make the answer draft-eligible.
+- User-confirmed facts, answer evidence, and continuity explanation must remain
+  separate in any future design.
+
+###### Verification / QA candidate
+
+This is a candidate checklist for a later design or implementation review. It is
+not a request to run broad eval now.
+
+- Manual examples for strong, weak, no-overlap, and conflicting/unsafe cases.
+- Check no new citations or grounded context ids are created from Bridge.
+- Check hidden/deleted Bridge or source Before does not appear.
+- Check all-unchecked Bridge cards do not open continuity or draft affordance.
+- Check current-answer missing evidence blocks continuity/draft affordance.
+- Check SCN-004 direct `/after` remains unaffected and login-free.
+- Check `/api/v1/answer` and `/api/v1/documents/draft` public contracts remain
+  unchanged.
+- No broad eval unless retrieval/answer behavior or API response contract
+  changes.
+
+###### Next target
+
+If this matrix is accepted, the next design target can be frontend-only
+continuity panel design review. That follow-up should remain design-only and
+should not implement the panel, finalize protected SCN-001 draft endpoint
+path/method/schema, generate SCN-001 draft documents, or open SCN-001 draft
+freeze.
 
 ##### 4. Draft affordance policy
 
@@ -910,7 +1025,8 @@ Candidate quality gate for a future design review:
 - Bridge continuity note is separated from legal basis.
 - Bridge continuity note does not create `cited_articles` or
   `grounded_context_ids`.
-- Bridge/query relevance guard matrix is reviewed before any draft affordance.
+- Bridge/query relevance guard matrix is documented and remains a prerequisite
+  before any draft affordance.
 - manual browser rehearsal is required before treating SCN-001 draft as demo-ready.
 - no broad eval unless retrieval/answer behavior or API response contract changes.
 - SCN-004 exact preset, SCN-004 free input, and SCN-004 login-free draft flow must
@@ -921,12 +1037,12 @@ Candidate quality gate for a future design review:
 
 ##### 8. Suggested next prompt target
 
-Next target: Step 4 Bridge/query relevance guard matrix review.
+Next target: frontend-only continuity panel design review.
 
-The next prompt should refine the guard matrix and outcome rules only. It should
-not implement a continuity panel, code an endpoint, finalize schema/migration,
-generate SCN-001 draft documents, open SCN-001 draft freeze, open SCN-005, or
-change SCN-004 public answer/draft behavior.
+The next prompt should review the future continuity panel UX/copy/state boundary
+only. It should not implement a continuity panel, code an endpoint, finalize
+schema/migration, generate SCN-001 draft documents, open SCN-001 draft freeze,
+open SCN-005, or change SCN-004 public answer/draft behavior.
 
 ### Step 5. SCN-001 Draft Freeze
 
@@ -998,26 +1114,20 @@ NOT opened 상태를 유지한다. Full retention lifecycle policy review, artif
 access/retrieval policy review, audit/status policy review는 Step 3 아래에
 문서화되어 있다.
 
-Step 4는 SCN-001 Document Draft Design으로만 열렸다. 다음 prompt target은 구현이
-아니라 Bridge/query relevance guard matrix review로 제한한다.
+Step 4는 SCN-001 Document Draft Design으로만 열렸다. Bridge/query relevance guard
+matrix review도 문서화됐다. 다음 prompt target은 구현이 아니라 frontend-only
+continuity panel design review로 제한한다.
 
 Review focus:
 
-- `issue_categories` / `risk_tags` overlap 기준이 strong/weak/no/conflicting
-  outcome을 나누기에 충분한지
-- `law_refs` overlap을 answer `cited_articles` 또는 retrieved law references와만
-  비교하도록 제한했는지
-- `recommended_next_actions` overlap이 continuity 설명 후보일 뿐 legal basis가
-  아닌지
-- `user_visible_summary` text similarity가 weak signal only로 남아 있는지
-- strong overlap에서도 Bridge가 `cited_articles`, `grounded_context_ids`, legal
-  grounding을 새로 만들지 않는지
-- weak/no/conflicting outcome에서 continuity panel을 숨기거나 reference-only note로
-  제한하는지
-- SCN-001 draft affordance가 relevance guard 통과 전 열리지 않는지
-- frontend-only continuity panel + relevance guard design을 먼저 검토하고,
-  protected SCN-001 draft endpoint는 document type/template/QA criteria 전까지
-  defer하는지
+- continuity panel이 "이전 검토와 이번 질문이 이어질 수 있는 지점"만 설명하는지
+- strong/weak/no/conflicting matrix outcome을 UI copy와 panel visibility로만
+  연결하고 구현 scoring으로 고정하지 않는지
+- reference-only note가 Bridge를 현재 답변의 legal basis로 사용하지 않았다고
+  분명히 말하는지
+- unsafe/conflicting/deleted/hidden source는 설명보다 panel hiding을 우선하는지
+- SCN-001 draft affordance가 relevance guard와 별도 quality gate, document type
+  confirmation, separate review 전 열리지 않는지
 - `/api/v1/answer`와 `/api/v1/documents/draft` public contract unchanged, SCN-004
   login-free draft flow unchanged 상태를 유지하는지
 - raw Before/Bridge payload, raw `after_query_seed`, token, Firebase uid,
@@ -1033,10 +1143,11 @@ Suggested prompt target:
 SCN-004 freeze와 `/api/v1/answer`, `/api/v1/documents/draft` public contract
 unchanged 상태를 유지하면서 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`
 의 Step 4 SCN-001 Document Draft Design을 구현이 아닌 design review로만 이어간다.
-다음 문서 cycle은 Bridge/query relevance guard matrix review로 제한한다.
-Bridge는 Bridge-as-Continuity, Not Grounding 정책을 유지하고, issue/law/action
-overlap과 `user_visible_summary` weak signal이 continuity panel 후보를 어떻게
-여닫는지만 검토한다.
+Bridge/query relevance guard matrix review는 문서화됐으므로, 다음 문서 cycle은
+frontend-only continuity panel design review로 제한한다. Bridge는
+Bridge-as-Continuity, Not Grounding 정책을 유지하고, continuity panel copy,
+visibility, reference-only note, unsafe hide behavior, and answer-only/draft-disabled
+boundaries만 검토한다.
 코드 구현, DB schema/migration 확정, protected SCN-001 draft endpoint path/method/schema
 확정, API 구현 프롬프트 작성, SCN-001 draft generation, SCN-001 draft freeze,
 SCN-005, Step 3 full retention lifecycle implementation, hard delete/file purge,

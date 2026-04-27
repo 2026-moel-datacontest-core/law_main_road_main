@@ -25,10 +25,10 @@
 - actual browser logged-in smoke PASS 및 SCN-001 backend-verified auth gate hardening 반영
 - Step 3 MVP soft-delete slice completed 반영: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
 - Step 3 full retention lifecycle, artifact access/retrieval, audit/status policy review 반영. Implementation은 NOT opened.
-- Step 4 SCN-001 Document Draft Design 반영: docs-only design으로만 opened.
-  다음 target은 Bridge/query relevance guard matrix review이며, SCN-001 draft
-  implementation/generation/freeze와 protected SCN-001 draft endpoint
-  path/method/schema는 NOT opened.
+- Step 4 SCN-001 Document Draft Design 및 Bridge/query relevance guard matrix
+  review 반영: docs-only design으로만 opened. 다음 target은 frontend-only
+  continuity panel design review이며, SCN-001 draft implementation/generation/freeze와
+  protected SCN-001 draft endpoint path/method/schema는 NOT opened.
 - local secret/database ignore rules hardening 반영
 
 현재 코드/구조 기준으로 반영된 주요 상태:
@@ -300,14 +300,15 @@ Document Draft Design은
 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`에 문서화된 상태다.
 Step 3 MVP soft-delete slice completed 상태를 유지하고, full retention lifecycle
 implementation, artifact retrieval UI/API, audit export/admin UI는 NOT opened
-상태로 둔다. Step 4는 docs-only design으로만 opened 상태이며, SCN-001 draft
+상태로 둔다. Step 4는 docs-only design으로만 opened 상태이며, Bridge/query
+relevance guard matrix review도 문서화됐다. SCN-001 draft
 implementation/generation/freeze와 protected SCN-001 draft endpoint
 path/method/schema는 NOT opened 상태로 둔다. 다음 design review target은 추가 코드
-구현이 아니라 Bridge/query relevance guard matrix review로 제한한다.
+구현이 아니라 frontend-only continuity panel design review로 제한한다.
 
 별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-1. Step 4 Bridge/query relevance guard matrix review
+1. frontend-only continuity panel design review
 2. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
 3. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
 4. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
