@@ -149,6 +149,7 @@ export function Scn001HistoryManager() {
 
   const canShowSignInAction =
     firebaseConfigured && !authBusy && !firebaseUser && !isBackendAuthenticated;
+  const totalHistoryCount = beforeHistory.length + bridgeHistory.length;
 
   async function handleDeleteHistoryRecord(target: HistoryDeleteTarget) {
     if (historyDeleteTarget) {
@@ -176,7 +177,7 @@ export function Scn001HistoryManager() {
       applyLocalHistoryDeletion(target);
       setHistoryMutationMessage({
         kind: 'notice',
-        message: '기록을 삭제하고 목록을 새로고침했습니다.',
+        message: '기록을 목록에서 삭제하고 After 연결 후보에서도 숨겼습니다.',
       });
       setHistoryRefreshNonce((current) => current + 1);
     } catch (error) {
@@ -274,7 +275,12 @@ export function Scn001HistoryManager() {
             완료되어 다시 확인할 수 있는 Before 검토와 Bridge 연결 기록만 표시합니다.
           </p>
         </div>
-        <span className={styles.visibilityPill}>완료/표시 가능</span>
+        <div className={styles.headerMeta} aria-label="기록 표시 범위">
+          <span className={styles.visibilityPill}>완료/표시 가능</span>
+          {isBackendAuthenticated && historyStatus === 'success' ? (
+            <span className={styles.totalPill}>총 {totalHistoryCount}건</span>
+          ) : null}
+        </div>
       </div>
 
       {notice ? (
@@ -304,18 +310,32 @@ export function Scn001HistoryManager() {
       ) : null}
 
       {isBackendAuthenticated && historyStatus === 'success' ? (
-        <div className={styles.columns}>
-          <BeforeHistoryList
-            jobs={beforeHistory}
-            deletingTarget={historyDeleteTarget}
-            onDelete={(target) => void handleDeleteHistoryRecord(target)}
-          />
-          <BridgeHistoryList
-            bridgeRuns={bridgeHistory}
-            deletingTarget={historyDeleteTarget}
-            onDelete={(target) => void handleDeleteHistoryRecord(target)}
-          />
-        </div>
+        <>
+          <div className={styles.summaryGrid} aria-label="기록 요약">
+            <HistoryStat
+              label="Before 검토"
+              value={`${beforeHistory.length}건`}
+              description="완료된 계약서 검토 요약"
+            />
+            <HistoryStat
+              label="Bridge 연결"
+              value={`${bridgeHistory.length}건`}
+              description="After로 이어볼 수 있는 표시 요약"
+            />
+          </div>
+          <div className={styles.columns}>
+            <BeforeHistoryList
+              jobs={beforeHistory}
+              deletingTarget={historyDeleteTarget}
+              onDelete={(target) => void handleDeleteHistoryRecord(target)}
+            />
+            <BridgeHistoryList
+              bridgeRuns={bridgeHistory}
+              deletingTarget={historyDeleteTarget}
+              onDelete={(target) => void handleDeleteHistoryRecord(target)}
+            />
+          </div>
+        </>
       ) : null}
     </section>
   );
@@ -355,23 +375,26 @@ function BeforeHistoryList({
   return (
     <section className={styles.column} aria-label="Before review job 기록">
       <div className={styles.columnHeader}>
-        <h3 className={styles.columnTitle}>Before review job</h3>
+        <div>
+          <h3 className={styles.columnTitle}>Before 검토 기록</h3>
+          <p className={styles.columnDescription}>계약서 검토에서 만든 상황 요약</p>
+        </div>
         <span className={styles.count}>{jobs.length}건</span>
       </div>
 
       {jobs.length === 0 ? (
-        <p className={styles.empty}>표시할 완료 Before 기록이 없습니다.</p>
+        <p className={styles.empty}>
+          완료된 Before 검토가 없습니다. Before 화면에서 분석을 마치면 여기에 표시됩니다.
+        </p>
       ) : (
         <ol className={styles.list}>
           {jobs.map((job) => (
             <li className={styles.item} key={job.before_review_job_id}>
-              <article className={styles.card}>
+              <article className={`${styles.card} ${styles.beforeCard}`}>
                 <div className={styles.cardTop}>
                   <div className={styles.cardTitleGroup}>
-                    <p className={styles.cardEyebrow}>Before review job</p>
-                    <strong className={styles.beforeSummary}>
-                      {formatInlineText(job.summary, '요약이 없는 Before 검토입니다.')}
-                    </strong>
+                    <p className={styles.cardEyebrow}>Before situation summary</p>
+                    <h4 className={styles.cardTitle}>Before 상황 요약</h4>
                   </div>
                   <div className={styles.cardActions}>
                     <span className={styles.statusPill}>{formatBeforeJobStatus(job.status)}</span>
@@ -393,8 +416,14 @@ function BeforeHistoryList({
                   </div>
                 </div>
 
+                <HistorySummaryBlock
+                  title="검토된 상황"
+                  body={job.summary}
+                  fallback="요약이 없는 Before 검토입니다."
+                />
+
                 <dl className={styles.metaGrid}>
-                  <HistoryMeta label="판정" value={formatOverallResult(job.overall_result)} />
+                  <HistoryMeta label="검토 판정" value={formatOverallResult(job.overall_result)} />
                   <HistoryMeta label="심각도" value={formatSeverity(job.overall_severity)} />
                   <HistoryMeta label="Bridge 연결" value={job.has_bridge_run ? '있음' : '없음'} />
                   <HistoryMeta label="생성" value={formatHistoryDateTime(job.created_at)} />
@@ -421,74 +450,121 @@ function BridgeHistoryList({
   return (
     <section className={styles.column} aria-label="Bridge run 기록">
       <div className={styles.columnHeader}>
-        <h3 className={styles.columnTitle}>Bridge run</h3>
+        <div>
+          <h3 className={styles.columnTitle}>Bridge 연결 기록</h3>
+          <p className={styles.columnDescription}>Before 요약을 After 질문으로 넘기는 연결 정보</p>
+        </div>
         <span className={styles.count}>{bridgeRuns.length}건</span>
       </div>
 
       {bridgeRuns.length === 0 ? (
-        <p className={styles.empty}>표시할 Bridge 기록이 없습니다.</p>
+        <p className={styles.empty}>
+          표시할 Bridge 기록이 없습니다. Before 결과에서 Bridge 연결을 만들면 여기에 표시됩니다.
+        </p>
       ) : (
         <ol className={styles.list}>
-          {bridgeRuns.map((bridgeRun) => (
-            <li className={styles.item} key={bridgeRun.bridge_run_id}>
-              <article className={styles.card}>
-                <div className={styles.cardTop}>
-                  <div className={styles.cardTitleGroup}>
-                    <p className={styles.cardEyebrow}>Bridge run</p>
-                    <p className={styles.bridgeSummary}>
-                      {formatInlineText(bridgeRun.user_visible_summary, 'Bridge 요약이 없습니다.')}
-                    </p>
+          {bridgeRuns.map((bridgeRun) => {
+            const issueLabels =
+              bridgeRun.issue_categories.length > 0
+                ? bridgeRun.issue_categories
+                : bridgeRun.risk_tags;
+
+            return (
+              <li className={styles.item} key={bridgeRun.bridge_run_id}>
+                <article className={`${styles.card} ${styles.bridgeCard}`}>
+                  <div className={styles.cardTop}>
+                    <div className={styles.cardTitleGroup}>
+                      <p className={styles.cardEyebrow}>Bridge law/risk explanation</p>
+                      <h4 className={styles.cardTitle}>Bridge 법·위험 설명</h4>
+                    </div>
+                    <HistoryDeleteButton
+                      label={`Bridge 기록 삭제: ${formatInlineText(
+                        bridgeRun.user_visible_summary,
+                        formatHistoryDateTime(bridgeRun.created_at),
+                      )}`}
+                      isDeleting={isHistoryDeletePending(
+                        deletingTarget,
+                        'bridge',
+                        bridgeRun.bridge_run_id,
+                      )}
+                      disabled={Boolean(deletingTarget)}
+                      onDelete={() =>
+                        onDelete({ kind: 'bridge', id: bridgeRun.bridge_run_id })
+                      }
+                    />
                   </div>
-                  <HistoryDeleteButton
-                    label={`Bridge 기록 삭제: ${formatInlineText(
-                      bridgeRun.user_visible_summary,
-                      formatHistoryDateTime(bridgeRun.created_at),
-                    )}`}
-                    isDeleting={isHistoryDeletePending(
-                      deletingTarget,
-                      'bridge',
-                      bridgeRun.bridge_run_id,
-                    )}
-                    disabled={Boolean(deletingTarget)}
-                    onDelete={() =>
-                      onDelete({ kind: 'bridge', id: bridgeRun.bridge_run_id })
-                    }
+
+                  <HistorySummaryBlock
+                    title="Before situation summary"
+                    body={bridgeRun.user_visible_summary}
+                    fallback="Before 상황 요약이 없습니다."
                   />
-                </div>
 
-                <HistoryTagList
-                  label="이슈"
-                  values={
-                    bridgeRun.issue_categories.length > 0
-                      ? bridgeRun.issue_categories
-                      : bridgeRun.risk_tags
-                  }
-                />
-                <HistoryTagList label="법령 근거" values={bridgeRun.law_refs} />
+                  <div className={styles.bridgeInsight}>
+                    <p className={styles.metaLabel}>Bridge가 정리한 법 조항 / 위험 설명</p>
+                    <HistoryTagList label="위험·쟁점" values={issueLabels} />
+                    <HistoryTagList label="법 조항 후보" values={bridgeRun.law_refs} />
 
-                {bridgeRun.recommended_next_actions.length > 0 ? (
-                  <div className={styles.actionBlock}>
-                    <p className={styles.metaLabel}>권장 다음 단계</p>
-                    <ul className={styles.actionList}>
-                      {bridgeRun.recommended_next_actions.map((action, index) => (
-                        <li key={`${bridgeRun.bridge_run_id}-action-${index}`}>
-                          {formatInlineText(action, '확인 필요')}
-                        </li>
-                      ))}
-                    </ul>
+                    {bridgeRun.recommended_next_actions.length > 0 ? (
+                      <div className={styles.actionBlock}>
+                        <p className={styles.metaLabel}>권장 다음 단계</p>
+                        <ul className={styles.actionList}>
+                          {bridgeRun.recommended_next_actions.map((action, index) => (
+                            <li key={`${bridgeRun.bridge_run_id}-action-${index}`}>
+                              {formatInlineText(action, '확인 필요')}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
 
-                <dl className={styles.metaGrid}>
-                  <HistoryMeta label="생성" value={formatHistoryDateTime(bridgeRun.created_at)} />
-                  <HistoryMeta label="업데이트" value={formatHistoryDateTime(bridgeRun.updated_at)} />
-                </dl>
-              </article>
-            </li>
-          ))}
+                  <dl className={styles.metaGrid}>
+                    <HistoryMeta label="생성" value={formatHistoryDateTime(bridgeRun.created_at)} />
+                    <HistoryMeta label="업데이트" value={formatHistoryDateTime(bridgeRun.updated_at)} />
+                  </dl>
+                </article>
+              </li>
+            );
+          })}
         </ol>
       )}
     </section>
+  );
+}
+
+function HistoryStat({
+  label,
+  value,
+  description,
+}: {
+  label: string;
+  value: string;
+  description: string;
+}) {
+  return (
+    <div className={styles.statCard}>
+      <p className={styles.statLabel}>{label}</p>
+      <strong className={styles.statValue}>{value}</strong>
+      <p className={styles.statDescription}>{description}</p>
+    </div>
+  );
+}
+
+function HistorySummaryBlock({
+  title,
+  body,
+  fallback,
+}: {
+  title: string;
+  body: string | null | undefined;
+  fallback: string;
+}) {
+  return (
+    <div className={styles.summaryBlock}>
+      <p className={styles.metaLabel}>{title}</p>
+      <p className={styles.summaryText}>{formatInlineText(body, fallback)}</p>
+    </div>
   );
 }
 
@@ -512,7 +588,7 @@ function HistoryDeleteButton({
       aria-label={label}
     >
       <Trash2 size={15} aria-hidden="true" />
-      {isDeleting ? '삭제 중' : '삭제'}
+      {isDeleting ? '처리 중' : '목록에서 삭제'}
     </button>
   );
 }
@@ -595,7 +671,7 @@ function getScn001HistoryNotice(input: {
   if (input.status === 'loading') {
     return {
       kind: 'notice',
-      message: '기록을 불러오는 중입니다.',
+      message: '완료된 Before 검토와 Bridge 연결 기록을 불러오는 중입니다.',
       canRetry: false,
     };
   }
@@ -623,7 +699,7 @@ function getScn001HistoryNotice(input: {
   ) {
     return {
       kind: 'notice',
-      message: '표시할 완료 Before 또는 Bridge 기록이 없습니다.',
+      message: '표시할 완료 기록이 없습니다. Before 검토를 완료하거나 Bridge 연결을 만든 뒤 다시 확인해주세요.',
       canRetry: true,
     };
   }
@@ -657,10 +733,10 @@ function getScn001HistoryDeleteErrorMessage(error: unknown): string {
 
 function getHistoryDeleteConfirmMessage(kind: HistoryDeleteKind): string {
   if (kind === 'before') {
-    return '이 Before 기록을 목록에서 삭제할까요? 삭제 후 기록 목록과 After 연결 후보에서 보이지 않습니다.';
+    return '이 Before 기록을 목록에서 삭제할까요? 삭제 후 기록 목록과 After 연결 후보에서 보이지 않습니다. 원문이나 식별 정보는 이 화면에 표시하지 않습니다.';
   }
 
-  return '이 Bridge 기록을 목록에서 삭제할까요? 삭제 후 After 연결 후보에서 보이지 않습니다.';
+  return '이 Bridge 기록을 목록에서 삭제할까요? 삭제 후 기록 목록과 After 연결 후보에서 보이지 않습니다. 원문이나 식별 정보는 이 화면에 표시하지 않습니다.';
 }
 
 function isHistoryDeletePending(
