@@ -289,16 +289,16 @@ Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서�
 
 ## 앞으로의 우선 작업
 
-현재 문서 정리 이후 Step 3 full retention lifecycle policy review는
+현재 문서 정리 이후 Step 3 full retention lifecycle policy review와 artifact
+access/retrieval policy review는
 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`에 문서화된 상태다.
 Step 3 MVP soft-delete slice completed 상태를 유지하고, full retention lifecycle
-implementation은 NOT opened 상태로 둔다. 다음 design review target은 추가 코드
-구현이 아니라 artifact access/retrieval policy review 또는 audit/status policy
-review 중 하나로 제한한다.
+implementation과 artifact retrieval UI/API는 NOT opened 상태로 둔다. 다음 design
+review target은 추가 코드 구현이 아니라 audit/status policy review로 제한한다.
 
 별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-1. Artifact access/retrieval policy review 또는 audit/status policy review
+1. audit/status policy review
 2. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
 3. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
 4. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행

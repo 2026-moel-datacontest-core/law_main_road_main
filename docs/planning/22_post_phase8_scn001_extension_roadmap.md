@@ -258,10 +258,92 @@ Lifecycle decision table:
 | account deletion/access-control | separate from history item deletion; not opened in Step 3 | account-level lifecycle, ownership model, and access-control policy | auth/account policy, history/artifact visibility policy, legal/ops review | separate phase after history item policy stabilizes | account deletion UX/API |
 | orphan cleanup | not opened; orphan candidates remain inaccessible/classification candidates | classification criteria, quarantine rules, cleanup evidence, and manual review need | artifact linkage review, storage inventory, audit/status policy | after artifact access/retrieval and cloud storage policy are reviewed | orphan cleanup job |
 
+#### Artifact access / retrieval policy review
+
+This is policy review only. Artifact retrieval UI/API is NOT opened.
+This subsection does not decide API path/method, DB schema/migration, storage
+transport, response shape, status code, or implementation prompt.
+
+Scope boundary:
+
+- Artifact retrieval UI/API is NOT opened.
+- Hard delete, file purge, GCS lifecycle, audit export, undo/restore, account
+  deletion/access-control, and orphan cleanup are NOT opened.
+- SCN-001 document draft is NOT opened.
+- SCN-004 freeze remains unchanged.
+- `/api/v1/answer` public contract remains unchanged.
+- `/api/v1/documents/draft` public contract remains unchanged.
+
+Artifact categories:
+
+- protected linked Before artifacts, if/when exposed
+- protected linked Bridge-derived After answer artifacts
+- public unlinked After answer artifacts
+- orphan artifact candidates
+- already-hidden/deleted record artifacts
+
+Access principles:
+
+- Protected linked artifacts require backend-verified user ownership.
+- Public unlinked artifacts are not account-history retrievable by default.
+- Orphan artifacts are not user-retrievable until classification policy exists.
+- Already-hidden/deleted record artifacts are not user-facing retrievable.
+- Source Bridge/Before hidden state must block future user-facing artifact
+  retrieval.
+- Retrieval response, UI, and logs must not expose raw token material, Firebase
+  identifiers, provider subjects, contact fields, raw query, full answer body,
+  artifact body, artifact storage path, or real Bridge database identifier.
+
+Retrieval response policy candidates:
+
+- metadata-only first candidate.
+- No raw artifact body by default.
+- Signed URL, file streaming, and inline body are future choices, not decided.
+- Redact or mask sensitive internal identifiers.
+- Avoid exposing real Bridge database identifier or artifact storage path.
+- Distinguish internal retrieval from user-facing retrieval. Internal ops review
+  may need storage inventory/status checks, while user-facing retrieval should
+  remain ownership-checked, minimal, and sanitized.
+
+Relationship to deletion policy:
+
+- Soft-deleted history rows remain hidden from future artifact access UI.
+- Before hide affects linked Bridge visibility; artifact access depends on
+  future policy.
+- Bridge hide excludes linked After artifact from continuity/draft affordance
+  and future user-facing retrieval candidate.
+- Public unlinked artifacts remain global retention cleanup candidates, not
+  account retrieval candidates.
+- Orphan cleanup remains a separate ops/policy task.
+
+Relationship to Bridge-as-Continuity:
+
+- Artifact retrieval must not make Bridge a grounding source.
+- Displayed safe subset may support continuity explanation, but retrieved
+  artifact files/bodies must not create new `cited_articles`,
+  `grounded_context_ids`, or legal grounding.
+- Do not expose raw Before/Bridge payload as continuity context.
+
+Decision table:
+
+| artifact category | current MVP access | future access candidate | ownership basis | hidden/deleted behavior | response body candidate | unresolved question | non-goal now |
+|---|---|---|---|---|---|---|---|
+| Protected linked Before artifacts, if/when exposed | no artifact retrieval surface; Before history is list/detail metadata only | account history artifact metadata candidate only after policy approval | backend-verified internal user ownership on Before review job | hidden Before blocks history/detail, Bridge creation, Bridge selection, and future artifact retrieval candidate | metadata-only first; no raw artifact body by default | If Before artifacts become exposed, which metadata is enough without raw OCR/contract/result body? | Before artifact retrieval UI/API, raw body exposure, file streaming, signed URL, inline body |
+| Protected linked Bridge-derived After answer artifacts | protected checked Bridge answer persists linked After artifact, but no retrieval surface is opened | owner-checked metadata candidate tied to source Bridge visibility | backend-verified internal user ownership plus source Bridge linkage | hidden Bridge or hidden-source-Before blocks continuity/draft affordance and future user-facing retrieval candidate | metadata-only first; no raw answer/artifact body by default | Should linked After artifact visibility be controlled by artifact row status, source Bridge/Before visibility, or both? | exposing real Bridge id, artifact storage path, full answer body, artifact body |
+| Public unlinked After answer artifacts | public `/api/v1/answer` artifacts are not account-history retrievable | global retention cleanup inventory candidate, not account retrieval | no account ownership basis by default | not shown in account history and not confirmed/denied by account UX | no user-facing body candidate until a separate public artifact policy exists | What global retention window and cleanup evidence are enough for public unlinked artifacts? | retroactive account ownership inference, account deletion cascade |
+| Orphan artifact candidates | not visible and not user-retrievable | quarantine/classification metadata candidate after orphan policy | ownership/context uncertain until classification policy exists | remain inaccessible; hidden parent state alone does not prove orphan status | metadata-only internal classification candidate; no user-facing body | What automated/manual checks can classify an artifact without irreversible assumptions? | orphan cleanup job, user-triggered purge, account history disclosure |
+| Already-hidden/deleted record artifacts | hidden from history/detail/Bridge selection; no artifact access | idempotent internal status candidate only | internal linkage if inspectable internally, never provider identifiers | remain not user-facing retrievable; repeated access should look absent/hidden | no user-facing body; minimal internal status only | What status granularity supports idempotency without exposing state transitions? | restore/undo, hard delete, file purge triggered by repeated access |
+
+Recommended next policy target after this review:
+
+- If artifact access/retrieval policy is accepted, the next target should be
+  audit/status policy review.
+- This is not implementation.
+
 Recommended sequencing:
 
-1. artifact access/retrieval policy
-2. audit/status policy
+1. artifact access/retrieval policy review
+2. audit/status policy review
 3. cloud storage/GCS lifecycle policy
 4. orphan classification/cleanup policy
 5. hard delete/file purge implementation
@@ -282,6 +364,8 @@ Current safe default:
 
 Do-not-open checklist:
 
+- artifact retrieval UI/API implementation
+- raw artifact body exposure
 - hard delete implementation
 - file purge job
 - GCS lifecycle job
@@ -294,8 +378,8 @@ Do-not-open checklist:
 
 Next prompt target:
 
-- If continuing, the next policy review should be either artifact access/retrieval
-  policy review or audit/status policy review.
+- If continuing after this artifact access/retrieval policy review, the next
+  policy review should be audit/status policy review.
 - It should not be implementation yet.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
@@ -725,9 +809,9 @@ fixture/preset 후보로 검토한다.
 
 실제 브라우저 logged-in history deletion smoke는 PASS 상태다. Step 3 MVP
 soft-delete slice completed 상태이며, full retention lifecycle implementation은
-NOT opened 상태를 유지한다. Full retention lifecycle policy review는 Step 3 아래에
-문서화되어 있고, 다음 prompt target은 추가 deletion API/schema 구현이 아니라
-artifact access/retrieval policy review 또는 audit/status policy review로 제한한다.
+NOT opened 상태를 유지한다. Full retention lifecycle policy review와 artifact
+access/retrieval policy review는 Step 3 아래에 문서화되어 있고, 다음 prompt target은
+추가 deletion API/schema 구현이 아니라 audit/status policy review로 제한한다.
 
 Review focus:
 
@@ -741,8 +825,8 @@ Review focus:
   남아 있는지
 - retention window, audit log/status column, file purge job, orphan classification,
   cascade policy가 구현 확정 없이 review/refine 대상으로 남아 있는지
-- artifact access/retrieval policy와 audit/status policy가 다음 문서 cycle에서
-  implementation 없이 정리될 수 있게 분리되어 있는지
+- artifact access/retrieval policy가 implementation 없이 정리되어 있고, 다음
+  audit/status policy cycle과 분리되어 있는지
 - additional deletion API, DB schema/migration, account deletion/access-control
   implementation을 여전히 열지 않는지
 - auth persistence changes, undo/restore, hard delete, file purge, artifact physical
@@ -756,8 +840,8 @@ SCN-004 freeze와 `/api/v1/answer`, `/api/v1/documents/draft` public contract
 unchanged 상태를 유지하면서 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`
 의 Step 3 MVP soft-delete slice completed 상태와 full retention lifecycle
 implementation NOT opened 상태를 유지한다.
-다음 문서 cycle은 artifact access/retrieval policy review 또는 audit/status policy
-review 중 하나로 제한한다.
+Artifact access/retrieval policy review가 문서화된 상태에서, 다음 문서 cycle은
+audit/status policy review로 제한한다.
 코드 구현, DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성,
 account deletion/access-control implementation, SCN-001 document draft,
 SCN-001 draft freeze, provider_timeout/OCR retry hardening은 열지 않는다.

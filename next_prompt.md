@@ -9,12 +9,14 @@ law_main_road repo root에서 작업해주세요.
 - 2026-04-27
 
 현재 git / 제출 기준 상태:
-- 2026-04-27 Step 3 MVP soft-delete docs sync 시작 시점의 `git status -sb`: `## main...origin/main`.
-- 2026-04-27 Step 3 MVP soft-delete docs sync 시작 시점의 `git status --short`: clean.
-- 문서 업데이트 후 commit 전이면 `AGENTS.md`, `CLAUDE.md`, `frontend/CLAUDE.md`, `docs/ops/README.md`, `docs/planning/19_scn001_auth_integration_status.md`, `docs/planning/22_post_phase8_scn001_extension_roadmap.md`, `next_prompt.md`도 modified일 수 있다.
+- 2026-04-27 artifact access/retrieval policy review 시작 시점의 `git status -sb`: `## main...origin/main`.
+- 2026-04-27 artifact access/retrieval policy review 시작 시점의 `git status --short`: clean.
+- 문서 업데이트 후 commit 전이면 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`, `next_prompt.md`, `docs/ops/README.md`도 modified일 수 있다.
 - 새 세션 시작 직후 `git status -sb`, `git status --short`, `git log --oneline -12`로 origin/main 동기화와 clean/dirty 상태를 다시 확인하세요.
 - 이번 문서 업데이트는 별도 add/commit/push를 하지 않는 작업 범위였다.
 - 최근 중요 커밋:
+  - 180d81c docs(scn-001): document Step 3 retention policy review
+  - 83508dc docs(scn-001): record Step 3 MVP deletion completion
   - 50c279f feat(frontend): add SCN-001 history delete UI
   - e6f17eb feat(scn-001): add backend history soft delete
   - 591ca11 docs(scn-001): refine deletion policy candidates
@@ -93,6 +95,12 @@ law_main_road repo root에서 작업해주세요.
 - Step 3 full retention lifecycle policy review is documented in
   `docs/planning/22_post_phase8_scn001_extension_roadmap.md`; this is policy
   review only, not implementation.
+- Artifact access/retrieval policy review is documented in
+  `docs/planning/22_post_phase8_scn001_extension_roadmap.md`; artifact retrieval
+  UI/API, retrieval implementation, API path/method, DB schema/migration, signed
+  URL, file streaming, inline body, hard delete, file purge, GCS lifecycle,
+  audit export, undo/restore, account deletion/access-control, orphan cleanup,
+  and SCN-001 document draft are NOT opened.
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
@@ -329,6 +337,7 @@ npm run dev
 - Step 2B-3 또는 Step 3 full retention lifecycle implementation을 현재 상태에서 바로 열지 마세요.
 - Step 3 MVP soft-delete slice는 completed 상태입니다. 추가 deletion/history retention 구현은 열지 마세요.
 - full retention lifecycle은 policy review 수준으로만 허용합니다.
+- artifact retrieval UI/API, artifact body retrieval, signed URL, file streaming, inline body는 아직 열지 마세요.
 - provider_timeout/OCR retry hardening을 UI polish와 섞지 마세요.
 - backend API contract 임의 변경 금지.
 - `/api/v1/answer` public contract 변경 금지.
@@ -350,9 +359,9 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. Artifact access/retrieval policy review 또는 audit/status policy review
-   - Step 3 full retention lifecycle policy review 다음의 문서-only target
-   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 artifact access/retrieval 또는 audit/status 정책만 정리
+1. audit/status policy review
+   - Step 3 full retention lifecycle policy review와 artifact access/retrieval policy review 다음의 문서-only target
+   - 구현이 아니라 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`의 audit/status 정책만 정리
    - Step 3 MVP soft-delete slice completed 상태를 유지
    - DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성, account history access-control 구현은 열지 않음
    - hard delete/file purge implementation, GCS lifecycle job, audit export endpoint, restore endpoint, account deletion UX/API, orphan cleanup job은 열지 않음
@@ -408,5 +417,6 @@ Post-Phase 8 Step 1, 1.5, OCR 429 friendly message, Step 2A, Step 2B-1,
 Step 2B-2, Step 1.6까지 `git log` 기준 완료 상태다. 2026-04-27 기준 실제
 브라우저 logged-in smoke PASS와 backend-verified auth gate sync hardening도
 확인됐다. Step 3 MVP soft-delete slice completed 상태이며, Step 3 full retention
-lifecycle policy review는 문서화됐지만 implementation은 NOT opened 상태다.
+lifecycle policy review와 artifact access/retrieval policy review는 문서화됐지만
+implementation은 NOT opened 상태다. 다음 target은 audit/status policy review다.
 SCN-001 document draft도 아직 열지 않는다.
