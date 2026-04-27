@@ -91,7 +91,7 @@ GOOGLE_APPLICATION_CREDENTIALS=$PWD/config/secrets/firebase-admin.json
 - `FIREBASE_ADMIN_CREDENTIALS`는 local fallback이다.
 - 현재 backend 구현은 ADC / `GOOGLE_APPLICATION_CREDENTIALS`를 우선 사용할 수 있으므로, smoke shell에서는 `GOOGLE_APPLICATION_CREDENTIALS=$PWD/config/secrets/firebase-admin.json`로 Firebase Admin JSON을 명확히 지정한다.
 - `GOOGLE_APPLICATION_CREDENTIALS`가 Vertex AI용 credential을 가리키고 있으면 Firebase Admin SDK도 그 ADC를 먼저 사용할 수 있다.
-- Phase 6F 이후 Vertex IAM/credential issue는 runtime resolved 상태로 기록한다. 이후 answer smoke에서 남은 주된 runtime risk는 transient `provider_timeout`이며, retry/backoff hardening은 별도 runtime 작업이다.
+- Phase 6F 이후 Vertex IAM/credential issue는 runtime resolved 상태로 기록한다. 이후 answer smoke에서 남은 주된 runtime risk는 transient `provider_timeout`이며, retry/backoff hardening은 별도 runtime 작업이다. Before OCR에는 timeout/stale-job failure guard를 둔다.
 
 ### 2. Frontend Firebase Web App public config
 

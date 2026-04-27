@@ -511,6 +511,20 @@ backend code 기준:
 - credential path, service account JSON, token, Firebase uid, provider_subject, email 값은 문서/로그/채팅/git에 남기지 않는다.
 - `/api/v1/answer` public contract와 `/api/v1/documents/draft` contract를 timeout 회피 목적으로 확장하지 않는다.
 
+## 2026-04-27 Before OCR Timeout Notes
+
+증상:
+
+- `/before`에서 파일 업로드 후 OCR 단계가 계속 진행 중으로 보이고 완료 또는 실패로 넘어가지 않는다.
+- 최신 `backend/data/before_artifacts/runs/...` 폴더에는 업로드 원본만 있고 `ocr_output.json`, `review_result.json`, `error.txt`가 없다.
+
+대응:
+
+- Before OCR provider 호출에는 wall-clock timeout guard를 둔다.
+- 상태 조회 시 `queued` 또는 `running` job이 stale timeout을 넘기면 failed로 전환한다.
+- 기본값은 `BEFORE_OCR_TIMEOUT_SECONDS=120`, `BEFORE_REVIEW_JOB_STALE_TIMEOUT_SECONDS=180`이다.
+- frontend는 OCR 429와 OCR timeout을 구분해 사용자에게 재시도 가능한 메시지로 표시한다.
+
 ## 2026-04-20 Demo / QA Troubleshooting
 
 ### 1. Non-interactive shell에서 `conda activate` 실패

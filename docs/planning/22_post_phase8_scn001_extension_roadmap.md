@@ -235,7 +235,8 @@ Remaining boundary:
 - orphan cleanup remains out of scope.
 - SCN-001 document draft implementation remains out of scope.
 - SCN-005 remains out of scope.
-- provider_timeout/OCR retry hardening remains out of scope.
+- provider_timeout retry/backoff hardening remains out of scope. Before OCR
+  timeout/stale-job failure guard is treated as a narrow runtime guard.
 
 #### Full retention lifecycle policy review
 
@@ -1125,8 +1126,7 @@ fixture/preset 후보로 검토한다.
 - history deletion 설계와 deletion API/code implementation을 한 patch에 섞지 않는다.
 - SCN-001 draft와 SCN-004 freeze QA를 한 patch에 섞지 않는다.
 - SCN-001 draft와 provider_timeout retry/backoff hardening을 섞지 않는다.
-- provider_timeout/OCR retry/backoff/hard-timeout hardening을 UI polish와 섞지
-  않는다.
+- provider_timeout/OCR retry/backoff hardening을 UI polish와 섞지 않는다.
 - SCN-001 draft와 SCN-005 document type 확장을 섞지 않는다.
 - read-only history와 deletion/history retention을 한 patch에 섞지 않는다.
 - `/api/v1/answer` public contract 변경과 SCN-001 protected extension을 섞지 않는다.
@@ -1200,7 +1200,7 @@ Review focus:
   쓰거나 노출하지 않는지
 - Step 3 full retention lifecycle implementation, hard delete, file purge, GCS
   lifecycle, audit/export, undo/restore, account deletion/access-control, orphan
-  cleanup, SCN-005, provider_timeout/OCR retry hardening을 여전히 열지 않는지
+  cleanup, SCN-005, provider_timeout retry/backoff hardening을 여전히 열지 않는지
 
 Current prompt target summary:
 
@@ -1215,4 +1215,4 @@ Current prompt target summary:
   path/method/schema 확정, API 구현 프롬프트, SCN-001 document draft generation,
   SCN-001 draft freeze, SCN-005, Step 3 full retention lifecycle implementation,
   hard delete/file purge, GCS lifecycle job, orphan cleanup job,
-  provider_timeout/OCR retry hardening은 열지 않는다.
+  provider_timeout retry/backoff hardening은 열지 않는다.

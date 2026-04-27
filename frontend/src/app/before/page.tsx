@@ -80,7 +80,16 @@ const BEFORE_JOB_GENERAL_FAILURE_MESSAGE =
   '계약서 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
 const BEFORE_JOB_OCR_QUOTA_FAILURE_MESSAGE =
   'OCR 요청 한도가 일시적으로 초과되었습니다. 잠시 후 다시 시도해주세요.';
+const BEFORE_JOB_OCR_TIMEOUT_FAILURE_MESSAGE =
+  'OCR 응답 시간이 초과되어 분석을 중단했습니다. 잠시 후 다시 시도해주세요.';
 const OCR_QUOTA_ERROR_PATTERNS = [/429/i, /resource exhausted/i, /quota/i, /rate limit/i];
+const OCR_TIMEOUT_ERROR_PATTERNS = [
+  /timeout/i,
+  /timed out/i,
+  /hard wall-clock timeout/i,
+  /응답 시간이 초과/i,
+  /시간이 초과/i,
+];
 
 function createMockJob(): BeforeReviewJob {
   const now = new Date().toISOString();
@@ -1664,6 +1673,13 @@ function getBeforeJobFailureMessage(job: BeforeReviewJob): string {
     return BEFORE_JOB_OCR_QUOTA_FAILURE_MESSAGE;
   }
 
+  if (
+    failedOcrStep &&
+    hasOcrTimeoutErrorMessage([job.error ?? null, failedOcrStep.message ?? null])
+  ) {
+    return BEFORE_JOB_OCR_TIMEOUT_FAILURE_MESSAGE;
+  }
+
   return BEFORE_JOB_GENERAL_FAILURE_MESSAGE;
 }
 
@@ -1685,5 +1701,15 @@ function hasOcrQuotaErrorMessage(messages: Array<string | null>): boolean {
     }
 
     return OCR_QUOTA_ERROR_PATTERNS.some((pattern) => pattern.test(message));
+  });
+}
+
+function hasOcrTimeoutErrorMessage(messages: Array<string | null>): boolean {
+  return messages.some((message) => {
+    if (!message) {
+      return false;
+    }
+
+    return OCR_TIMEOUT_ERROR_PATTERNS.some((pattern) => pattern.test(message));
   });
 }

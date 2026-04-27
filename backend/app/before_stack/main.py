@@ -17,10 +17,11 @@ app.py — Phase B-5 (FastAPI 통합)
 
 import asyncio
 import json
+import os
 import re
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -321,6 +322,42 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+DEFAULT_BEFORE_OCR_TIMEOUT_SECONDS = 120.0
+DEFAULT_REVIEW_JOB_STALE_TIMEOUT_SECONDS = 180.0
+STALE_REVIEW_JOB_MESSAGE = (
+    "OCR 응답 시간이 초과되어 분석을 중단했습니다. 잠시 후 다시 시도해주세요."
+)
+
+
+def _resolve_positive_float_env(name: str, default: float) -> float:
+    raw_value = os.environ.get(name, "").strip()
+    if not raw_value:
+        return default
+
+    try:
+        value = float(raw_value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a positive number of seconds.") from exc
+
+    if value <= 0:
+        raise ValueError(f"{name} must be greater than 0.")
+    return value
+
+
+def _resolve_review_job_stale_timeout_seconds() -> float:
+    return _resolve_positive_float_env(
+        "BEFORE_REVIEW_JOB_STALE_TIMEOUT_SECONDS",
+        DEFAULT_REVIEW_JOB_STALE_TIMEOUT_SECONDS,
+    )
+
+
+def _resolve_before_ocr_timeout_seconds() -> float:
+    return _resolve_positive_float_env(
+        "BEFORE_OCR_TIMEOUT_SECONDS",
+        DEFAULT_BEFORE_OCR_TIMEOUT_SECONDS,
+    )
+
+
 def _build_default_steps() -> list[dict[str, Any]]:
     return [
         {"key": "upload", "label": "업로드 파일 확인", "order": 1, "status": "pending", "message": None},
@@ -355,6 +392,69 @@ def _update_job(
     )
 
 
+def _exception_message(error: Exception) -> str:
+    if isinstance(error, HTTPException):
+        detail = error.detail
+        if isinstance(detail, str) and detail.strip():
+            return detail.strip()
+        if detail is not None:
+            return str(detail)
+    return str(error) or type(error).__name__
+
+
+def _parse_job_datetime(value: object) -> datetime | None:
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError:
+            return None
+    else:
+        return None
+
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _mark_stale_review_job_failed(job: dict[str, Any]) -> dict[str, Any]:
+    steps = job.get("steps") or []
+    active_step = next(
+        (step for step in steps if step.get("status") == "running"),
+        None,
+    )
+    if active_step is None:
+        active_step = next(
+            (step for step in steps if step.get("status") == "pending"),
+            None,
+        )
+
+    return update_job_record(
+        job["job_id"],
+        status="failed",
+        active_step_key=active_step.get("key") if active_step else "ocr",
+        active_step_status="failed",
+        active_step_message=STALE_REVIEW_JOB_MESSAGE,
+        error=STALE_REVIEW_JOB_MESSAGE,
+    )
+
+
+def _fail_stale_review_job_if_needed(job: dict[str, Any]) -> dict[str, Any]:
+    if job.get("status") not in {"queued", "running"}:
+        return job
+
+    updated_at = _parse_job_datetime(job.get("updated_at"))
+    if updated_at is None:
+        return job
+
+    stale_after = timedelta(seconds=_resolve_review_job_stale_timeout_seconds())
+    if datetime.now(timezone.utc) - updated_at < stale_after:
+        return job
+
+    return _mark_stale_review_job_failed(job)
+
+
 async def _execute_review_job(
     app: FastAPI,
     job_id: str,
@@ -377,6 +477,9 @@ async def _execute_review_job(
             active_step_message="계약서 이미지를 읽고 텍스트를 추출하는 중입니다.",
         )
         response = await run_contract_review_pipeline(app, page_files)
+        current_job = get_job_record(job_id)
+        if current_job is not None and current_job.get("status") == "failed":
+            return
         _update_job(app, job_id, active_step_key="ocr", active_step_status="completed", active_step_message="OCR 추출 완료")
         _update_job(
             app,
@@ -403,7 +506,8 @@ async def _execute_review_job(
             run_directory=response.get("run_directory"),
         )
     except Exception as error:  # pragma: no cover - background task boundary
-        _update_job(app, job_id, status="failed", error=str(error))
+        message = _exception_message(error)
+        _update_job(app, job_id, status="failed", error=message)
         job = get_job_record(job_id)
         if job is not None:
             for step in job["steps"]:
@@ -412,7 +516,7 @@ async def _execute_review_job(
                         job_id,
                         active_step_key=step["key"],
                         active_step_status="failed",
-                        active_step_message=str(error),
+                        active_step_message=message,
                     )
                     break
 
@@ -560,6 +664,16 @@ def run_ocr(saved_paths: list[str]) -> dict:
     if len(saved_paths) == 1:
         return _run_ocr_pipeline(saved_paths[0])
     return _run_ocr_pipeline_pages(saved_paths)
+
+
+async def _run_ocr_with_timeout(saved_paths: list[str]) -> dict:
+    try:
+        return await asyncio.wait_for(
+            asyncio.to_thread(run_ocr, saved_paths),
+            timeout=_resolve_before_ocr_timeout_seconds(),
+        )
+    except TimeoutError as exc:
+        raise TimeoutError(STALE_REVIEW_JOB_MESSAGE) from exc
 
 
 def _save_run_artifacts(run_dir: Path, output: dict, response: dict) -> None:
@@ -1002,7 +1116,14 @@ async def run_contract_review_pipeline(
     saved_paths = _persist_uploaded_files(page_files, run_dir)
 
     try:
-        output = await asyncio.to_thread(run_ocr, saved_paths)
+        output = await _run_ocr_with_timeout(saved_paths)
+    except TimeoutError as error:
+        message = str(error) or STALE_REVIEW_JOB_MESSAGE
+        (run_dir / "error.txt").write_text(
+            f"OCR 실패: {message}",
+            encoding="utf-8",
+        )
+        raise HTTPException(status_code=504, detail=message) from error
     except Exception as error:
         (run_dir / "error.txt").write_text(
             f"OCR 실패: {error}",
@@ -1091,6 +1212,7 @@ async def get_review_job(job_id: str):
     job = get_job_record(job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="before review job not found")
+    job = _fail_stale_review_job_if_needed(job)
     return JSONResponse(content=job)
 
 

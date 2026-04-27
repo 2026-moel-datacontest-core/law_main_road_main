@@ -176,7 +176,8 @@ Out of scope remains:
 - hard delete, artifact physical deletion, file purge, retention lifecycle, GCS
   lifecycle, audit/export, undo/restore, auth persistence changes, account
   deletion/access-control, orphan cleanup, SCN-001 document draft, SCN-005, and
-  provider_timeout/OCR retry hardening are not opened.
+  provider_timeout retry/backoff hardening are not opened. Before OCR timeout
+  and stale job failure guard are a narrow runtime guard, not a retry/backoff phase.
 
 ## Current Auth / Linkage Architecture
 
@@ -240,14 +241,14 @@ Displayed safe subset:
 
 - Additional negative auth smoke for missing token / other-user `bridge_run_id` masking can be run as needed; positive Phase 7E browser/network/DB route smoke and Post-Phase 8 actual logged-in browser smoke passed.
 - Phase 6F passed with retry, but transient `provider_timeout` remains residual runtime risk. Retry/backoff hardening is separate runtime work.
-- Full real Before/OCR completed E2E remains separate if needed; Phase 6F Bridge checked-live smoke used memory-only synthetic handoff state.
+- Full real Before/OCR completed E2E remains separate if needed; Phase 6F Bridge checked-live smoke used memory-only synthetic handoff state. Before OCR now has a timeout/stale-job guard so OCR provider hangs fail instead of polling indefinitely.
 - IndexedDB Firebase SDK persistence policy can be revisited if needed; MVP app code still uses `inMemoryPersistence` and does not store raw flow payload in Web Storage.
 - Retroactive linking for existing null orphan Before jobs is Post-MVP.
 - Step 3 MVP soft-delete slice completed, but full retention lifecycle remains
   NOT opened. Hard delete, artifact physical deletion/file purge, retention
   lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes,
   account deletion/access-control, orphan cleanup, SCN-001 document draft,
-  SCN-005, and provider_timeout/OCR retry hardening remain future/out of scope.
+  SCN-005, and provider_timeout retry/backoff hardening remain future/out of scope.
 
 ## Do Not Mix
 
