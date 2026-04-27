@@ -17,6 +17,7 @@ app.py — Phase B-5 (FastAPI 통합)
 
 import asyncio
 import json
+import multiprocessing as mp
 import os
 import re
 import uuid
@@ -324,6 +325,7 @@ def _now_iso() -> str:
 
 DEFAULT_BEFORE_OCR_TIMEOUT_SECONDS = 120.0
 DEFAULT_REVIEW_JOB_STALE_TIMEOUT_SECONDS = 180.0
+DEFAULT_BEFORE_OCR_TERMINATE_GRACE_SECONDS = 1.0
 STALE_REVIEW_JOB_MESSAGE = (
     "OCR 응답 시간이 초과되어 분석을 중단했습니다. 잠시 후 다시 시도해주세요."
 )
@@ -356,6 +358,12 @@ def _resolve_before_ocr_timeout_seconds() -> float:
         "BEFORE_OCR_TIMEOUT_SECONDS",
         DEFAULT_BEFORE_OCR_TIMEOUT_SECONDS,
     )
+
+
+def _get_process_context() -> mp.context.BaseContext:
+    if "fork" in mp.get_all_start_methods():
+        return mp.get_context("fork")
+    return mp.get_context("spawn")
 
 
 def _build_default_steps() -> list[dict[str, Any]]:
@@ -666,14 +674,63 @@ def run_ocr(saved_paths: list[str]) -> dict:
     return _run_ocr_pipeline_pages(saved_paths)
 
 
-async def _run_ocr_with_timeout(saved_paths: list[str]) -> dict:
+def _ocr_process_entry(saved_paths: list[str], result_conn: Any) -> None:
     try:
-        return await asyncio.wait_for(
-            asyncio.to_thread(run_ocr, saved_paths),
-            timeout=_resolve_before_ocr_timeout_seconds(),
+        payload = run_ocr(saved_paths)
+    except BaseException as exc:  # pragma: no cover - subprocess boundary
+        result_conn.send(
+            {
+                "status": "error",
+                "error_type": type(exc).__name__,
+                "message": str(exc),
+            }
         )
-    except TimeoutError as exc:
-        raise TimeoutError(STALE_REVIEW_JOB_MESSAGE) from exc
+    else:
+        result_conn.send({"status": "ok", "payload": payload})
+    finally:
+        result_conn.close()
+
+
+async def _run_ocr_with_timeout(saved_paths: list[str]) -> dict:
+    timeout_seconds = _resolve_before_ocr_timeout_seconds()
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout_seconds
+    ctx = _get_process_context()
+    parent_conn, child_conn = ctx.Pipe(duplex=False)
+    process = ctx.Process(
+        target=_ocr_process_entry,
+        args=(saved_paths, child_conn),
+    )
+    process.start()
+    child_conn.close()
+
+    try:
+        while process.is_alive():
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                process.terminate()
+                process.join(DEFAULT_BEFORE_OCR_TERMINATE_GRACE_SECONDS)
+                if process.is_alive():
+                    process.kill()
+                    process.join(DEFAULT_BEFORE_OCR_TERMINATE_GRACE_SECONDS)
+                raise TimeoutError(STALE_REVIEW_JOB_MESSAGE)
+            await asyncio.sleep(min(0.25, remaining))
+
+        process.join(DEFAULT_BEFORE_OCR_TERMINATE_GRACE_SECONDS)
+        if not parent_conn.poll(DEFAULT_BEFORE_OCR_TERMINATE_GRACE_SECONDS):
+            raise RuntimeError(
+                "OCR provider process exited without returning a result. "
+                f"exitcode={process.exitcode}"
+            )
+        result = parent_conn.recv()
+    finally:
+        parent_conn.close()
+
+    if result["status"] == "ok":
+        return result["payload"]
+
+    message = str(result.get("message") or "OCR provider call failed.")
+    raise RuntimeError(message)
 
 
 def _save_run_artifacts(run_dir: Path, output: dict, response: dict) -> None:
