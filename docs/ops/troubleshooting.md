@@ -511,7 +511,7 @@ backend code 기준:
 - credential path, service account JSON, token, Firebase uid, provider_subject, email 값은 문서/로그/채팅/git에 남기지 않는다.
 - `/api/v1/answer` public contract와 `/api/v1/documents/draft` contract를 timeout 회피 목적으로 확장하지 않는다.
 
-## 2026-04-27 Before OCR Timeout Notes
+## 2026-04-27 Before OCR Timeout / Stale Job Notes
 
 증상:
 
@@ -524,6 +524,14 @@ backend code 기준:
 - 상태 조회 시 `queued` 또는 `running` job이 stale timeout을 넘기면 failed로 전환한다.
 - 기본값은 `BEFORE_OCR_TIMEOUT_SECONDS=120`, `BEFORE_REVIEW_JOB_STALE_TIMEOUT_SECONDS=180`이다.
 - frontend는 OCR 429와 OCR timeout을 구분해 사용자에게 재시도 가능한 메시지로 표시한다.
+
+구현 상태:
+
+- stale/running OCR review job failure guard는 `c6c3ed0`에서 completed 상태다.
+- 이 guard는 public `/api/v1/answer`, public `/api/v1/documents/draft`, SCN-004
+  frontend flow와 무관한 Before runtime guard다.
+- OCR live upload smoke에는 provider/runtime risk가 있었으며, retry/backoff/full
+  provider hardening은 별도 future runtime 후보로 둔다.
 
 ## 2026-04-20 Demo / QA Troubleshooting
 

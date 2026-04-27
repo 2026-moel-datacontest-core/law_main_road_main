@@ -37,7 +37,7 @@
 - SCN-004 draft navigation race 수정 완료
 - SCN-004 free input document eligibility guard 완료
 - SCN-001/004 presentation-local preset architecture 완료:
-  - `SCN-001-BRIDGE-DEMO`: fixed/live 여부와 관계없이 answer-only
+  - `SCN-001-BRIDGE-DEMO`: exact fixed preset은 frozen draft flow 제공, modified/live and Bridge-origin paths는 answer-only
   - `SCN-004-DEMO-FREEZE`: main demo / document draft freeze path
   - SCN-005는 현재 UI preset에서 제외하고 후속 확장 후보로 유지
 - Phase 3C 이후 확장 작업은 보류:
@@ -80,13 +80,20 @@
   - Before delete hides/removes linked Bridge visible path
   - memory-only Bridge handoff clear so deleted Before cannot seed `/after`
   - Step 3 full retention lifecycle is NOT opened
-- SCN-001 Step 4 document draft design is opened as docs-only design:
-  - SCN-001 document draft frontend implementation remains NOT opened
-  - Bridge/query relevance guard matrix review is the current design baseline
-  - next target is `SCN-001 MVP demo frontend-only continuity panel`
-  - continuity panel is Bridge -> After answer-only continuity explanation only
-  - no SCN-004 `/after` draft behavior change
+- SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow 완료:
+  - `/after -> /after/result -> /after/intake -> /after/draft`
+  - document type: `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안
+  - SCN-001 intake는 SCN-004와 유사한 입력 form UX를 사용
+  - frozen draft는 frontend fixture + deterministic template 기반이며 사용자 intake 값을 반영
+  - backend/LLM 호출 없음, `/api/v1/documents/draft` 호출 없음
+- SCN-001 continuity panel 완료:
+  - `/after/result`와 `/after/draft`에 표시
   - `Bridge-as-Continuity, Not Grounding` 유지
+  - legal basis, citations, source context ids, grounded context ids, retrieved chunks를 생성/수정하지 않음
+- SCN-001 live/backend draft generation and protected SCN-001 draft endpoint path/method/schema remain NOT opened:
+  - SCN-004 `/after` draft behavior unchanged
+  - SCN-004 public `/api/v1/documents/draft` flow unchanged
+  - next target is frozen draft + continuity panel browser rehearsal/evidence finalization, docs sync/release readiness, or optional live Bridge handoff continuity smoke
 
 ## 핵심 원칙
 
@@ -131,12 +138,12 @@
 - presentation preset exact path는 fixed answer fixture를 사용하므로 `/api/v1/answer`를 호출하지 않음
 - presentation preset modified path는 `top_k=10`, 일반 자유 입력은 `top_k=5`, 항상 `ef_search=100`
 - SCN-004 범위 밖 자유 입력은 answer-only로 처리하고 document draft UI를 열지 않음
-- `/api/v1/documents/draft`에는 `buildCaseIntake()`와 `buildLegalBasis()` 결과만 보냄
+- `/api/v1/documents/draft`에는 SCN-004 public draft flow에서만 `buildCaseIntake()`와 `buildLegalBasis()` 결과를 보냄. SCN-001-BRIDGE-DEMO exact fixed frozen draft path는 frontend-local deterministic draft를 만들고 이 endpoint를 호출하지 않음
 - `/api/v1/answer` public contract unchanged
 - `/api/v1/documents/draft` contract unchanged
-- SCN-001 Step 4 document draft design is docs-only; SCN-001 draft generation/freeze and protected SCN-001 draft endpoint path/method/schema remain NOT opened.
-- Bridge/query relevance guard matrix review is the current design baseline. Next target is `SCN-001 MVP demo frontend-only continuity panel`, not SCN-001 document draft generation.
-- Continuity panel은 Bridge-origin result의 answer-only continuity explanation이며, Bridge는 legal grounding이 아니라 continuity 설명으로만 다룬다.
+- SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow is frontend-local; it does not call `/api/v1/documents/draft`.
+- SCN-001 live/backend draft generation and protected SCN-001 draft endpoint path/method/schema remain NOT opened.
+- Bridge/query relevance guard matrix review is the current design baseline. Continuity panel is completed on `/after/result` and `/after/draft`, and Bridge는 legal grounding이 아니라 continuity 설명으로만 다룬다.
 - Bridge handoff screen submission은 all unchecked라도 sticky `answer_origin = "bridge_handoff"`를 유지한다.
 - Bridge-origin result는 answer-only / draft disabled다. regular draft behavior는 direct `/after` 진입 또는 reset/re-entry가 필요하다.
 
@@ -161,7 +168,7 @@
 - PDF 다운로드 / 실제 제출 기능
 - 현재 SCN-004 demo freeze 유지 작업과 SCN-005 문서 타입 확장을 한 패치에 혼합
 - SCN-005 API / schema 검토 없는 독단적 문서 타입 확장
-- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장. SCN-001 document draft는 Step 4 docs-only design으로만 opened; draft generation/freeze, protected SCN-001 draft endpoint path/method/schema, Step 3 full retention lifecycle, 독립 `/bridge` 확장은 NOT opened. 다음 frontend-only 확장은 SCN-001 MVP demo continuity panel 범위로만 제한한다.
+- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은 completed 상태지만, live/backend draft generation, protected SCN-001 draft endpoint path/method/schema, Step 3 full retention lifecycle, 독립 `/bridge` 확장은 NOT opened.
 
 ## Do Not
 

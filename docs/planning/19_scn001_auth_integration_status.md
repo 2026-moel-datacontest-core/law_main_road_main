@@ -4,7 +4,7 @@
 
 ## Purpose
 
-이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 repo 기준으로 Firebase Auth Phase 0~5, Phase 6A~6F Bridge -> After answer-only handoff, Phase 7A~7E after artifact linkage/protected bridge answer endpoint/frontend routing verification, Post-Phase 8 Step 3 MVP soft-delete slice, SCN-004 freeze guard, residual runtime risk, current git history hash를 한 곳에 고정한다.
+이 문서는 설계 문서가 아니라 SCN-001 auth/linkage status checkpoint다. 현재 repo 기준으로 Firebase Auth Phase 0~5, Phase 6A~6F Bridge -> After answer-only handoff, Phase 7A~7E after artifact linkage/protected bridge answer endpoint/frontend routing verification, Post-Phase 8 Step 3 MVP soft-delete slice, SCN-001 fixed-preset frozen draft/continuity panel, SCN-004 freeze guard, residual runtime risk, current git history hash를 한 곳에 고정한다.
 
 ## Current Status by Phase
 
@@ -27,6 +27,9 @@
 | Phase 8 | PARTIAL | regression / demo preflight / SCN-004 manual rehearsal PASS. SCN-001 browser replay BLOCKED in Codex headless because interactive Firebase Google popup login and in-memory auth state were not available |
 | Post-Phase 8 logged-in smoke | PASS | actual browser Google login, backend `/api/v1/auth/me` verification, main Before CTA, history endpoints Authorization, and read-only history render passed with sanitized evidence. Frontend protected SCN-001 gates now require backend-verified `backendUser.logged_in`, not Firebase signed-in alone |
 | Step 3 MVP soft-delete slice | completed | backend history soft-delete foundation completed in `e6f17eb`; frontend `/before` delete UI/client completed in `50c279f`; browser deletion smoke PASS with sanitized PASS/PRESENT/NO signals. Step 3 full retention lifecycle is NOT opened |
+| Before OCR stale-job guard | completed | `c6c3ed0` fails stale/running OCR review jobs. This is a narrow Before runtime guard outside public `/api/v1/answer`, public `/api/v1/documents/draft`, and SCN-004 frontend flow |
+| SCN-001 fixed-preset frozen draft | completed | `667a1bd` adds exact `SCN-001-BRIDGE-DEMO` frozen draft flow for `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안. It is frontend fixture/deterministic template based, reflects user intake, and does not call backend/LLM or `/api/v1/documents/draft` |
+| SCN-001 continuity panel | completed | `f574e6b` adds continuity panel on `/after/result` and `/after/draft`. It preserves Bridge-as-Continuity, Not Grounding and does not create or modify legal basis, citations, source/grounded context ids, or retrieved chunks |
 
 ## Current Git History References
 
@@ -55,6 +58,9 @@ Recent relevant commits after history rewrite:
 - `9287281` chore(gitignore): harden local secret and database ignore rules
 - `e6f17eb` feat(scn-001): add backend history soft delete
 - `50c279f` feat(frontend): add SCN-001 history delete UI
+- `667a1bd` feat(frontend): add frozen SCN-001 draft flow
+- `c6c3ed0` fix(before): fail stale OCR review jobs
+- `f574e6b` feat(frontend): add SCN-001 continuity panel
 
 ## Phase 6F Evidence Summary
 
@@ -175,7 +181,8 @@ Out of scope remains:
 - Step 3 full retention lifecycle is NOT opened.
 - hard delete, artifact physical deletion, file purge, retention lifecycle, GCS
   lifecycle, audit/export, undo/restore, auth persistence changes, account
-  deletion/access-control, orphan cleanup, SCN-001 document draft, SCN-005, and
+  deletion/access-control, orphan cleanup, live/backend SCN-001 document draft,
+  protected SCN-001 draft endpoint, SCN-005, and
   provider_timeout retry/backoff hardening are not opened. Before OCR timeout
   and stale job failure guard are a narrow runtime guard, not a retry/backoff phase.
 
@@ -199,9 +206,14 @@ Out of scope remains:
 - `/api/v1/documents/draft` contract unchanged.
 - Firebase token must not be required on SCN-004 paths.
 - `SCN-004-DEMO-FREEZE` exact preset continues to use fixed answer fixture.
-- `SCN-001-BRIDGE-DEMO` remains answer-only and must not open SCN-004 document draft UI.
+- `SCN-001-BRIDGE-DEMO` exact fixed preset opens only its frontend-local frozen
+  `workplace_change_reason_summary` draft flow. It must not open SCN-004
+  document draft UI.
+- SCN-001 frozen draft flow does not call `/api/v1/documents/draft`; SCN-004
+  public draft flow continues to use `/api/v1/documents/draft` unchanged.
 - SCN-004 fixed/free input/draft flow unchanged.
-- SCN-001 document draft is not activated.
+- SCN-001 live/backend draft generation and protected SCN-001 draft endpoint are
+  not activated.
 
 ## Phase 6 Sticky Bridge Origin Policy
 
@@ -241,14 +253,16 @@ Displayed safe subset:
 
 - Additional negative auth smoke for missing token / other-user `bridge_run_id` masking can be run as needed; positive Phase 7E browser/network/DB route smoke and Post-Phase 8 actual logged-in browser smoke passed.
 - Phase 6F passed with retry, but transient `provider_timeout` remains residual runtime risk. Retry/backoff hardening is separate runtime work.
-- Full real Before/OCR completed E2E remains separate if needed; Phase 6F Bridge checked-live smoke used memory-only synthetic handoff state. Before OCR now has a timeout/stale-job guard so OCR provider hangs fail instead of polling indefinitely.
+- Full real Before/OCR completed E2E remains separate if needed; Phase 6F Bridge checked-live smoke used memory-only synthetic handoff state. Before OCR now has a timeout/stale-job guard so OCR provider hangs or stale/running jobs fail instead of polling indefinitely.
 - IndexedDB Firebase SDK persistence policy can be revisited if needed; MVP app code still uses `inMemoryPersistence` and does not store raw flow payload in Web Storage.
 - Retroactive linking for existing null orphan Before jobs is Post-MVP.
 - Step 3 MVP soft-delete slice completed, but full retention lifecycle remains
   NOT opened. Hard delete, artifact physical deletion/file purge, retention
   lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes,
-  account deletion/access-control, orphan cleanup, SCN-001 document draft,
+  account deletion/access-control, orphan cleanup, live/backend SCN-001 document draft,
   SCN-005, and provider_timeout retry/backoff hardening remain future/out of scope.
+  SCN-001-BRIDGE-DEMO exact fixed preset frozen draft and continuity panel are
+  completed frontend-local demo paths, not live/backend draft generation.
 
 ## Do Not Mix
 
@@ -259,4 +273,5 @@ Displayed safe subset:
 - Do not store raw OCR, raw contract, raw user_statement, raw answer/draft payload, raw Before full result, or raw `after_query_seed` in browser Web Storage.
 - Do not store Firebase ID token, Firebase uid, Google `sub`, `provider_subject`, or email value in business tables or backend responses.
 - Do not switch MVP persistence to `browserSessionPersistence`.
-- Do not add SCN-001 document draft or SCN-004 document type expansion in this scope.
+- Do not add live/backend SCN-001 document draft generation, protected SCN-001
+  draft endpoint, or SCN-004 document type expansion in this scope.

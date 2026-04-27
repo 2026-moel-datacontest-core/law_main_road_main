@@ -16,8 +16,11 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
 - SCN-004 main demo freeze를 유지하면서 후속 작업의 안전한 순서를 제안한다.
 - Phase 7/8 evidence/status 문서를 다시 고치지 않고, 다음 후보의 우선순위와
   guardrail만 별도 문서로 분리한다.
-- SCN-001 document draft는 Step 4 design으로만 열고, 구현 확정이나 API/schema
-  확정은 별도 phase 후보로 둔다.
+- SCN-001 live/backend document draft는 Step 4 design baseline으로만 열고,
+  구현 확정이나 API/schema 확정은 별도 phase 후보로 둔다.
+- SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은
+  frontend-local demo path로 completed 상태이며, live/backend draft generation으로
+  취급하지 않는다.
 
 ## 2. Current Baseline
 
@@ -34,6 +37,7 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
 - Post-Phase 8 Step 1 logout memory reset 완료.
 - Post-Phase 8 Step 1.5 Before login-required UX 완료.
 - OCR provider 429 frontend friendly message 완료.
+- Before OCR stale/running job failure guard completed in `c6c3ed0`.
 - Post-Phase 8 Step 2A protected read-only history backend endpoints 완료.
 - Post-Phase 8 Step 2B-1 frontend history helper/types 완료.
 - Post-Phase 8 Step 2B-2 `/before` read-only history UI 완료.
@@ -49,18 +53,27 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
   - browser smoke passed with sanitized PASS/PRESENT/NO signals
   - Step 3 full retention lifecycle is NOT opened.
   - SCN-004 freeze impact: NO.
-- Step 4 SCN-001 Document Draft Design is opened only as design:
-  - SCN-001 draft implementation is NOT opened.
-  - SCN-001 document draft generation is NOT opened.
+- Step 4 SCN-001 Document Draft Design remains a docs-only design baseline:
+  - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow completed in
+    `667a1bd`.
+  - Frozen draft document type is `workplace_change_reason_summary` / 사업장 변경
+    사유 정리서 초안.
+  - Frozen draft is frontend fixture + deterministic template based, reflects
+    user intake, and does not call backend/LLM or `/api/v1/documents/draft`.
+  - SCN-001 live/backend draft implementation is NOT opened.
+  - SCN-001 live/backend document draft generation is NOT opened.
   - protected SCN-001 draft endpoint path/method/schema is NOT decided.
-  - SCN-001 draft freeze is NOT opened.
+  - SCN-001 live draft freeze is NOT opened.
   - Bridge/query relevance guard matrix review is completed as the current design
     baseline.
-  - next target is `SCN-001 MVP demo frontend-only continuity panel`, not
-    SCN-001 document draft generation.
-  - SCN-001 MVP demo includes Bridge -> After answer-only continuity
-    explanation.
+  - SCN-001 continuity panel completed in `f574e6b` on `/after/result` and
+    `/after/draft`.
+  - SCN-001 MVP demo includes fixed-preset frozen draft continuity explanation
+    and Bridge-origin answer-only continuity explanation where eligible.
   - Bridge-as-Continuity, Not Grounding is the policy boundary.
+  - Current next target candidates are frozen draft + continuity panel browser
+    rehearsal/evidence finalization, docs sync/release readiness, or optional live
+    Bridge handoff continuity smoke using existing completed history.
 
 ## 3. Recommended Sequence
 
@@ -146,7 +159,7 @@ Step 2 status (2026-04-24):
   not reproduced, and read-only history UI rendered without auth error.
 - Step 2B-3 is not open.
 - Step 3 MVP soft-delete slice completed separately after Step 2. Step 3 full
-  retention lifecycle, SCN-001 document draft implementation, hard delete, file purge, and
+  retention lifecycle, live/backend SCN-001 document draft implementation, hard delete, file purge, and
   artifact lifecycle remain out of scope.
 
 - 삭제, 수정, artifact body 노출 없이 목록/상세 조회만 고려한다.
@@ -233,7 +246,7 @@ Remaining boundary:
 - auth persistence changes remain out of scope.
 - account deletion/access-control remains out of scope.
 - orphan cleanup remains out of scope.
-- SCN-001 document draft implementation remains out of scope.
+- live/backend SCN-001 document draft implementation remains out of scope.
 - SCN-005 remains out of scope.
 - provider_timeout retry/backoff hardening remains out of scope. Before OCR
   timeout/stale-job failure guard is treated as a narrow runtime guard.
@@ -283,7 +296,7 @@ Scope boundary:
 - Artifact retrieval UI/API is NOT opened.
 - Hard delete, file purge, GCS lifecycle, audit export, undo/restore, account
   deletion/access-control, and orphan cleanup are NOT opened.
-- SCN-001 document draft implementation is NOT opened.
+- live/backend SCN-001 document draft implementation is NOT opened.
 - SCN-004 freeze remains unchanged.
 - `/api/v1/answer` public contract remains unchanged.
 - `/api/v1/documents/draft` public contract remains unchanged.
@@ -366,7 +379,7 @@ Scope boundary:
 - No user-facing audit export endpoint is opened.
 - Artifact access policy remains a metadata-only candidate, and user-facing
   retrieval is NOT opened.
-- SCN-001 document draft implementation is NOT opened.
+- live/backend SCN-001 document draft implementation is NOT opened.
 - SCN-004 freeze remains unchanged.
 - `/api/v1/answer` public contract remains unchanged.
 - `/api/v1/documents/draft` public contract remains unchanged.
@@ -406,7 +419,7 @@ Audit/export non-goals:
 - No admin audit UI.
 - No raw artifact body export.
 - No secret, credential, provider identifier, or contact-field export.
-- No SCN-001 document draft implementation or linkage changes.
+- No live/backend SCN-001 document draft implementation or linkage changes.
 
 Relationship to artifact access policy:
 
@@ -443,8 +456,10 @@ Retention-stream future policy target after this review:
 
 - Cloud storage / GCS lifecycle policy review or orphan classification/cleanup
   policy review remains a later policy candidate for the Step 3 retention stream.
-- The current global next prompt target is `SCN-001 MVP demo frontend-only
-  continuity panel` design review, not this retention-stream policy work.
+- The current global next prompt target candidates are SCN-001 frozen draft +
+  continuity panel browser rehearsal/evidence finalization, docs sync/release
+  readiness, or optional live Bridge handoff continuity smoke using existing
+  completed history, not this retention-stream policy work.
 
 Recommended sequencing:
 
@@ -480,16 +495,17 @@ Do-not-open checklist:
 - account deletion UX/API
 - orphan cleanup job
 - auth persistence change
-- SCN-001 document draft implementation
+- live/backend SCN-001 document draft implementation
 
 Retention-stream note:
 
 - If the work later returns to Step 3 retention policy, cloud storage / GCS
   lifecycle policy review or orphan classification/cleanup policy review remains
   the next retention-stream candidate.
-- The active next target for this roadmap is `SCN-001 MVP demo frontend-only
-  continuity panel` design review, and it should not open implementation, SCN-001
-  draft generation, or protected SCN-001 draft endpoint work.
+- The active next target candidates for this roadmap are frozen draft + continuity
+  panel browser rehearsal/evidence finalization, docs sync/release readiness, or
+  optional live Bridge handoff continuity smoke. They should not open live/backend
+  SCN-001 draft generation or protected SCN-001 draft endpoint work.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
 new implementation instructions for this completed MVP soft-delete slice.
@@ -638,7 +654,7 @@ Non-goals:
 - Additional deletion API 또는 full retention lifecycle 구현이 아니다.
 - DB schema/migration 확정이 아니다.
 - account deletion/access-control 구현이 아니다.
-- SCN-001 document draft implementation이 아니다.
+- live/backend SCN-001 document draft implementation이 아니다.
 - SCN-004 freeze 변경이 아니다.
 - `/api/v1/answer` public contract 변경이 아니다.
 - `/api/v1/documents/draft` public contract 변경이 아니다.
@@ -740,7 +756,7 @@ Strong non-decisions:
 - actual retention day count는 확정하지 않는다.
 - hard delete/file purge 실행은 확정하지 않는다.
 - account deletion/access-control 구현은 확정하지 않는다.
-- SCN-001 document draft implementation은 열지 않는다.
+- live/backend SCN-001 document draft implementation은 열지 않는다.
 
 Bridge policy retained:
 
@@ -780,31 +796,38 @@ Acceptance direction:
 
 ### Step 4. SCN-001 MVP Continuity Panel / Document Draft Boundary
 
-Step 4는 SCN-001 document draft generation 착수가 아니다. Bridge/query relevance
-guard matrix review는 completed/current design baseline이며, 현재 다음 target은
-`SCN-001 MVP demo frontend-only continuity panel`이다. SCN-001 MVP demo는
-Bridge -> After answer-only continuity explanation을 포함하되, document draft
-generation, protected SCN-001 draft endpoint, draft freeze는 열지 않는다.
+Step 4는 live/backend SCN-001 document draft generation 착수가 아니다.
+Bridge/query relevance guard matrix review는 completed/current design baseline이다.
+이 baseline 위에서 frontend-local SCN-001-BRIDGE-DEMO exact fixed preset frozen
+draft flow와 continuity panel이 completed 상태가 됐다.
 
-현재 산출물은 구현 계획이 아니라 SCN-001 document draft boundary +
-Bridge/query relevance guard + frontend-only continuity panel scope sync다.
+현재 산출물은 SCN-001 live/backend document draft boundary +
+Bridge/query relevance guard + completed frontend-local frozen draft/continuity
+panel scope sync다. Protected SCN-001 draft endpoint, live draft generation, live
+draft freeze는 열지 않는다.
 
 #### SCN-001 Document Draft Design
 
 ##### 1. Scope boundary
 
-- Step 4 design only.
-- SCN-001 draft implementation is NOT opened.
+- Step 4 live/backend draft design baseline only.
+- SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow is completed:
+  `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안.
+- The frozen draft is frontend fixture + deterministic template based, reflects
+  user intake, and does not call backend/LLM or `/api/v1/documents/draft`.
+- SCN-001 continuity panel is completed on `/after/result` and `/after/draft`.
+- SCN-001 live/backend draft implementation is NOT opened.
 - SCN-004 `/api/v1/documents/draft` public contract unchanged.
 - SCN-004 `/api/v1/answer` public contract unchanged.
 - SCN-004 `/after` login-free draft flow unchanged.
 - SCN-004 fixed/free input/draft behavior remains separated from this design.
 - No SCN-005.
 - No independent `/bridge` route or Recovery implementation.
-- No DB schema/migration, endpoint path/method/schema, document template, or QA
-  fixture is finalized here.
-- Next target is frontend-only continuity panel for SCN-001 MVP demo, not
-  SCN-001 document draft generation.
+- No live/backend DB schema/migration, protected endpoint path/method/schema, live
+  document template, or live QA fixture is finalized here.
+- Current next target candidates are frozen draft + continuity panel browser
+  rehearsal/evidence finalization, docs sync/release readiness, or optional live
+  Bridge handoff continuity smoke using existing completed history.
 
 ##### 2. Bridge usage policy
 
@@ -834,15 +857,18 @@ Bridge policy: **Bridge-as-Continuity, Not Grounding**.
   be written into docs, UI, logs, commits, issues, chat, or a future continuity
   payload.
 
-##### 3. Frontend-only continuity panel scope
+##### 3. Frontend-local continuity panel scope
 
-This is the current next target for the SCN-001 MVP demo. It is frontend-only and
-limited to Bridge-origin result continuity explanation. It is not SCN-001
-document draft generation and does not open a protected SCN-001 draft endpoint.
+Status: completed in `f574e6b`.
 
-- Placement is `/after/result` or the Bridge-origin result screen only.
-- Show only when a Bridge handoff exists and at least one included/checked Bridge
-  context is available.
+The continuity panel is frontend-local and does not open live/backend SCN-001
+document draft generation or a protected SCN-001 draft endpoint.
+
+- Placement is `/after/result` and `/after/draft`.
+- Fixed SCN-001 frozen draft path shows the panel to explain the connection
+  between the prior contract review and the current question/draft.
+- Bridge-origin result shows the answer-only continuity panel only when a Bridge
+  handoff exists and at least one included/checked Bridge context is available.
 - Strong overlap may show continuity explanation.
 - Weak overlap may show a reference-only note or hide the panel.
 - No overlap hides the panel.
@@ -857,6 +883,8 @@ document draft generation and does not open a protected SCN-001 draft endpoint.
 - Bridge information remains supplementary.
 - Bridge information creates no legal grounding, `cited_articles`, or
   `grounded_context_ids`.
+- Continuity panel does not create or modify `legal_basis`, `cited_articles`,
+  `source_context_ids`, `grounded_context_ids`, or `retrieved_chunks`.
 
 ##### 4. Bridge/query relevance guard matrix review
 
@@ -869,10 +897,10 @@ type, document template, or draft generation flow.
 
 ###### Scope boundary
 
-- Design review only.
-- No implementation.
+- Design baseline review. Frontend continuity panel implementation is completed,
+  but this guard review still does not define a numeric score or backend API.
 - No endpoint/schema/document type finalization.
-- No draft generation/freeze.
+- No live/backend draft generation/freeze.
 - No public contract changes.
 - `/api/v1/answer` public contract remains unchanged.
 - `/api/v1/documents/draft` public contract remains unchanged.
@@ -975,7 +1003,7 @@ Candidate copy direction:
 - Relevance guard pass alone does not open draft.
 - Draft affordance remains subject to quality gate, document type confirmation,
   and separate review.
-- No SCN-001 draft generation now.
+- No live/backend SCN-001 draft generation now.
 - No protected SCN-001 draft endpoint now.
 - No protected SCN-001 draft endpoint path/method/schema is decided here.
 - Bridge overlap must not add answer evidence, legal basis, or user-confirmed
@@ -1003,19 +1031,20 @@ not a request to run broad eval now.
 
 ###### Next target
 
-The next target is `SCN-001 MVP demo frontend-only continuity panel`, not
-SCN-001 document draft generation. The panel target is limited to Bridge ->
-After answer-only continuity explanation and must preserve draft CTA/button
-hidden behavior for Bridge-origin result. This document does not provide a
-frontend implementation prompt, finalize protected SCN-001 draft endpoint
-path/method/schema, generate SCN-001 draft documents, or open SCN-001 draft
-freeze.
+The previous frontend-only continuity panel target is completed. Current next
+target candidates are SCN-001 frozen draft + continuity panel browser
+rehearsal/evidence finalization, docs sync/release readiness, or optional live
+Bridge handoff continuity smoke using existing completed history. These targets
+do not finalize protected SCN-001 draft endpoint path/method/schema, open
+live/backend SCN-001 draft generation, or open SCN-001 live draft freeze.
 
 ##### 5. Draft affordance policy
 
-- SCN-001 draft affordance must not open before the Bridge/query relevance guard
-  passes.
-- SCN-001 draft affordance must stay separate from the SCN-004 document draft
+- Live/backend SCN-001 draft affordance must not open before the Bridge/query
+  relevance guard, quality gate, document type confirmation, and separate review
+  pass.
+- SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow is the completed
+  frontend-local exception and must stay separate from the SCN-004 document draft
   path.
 - Draft must not use raw Before/Bridge payload.
 - Draft must not use raw `after_query_seed`.
@@ -1026,7 +1055,7 @@ freeze.
 - User-confirmed facts must remain distinct from inferred continuity. Missing
   facts stay placeholders or `missing_fields`.
 - Existing SCN-004 `/after/result -> /after/intake -> /after/draft` behavior stays
-  unchanged and login-free.
+  unchanged, login-free, and backed by public `/api/v1/documents/draft`.
 
 ##### 6. Endpoint/contract candidate review
 
@@ -1036,13 +1065,14 @@ status codes, DB columns, migrations, or implementation prompts.
 | candidate | review | current recommendation |
 |---|---|---|
 | Reuse public `/api/v1/documents/draft` | Not recommended for SCN-001 protected draft because it risks the SCN-004 public contract/freeze and mixes protected Bridge continuity into a public draft surface. | Do not reuse as the first SCN-001 protected draft path. |
-| Add protected SCN-001 draft endpoint | Candidate only, not implementation. It may be needed later if SCN-001 draft requires auth, ownership, artifact linkage, or separate templates. | Defer until document type, template, QA criteria, and relevance guard are defined. |
-| Frontend-only continuity panel without draft endpoint | Possible first MVP extension because it can validate Bridge-as-Continuity and the relevance guard without opening draft generation. | Recommended candidate starting point. |
+| Add protected SCN-001 draft endpoint | Candidate only, not implementation. It may be needed later if live SCN-001 draft requires auth, ownership, artifact linkage, or separate templates. | Defer until live document type, template, QA criteria, and relevance guard are defined. |
+| Frontend-only continuity panel without draft endpoint | Completed in `f574e6b`; validates Bridge-as-Continuity without opening live/backend draft generation. | Keep as completed frontend-local demo capability and evidence target. |
+| Frontend fixed-preset frozen draft without backend endpoint | Completed in `667a1bd`; exact SCN-001-BRIDGE-DEMO path uses deterministic frontend template and does not call `/api/v1/documents/draft`. | Keep separate from live/backend draft generation and SCN-004 public draft flow. |
 
 Recommendation candidate:
 
-- Start with SCN-001 MVP demo frontend-only continuity panel under the relevance
-  guard baseline.
+- Treat the completed SCN-001 continuity panel and exact fixed frozen draft flow
+  as completed frontend-local paths under the relevance guard baseline.
 - Defer protected SCN-001 draft endpoint until document type/template/QA criteria
   are defined.
 - Do not finalize any SCN-001 draft endpoint path/method/schema in this Step 4
@@ -1051,9 +1081,13 @@ Recommendation candidate:
 
 ##### 7. SCN-001 document type candidates
 
-These are document type candidates only. Do not claim SCN-001 draft type is
-implemented.
+These are live/backend document type candidates only. Do not claim a live/backend
+SCN-001 draft type is implemented. The frontend-local exact fixed preset already
+uses `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안 for the frozen
+demo path.
 
+- workplace_change_reason_summary / 사업장 변경 사유 정리서 초안 (frontend-local
+  frozen demo type only)
 - labor office complaint supplement
 - evidence summary / issue chronology
 - consultation memo
@@ -1075,7 +1109,8 @@ Candidate quality gate for a future design review:
   `grounded_context_ids`.
 - Bridge/query relevance guard matrix is documented and remains a prerequisite
   before any draft affordance.
-- manual browser rehearsal is required before treating SCN-001 draft as demo-ready.
+- manual browser rehearsal is required before treating the SCN-001 frozen draft +
+  continuity panel path as final evidence.
 - no broad eval unless retrieval/answer behavior or API response contract changes.
 - SCN-004 exact preset, SCN-004 free input, and SCN-004 login-free draft flow must
   remain regression checkpoints.
@@ -1085,35 +1120,38 @@ Candidate quality gate for a future design review:
 
 ##### 9. Current next target
 
-Next target: SCN-001 MVP demo frontend-only continuity panel.
+Current next target candidates:
 
-This is a frontend-only continuity target for Bridge-origin result explanation.
-This document does not provide a frontend implementation prompt. It should not
-code an endpoint, finalize schema/migration, generate SCN-001 draft documents,
-open SCN-001 draft freeze, open SCN-005, or change SCN-004 public answer/draft
-behavior.
+1. SCN-001 frozen draft + continuity panel browser rehearsal/evidence finalization.
+2. docs sync/release readiness.
+3. optional live Bridge handoff continuity smoke using existing completed history.
+
+These targets should not code a backend endpoint, finalize schema/migration, open
+live/backend SCN-001 draft generation, open protected SCN-001 draft endpoint
+path/method/schema, open SCN-001 live draft freeze, open SCN-005, or change
+SCN-004 public answer/draft behavior.
 
 Later SCN-001 draft/freeze sequence:
 
-1. Complete the frontend-only continuity panel slice.
+1. Finalize SCN-001 frozen draft + continuity panel browser evidence.
 2. Document SCN-001 MVP demo rehearsal evidence.
-3. Revisit SCN-001 document draft design, document type, and quality gate.
+3. Revisit live/backend SCN-001 document draft design, document type, and quality gate.
 4. Open live SCN-001 draft implementation only after the above review.
-5. Open SCN-001 draft freeze only after output quality is stable, and keep it
+5. Open SCN-001 live draft freeze only after output quality is stable, and keep it
    separate from `SCN-004-DEMO-FREEZE`.
 
-### Step 5. SCN-001 Draft Freeze
+### Step 5. SCN-001 Live Draft Freeze
 
-SCN-001 draft 결과가 원하는 수준으로 안정화되면 presentation-local freeze
-fixture/preset 후보로 검토한다.
+Live/backend SCN-001 draft 결과가 원하는 수준으로 안정화되면 presentation-local
+freeze fixture/preset 후보로 검토한다.
 
 - `SCN-004-DEMO-FREEZE`와 분리한다.
-- SCN-001 draft freeze는 별도 preset/fixture 이름과 별도 eligibility guard를 둔다.
+- SCN-001 live draft freeze는 별도 preset/fixture 이름과 별도 eligibility guard를 둔다.
 - fixed fixture는 demo stability 목적이며 live retrieval/answer evidence와 혼용하지
   않는다.
 - freeze 전에는 `Bridge-as-Continuity, Not Grounding` 정책과 Bridge-query
   relevance/matching guard가 먼저 고정되어야 한다.
-- freeze 전에는 SCN-001 draft live quality, citation grounding, document output을
+- freeze 전에는 SCN-001 live draft quality, citation grounding, document output을
   별도 evidence로 확인한다.
 
 ## 4. Do Not Mix
@@ -1171,15 +1209,20 @@ NOT opened 상태를 유지한다. Full retention lifecycle policy review, artif
 access/retrieval policy review, audit/status policy review는 Step 3 아래에
 문서화되어 있다.
 
-Step 4는 SCN-001 Document Draft Design으로만 열렸다. Bridge/query relevance guard
-matrix review는 completed/current design baseline으로 문서화됐다. 다음 target은
-SCN-001 document draft generation이 아니라 `SCN-001 MVP demo frontend-only
-continuity panel`로 제한한다.
+Step 4는 live/backend SCN-001 Document Draft Design baseline으로 유지한다.
+Bridge/query relevance guard matrix review는 completed/current design baseline으로
+문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity
+panel은 completed 상태다. 다음 target 후보는 SCN-001 frozen draft + continuity
+panel browser rehearsal/evidence finalization, docs sync/release readiness, optional
+live Bridge handoff continuity smoke using existing completed history다.
 
 Review focus:
 
-- continuity panel이 Bridge-origin result에서 "이전 검토와 이번 질문이 이어질 수
-  있는 지점"만 설명하는지
+- continuity panel이 `/after/result`와 `/after/draft`에서 "이전 검토와 이번 질문이
+  이어질 수 있는 지점"만 설명하는지
+- fixed SCN-001 frozen draft path가 `workplace_change_reason_summary` / 사업장 변경
+  사유 정리서 초안만 제공하고 backend/LLM 또는 `/api/v1/documents/draft`를 호출하지
+  않는지
 - Bridge handoff가 있고 included/checked Bridge context가 있을 때만 표시하는지
 - strong/weak/no/conflicting matrix outcome을 UI copy와 panel visibility로만
   연결하고 구현 scoring으로 고정하지 않는지
@@ -1191,8 +1234,8 @@ Review focus:
 - unsafe/conflicting/deleted/hidden source는 설명보다 panel hiding을 우선하는지
 - answer remains primary이고 Bridge info remains supplementary인지
 - draft CTA/button이 Bridge-origin result에서 계속 hidden인지
-- SCN-001 draft affordance가 relevance guard와 별도 quality gate, document type
-  confirmation, separate review 전 열리지 않는지
+- live/backend SCN-001 draft affordance가 relevance guard와 별도 quality gate,
+  document type confirmation, separate review 전 열리지 않는지
 - `/api/v1/answer`와 `/api/v1/documents/draft` public contract unchanged, SCN-004
   login-free draft flow unchanged 상태를 유지하는지
 - raw Before/Bridge payload, raw `after_query_seed`, token, Firebase uid,
@@ -1208,11 +1251,16 @@ Current prompt target summary:
   unchanged 상태를 유지한다.
 - Bridge/query relevance guard matrix review는 completed/current design
   baseline이다.
-- 다음 target은 SCN-001 MVP demo frontend-only continuity panel이다.
-- Continuity panel은 Bridge -> After answer-only continuity explanation이며,
-  Bridge-as-Continuity, Not Grounding 정책을 유지한다.
+- SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은
+  completed 상태다.
+- 다음 target 후보는 frozen draft + continuity panel browser rehearsal/evidence
+  finalization, docs sync/release readiness, optional live Bridge handoff continuity
+  smoke다.
+- Continuity panel은 Bridge -> After answer-only continuity explanation과 fixed
+  frozen draft continuity explanation이며, Bridge-as-Continuity, Not Grounding
+  정책을 유지한다.
 - 코드 구현 프롬프트, DB schema/migration 확정, protected SCN-001 draft endpoint
-  path/method/schema 확정, API 구현 프롬프트, SCN-001 document draft generation,
-  SCN-001 draft freeze, SCN-005, Step 3 full retention lifecycle implementation,
+  path/method/schema 확정, API 구현 프롬프트, live/backend SCN-001 document draft
+  generation, SCN-001 live draft freeze, SCN-005, Step 3 full retention lifecycle implementation,
   hard delete/file purge, GCS lifecycle job, orphan cleanup job,
   provider_timeout retry/backoff hardening은 열지 않는다.

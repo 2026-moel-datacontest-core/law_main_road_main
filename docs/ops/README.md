@@ -26,10 +26,12 @@
 - Step 3 MVP soft-delete slice completed 반영: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
 - Step 3 full retention lifecycle, artifact access/retrieval, audit/status policy review 반영. Implementation은 NOT opened.
 - Step 4 SCN-001 Document Draft Design 및 Bridge/query relevance guard matrix
-  review 반영: docs-only design으로만 opened. Bridge/query relevance guard matrix
-  review는 completed/current design baseline이며, 다음 target은 `SCN-001 MVP demo
-  frontend-only continuity panel`이다. SCN-001 draft implementation/generation/freeze와
-  protected SCN-001 draft endpoint path/method/schema는 NOT opened.
+  review 반영: docs-only design baseline으로 유지. SCN-001-BRIDGE-DEMO exact fixed
+  preset frozen draft flow와 SCN-001 continuity panel은 completed 상태다.
+  SCN-001 live/backend draft generation과 protected SCN-001 draft endpoint
+  path/method/schema는 NOT opened.
+- Before OCR stale/running review job failure guard 반영: stale OCR review jobs는
+  failed 처리된다. Retry/backoff/full provider hardening은 별도 future runtime 후보다.
 - local secret/database ignore rules hardening 반영
 
 현재 코드/구조 기준으로 반영된 주요 상태:
@@ -50,6 +52,13 @@
 - `GET /api/v1/scn001/before-review-jobs`, `GET /api/v1/scn001/before-review-jobs/{before_review_job_id}`, `GET /api/v1/scn001/bridge-runs`: read-only history 반영 완료
 - `DELETE /api/v1/scn001/before-review-jobs/{before_review_job_id}`, `DELETE /api/v1/scn001/bridge-runs/{bridge_run_id}`: MVP soft-delete 반영 완료. Protected DELETE Authorization PRESENT, 204/masked generic UX, no hard delete, no file purge.
 - frontend protected Bridge answer helper, `/after` checked Bridge submit routing, `/before` read-only history UI, backend-verified main Before entry login gate 반영 완료
+- SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow 반영 완료:
+  `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안, frontend fixture
+  + deterministic template 기반, backend/LLM 호출 없음, `/api/v1/documents/draft`
+  호출 없음
+- SCN-001 continuity panel 반영 완료: `/after/result`와 `/after/draft`에 표시되며
+  Bridge-as-Continuity, Not Grounding 정책을 유지하고 legal basis/citations/context
+  ids/retrieved chunks를 만들거나 수정하지 않음
 - SCN-001 protected frontend actions는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`)를 기준으로 동작
 - Phase 7E live browser/network/DB smoke PASS, Phase 8 regression / demo preflight / SCN-004 manual rehearsal PASS
 - Post-Phase 8 actual browser logged-in smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, history endpoints Authorization PRESENT, read-only history render PASS
@@ -301,17 +310,23 @@ Document Draft Design은
 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`에 문서화된 상태다.
 Step 3 MVP soft-delete slice completed 상태를 유지하고, full retention lifecycle
 implementation, artifact retrieval UI/API, audit export/admin UI는 NOT opened
-상태로 둔다. Step 4는 docs-only design으로만 opened 상태이며, Bridge/query
+상태로 둔다. Step 4는 docs-only design baseline으로 유지하며, Bridge/query
 relevance guard matrix review도 completed/current design baseline으로 문서화됐다.
-SCN-001 draft implementation/generation/freeze와 protected SCN-001 draft endpoint
-path/method/schema는 NOT opened 상태로 둔다. 다음 target은 SCN-001 document draft
-generation이 아니라 `SCN-001 MVP demo frontend-only continuity panel`이다.
+SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은
+completed 상태다. SCN-001 live/backend draft generation과 protected SCN-001 draft
+endpoint path/method/schema는 NOT opened 상태로 둔다.
+
+현재 next target 후보:
+
+1. SCN-001 frozen draft + continuity panel browser rehearsal/evidence finalization
+2. docs sync/release readiness
+3. optional live Bridge handoff continuity smoke using existing completed history
 
 Continuity panel scope:
 
-- `/after/result` 또는 Bridge-origin result 화면에만 표시한다.
-- Bridge handoff가 있고 included/checked Bridge context가 있을 때만 표시한다.
-- strong overlap이면 answer-only continuity explanation을 표시한다.
+- `/after/result`와 `/after/draft`에 표시된다.
+- fixed SCN-001 frozen draft path에서는 이전 계약서 검토와 현재 질문/초안의 연결 지점을 설명한다.
+- Bridge-origin result에서는 Bridge handoff가 있고 included/checked Bridge context와 현재 answer evidence가 있을 때만 answer-only continuity explanation을 표시한다.
 - weak overlap이면 reference-only note 또는 hidden으로 둔다.
 - no overlap / deleted-hidden / all-unchecked / answer evidence 부족이면 hidden으로 둔다.
 - draft CTA/button은 계속 hidden이다.
@@ -321,7 +336,7 @@ Continuity panel scope:
 
 별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-1. SCN-001 MVP demo frontend-only continuity panel
+1. SCN-001 frozen draft + continuity panel browser rehearsal/evidence finalization
 2. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
 3. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
 4. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
@@ -331,14 +346,16 @@ Continuity panel scope:
 8. `before` / `after` artifact의 향후 GCS 전환 기준 정리
 9. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
 
-Step 2B-3, Step 3 full retention lifecycle implementation, SCN-001 document draft
-implementation은 아직 열지 않는다. Continuity panel 이후 순서는 SCN-001 demo
-rehearsal docs, SCN-001 document draft design/type/quality gate, live draft
-implementation, output quality stable 이후 별도 SCN-001 draft freeze 순서로 둔다.
-Protected SCN-001 draft endpoint path/method/schema, SCN-001 draft generation,
-SCN-001 draft freeze, hard delete, artifact physical deletion/file purge, retention
-lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes,
-account deletion/access-control, orphan cleanup은 후속 정책 영역으로 유지한다.
+Step 2B-3, Step 3 full retention lifecycle implementation, live/backend SCN-001
+document draft implementation은 아직 열지 않는다. Frozen draft + continuity panel
+browser rehearsal/evidence finalization 이후 순서는 SCN-001 demo rehearsal docs,
+SCN-001 live document draft design/type/quality gate 재검토, live draft
+implementation, output quality stable 이후 별도 SCN-001 live draft freeze 순서로 둔다.
+Protected SCN-001 draft endpoint path/method/schema, live SCN-001 draft generation,
+SCN-001 live draft freeze, hard delete, artifact physical deletion/file purge,
+retention lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence
+changes, account deletion/access-control, orphan cleanup은 후속 정책 영역으로
+유지한다.
 
 ## 현재 남아 있는 큰 기술 작업
 
