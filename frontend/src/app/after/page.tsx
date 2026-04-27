@@ -1090,17 +1090,22 @@ function BridgeHistoryList({
 
             return (
               <li className={styles.historyItem} key={bridgeRun.bridge_run_id}>
-                <article className={styles.historyCard}>
+                <article
+                  className={isSelected ? styles.historyCardSelected : styles.historyCard}
+                  aria-label={
+                    isSelected
+                      ? '이번 질문에 포함된 Bridge 기록'
+                      : '선택 가능한 Bridge 기록'
+                  }
+                >
                   <div className={styles.historyCardTop}>
                     <div className={styles.historyCardTitleGroup}>
-                      <p className={styles.historyCardEyebrow}>Bridge summary</p>
-                      <p className={styles.historyBridgeSummary}>
-                        {formatInlineText(
-                          displayFields.userVisibleSummary,
-                          'Bridge 요약이 없습니다.',
-                        )}
-                      </p>
+                      <p className={styles.historyCardEyebrow}>Bridge law/risk explanation</p>
+                      <h4 className={styles.historyCardTitle}>Bridge 법·위험 설명</h4>
                     </div>
+                    {isSelected ? (
+                      <span className={styles.historySelectedPill}>이번 질문에 포함됨</span>
+                    ) : null}
                     <HistoryDeleteButton
                       label={`Bridge 기록 삭제: ${formatInlineText(
                         displayFields.userVisibleSummary,
@@ -1118,23 +1123,40 @@ function BridgeHistoryList({
                     />
                   </div>
 
+                  <HistorySummaryBlock
+                    title="Before situation summary"
+                    body={displayFields.userVisibleSummary}
+                    fallback="Before 상황 요약이 없습니다."
+                  />
+
+                  <div className={styles.historyBridgeInsight}>
+                    <p className={styles.historyBridgeInsightTitle}>
+                      Bridge가 정리한 법 조항 / 위험 설명
+                    </p>
+                    <div className={styles.historyMetaStack}>
+                      <HistoryTagList title="위험·쟁점" values={displayFields.issueLabels} />
+                      <HistoryTagList title="법 조항 후보" values={displayFields.lawRefs} />
+                      <HistoryActionList values={displayFields.recommendedNextActions} />
+                    </div>
+                  </div>
+
                   <div className={styles.historyMetaStack}>
-                    <HistoryTagList title="Bridge 위험/쟁점" values={displayFields.issueLabels} />
-                    <HistoryTagList title="법 조항 후보" values={displayFields.lawRefs} />
-                    <HistoryActionList values={displayFields.recommendedNextActions} />
+                    <dl className={styles.historyMetaGrid}>
+                      <HistoryMeta label="저장 시각" value={formatHistoryDateTime(bridgeRun.created_at)} />
+                      <HistoryMeta label="최근 갱신" value={formatHistoryDateTime(bridgeRun.updated_at)} />
+                    </dl>
                   </div>
 
                   <div className={styles.historyCardFooter}>
-                    <span className={styles.historyDate}>
-                      {formatHistoryDateTime(bridgeRun.created_at)}
-                    </span>
+                    <span className={styles.historyDate}>표시된 요약만 포함</span>
                     <button
                       className={isSelected ? styles.historySelectButtonSelected : styles.historySelectButton}
                       type="button"
+                      aria-pressed={isSelected}
                       onClick={() => onSelectBridge(bridgeRun)}
                       disabled={disabled || Boolean(deletingTarget) || isSelected}
                     >
-                      {isSelected ? '포함됨' : '이번 질문에 포함'}
+                      {isSelected ? '이미 포함됨' : '이번 질문에 포함'}
                     </button>
                   </div>
                 </article>
@@ -1181,10 +1203,8 @@ function BeforeHistoryList({
                 <article className={styles.historyCard}>
                   <div className={styles.historyCardTop}>
                     <div className={styles.historyCardTitleGroup}>
-                      <p className={styles.historyCardEyebrow}>Before summary</p>
-                      <strong className={styles.historyBeforeSummary}>
-                        {formatInlineText(job.summary, '요약이 없는 Before 검토입니다.')}
-                      </strong>
+                      <p className={styles.historyCardEyebrow}>Before situation summary</p>
+                      <h4 className={styles.historyCardTitle}>Before 상황 요약</h4>
                     </div>
                     <HistoryDeleteButton
                       label={`Before 기록 삭제: ${formatInlineText(
@@ -1203,9 +1223,15 @@ function BeforeHistoryList({
                     />
                   </div>
 
+                  <HistorySummaryBlock
+                    title="검토된 상황"
+                    body={job.summary}
+                    fallback="요약이 없는 Before 검토입니다."
+                  />
+
                   <dl className={styles.historyMetaGrid}>
-                    <HistoryMeta label="상태" value={formatBeforeJobStatus(job.status)} />
-                    <HistoryMeta label="판정" value={formatOverallResult(job.overall_result)} />
+                    <HistoryMeta label="검토 상태" value={formatBeforeJobStatus(job.status)} />
+                    <HistoryMeta label="검토 판정" value={formatOverallResult(job.overall_result)} />
                     <HistoryMeta label="심각도" value={formatSeverity(job.overall_severity)} />
                     <HistoryMeta
                       label="Bridge"
@@ -1237,6 +1263,25 @@ function BeforeHistoryList({
   );
 }
 
+function HistorySummaryBlock({
+  title,
+  body,
+  fallback,
+}: {
+  title: string;
+  body: string | null | undefined;
+  fallback: string;
+}) {
+  return (
+    <div className={styles.historySummaryBlock}>
+      <p className={styles.historySummaryLabel}>{title}</p>
+      <p className={styles.historySummaryBody}>
+        {formatInlineText(body, fallback)}
+      </p>
+    </div>
+  );
+}
+
 function HistoryDeleteButton({
   label,
   isDeleting,
@@ -1257,7 +1302,7 @@ function HistoryDeleteButton({
       aria-label={label}
     >
       <Trash2 size={15} aria-hidden="true" />
-      {isDeleting ? '삭제 중' : '삭제'}
+      {isDeleting ? '처리 중' : '목록에서 삭제'}
     </button>
   );
 }
