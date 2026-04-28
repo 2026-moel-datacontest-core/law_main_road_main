@@ -1,95 +1,101 @@
 .main {
   min-height: calc(100vh - var(--kl-masthead-height));
-  padding-bottom: 24px;
-  background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 28%),
-    linear-gradient(180deg, #07111f 0%, #0d1726 25%, #f4f6f9 25%, #f4f6f9 100%);
+  padding-bottom: var(--kl-space-6);
+  background: var(--kl-surface-page);
+  color: var(--kl-text-primary);
 }
 
 .redirectMessage {
-  max-width: 1240px;
+  max-width: var(--kl-max-width);
   margin: 0 auto;
-  padding: 48px 20px;
-  color: #e2e8f0;
+  padding: var(--kl-space-8) var(--kl-margin-mobile);
+  color: var(--kl-text-secondary);
 }
 
 .headerBand {
-  padding: 40px 0 28px;
+  padding: var(--kl-space-8) 0 var(--kl-space-6);
+  border-bottom: var(--kl-border-subtle-line);
+  background: var(--kl-surface-card);
 }
 
 .shell,
 .formContent,
 .formContentDisabled,
 .stickyInner {
-  max-width: 1240px;
+  max-width: var(--kl-max-width);
   margin: 0 auto;
-  padding-right: 20px;
-  padding-left: 20px;
+  padding-right: var(--kl-margin-mobile);
+  padding-left: var(--kl-margin-mobile);
 }
 
 .shell {
   display: grid;
-  gap: 16px;
+  gap: var(--kl-space-3);
 }
 
 .eyebrow {
   margin: 0;
-  color: #78a6ff;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  color: var(--kl-primary);
+  font-size: var(--kl-text-caption);
+  font-weight: 700;
+  letter-spacing: var(--kl-ls-caption);
   text-transform: uppercase;
 }
 
 .title {
   max-width: 860px;
   margin: 0;
-  color: #f8fbff;
-  font-size: clamp(2.2rem, 5vw, 4.2rem);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -0.05em;
+  color: var(--kl-text-primary);
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-weight: 700;
+  line-height: var(--kl-lh-heading);
+  letter-spacing: 0;
 }
 
 .badgeRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 4px;
+  gap: var(--kl-space-2);
+  margin-top: var(--kl-space-1);
 }
 
 .documentBadge {
   display: inline-flex;
   align-items: center;
-  min-height: 34px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(199, 217, 249, 0.2);
-  color: #dbeafe;
-  font-size: 0.82rem;
-  font-weight: 800;
+  min-height: 28px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border: 1px solid rgba(15, 98, 254, 0.22);
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-primary-light);
+  color: var(--kl-primary);
+  font-size: var(--kl-text-caption);
+  font-weight: 700;
+  letter-spacing: var(--kl-ls-caption);
+  line-height: var(--kl-lh-caption);
+  overflow-wrap: anywhere;
 }
 
 .lead {
   max-width: 760px;
   margin: 0;
-  color: rgba(226, 234, 245, 0.78);
+  color: var(--kl-text-secondary);
   font-size: 1rem;
-  line-height: 1.75;
+  line-height: var(--kl-lh-body);
 }
 
 .form {
   display: grid;
-  gap: 24px;
+  gap: var(--kl-space-6);
 }
 
 .formContent,
 .formContentDisabled {
   display: grid;
-  gap: 24px;
+  gap: var(--kl-space-6);
   width: 100%;
-  padding-top: 16px;
-  padding-bottom: 24px;
+  padding-top: var(--kl-space-6);
+  padding-bottom: var(--kl-space-6);
 }
 
 .formContentDisabled {
@@ -101,17 +107,19 @@
   position: sticky;
   bottom: 0;
   z-index: var(--kl-z-sticky-bar);
-  padding-top: 12px;
-  padding-bottom: 16px;
-  background: linear-gradient(180deg, rgba(244, 246, 249, 0), rgba(244, 246, 249, 0.96) 20%);
+  padding-top: var(--kl-space-3);
+  padding-bottom: var(--kl-space-4);
+  border-top: var(--kl-border-subtle-line);
+  background: rgba(244, 244, 244, 0.96);
+  backdrop-filter: blur(8px);
 }
 
 .stickyInner {
   display: grid;
-  gap: 16px;
+  gap: var(--kl-space-4);
   min-width: 0;
-  padding-top: 16px;
-  padding-bottom: 8px;
+  padding-top: var(--kl-space-3);
+  padding-bottom: var(--kl-space-1);
 }
 
 .stickyMessage {
@@ -125,14 +133,16 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--kl-space-3);
 }
 
 @media (max-width: 671px) {
   .stickyBar {
     position: static;
     padding-top: 0;
+    border-top: 0;
     background: transparent;
+    backdrop-filter: none;
   }
 
   .stickyInner {
@@ -156,8 +166,8 @@
   .formContent,
   .formContentDisabled,
   .stickyInner {
-    padding-right: 40px;
-    padding-left: 40px;
+    padding-right: var(--kl-margin-desktop);
+    padding-left: var(--kl-margin-desktop);
   }
 }
 
