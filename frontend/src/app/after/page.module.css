@@ -1,58 +1,57 @@
 .main {
   min-height: calc(100vh - var(--kl-masthead-height));
-  background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 28%),
-    linear-gradient(180deg, #07111f 0%, #0d1726 34%, #f4f6f9 34%, #f4f6f9 100%);
+  background: var(--kl-surface-page);
+  color: var(--kl-text-primary);
 }
 
 .introInner,
 .formShell {
-  max-width: 1240px;
+  max-width: var(--kl-max-width);
   margin: 0 auto;
-  padding-right: 20px;
-  padding-left: 20px;
+  padding-right: var(--kl-margin-mobile);
+  padding-left: var(--kl-margin-mobile);
 }
 
 .intro {
-  padding: 48px 0 40px;
+  padding: var(--kl-space-8) 0 var(--kl-space-6);
+  border-bottom: var(--kl-border-subtle-line);
+  background: var(--kl-surface-card);
 }
 
 .introInner {
   display: grid;
-  gap: 20px;
-  padding-top: 20px;
-  padding-bottom: 24px;
+  gap: var(--kl-space-3);
 }
 
 .eyebrow {
   margin: 0;
-  color: #78a6ff;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  color: var(--kl-primary);
+  font-size: var(--kl-text-caption);
+  font-weight: 700;
+  letter-spacing: var(--kl-ls-caption);
   text-transform: uppercase;
 }
 
 .title {
   max-width: 860px;
   margin: 0;
-  color: #f8fbff;
-  font-size: clamp(2.4rem, 5.8vw, 4.7rem);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.05em;
+  color: var(--kl-text-primary);
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-weight: 700;
+  line-height: var(--kl-lh-heading);
+  letter-spacing: 0;
 }
 
 .lead {
   max-width: 760px;
   margin: 0;
-  color: rgba(226, 234, 245, 0.78);
-  font-size: 1.05rem;
-  line-height: 1.8;
+  color: var(--kl-text-secondary);
+  font-size: 1rem;
+  line-height: var(--kl-lh-body);
 }
 
 .formBand {
-  padding-bottom: 48px;
+  padding: var(--kl-space-6) 0 0;
 }
 
 .formShell {
@@ -81,10 +80,10 @@
   min-height: 34px;
   max-width: 100%;
   padding: 0 12px;
-  border: 1px solid rgba(148, 163, 184, 0.34);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #334155;
+  border: var(--kl-border-subtle-line);
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-surface-card);
+  color: var(--kl-text-secondary);
   font-size: 0.82rem;
   font-weight: 800;
   overflow-wrap: anywhere;
@@ -99,11 +98,10 @@
   display: grid;
   gap: 14px;
   min-width: 0;
-  padding: 20px;
-  border: 1px solid rgba(148, 163, 184, 0.34);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+  padding: var(--kl-space-4);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
 }
 
 .handoffCardTop {
@@ -142,7 +140,7 @@
   max-width: 100%;
   padding: 0 12px;
   border: 1px solid rgba(37, 99, 235, 0.26);
-  border-radius: 8px;
+  border-radius: var(--kl-radius-sm);
   background: #ffffff;
   color: #1d4ed8;
   font: inherit;
@@ -238,7 +236,7 @@
 .handoffPillList li {
   max-width: 100%;
   padding: 6px 9px;
-  border-radius: 8px;
+  border-radius: var(--kl-radius-sm);
   background: #eef2f7;
   color: #334155;
   font-size: 0.84rem;
@@ -258,11 +256,10 @@
   display: grid;
   gap: 18px;
   max-width: 840px;
-  padding: 28px;
-  border: 1px solid rgba(160, 183, 214, 0.24);
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 24px 54px rgba(15, 29, 45, 0.1);
+  padding: var(--kl-space-6);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
 }
 
 .formHeader {
@@ -274,11 +271,11 @@
 
 .sectionTitle {
   margin: 4px 0 0;
-  color: #0f172a;
-  font-size: 1.8rem;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
+  color: var(--kl-text-primary);
+  font-size: var(--kl-text-h2);
+  font-weight: 700;
+  line-height: var(--kl-lh-heading);
+  letter-spacing: 0;
 }
 
 .counter {
@@ -287,15 +284,15 @@
   justify-content: center;
   min-height: 36px;
   padding: 0 14px;
-  border-radius: 999px;
-  background: #e9eef6;
-  color: #475569;
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-surface-01);
+  color: var(--kl-text-secondary);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
 .label {
-  color: #334155;
+  color: var(--kl-text-secondary);
   font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -309,10 +306,10 @@
   min-width: 0;
   resize: vertical;
   padding: 18px 20px;
-  border: 1px solid rgba(179, 197, 221, 0.7);
-  border-radius: 22px;
-  background: #f8fafc;
-  color: #0f172a;
+  border: var(--kl-border-default);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
+  color: var(--kl-text-primary);
   font-size: 1rem;
   line-height: 1.8;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
@@ -342,7 +339,7 @@
 }
 
 .helperText {
-  color: #64748b;
+  color: var(--kl-text-secondary);
 }
 
 .warningText {
@@ -360,10 +357,9 @@
 .historyPanel {
   max-width: 840px;
   min-width: 0;
-  border: 1px solid rgba(148, 163, 184, 0.34);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
 }
 
 .historyGatePanel {
@@ -396,7 +392,7 @@
 }
 
 .historyEyebrow {
-  color: #2563eb;
+  color: var(--kl-primary);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -404,7 +400,7 @@
 }
 
 .historyTitle {
-  color: #0f172a;
+  color: var(--kl-text-primary);
   font-size: 1.08rem;
   font-weight: 800;
   line-height: 1.3;
@@ -413,7 +409,7 @@
 
 .historyDescription {
   margin: 0;
-  color: #64748b;
+  color: var(--kl-text-secondary);
   font-size: 0.9rem;
   line-height: 1.6;
   overflow-wrap: anywhere;
@@ -444,9 +440,9 @@
   justify-content: center;
   min-height: 30px;
   padding: 0 10px;
-  border-radius: 8px;
-  background: #eef2f7;
-  color: #334155;
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-surface-01);
+  color: var(--kl-text-secondary);
   font-size: 0.8rem;
   font-weight: 800;
 }
@@ -466,7 +462,7 @@
   gap: 12px;
   min-width: 0;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--kl-radius-md);
   font-size: 0.88rem;
   font-weight: 700;
   line-height: 1.55;
@@ -496,7 +492,7 @@
   min-height: 34px;
   max-width: 100%;
   padding: 0 10px;
-  border-radius: 8px;
+  border-radius: var(--kl-radius-sm);
   font: inherit;
   font-size: 0.82rem;
   font-weight: 800;
@@ -579,9 +575,9 @@
   min-width: 0;
   padding: 16px;
   border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 8px;
+  border-radius: var(--kl-radius-md);
   background: #ffffff;
-  box-shadow: inset 3px 0 0 #2563eb;
+  box-shadow: inset 3px 0 0 var(--kl-primary);
 }
 
 .historyCardTop,
@@ -628,7 +624,7 @@
   min-width: 0;
   padding: 12px;
   border: 1px solid rgba(37, 99, 235, 0.16);
-  border-radius: 8px;
+  border-radius: var(--kl-radius-md);
   background: #f8fafc;
 }
 
@@ -669,7 +665,7 @@
   margin: 0;
   padding: 12px;
   border: 1px dashed rgba(37, 99, 235, 0.22);
-  border-radius: 8px;
+  border-radius: var(--kl-radius-md);
   background: #ffffff;
   color: #64748b;
   font-size: 0.86rem;
@@ -685,7 +681,7 @@
   min-height: 30px;
   max-width: 100%;
   padding: 0 10px;
-  border-radius: 8px;
+  border-radius: var(--kl-radius-sm);
   background: #dcfce7;
   color: #166534;
   font-size: 0.78rem;
@@ -700,7 +696,7 @@
   min-width: 0;
   padding: 12px;
   border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 8px;
+  border-radius: var(--kl-radius-md);
   background: #f8fafc;
 }
 
@@ -734,7 +730,7 @@
   min-width: 0;
   padding: 12px;
   border: 1px solid rgba(37, 99, 235, 0.16);
-  border-radius: 8px;
+  border-radius: var(--kl-radius-md);
   background: #eff6ff;
 }
 
@@ -785,7 +781,7 @@
   min-width: 0;
   padding: 8px;
   border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 8px;
+  border-radius: var(--kl-radius-md);
   background: #ffffff;
 }
 
@@ -808,7 +804,7 @@
 .historyTag {
   max-width: 100%;
   padding: 5px 8px;
-  border-radius: 8px;
+  border-radius: var(--kl-radius-sm);
   background: #eef2f7;
   color: #334155;
   font-size: 0.78rem;
@@ -935,7 +931,7 @@
 }
 
 .disclaimerBand {
-  padding-bottom: 72px;
+  padding: var(--kl-space-6) 0 var(--kl-space-12);
 }
 
 .disclaimerBand .formShell {
@@ -988,12 +984,7 @@
 @media (min-width: 900px) {
   .introInner,
   .formShell {
-    padding-right: 40px;
-    padding-left: 40px;
-  }
-
-  .introInner {
-    padding-top: 32px;
-    padding-bottom: 32px;
+    padding-right: var(--kl-margin-desktop);
+    padding-left: var(--kl-margin-desktop);
   }
 }
