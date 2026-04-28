@@ -573,6 +573,46 @@ Evidence hygiene:
 - Step 3 full retention lifecycle, hard delete, file purge, artifact retrieval
   UI/API도 열지 않는다.
 
+## 2026-04-28 SCN-001 History Card / Summary Notes
+
+목적:
+
+- `8cd1ccb`와 `c365ca5` 기준 `/after` saved history와 `/history`는
+  Before/Bridge 분리형 list/card가 아니라 사건 중심 단일 카드 구조다.
+- 한 사건 카드에서 사건 요약, 확인된 쟁점, 참고할 법 조항 후보, 권장 다음
+  단계, After 질문과 연결점을 사용자 설명형 문장으로 보여준다.
+
+확인 포인트:
+
+- `/after` saved history는 backend-verified logged-in user에게만 추가로 보이고,
+  logged-out SCN-004 preset/free input flow를 막지 않아야 한다.
+- `/history`는 기록 보관함이며 details/fold로 compact하게 표시한다.
+- failed/running Before는 user-facing list에서 숨긴다.
+- fetched non-completed Before에 연결된 Bridge는 숨긴다.
+- source Before가 fetch window 밖인 Bridge-only record는 표시 유지한다.
+- delete confirm/cancel/success soft-delete UX는 유지한다.
+- `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, unknown
+  snake_case는 raw key로 노출하지 않고 한국어 label/description 또는 readable
+  fallback으로 표시한다.
+- Bridge는 legal grounding이 아니라 continuity/reference로만 표시한다.
+- raw `after_query_seed`는 계속 null이며 UI/query/storage에 노출하지 않는다.
+
+다음 UI polish 후보:
+
+- main page logged-out nav/action은 `Before / After` 유지.
+- backend-verified logged-in nav/action은 `History / Before / After` 순서로 정리.
+- `/after`, `/history`, main page card spacing, button labels,
+  fold/collapsible density, mobile width를 frontend-only로 다룬다.
+
+주의:
+
+- SCN-004 freeze, SCN-001 frozen draft flow, backend/API/schema는 건드리지 않는다.
+- `/api/v1/history` 통합 backend API, live/backend SCN-001 draft generation,
+  protected SCN-001 draft endpoint, Step 3 full retention lifecycle은 열지 않는다.
+- `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않는다.
+- raw payload, token, Firebase uid, provider_subject, email, raw query, full answer
+  body, artifact body, real bridge id를 문서/로그/채팅/git에 기록하지 않는다.
+
 ## 2026-04-20 Demo / QA Troubleshooting
 
 ### 1. Non-interactive shell에서 `conda activate` 실패

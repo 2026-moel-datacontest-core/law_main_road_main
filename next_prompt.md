@@ -6,7 +6,7 @@
 law_main_road repo root에서 작업해주세요.
 
 기준일:
-- 2026-04-27
+- 2026-04-28
 
 현재 git / 제출 기준 상태:
 - 새 세션 시작 직후 `git status -sb`, `git status --short`, `git branch --show-current`, `git log --oneline -12`로 현재 branch, clean/dirty 상태, 최신 commit을 다시 확인하세요.
@@ -14,6 +14,8 @@ law_main_road repo root에서 작업해주세요.
 - `experiment/frontend-polish-history-after`를 review 중이면 해당 branch context를 사용하고, main merge 후라면 main의 현재 상태를 기준으로 복구하세요.
 - push는 수행하지 않는다.
 - 최근 중요 커밋:
+  - c365ca5 feat(frontend): clarify SCN-001 history summaries
+  - 8cd1ccb feat(frontend): polish SCN-001 history cards
   - 1a57601 refactor(frontend): remove stale Before history styles
   - 903ec4f fix(frontend): improve navigation and delete accessibility
   - d8ea907 feat(frontend): polish SCN-001 history page
@@ -151,20 +153,39 @@ law_main_road repo root에서 작업해주세요.
   - exact preset submit keeps fixed answer path priority
 - SCN-001 frontend history/After polish changes are completed in the current git
   history when the polish commits are present:
-  - `/after` saved history cards clarify Before situation summary and Bridge
-    law/risk explanation using only safe displayed subset fields
+  - latest main includes `8cd1ccb feat(frontend): polish SCN-001 history cards`
+    and `c365ca5 feat(frontend): clarify SCN-001 history summaries`
+  - `/after` saved history and `/history` now use incident-centered single cards,
+    not separate Before/Bridge list cards or 2-column layout
+  - one incident card shows situation summary, confirmed issues, candidate legal
+    references, recommended next steps, and the After question connection
+  - situation summaries are user-facing Korean explanations rather than raw
+    status/key output
+  - `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, and
+    unknown snake_case values render through Korean label/description or readable
+    fallback
+  - Bridge remains continuity/reference only, not legal grounding
+  - raw `after_query_seed` remains null and is not exposed in UI/query/storage
   - SCN-001 fixed frozen draft selector/result panel is no longer sticky, while
     SCN-004 document selection remains unchanged
-  - `/history` scanning hierarchy, empty/loading/error states, and soft-delete
-    copy are polished
+  - `/history` is the record archive with compact details/fold sections,
+    empty/loading/error states, and soft-delete copy polished
+  - failed/running Before jobs are hidden from the user-facing list; Bridge
+    records linked to fetched non-completed Before jobs are hidden; Bridge-only
+    records whose source Before is outside the fetch window remain visible
+  - main page has a backend-verified logged-in History entry point; remaining UI
+    polish candidate is logged-in order `History / Before / After` while
+    logged-out nav/actions stay `Before / After`
   - Masthead active/focus states and intake delete aria labels are clearer
   - stale `/before` embedded-history CSS was removed
-  - frontend-only; no backend API contract, auth persistence, Web Storage, or
+  - frontend-only; no backend API contract, auth persistence, Web Storage,
+    `/api/v1/history` unified backend API, live/backend SCN-001 draft generation,
+    protected SCN-001 draft endpoint, Step 3 full retention lifecycle, or
     SCN-004 freeze behavior changed
-- Current next target candidates:
-  - final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved history selector
-  - docs release readiness
-  - optional logged-in saved history smoke
+- Current next target:
+  - frontend-only UI polish: main page History position/order, final
+    `/after`/`/history`/main card spacing, button labels, fold/collapsible
+    behavior, and mobile width
 
 현재 구현 API:
 - `GET /api/v1/auth/me`
@@ -321,8 +342,14 @@ SCN-001 protected Bridge answer routing 기준:
 - Multi-bridge full provenance는 Post-MVP join table 후보입니다.
 
 SCN-001 `/after` saved history selector 기준:
-- Backend-verified logged-in user can view saved Before/Bridge history on `/after`.
+- Backend-verified logged-in user can view saved Before/Bridge incident records on `/after`.
 - The saved history section is collapsible/fold UI.
+- Records are shown as incident-centered single cards, not separate Before/Bridge
+  columns or independent list cards.
+- Each card presents situation summary, confirmed issues, candidate legal
+  references, recommended next steps, and the After question connection.
+- Situation summaries are user-facing Korean explanations rather than raw
+  status/key text.
 - Selecting a saved Bridge record adds only the displayed safe subset to Bridge handoff memory state.
 - Raw `after_query_seed`, raw Bridge payload, token, Firebase uid, provider_subject, email, raw query, full answer body, artifact body, and real bridge id must not be exposed in UI/query/storage/docs.
 - `/after` history list provides Before/Bridge soft-delete affordances.
@@ -336,6 +363,24 @@ SCN-001 `/after` saved history selector 기준:
 - Preset unselected + included Bridge context keeps the existing protected Bridge answer path.
 - Logged-out users can still use `/after` public preset/free input flows.
 - SCN-004 public flow remains unchanged.
+
+SCN-001 `/history` record archive 기준:
+- `/history` is the SCN-001 record archive.
+- It uses incident-centered single cards, not a separate Before/Bridge 2-column
+  flow.
+- Details/fold sections keep the view compact.
+- Existing delete confirm/cancel/success soft-delete UX remains.
+- failed/running Before jobs are hidden from the user-facing list.
+- Bridge records linked to fetched non-completed Before jobs are hidden.
+- Bridge-only records whose source Before is outside the fetch window remain visible.
+- `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, and
+  unknown snake_case values are shown as Korean label/description or readable
+  fallback, not raw keys.
+
+Main page history entry 기준:
+- Backend-verified logged-in users have a History entry point.
+- Remaining UI polish candidate: logged-out nav/actions stay `Before / After`;
+  logged-in nav/actions should be ordered `History / Before / After`.
 
 Free input 정책:
 - preset 없음 + 직접 입력:
@@ -433,6 +478,7 @@ npm run dev
   generation, live SCN-001 draft freeze, API implementation prompt는 열지 마세요.
 - provider_timeout/OCR retry hardening을 UI polish와 섞지 마세요.
 - backend API contract 임의 변경 금지.
+- `/api/v1/history` 통합 backend API를 열지 마세요.
 - `/api/v1/answer` public contract 변경 금지.
 - `/api/v1/documents/draft` contract 변경 금지.
 - hard delete/file purge 구현 금지.
@@ -452,34 +498,17 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. Final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved history selector
-   - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity panel, and `/after` saved history selector are completed 상태
-   - `/after -> /after/result -> /after/intake -> /after/draft`
-   - `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안
-   - frontend fixture + deterministic template 기반이며 사용자 intake 값을 반영
-   - backend/LLM 호출 없음, `/api/v1/documents/draft` 호출 없음
-   - `/after/result`와 `/after/draft` continuity panel 확인
-   - `/after` collapsible saved history selector 확인
-   - saved Bridge selection이 displayed safe subset만 handoff memory state에 넣는지 확인
-   - `/after` Before/Bridge soft-delete success 후 local list/selected handoff state 정리 확인
-   - Bridge context가 있어도 SCN-001/SCN-004 preset buttons와 exact fixed answer priority 유지 확인
-   - continuity panel은 Bridge-as-Continuity, Not Grounding 유지
-   - legal_basis, `cited_articles`, `source_context_ids`, `grounded_context_ids`, `retrieved_chunks`를 만들거나 수정하지 않음
-   - evidence는 PASS/PRESENT/ABSENT 수준만 기록
-   - protected SCN-001 draft endpoint path/method/schema, live SCN-001 draft generation, live SCN-001 draft freeze는 열지 않음
-2. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
-   - Step 3 full retention lifecycle, artifact access/retrieval, audit/status policy review 다음의 문서-only target
-   - frozen draft + continuity panel evidence finalization 이후 별도 policy cycle로만 처리
-   - Step 3 MVP soft-delete slice completed 상태를 유지
-   - DB schema/migration 확정, 추가 deletion API 구현 프롬프트 작성, account history access-control 구현은 열지 않음
-   - hard delete/file purge implementation, GCS lifecycle job, audit export endpoint, restore endpoint, account deletion UX/API, orphan cleanup job은 열지 않음
-3. history status pill color polish
-   - read-only history UI의 status pill 색상/상태 표시만 작은 patch로 다룸
-   - deletion, retention, artifact body 노출과 섞지 않음
-4. main Before gate semantic/a11y polish
-   - Step 1.6 구현을 유지하면서 semantic/a11y만 필요한 경우 최소 보강
+1. Main page History 위치 수정
+   - logged-out nav/action은 `Before / After` 그대로 유지
+   - backend-verified logged-in nav/action은 `History / Before / After` 순서가 자연스러움
    - SCN-004 `/after` login-free path는 건드리지 않음
-5. submission/final demo preflight 재실행 및 presentation rehearsal
+2. Final frontend-only UI polish
+   - `/after`, `/history`, main page 카드 spacing
+   - 버튼 라벨
+   - details/fold/collapsible density
+   - mobile width
+   - SCN-004 freeze와 SCN-001 frozen draft flow는 건드리지 않음
+3. Submission/final demo preflight 재실행 및 presentation rehearsal
    - `bash scripts/demo_preflight.sh`
    - 필요 시 backend/frontend 수동 실행 후 `http://localhost:5090/after`에서 SCN-004-DEMO-FREEZE dry-run
    - SCN-004 exact preset no public answer call, result, draft choices 확인
@@ -487,22 +516,22 @@ npm run dev
    - SCN-001 exact fixed frozen draft path 확인
    - SCN-001 checked Bridge protected answer routing 확인
    - SCN-001 all-unchecked Bridge public answer + sticky bridge_handoff 확인
-6. optional Phase 8 regression/manual evidence polish
+4. Optional Phase 8 regression/manual evidence polish
    - 이미 PASS한 Phase 7E evidence를 깨지 않는 범위에서만 보강
    - 필요한 경우 negative auth smoke나 sanitized checklist를 추가
-7. provider_timeout / OCR retry/backoff/hard-timeout hardening
+5. Provider_timeout / OCR retry/backoff/hard-timeout hardening
    - 별도 runtime hardening 후보
    - SCN-004 freeze와 public contract 보호를 전제로 분리 작업
-8. Step 2B-3 또는 full retention lifecycle implementation
+6. Step 2B-3 또는 full retention lifecycle implementation
    - Step 2B-3와 Step 3 full retention lifecycle implementation은 아직 열지 않음
    - Step 3 MVP soft-delete slice completed 상태를 유지하고, policy/design doc review 수준으로만 허용
    - hard delete, file purge, artifact physical deletion, auth persistence changes, undo/restore, account deletion/access-control, orphan cleanup을 열지 않음
-9. artifact retention/deletion/account history access control
+7. Artifact retention/deletion/account history access control
    - Post-MVP
    - artifact retrieval UI/API, retention policy, account history access control은 별도 설계 후 진행
-10. live/backend SCN-001 document draft implementation
+8. Live/backend SCN-001 document draft implementation
    - 아직 열지 않음
-   - frozen draft + continuity panel evidence finalization, SCN-001 demo rehearsal docs 이후 별도 큰 phase로만 검토
+   - frontend UI polish와 별도 큰 phase로만 검토
    - 먼저 live/backend SCN-001 document draft design/type/quality gate를 재검토하고, 그 다음 live draft implementation을 별도로 연다
    - SCN-001 live draft freeze는 output quality stable 이후에만 별도 phase로 열며 `SCN-004-DEMO-FREEZE`와 분리한다
    - SCN-004 freeze 기준을 유지한 별도 설계/패치가 필요
@@ -534,8 +563,10 @@ Document Draft Design은 live/backend docs-only baseline으로 유지되고,
 Bridge/query relevance guard matrix review도 completed/current design baseline으로
 문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, stale OCR
 review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history
-selector, SCN-001 frontend history/After polish는 completed 상태다. 다음 target
-후보는 final browser rehearsal/evidence, docs release readiness, optional
-logged-in saved history smoke이다.
+selector, SCN-001 frontend history/After polish는 completed 상태다. 최신 main의
+`/after`와 `/history`는 사건 중심 단일 카드와 사용자 설명형 요약으로 정리됐다.
+다음 target은 frontend-only UI polish다: main page History position/order,
+`/after`/`/history`/main card spacing, button labels, fold/collapsible behavior,
+and mobile width.
 live/backend SCN-001 document draft implementation, protected SCN-001 draft endpoint
 확정, live SCN-001 draft generation/freeze는 아직 열지 않는다.

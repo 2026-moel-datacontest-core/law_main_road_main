@@ -8,7 +8,7 @@
 
 ## 현재 진행 상태
 
-기준일: `2026-04-27`
+기준일: `2026-04-28`
 
 현재 `ops` 문서 기준으로 정리된 상태는 아래와 같다.
 
@@ -34,6 +34,14 @@
   user는 collapsible saved history section에서 saved Bridge를 선택할 수 있고,
   displayed safe subset만 Bridge handoff memory state에 추가된다. `/after` history
   list의 Before/Bridge soft-delete는 기존 protected DELETE helper를 사용한다.
+- 최신 frontend history polish 반영: `8cd1ccb`/`c365ca5` 기준 `/after` saved
+  history와 `/history`는 Before/Bridge 분리형 list/card가 아니라 사건 중심 단일
+  카드 구조다. 사건 요약, 확인된 쟁점, 참고할 법 조항 후보, 권장 다음 단계,
+  After 질문과 연결점을 한 카드에서 사용자 설명형 문장으로 보여준다.
+- `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, unknown
+  snake_case는 raw key로 노출하지 않고 한국어 label/description 또는 readable
+  fallback으로 표시한다. Bridge는 legal grounding이 아니라 continuity/reference로만
+  표시하고 raw `after_query_seed`는 계속 null/비노출 상태다.
 - Before OCR stale/running review job failure guard 반영: stale OCR review jobs는
   failed 처리된다. Retry/backoff/full provider hardening은 별도 future runtime 후보다.
 - local secret/database ignore rules hardening 반영
@@ -69,6 +77,13 @@
   ids/token/provider identifiers/email 비노출, `/after` Before/Bridge
   soft-delete, delete success local list/selected handoff cleanup, Before delete
   linked Bridge visible path removal
+- `/history` 기록 보관함 반영 완료: 사건 중심 단일 카드 flow, details/fold 기반
+  compact display, 기존 delete confirm/cancel/success soft-delete UX 유지,
+  failed/running Before user-facing hidden, fetched non-completed Before-linked
+  Bridge hidden, source Before가 fetch window 밖인 Bridge-only record 표시 유지
+- main page는 backend-verified logged-in 상태에서 History 진입점을 제공한다.
+  남은 UI polish 후보는 logged-out `Before / After` 유지, logged-in
+  `History / Before / After` 순서 정리다.
 - SCN-001 protected frontend actions는 Firebase signed-in 단독이 아니라 backend `/api/v1/auth/me` verification 완료 상태(`backendUser.logged_in`)를 기준으로 동작
 - Phase 7E live browser/network/DB smoke PASS, Phase 8 regression / demo preflight / SCN-004 manual rehearsal PASS
 - Post-Phase 8 actual browser logged-in smoke PASS: `/api/v1/auth/me` 200 `logged_in=true`, main Before CTA -> `/before`, history endpoints Authorization PRESENT, read-only history render PASS
@@ -331,11 +346,17 @@ SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity panel,
 상태다. SCN-001 live/backend draft generation과 protected SCN-001 draft endpoint
 path/method/schema는 NOT opened 상태로 둔다.
 
-현재 next target 후보:
+현재 next target:
 
-1. final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after` saved history selector
-2. docs release readiness
-3. optional logged-in saved history smoke
+1. frontend-only UI polish: main page History 위치/order 정리
+   - logged-out: `Before / After`
+   - logged-in: `History / Before / After`
+2. final frontend UI polish
+   - `/after`, `/history`, main page 카드 spacing
+   - 버튼 라벨
+   - fold/collapsible density
+   - mobile width
+3. backend/API/schema 작업은 열지 않음
 
 Continuity panel scope:
 
@@ -351,15 +372,13 @@ Continuity panel scope:
 
 별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-1. SCN-001 frozen draft + continuity panel + `/after` saved history selector browser rehearsal/evidence finalization
-2. cloud storage / GCS lifecycle policy review 또는 orphan classification/cleanup policy review
-3. read-only history status pill color polish가 필요하면 별도 작은 patch로 처리
-4. main Before gate semantic/a11y polish가 필요하면 SCN-004 `/after` login-free path를 건드리지 않고 처리
-5. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
-6. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
-7. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
-8. `before` / `after` artifact의 향후 GCS 전환 기준 정리
-9. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
+1. main page History 위치/order polish
+2. `/after`, `/history`, main page 최종 UI polish
+3. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
+4. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
+5. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
+6. `before` / `after` artifact의 향후 GCS 전환 기준 정리
+7. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
 
 Step 2B-3, Step 3 full retention lifecycle implementation, live/backend SCN-001
 document draft implementation은 아직 열지 않는다. Frozen draft + continuity panel

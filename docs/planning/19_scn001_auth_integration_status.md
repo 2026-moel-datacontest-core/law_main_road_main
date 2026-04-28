@@ -1,6 +1,6 @@
 # SCN-001 Auth Integration Status
 
-기준일: `2026-04-27`
+기준일: `2026-04-28`
 
 ## Purpose
 
@@ -31,7 +31,7 @@
 | SCN-001 fixed-preset frozen draft | completed | `667a1bd` adds exact `SCN-001-BRIDGE-DEMO` frozen draft flow for `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안. It is frontend fixture/deterministic template based, reflects user intake, and does not call backend/LLM or `/api/v1/documents/draft` |
 | SCN-001 continuity panel | completed | `f574e6b` adds continuity panel on `/after/result` and `/after/draft`. It preserves Bridge-as-Continuity, Not Grounding and does not create or modify legal basis, citations, source/grounded context ids, or retrieved chunks |
 | `/after` saved history selector | completed | `2ec5488` shows saved Before/Bridge history on `/after` for backend-verified logged-in users. The section is collapsible, saved Bridge selection uses only the displayed safe subset for Bridge handoff memory state, Before/Bridge soft-delete uses existing protected DELETE helpers, exact preset submit keeps fixed answer priority, and SCN-004 public flow remains unchanged |
-| SCN-001 history/After frontend polish | completed | `f38aea6` clarifies `/after` saved history cards, `3822da2` makes the SCN-001 fixed-draft result panel non-sticky while preserving SCN-004 selector behavior, `d8ea907` polishes `/history`, `903ec4f` improves nav/delete accessibility, and `1a57601` removes stale `/before` embedded-history CSS. Frontend-only; public API contracts, auth persistence, storage policy, and SCN-004 freeze remain unchanged |
+| SCN-001 history/After frontend polish | completed | `f38aea6` clarifies `/after` saved history cards, `3822da2` makes the SCN-001 fixed-draft result panel non-sticky while preserving SCN-004 selector behavior, `d8ea907` polishes `/history`, `903ec4f` improves nav/delete accessibility, `1a57601` removes stale `/before` embedded-history CSS, `8cd1ccb` polishes SCN-001 history cards, and `c365ca5` clarifies SCN-001 history summaries. `/after` saved history and `/history` now use an incident-centered single card flow with user-facing Korean explanations instead of separate Before/Bridge list cards or raw status/key output. Frontend-only; public API contracts, auth persistence, storage policy, `/api/v1/history` unified backend API, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, Step 3 full retention lifecycle, and SCN-004 freeze remain unchanged |
 
 ## Current Git History References
 
@@ -69,6 +69,8 @@ Recent relevant commits after history rewrite:
 - `d8ea907` feat(frontend): polish SCN-001 history page
 - `903ec4f` fix(frontend): improve navigation and delete accessibility
 - `1a57601` refactor(frontend): remove stale Before history styles
+- `8cd1ccb` feat(frontend): polish SCN-001 history cards
+- `c365ca5` feat(frontend): clarify SCN-001 history summaries
 
 ## Phase 6F Evidence Summary
 
@@ -224,6 +226,52 @@ Implemented behavior:
 - Logged-out users can still use `/after` public preset/free input flows.
 - SCN-004 public flow unchanged.
 
+## Incident-centered History UI Status
+
+2026-04-28 latest main includes `8cd1ccb` and `c365ca5`. The SCN-001 history
+surfaces are now aligned around an incident-centered single card model.
+
+Current `/after` behavior:
+
+- Backend-verified logged-in users can select saved Before/Bridge incident
+  records from `/after`.
+- Records are shown as one incident card instead of separate Before/Bridge
+  columns or independent cards.
+- Bridge selection keeps the existing protected Bridge answer routing and memory
+  handoff behavior.
+- SCN-004 public `/after` preset/free input flow remains login-free.
+- SCN-004 exact/free input draft behavior remains unchanged.
+
+Current `/history` behavior:
+
+- `/history` is the SCN-001 record archive.
+- It uses an incident-centered single card flow, not a separate 2-column
+  Before/Bridge layout.
+- Details/fold sections keep the archive compact while still showing confirmed
+  issues, candidate legal references, recommended next steps, and After
+  connection.
+- Existing soft-delete confirm/cancel/success UX remains in place.
+- Failed/running Before jobs are hidden from the user-facing list.
+- Bridge records linked to fetched non-completed Before jobs are hidden.
+- Bridge-only records whose source Before is outside the fetch window remain
+  visible as reference records.
+
+Display policy:
+
+- Incident summaries are user-facing Korean explanations, not raw status/key
+  dumps.
+- `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, and
+  unknown snake_case values are rendered through Korean label/description or
+  readable fallback.
+- Bridge is continuity/reference only, not legal grounding.
+- Raw `after_query_seed` remains null and is not exposed in UI/query/storage.
+
+Main page state:
+
+- A History entry point exists for backend-verified logged-in users.
+- Remaining UI polish candidate: logged-out nav/actions stay `Before / After`,
+  while logged-in nav/actions should be ordered `History / Before / After`.
+
 Evidence hygiene:
 
 - Record only PASS/PRESENT/ABSENT/NO-level evidence.
@@ -312,6 +360,10 @@ Displayed safe subset:
   SCN-001-BRIDGE-DEMO exact fixed preset frozen draft, continuity panel, and
   `/after` saved history selector are completed frontend-local/protected-history
   paths, not live/backend draft generation.
+- Current recommended next work is frontend-only UI polish: main page History
+  position/order, final `/after`/`/history`/main card spacing, button labels,
+  fold/collapsible behavior, and mobile width. Backend/API/schema work remains
+  closed for this target.
 
 ## Do Not Mix
 

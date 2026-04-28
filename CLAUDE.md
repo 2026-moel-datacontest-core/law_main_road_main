@@ -11,7 +11,7 @@
 
 ## Current Phase
 
-기준일: `2026-04-27`
+기준일: `2026-04-28`
 
 - RAG refinement landing 완료
 - SCN-004 document draft backend 완료
@@ -38,7 +38,9 @@
 - SCN-001 Step 3 MVP soft-delete slice completed: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
 - SCN-001 `/after` saved Before/Bridge history selector completed in `2ec5488`: backend-verified logged-in users can open a collapsible saved history section on `/after`, select saved Bridge records into Bridge handoff memory state using only the displayed safe subset, and soft-delete Before/Bridge records from the `/after` history list.
 - `/after` saved history selector does not expose raw `after_query_seed`, raw Bridge payload, token, Firebase uid, provider_subject, email, or real bridge id in UI/query/storage. Delete success refreshes/local-cleans the history list and selected handoff state; Before delete removes the linked Bridge visible path.
-- SCN-001 frontend history/After polish completed on `experiment/frontend-polish-history-after`: `/after` saved history cards clarified (`f38aea6`), SCN-001 result fixed-draft panel no longer sticky (`3822da2`), `/history` hierarchy/delete copy polished (`d8ea907`), Masthead/intake delete accessibility polished (`903ec4f`), and stale `/before` embedded-history CSS removed (`1a57601`). This was frontend-only and did not change public API contracts, auth persistence, storage policy, or SCN-004 freeze behavior.
+- SCN-001 frontend history/After polish completed through latest main commits: `8cd1ccb` polished SCN-001 history cards and `c365ca5` clarified SCN-001 history summaries. `/after` saved history and `/history` now use an incident-centered single card flow instead of separate Before/Bridge list cards.
+- SCN-001 incident cards show situation summary, confirmed issues, candidate legal references, recommended next steps, and the After question connection in one card. Summaries are user-facing Korean explanations rather than raw status/key output; `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, and unknown snake_case values are rendered through Korean label/description or readable fallback. Bridge remains continuity/reference only, not legal grounding, and raw `after_query_seed` remains null and hidden from UI/query/storage.
+- SCN-001 frontend history/After polish remains frontend-only: public API contracts, auth persistence, Web Storage policy, SCN-004 freeze behavior, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, `/api/v1/history` unified backend API, and Step 3 full retention lifecycle were not opened.
 - recent security/history cleanup: local secret/database ignore rules hardening 완료, 문서 hash 참조는 current git history 기준으로 관리
 - 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history, `/after` saved history selector, MVP soft-delete, SCN-001 fixed-preset frozen draft path까지의 public contract 보호**
 - SCN-001 Step 4 document draft design은 docs-only baseline으로 유지한다.
@@ -48,7 +50,7 @@
 - `Bridge/query relevance guard matrix review`는 current Step 4 design baseline으로 정리됐고, SCN-001 continuity panel은 `/after/result`와 `/after/draft`에 completed 상태다.
 - Continuity panel은 `Bridge-as-Continuity, Not Grounding` 정책을 유지하며 `legal_basis`, `cited_articles`, `source_context_ids`, `grounded_context_ids`, `retrieved_chunks`를 생성/수정하지 않는다.
 - Before OCR stale/running job failure guard completed. OCR live upload smoke에는 provider/runtime risk가 있었으며 retry/backoff/full provider hardening은 future runtime 후보로 유지한다.
-- 다음 target은 SCN-001 frozen draft + continuity panel + `/after` saved history selector + frontend polish completed 상태를 기준으로 final browser rehearsal/evidence, docs release readiness, optional logged-in saved history smoke 중에서 선택한다.
+- 다음 target은 frontend-only UI polish로 둔다: main page logged-in nav/action order를 `History / Before / After`로 정리하고, `/after`, `/history`, main page 카드 spacing, button labels, fold/collapsible, mobile width를 polish한다. SCN-004 freeze, SCN-001 frozen draft flow, backend/API/schema는 건드리지 않는다.
 - `SCN-001-BRIDGE-DEMO` exact fixed preset은 frozen draft flow를 제공하며, Bridge-origin/live modified SCN-001 paths는 answer-only / draft disabled 정책을 유지한다.
 - `SCN-004-DEMO-FREEZE`는 main demo / document draft freeze용 preset
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지
@@ -61,7 +63,7 @@ Evolution note:
 - 2026-04-17 기준 상태는 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal 완료였다.
 - 2026-04-20에는 위 상태를 흔들지 않고 presentation-local preset, preflight, free-input guard, eval evidence report를 추가해 MVP 제출 기준을 보강했다.
 - 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, frontend persistence는 `inMemoryPersistence`다.
-- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 docs-only design baseline, SCN-001-BRIDGE-DEMO frozen draft flow, stale OCR review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history selector, frontend history/After polish completed 상태가 확인됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
+- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 docs-only design baseline, SCN-001-BRIDGE-DEMO frozen draft flow, stale OCR review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history selector, frontend history/After polish completed 상태가 확인됐다. 2026-04-28 기준 최신 main은 `8cd1ccb`/`c365ca5`를 포함하며 `/after`와 `/history` 기록 UI가 사건 중심 단일 카드와 사용자 설명형 요약으로 정리됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
 
 ## Structure
 
@@ -185,16 +187,19 @@ Evolution note:
 - 발표 데모 안정성 우선
 - backend schema 확인 없이 응답 필드 가정 금지
 - 현재 제출/메인 demo 범위는 SCN-004 After 4-route flow: `/after`, `/after/result`, `/after/intake`, `/after/draft`
-- repo에는 `/before` 구현과 SCN-001 Bridge handoff CTA/cards도 포함되어 있다. 다만 `/bridge`, Recovery 확장은 현재 freeze 범위에서 진행하지 않음
+- repo에는 `/before`, `/history`, SCN-001 Bridge handoff CTA/cards도 포함되어 있다. 다만 `/bridge`, Recovery 확장은 현재 freeze 범위에서 진행하지 않음
 - 현재 SCN-004 demo freeze 유지 작업과 SCN-005 문서 타입 frontend 확장을 한 패치에 섞지 않음
 - SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
 - SCN-001 `Before -> Bridge -> After` answer-only handoff는 checked Bridge submit의 protected answer path와 all-unchecked public answer fallback까지 구현되어 있다.
 - Firebase Auth Google Sign-In 기반 최소 로그인의 현재 구현 적용 범위는 SCN-001 protected path다. Phase 4/5/6A~6F, Phase 7A~7E, read-only history UI, backend-verified main Before login gate, Step 3 MVP soft-delete UI/API까지 완료됐다.
 - `/after` saved Before/Bridge history selector는 backend-verified logged-in user에게만 보이는 collapsible UI다. Saved Bridge 선택은 displayed safe subset만 Bridge handoff memory state에 추가하고, SCN-001/SCN-004 preset buttons를 숨기지 않는다.
+- `/after` saved history와 `/history`는 사건 중심 단일 카드 UI다. Before와 Bridge를 별도 2-column/list로 나누지 않고 상황 설명, 확인된 쟁점, 참고할 법 조항 후보, 권장 다음 단계, After 질문과 연결점을 한 카드에서 설명한다.
+- `/history`는 SCN-001 기록 보관함이며 failed/running Before는 user-facing list에서 숨기고, fetched non-completed Before에 연결된 Bridge도 숨긴다. Source Before가 fetch window 밖인 Bridge-only record는 표시 유지한다.
 - `/after` saved history delete는 기존 protected DELETE helper를 사용한다. Success 시 local list와 selected handoff state를 정리하며, Before delete는 linked Bridge visible path도 제거한다.
 - Firebase Auth MVP frontend persistence는 `inMemoryPersistence`; token/auth state와 raw flow payload는 Web Storage에 저장하지 않는다.
 - `browserSessionPersistence`는 MVP default가 아니라 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`는 Web Storage에 저장하지 않음
+- SCN-001 history summary와 Bridge issue display는 raw status/key 중심 표시를 피한다. `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk` 같은 key와 unknown snake_case는 한국어 label/description 또는 readable fallback으로 표시한다.
 - presentation preset exact path는 fixed answer fixture를 사용하고 `/api/v1/answer`를 호출하지 않음
 - Bridge context/history가 있어도 exact preset submit은 fixed answer path가 우선된다: `SCN-001-BRIDGE-DEMO` exact는 fixed answer -> frozen draft flow, `SCN-004-DEMO-FREEZE` exact는 fixed answer -> existing SCN-004 draft flow.
 - Preset 미선택 + included Bridge context는 기존 protected Bridge answer path를 유지한다.
@@ -223,4 +228,4 @@ Evolution note:
 - 2026-04-17 기준 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, SCN-004 content QA, manual browser rehearsal까지 완료됨.
 - 2026-04-20 기준 presentation-local preset, SCN-004 free-input guard, demo preflight, full 60 answer evidence report까지 완료됨.
 - 2026-04-22 기준 SCN-001 Firebase Auth Phase 0~3 완료.
-- 2026-04-24 기준 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6 완료. 2026-04-27 기준 실제 브라우저 logged-in smoke PASS 및 backend-verified auth gate sync hardening 확인.
+- 2026-04-24 기준 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6 완료. 2026-04-27 기준 실제 브라우저 logged-in smoke PASS 및 backend-verified auth gate sync hardening 확인. 2026-04-28 기준 `/after`와 `/history`는 사건 중심 단일 카드와 사용자 설명형 요약으로 정리됨.

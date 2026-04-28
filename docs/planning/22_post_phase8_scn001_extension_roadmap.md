@@ -1,6 +1,6 @@
 # Post-Phase 8 SCN-001 Extension Roadmap
 
-기준일: `2026-04-27`
+기준일: `2026-04-28`
 
 이 문서는 Phase 8 이후 후속 작업 후보와 현재 완료 상태를 작고 안전한
 순서로 정리하는 post-Phase 8 roadmap이다.
@@ -48,19 +48,33 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
   `2ec5488`: backend-verified logged-in users can open a collapsible saved
   history section on `/after`, select saved Bridge records using only the
   displayed safe subset, and soft-delete Before/Bridge history from that list.
-- SCN-001 frontend history/After polish completed on
-  `experiment/frontend-polish-history-after`:
-  - `/after` saved history cards now separate Before situation summary from
-    Bridge law/risk explanation using only displayed safe fields.
+- SCN-001 frontend history/After polish completed through latest main commits:
+  - `8cd1ccb` polished SCN-001 history cards and `c365ca5` clarified SCN-001
+    history summaries.
+  - `/after` saved history and `/history` now use an incident-centered single
+    card flow instead of separate Before/Bridge list cards or 2-column layout.
+  - One incident card shows situation summary, confirmed issues, candidate legal
+    references, recommended next steps, and the After question connection.
+  - Situation summaries are user-facing Korean explanations rather than raw
+    status/key output.
+  - `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, and
+    unknown snake_case values are rendered through Korean label/description or
+    readable fallback.
+  - Bridge remains continuity/reference only, not legal grounding, and raw
+    `after_query_seed` remains null and hidden from UI/query/storage.
   - SCN-001 fixed frozen draft selector on `/after/result` is no longer sticky;
     SCN-004 document selection UX remains unchanged.
-  - `/history` has clearer Before/Bridge hierarchy, empty/loading/error states,
-    and non-destructive soft-delete wording.
+  - `/history` is the record archive with compact details/fold sections,
+    empty/loading/error states, and non-destructive soft-delete wording.
+  - Failed/running Before jobs are hidden from the user-facing list; Bridge
+    records linked to fetched non-completed Before jobs are hidden; Bridge-only
+    records whose source Before is outside the fetch window remain visible.
   - Masthead active/focus states and intake row delete labels are clearer.
   - stale `/before` embedded-history CSS was removed.
   - This did not open backend API/schema changes, Web Storage persistence,
-    live/backend SCN-001 draft generation, protected SCN-001 draft endpoint,
-    SCN-005, or Step 3 full retention lifecycle.
+    `/api/v1/history` unified backend API, live/backend SCN-001 draft generation,
+    protected SCN-001 draft endpoint, SCN-005, or Step 3 full retention
+    lifecycle.
 - Post-Phase 8 Step 1.6 main page Before entry login gate 완료.
 - Post-Phase 8 actual browser logged-in smoke PASS.
 - SCN-001 protected frontend auth gate hardening 완료: Firebase signed-in 단독이
@@ -91,8 +105,9 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
   - SCN-001 MVP demo includes fixed-preset frozen draft continuity explanation
     and Bridge-origin answer-only continuity explanation where eligible.
   - Bridge-as-Continuity, Not Grounding is the policy boundary.
-  - Current next target candidates are final browser rehearsal/evidence, docs
-    release readiness, or optional logged-in saved history smoke.
+  - Current next target is frontend-only UI polish: main page History
+    position/order, final `/after`/`/history`/main card spacing, button labels,
+    fold/collapsible behavior, and mobile width.
 
 ## 3. Recommended Sequence
 
@@ -516,10 +531,10 @@ Retention-stream future policy target after this review:
 
 - Cloud storage / GCS lifecycle policy review or orphan classification/cleanup
   policy review remains a later policy candidate for the Step 3 retention stream.
-- The current global next prompt target candidates are final browser
-  rehearsal/evidence for SCN-001 frozen draft + continuity panel + `/after`
-  saved history selector, docs release readiness, or optional logged-in saved
-  history smoke, not this retention-stream policy work.
+- The current global next prompt target is frontend-only UI polish: main page
+  History position/order, final `/after`/`/history`/main card spacing, button
+  labels, fold/collapsible behavior, and mobile width, not this
+  retention-stream policy work.
 
 Recommended sequencing:
 
@@ -562,11 +577,10 @@ Retention-stream note:
 - If the work later returns to Step 3 retention policy, cloud storage / GCS
   lifecycle policy review or orphan classification/cleanup policy review remains
   the next retention-stream candidate.
-- The active next target candidates for this roadmap are final browser
-  rehearsal/evidence for frozen draft + continuity panel + `/after` saved history
-  selector, docs release readiness, or optional logged-in saved history smoke.
-  They should not open live/backend SCN-001 draft generation or protected
-  SCN-001 draft endpoint work.
+- The active next target for this roadmap is frontend-only UI polish: main page
+  History position/order, final `/after`/`/history`/main card spacing, button
+  labels, fold/collapsible behavior, and mobile width. It should not open
+  live/backend SCN-001 draft generation or protected SCN-001 draft endpoint work.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
 new implementation instructions for this completed MVP soft-delete slice.
@@ -890,8 +904,9 @@ generation, live draft freeze는 열지 않는다.
 - No independent `/bridge` route or Recovery implementation.
 - No live/backend DB schema/migration, protected endpoint path/method/schema, live
   document template, or live QA fixture is finalized here.
-- Current next target candidates are final browser rehearsal/evidence, docs
-  release readiness, or optional logged-in saved history smoke.
+- Current next target is frontend-only UI polish: main page History
+  position/order, final `/after`/`/history`/main card spacing, button labels,
+  fold/collapsible behavior, and mobile width.
 
 ##### 2. Bridge usage policy
 
@@ -1101,11 +1116,11 @@ not a request to run broad eval now.
 
 The previous frontend-only continuity panel target, `/after` saved history
 selector target, and frontend history/After polish target are completed. Current
-next target candidates are final browser rehearsal/evidence for SCN-001 frozen
-draft + continuity panel + `/after` saved history selector, docs release
-readiness, or optional logged-in saved history smoke. These targets do not
-finalize protected SCN-001 draft endpoint path/method/schema, open live/backend
-SCN-001 draft generation, or open SCN-001 live draft freeze.
+next target is frontend-only UI polish: main page History position/order, final
+`/after`/`/history`/main card spacing, button labels, fold/collapsible behavior,
+and mobile width. This target does not finalize protected SCN-001 draft endpoint
+path/method/schema, open live/backend SCN-001 draft generation, or open SCN-001
+live draft freeze.
 
 ##### 5. Draft affordance policy
 
@@ -1189,12 +1204,17 @@ Candidate quality gate for a future design review:
 
 ##### 9. Current next target
 
-Current next target candidates:
+Current next target is frontend-only UI polish:
 
-1. Final browser rehearsal/evidence for SCN-001 frozen draft + continuity panel
-   + `/after` saved history selector.
-2. docs release readiness.
-3. optional logged-in saved history smoke.
+1. Main page History position/order:
+   - logged-out nav/actions stay `Before / After`.
+   - backend-verified logged-in nav/actions should read `History / Before / After`.
+2. Final UI polish for `/after`, `/history`, and main page:
+   - card spacing.
+   - button labels.
+   - fold/collapsible behavior.
+   - mobile width.
+3. Keep SCN-004 freeze and SCN-001 frozen draft flow untouched.
 
 These targets should not code a backend endpoint, finalize schema/migration, open
 live/backend SCN-001 draft generation, open protected SCN-001 draft endpoint
@@ -1287,35 +1307,26 @@ Step 4는 live/backend SCN-001 Document Draft Design baseline으로 유지한다
 Bridge/query relevance guard matrix review는 completed/current design baseline으로
 문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity
 panel, `/after` saved Before/Bridge history selector, frontend history/After
-polish는 completed 상태다. 다음 target 후보는 final browser rehearsal/evidence,
-docs release readiness, optional logged-in saved history smoke이다.
+polish는 completed 상태다. 최신 main의 `/after`와 `/history`는 사건 중심 단일
+카드와 사용자 설명형 요약으로 정리됐다. 다음 target은 frontend-only UI polish다.
 
-Review focus:
+UI polish focus:
 
-- continuity panel이 `/after/result`와 `/after/draft`에서 "이전 검토와 이번 질문이
-  이어질 수 있는 지점"만 설명하는지
-- `/after` saved history selector가 collapsible UI이고 saved Bridge 선택 시 displayed
-  safe subset만 Bridge handoff memory state에 넣는지
-- `/after` Before/Bridge soft-delete success 후 local list와 selected handoff state를
-  정리하고, Before delete가 linked Bridge visible path를 제거하는지
-- Bridge context/history가 있어도 SCN-001/SCN-004 preset buttons와 exact fixed
-  answer priority가 유지되는지
-- fixed SCN-001 frozen draft path가 `workplace_change_reason_summary` / 사업장 변경
-  사유 정리서 초안만 제공하고 backend/LLM 또는 `/api/v1/documents/draft`를 호출하지
-  않는지
-- Bridge handoff가 있고 included/checked Bridge context가 있을 때만 표시하는지
-- strong/weak/no/conflicting matrix outcome을 UI copy와 panel visibility로만
-  연결하고 구현 scoring으로 고정하지 않는지
-- strong overlap이면 continuity explanation, weak overlap이면 reference-only note
-  또는 hidden, no overlap/deleted/hidden/all-unchecked/missing answer evidence면
-  hidden으로 정렬하는지
-- reference-only note가 Bridge를 현재 답변의 legal basis로 사용하지 않았다고
-  분명히 말하는지
-- unsafe/conflicting/deleted/hidden source는 설명보다 panel hiding을 우선하는지
-- answer remains primary이고 Bridge info remains supplementary인지
-- draft CTA/button이 Bridge-origin result에서 계속 hidden인지
-- live/backend SCN-001 draft affordance가 relevance guard와 별도 quality gate,
-  document type confirmation, separate review 전 열리지 않는지
+- main page logged-out nav/actions는 `Before / After`를 유지하고, backend-verified
+  logged-in nav/actions는 `History / Before / After` 순서로 정리하는지
+- `/after`와 `/history`의 사건 중심 단일 카드 spacing, details/fold density,
+  button labels, mobile width가 자연스러운지
+- `/after` saved history selector가 사건 중심 단일 카드와 collapsible UI를
+  유지하고, saved Bridge 선택 시 displayed safe subset만 Bridge handoff memory
+  state에 넣는지
+- `/history`가 기록 보관함으로 동작하면서 details/fold로 compact하게 표시되는지
+- failed/running Before는 user-facing list에서 숨기고, fetched non-completed
+  Before에 연결된 Bridge는 숨기며, source Before가 fetch window 밖인 Bridge-only
+  record는 표시 유지하는지
+- delete confirm/cancel/success soft-delete UX가 유지되는지
+- Bridge가 legal grounding이 아니라 continuity/reference로만 표시되는지
+- raw status/key 중심 표시 대신 한국어 label/description 또는 readable fallback을
+  유지하는지
 - `/api/v1/answer`와 `/api/v1/documents/draft` public contract unchanged, SCN-004
   login-free draft flow unchanged 상태를 유지하는지
 - raw Before/Bridge payload, raw `after_query_seed`, token, Firebase uid,
@@ -1333,8 +1344,10 @@ Current prompt target summary:
   baseline이다.
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은
   completed 상태이며 `/after` saved history selector도 completed 상태다.
-- 다음 target 후보는 final browser rehearsal/evidence, docs release readiness,
-  optional logged-in saved history smoke이다.
+- `/after`와 `/history`는 사건 중심 단일 카드와 사용자 설명형 요약으로 정리됐다.
+- 다음 target은 frontend-only UI polish다: main page History position/order,
+  `/after`/`/history`/main card spacing, button labels, fold/collapsible behavior,
+  and mobile width.
 - Continuity panel은 Bridge -> After answer-only continuity explanation과 fixed
   frozen draft continuity explanation이며, Bridge-as-Continuity, Not Grounding
   정책을 유지한다.

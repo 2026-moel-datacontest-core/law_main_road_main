@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-기준일: `2026-04-27`
+기준일: `2026-04-28`
 
 - RAG refinement landing 완료
 - SCN-004 document draft backend 완료
@@ -34,7 +34,9 @@
 - SCN-001 Step 3 MVP soft-delete slice completed: backend history soft-delete foundation(`e6f17eb`), frontend `/before` delete UI/client(`50c279f`), browser deletion smoke PASS. Step 3 full retention lifecycle is NOT opened.
 - SCN-001 `/after` saved Before/Bridge history selector completed in `2ec5488`: backend-verified logged-in users can open a collapsible saved history section on `/after`, select saved Bridge records into Bridge handoff memory state using only the displayed safe subset, and soft-delete Before/Bridge records from the `/after` history list.
 - `/after` saved history selector does not expose raw `after_query_seed`, raw Bridge payload, token, Firebase uid, provider_subject, email, or real bridge id in UI/query/storage. Delete success refreshes/local-cleans the history list and selected handoff state; Before delete removes the linked Bridge visible path.
-- SCN-001 frontend history/After polish completed on `experiment/frontend-polish-history-after`: `/after` saved history cards clarified (`f38aea6`), SCN-001 result fixed-draft panel no longer sticky (`3822da2`), `/history` hierarchy/delete copy polished (`d8ea907`), Masthead/intake delete accessibility polished (`903ec4f`), and stale `/before` embedded-history CSS removed (`1a57601`). This was frontend-only and did not change public API contracts, auth persistence, storage policy, or SCN-004 freeze behavior.
+- SCN-001 frontend history/After polish completed through latest main commits: `8cd1ccb` polished SCN-001 history cards and `c365ca5` clarified SCN-001 history summaries. `/after` saved history and `/history` now use an incident-centered single card flow instead of separate Before/Bridge list cards.
+- SCN-001 incident cards show situation summary, confirmed issues, candidate legal references, recommended next steps, and the After question connection in one card. Summaries are user-facing Korean explanations rather than raw status/key output; `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, and unknown snake_case values are rendered through Korean label/description or readable fallback. Bridge remains continuity/reference only, not legal grounding, and raw `after_query_seed` remains null and hidden from UI/query/storage.
+- SCN-001 frontend history/After polish remains frontend-only: public API contracts, auth persistence, Web Storage policy, SCN-004 freeze behavior, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, `/api/v1/history` unified backend API, and Step 3 full retention lifecycle were not opened.
 - recent security/history cleanup: local secret/database ignore rules hardening 완료, 문서 hash 참조는 current git history 기준으로 관리
 - 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history, `/after` saved history selector, MVP soft-delete, SCN-001 fixed-preset frozen draft path까지의 public contract 보호**
 - SCN-001 Step 4 document draft design은 docs-only baseline으로 유지한다.
@@ -44,7 +46,7 @@
 - `Bridge/query relevance guard matrix review`는 current Step 4 design baseline으로 정리됐고, SCN-001 continuity panel은 `/after/result`와 `/after/draft`에 completed 상태다.
 - Continuity panel은 `Bridge-as-Continuity, Not Grounding` 정책을 유지하며 `legal_basis`, `cited_articles`, `source_context_ids`, `grounded_context_ids`, `retrieved_chunks`를 생성/수정하지 않는다.
 - Before OCR stale/running job failure guard completed. OCR live upload smoke에는 provider/runtime risk가 있었으며 retry/backoff/full provider hardening은 future runtime 후보로 유지한다.
-- 다음 target은 SCN-001 frozen draft + continuity panel + `/after` saved history selector + frontend polish completed 상태를 기준으로 final browser rehearsal/evidence, docs release readiness, optional logged-in saved history smoke 중에서 선택한다.
+- 다음 target은 frontend-only UI polish로 둔다: main page logged-in nav/action order를 `History / Before / After`로 정리하고, `/after`, `/history`, main page 카드 spacing, button labels, fold/collapsible, mobile width를 polish한다. SCN-004 freeze, SCN-001 frozen draft flow, backend/API/schema는 건드리지 않는다.
 - `SCN-001-BRIDGE-DEMO` exact fixed preset은 frozen draft flow를 제공하며, Bridge-origin/live modified SCN-001 paths는 answer-only / draft disabled 정책을 유지한다.
 - `SCN-004-DEMO-FREEZE`는 main demo / document draft freeze용 preset
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지
@@ -57,7 +59,7 @@ Evolution note:
 - 2026-04-17 기준 상태는 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal 완료였다.
 - 2026-04-20에는 위 상태를 흔들지 않고 presentation-local preset, preflight, free-input guard, eval evidence report를 추가해 MVP 제출 기준을 보강했다.
 - 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, frontend persistence는 `inMemoryPersistence`다.
-- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 docs-only design baseline, SCN-001-BRIDGE-DEMO frozen draft flow, stale OCR review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history selector, frontend history/After polish completed 상태가 확인됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
+- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 docs-only design baseline, SCN-001-BRIDGE-DEMO frozen draft flow, stale OCR review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history selector, frontend history/After polish completed 상태가 확인됐다. 2026-04-28 기준 최신 main은 `8cd1ccb`/`c365ca5`를 포함하며 `/after`와 `/history` 기록 UI가 사건 중심 단일 카드와 사용자 설명형 요약으로 정리됐다. `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
 
 ## Read Order
 
@@ -182,6 +184,7 @@ Implemented routes:
 * `/after/result`
 * `/after/intake`
 * `/after/draft`
+* `/history`
 
 Implemented integration:
 
@@ -189,11 +192,12 @@ Implemented integration:
 * `/after/result` guards draft flow when `cited_articles` or `grounded_context_ids` is empty and filters SCN-004 document types by answer evidence
 * `/after/intake` sends only `buildCaseIntake()` and `buildLegalBasis()` output to `POST /api/v1/documents/draft` for SCN-004 public draft flow. SCN-001-BRIDGE-DEMO exact fixed frozen draft path builds a frontend-local deterministic draft and bypasses `/api/v1/documents/draft`.
 * `/after/draft` displays `rendered_text`, `missing_fields`, `cautions`, `evidence_checklist`, `cited_articles`, source context ids, copy, and print
-* `/after` shows a collapsible saved Before/Bridge history selector for backend-verified logged-in users. Selecting a saved Bridge adds only the displayed safe subset to Bridge handoff memory state; raw seeds/payloads/internal ids/auth identifiers are not exposed in UI/query/storage.
+* `/after` shows a collapsible saved history selector for backend-verified logged-in users. The list is incident-centered single-card UI, not separate Before/Bridge columns. Selecting a saved Bridge adds only the displayed safe subset to Bridge handoff memory state; raw seeds/payloads/internal ids/auth identifiers are not exposed in UI/query/storage, and raw `after_query_seed` remains null.
 * `/after` saved history list supports Before/Bridge MVP soft-delete with the existing protected DELETE helpers. Delete success refreshes/local-cleans the list and selected handoff state; Before delete removes linked Bridge visible path.
+* `/history` is the SCN-001 record archive. It uses incident-centered single cards with details/fold sections for issues, candidate legal references, recommended next steps, and After connection. Failed/running Before jobs are hidden from the user-facing list; Bridge records linked to fetched non-completed Before jobs are hidden; Bridge-only records whose source Before is outside the fetch window remain visible as reference records.
 * `/before` can create protected `bridge_runs` from backend-verified logged-in completed Before jobs and add memory-only Bridge handoff items for `/after`
 * `/before` shows SCN-001 history for backend-verified logged-in users and includes MVP soft-delete affordances with confirmation/cancel, protected DELETE Authorization, success refresh/local hide, linked Bridge visible-path removal, and memory-only Bridge handoff clearing
-* main page Before entry is backend-verified login-gated while SCN-004 `/after` remains login-free
+* main page Before entry is backend-verified login-gated while SCN-004 `/after` remains login-free. Logged-in users have a History entry point; remaining UI polish candidate is to order logged-in nav/actions as `History / Before / After` while logged-out nav/actions stay `Before / After`.
 * checked Bridge handoff answers call the protected Bridge answer endpoint; all-unchecked handoff keeps sticky `answer_origin = "bridge_handoff"` and uses public answer without auth; result remains answer-only and draft disabled
 * state is React Context + `useReducer` memory state only
 

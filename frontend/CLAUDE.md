@@ -23,6 +23,7 @@
 - `/after/result`
 - `/after/intake`
 - `/after/draft`
+- `/history`
 - 독립 `/bridge` / `Recovery`는 현재 frontend 구현 범위에서 제외
 
 ## 현재 구현 상태
@@ -91,12 +92,16 @@
   - Bridge context/history가 있어도 SCN-001/SCN-004 preset buttons는 계속 표시
   - exact preset submit은 fixed answer path가 우선
 - SCN-001 frontend history/After polish 완료:
-  - `/after` saved history cards clarify Before situation summary and Bridge law/risk explanation using only displayed safe fields
-  - SCN-001 fixed frozen draft selector on `/after/result` is no longer sticky; SCN-004 selector behavior remains intact
-  - `/history` page hierarchy, empty/error/loading states, and soft-delete copy are denser and clearer
-  - Masthead active/focus states and intake row delete labels are more accessible
-  - stale `/before` embedded-history CSS was removed after history moved to `/history`
-  - frontend-only; no backend contract, auth persistence, Web Storage, or SCN-004 freeze change
+  - `8cd1ccb` polished SCN-001 history cards and `c365ca5` clarified SCN-001 history summaries on latest main
+  - `/after` saved history and `/history` now use an incident-centered single card flow instead of separate Before/Bridge list or 2-column cards
+  - one card shows situation summary, confirmed issues, candidate legal references, recommended next steps, and the After question connection
+  - situation summaries are user-facing Korean explanations rather than raw status/key text
+  - `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, and unknown snake_case values are rendered through Korean label/description or readable fallback
+  - Bridge remains continuity/reference only, not legal grounding; raw `after_query_seed` remains null and is not exposed in UI/query/storage
+  - `/history` remains a record archive with compact details/fold sections and existing delete confirm/cancel/success soft-delete UX
+  - failed/running Before jobs are hidden from the user-facing list; Bridge records linked to fetched non-completed Before jobs are hidden; Bridge-only records whose source Before is outside the fetch window remain visible
+  - main page has a backend-verified logged-in History entry point; remaining UI polish candidate is logged-in order `History / Before / After` while logged-out nav/actions stay `Before / After`
+  - frontend-only; no backend contract, auth persistence, Web Storage, `/api/v1/history` unified backend API, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, Step 3 full retention lifecycle, or SCN-004 freeze change
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow 완료:
   - `/after -> /after/result -> /after/intake -> /after/draft`
   - document type: `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안
@@ -110,7 +115,7 @@
 - SCN-001 live/backend draft generation and protected SCN-001 draft endpoint path/method/schema remain NOT opened:
   - SCN-004 `/after` draft behavior unchanged
   - SCN-004 public `/api/v1/documents/draft` flow unchanged
-  - next target is final browser rehearsal/evidence, docs release readiness, or optional logged-in saved history smoke
+  - next target is frontend-only UI polish: main page History position/order, final `/after`/`/history`/main card spacing, button labels, fold/collapsible behavior, and mobile width without touching SCN-004 freeze or SCN-001 frozen draft flow
 
 ## 핵심 원칙
 
@@ -129,6 +134,7 @@
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`를 sessionStorage/localStorage에 저장하지 않음
 - raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않음
 - `/after` saved history selector도 raw Bridge payload, internal ids, token, Firebase uid, provider_subject, email, raw query를 Web Storage, UI, answer query에 넣지 않음
+- SCN-001 history summary와 Bridge issue display는 raw status/key 중심 표시를 피한다. `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk` 같은 key와 unknown snake_case는 한국어 label/description 또는 readable fallback으로 표시한다.
 - 증거 체크리스트 상태는 화면 내 로컬 상태만 허용
 
 ## 계정 / OAuth 정책
