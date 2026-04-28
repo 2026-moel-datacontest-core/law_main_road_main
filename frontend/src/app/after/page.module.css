@@ -622,33 +622,38 @@
   overflow-wrap: anywhere;
 }
 
-.historyBridgeSection {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-  padding: 12px;
-  border: 1px solid rgba(15, 118, 110, 0.16);
-  border-radius: 8px;
-  background: #f8fffd;
-}
-
-.historyBridgeSummary {
+.historyCaseFlow {
   display: grid;
   gap: 12px;
   min-width: 0;
-  padding-top: 10px;
-  border-top: 1px solid rgba(15, 118, 110, 0.14);
+  padding: 12px;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 8px;
+  background: #f8fafc;
 }
 
-.historyBridgeSection > .historyBridgeSummary,
-.historyBridgeList .historyBridgeItem:first-child .historyBridgeSummary {
+.historyBridgeCandidate {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.historyCaseFlow > .historyBridgeCandidate:first-child {
   padding-top: 0;
   border-top: 0;
 }
 
-.historyBridgeSummarySelected {
+.historyBridgeCandidateSelected {
   padding-left: 10px;
   border-left: 3px solid #16a34a;
+}
+
+.historyBridgeEmptyState {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
 }
 
 .historyBridgeSectionTitle {
@@ -663,7 +668,7 @@
 .historyBridgeEmpty {
   margin: 0;
   padding: 12px;
-  border: 1px dashed rgba(15, 118, 110, 0.24);
+  border: 1px dashed rgba(37, 99, 235, 0.22);
   border-radius: 8px;
   background: #ffffff;
   color: #64748b;
@@ -723,7 +728,7 @@
   -webkit-line-clamp: 3;
 }
 
-.historyBridgeInsight {
+.historyCaseGrid {
   display: grid;
   gap: 10px;
   min-width: 0;
@@ -731,6 +736,15 @@
   border: 1px solid rgba(37, 99, 235, 0.16);
   border-radius: 8px;
   background: #eff6ff;
+}
+
+.historyConnectionNote {
+  margin: 0;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .historyMetaStack {
@@ -754,6 +768,41 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.historyIssueList {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyIssueItem {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.historyIssueLabel {
+  color: #1e293b;
+  font-size: 0.83rem;
+  font-weight: 850;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.historyIssueDescription {
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 650;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .historyTag {

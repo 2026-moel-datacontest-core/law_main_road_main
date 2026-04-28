@@ -131,17 +131,12 @@
   outline-offset: 2px;
 }
 
-.columns {
-  display: grid;
-  gap: 16px;
-}
-
 .summaryGrid {
   display: grid;
   gap: 10px;
 }
 
-.column {
+.caseSection {
   display: grid;
   gap: 12px;
   min-width: 0;
@@ -151,8 +146,9 @@
   background: #fbfcfe;
 }
 
-.columnHeader {
+.caseSectionHeader {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
   justify-content: space-between;
@@ -161,7 +157,7 @@
   border-bottom: 1px solid #e4e7ec;
 }
 
-.columnHeader > div {
+.caseSectionHeader > div {
   min-width: 0;
 }
 
@@ -225,20 +221,13 @@
 
 .card {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
   padding: 14px;
   border: 1px solid #eaecf0;
   border-radius: 8px;
   background: #ffffff;
-}
-
-.beforeCard {
   box-shadow: inset 3px 0 0 #2563eb;
-}
-
-.bridgeCard {
-  box-shadow: inset 3px 0 0 #0f766e;
 }
 
 .cardTop {
@@ -329,7 +318,7 @@
 }
 
 .summaryBlock,
-.bridgeInsight {
+.connectionGrid {
   display: grid;
   gap: 8px;
   min-width: 0;
@@ -337,11 +326,6 @@
   border: 1px solid #eaecf0;
   border-radius: 8px;
   background: #f9fafb;
-}
-
-.bridgeInsight {
-  border-color: rgba(15, 118, 110, 0.18);
-  background: #f0fdfa;
 }
 
 .summaryText {
@@ -355,6 +339,95 @@
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+.caseHint,
+.connectionNote {
+  margin: 0;
+  color: #667085;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.caseDetails {
+  min-width: 0;
+  border: 1px solid rgba(15, 98, 254, 0.16);
+  border-radius: 8px;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.caseDetailsSummary {
+  padding: 11px 12px;
+  color: #344054;
+  font-size: 0.86rem;
+  font-weight: 850;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.caseFlow {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 0 12px 12px;
+}
+
+.emptyConnection {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px dashed rgba(15, 98, 254, 0.24);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.emptyConnectionTitle,
+.connectionTitle {
+  margin: 0;
+  color: #101828;
+  font-size: 0.94rem;
+  font-weight: 850;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.connectionBlock {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.connectionBlock:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.connectionTop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.connectionTop > div {
+  min-width: 0;
+}
+
+.connectionGrid {
+  border-color: rgba(15, 98, 254, 0.16);
+  background: #eff6ff;
+}
+
+.connectionNote {
+  font-size: 0.82rem;
+  font-weight: 750;
 }
 
 .metaGrid {
@@ -403,6 +476,38 @@
   list-style: none;
 }
 
+.issueList {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.issueItem {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid #eaecf0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.issueLabel {
+  color: #344054;
+  font-size: 0.86rem;
+  font-weight: 850;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.issueDescription {
+  color: #667085;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
 .tag {
   padding: 5px 9px;
   background: #f2f4f7;
@@ -442,11 +547,5 @@
 @media (min-width: 672px) {
   .metaGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1056px) {
-  .columns {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }

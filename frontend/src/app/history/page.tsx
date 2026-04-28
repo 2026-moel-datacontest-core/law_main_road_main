@@ -13,9 +13,9 @@ export default function HistoryPage() {
         <section className={styles.heroSection}>
           <div className={styles.sectionInner}>
             <p className={styles.eyebrow}>History</p>
-            <h1 className={styles.title}>Before / Bridge 기록</h1>
+            <h1 className={styles.title}>사건 기록</h1>
             <p className={styles.lead}>
-              로그인한 계정에 연결된 SCN-001 기록을 완료/표시 가능한 항목 중심으로 확인합니다.
+              로그인한 계정에 연결된 SCN-001 사건 흐름을 완료/표시 가능한 항목 중심으로 확인합니다.
             </p>
           </div>
         </section>
