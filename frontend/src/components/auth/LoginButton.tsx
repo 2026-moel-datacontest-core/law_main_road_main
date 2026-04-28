@@ -22,10 +22,10 @@ export function LoginButton() {
     clearError,
   } = useAuth();
   const isBusy = isInitializing || isSigningIn || isCheckingBackend;
-  const accountLabel = getAccountLabel(
-    backendUser.display_name ?? firebaseUser?.display_name,
-    backendUser.email ?? firebaseUser?.email,
-  );
+  const accountStatusMessage = getAccountStatusMessage({
+    hasFirebaseSession: Boolean(firebaseUser),
+    isBackendVerified: backendUser.logged_in,
+  });
 
   return (
     <div className={styles.panel}>
@@ -52,7 +52,9 @@ export function LoginButton() {
         />
       </div>
 
-      {accountLabel ? <p className={styles.accountLine}>{accountLabel}</p> : null}
+      {accountStatusMessage ? (
+        <p className={styles.accountLine}>{accountStatusMessage}</p>
+      ) : null}
 
       {!firebaseConfigured ? (
         <div className={styles.configNotice} role="status">
@@ -155,44 +157,20 @@ function StatusItem({ label, value }: StatusItemProps) {
   );
 }
 
-function getAccountLabel(
-  displayName?: string | null,
-  email?: string | null,
-): string | null {
-  const maskedDisplayName = maskDisplayName(displayName);
-  const maskedEmail = maskEmail(email);
-
-  if (maskedDisplayName && maskedEmail) {
-    return `${maskedDisplayName} · ${maskedEmail}`;
+function getAccountStatusMessage({
+  hasFirebaseSession,
+  isBackendVerified,
+}: {
+  hasFirebaseSession: boolean;
+  isBackendVerified: boolean;
+}): string | null {
+  if (isBackendVerified) {
+    return 'Google 로그인과 서버 확인이 완료되어 기록을 사용할 수 있습니다.';
   }
 
-  return maskedDisplayName ?? maskedEmail;
-}
-
-function maskDisplayName(value?: string | null): string | null {
-  const trimmed = value?.trim();
-  if (!trimmed) {
-    return null;
+  if (hasFirebaseSession) {
+    return 'Google 로그인됨. 기록 사용 전 서버 확인이 필요합니다.';
   }
 
-  if (trimmed.length <= 2) {
-    return `${trimmed[0]}*`;
-  }
-
-  return `${trimmed.slice(0, 1)}${'*'.repeat(Math.min(trimmed.length - 1, 4))}`;
-}
-
-function maskEmail(value?: string | null): string | null {
-  const trimmed = value?.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const [localPart, domain] = trimmed.split('@');
-  if (!localPart || !domain) {
-    return null;
-  }
-
-  const visibleLocal = localPart.slice(0, Math.min(2, localPart.length));
-  return `${visibleLocal}${'*'.repeat(Math.max(2, Math.min(localPart.length, 4)))}@${domain}`;
+  return null;
 }

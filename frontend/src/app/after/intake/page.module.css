@@ -129,6 +129,16 @@
 }
 
 @media (max-width: 671px) {
+  .stickyBar {
+    position: static;
+    padding-top: 0;
+    background: transparent;
+  }
+
+  .stickyInner {
+    padding-top: 0;
+  }
+
   .actions {
     display: grid;
     grid-template-columns: minmax(0, 1fr);

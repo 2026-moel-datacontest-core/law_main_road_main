@@ -155,6 +155,16 @@
 }
 
 @media (max-width: 671px) {
+  .actionBar {
+    position: static;
+    padding-top: 0;
+    background: transparent;
+  }
+
+  .actionInner {
+    padding-top: 0;
+  }
+
   .actionGroup,
   .actionInner {
     display: grid;
