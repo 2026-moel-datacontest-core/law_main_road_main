@@ -9,6 +9,8 @@
   --kl-surface-info: #edf5ff;
   --kl-surface-success: #defbe6;
   --kl-surface-danger: #fff1f1;
+  --kl-surface-card: #ffffff;
+  --kl-surface-page: #f4f4f4;
 
   /* Text */
   --kl-text-primary: #161616;
@@ -86,12 +88,18 @@
   --kl-document-width: 720px;
   --kl-margin-desktop: 64px;
   --kl-margin-mobile: 16px;
+  --kl-page-gutter: clamp(var(--kl-margin-mobile), 4vw, var(--kl-margin-desktop));
+  --kl-page-section-padding: clamp(var(--kl-space-12), 8vw, var(--kl-space-24));
+  --kl-page-header-padding: clamp(var(--kl-space-12), 7vw, var(--kl-space-16));
 
   /* Interactive sizes */
   --kl-interactive-height: 48px;
   --kl-sticky-bar-height: 80px;
 
   /* Radius */
+  --kl-radius-sm: 4px;
+  --kl-radius-md: 8px;
+  --kl-radius-lg: 12px;
   --kl-radius-control: 0px;
   --kl-radius-card: 0px;
   --kl-radius-pill: 24px;
@@ -101,9 +109,12 @@
   /* Border styles */
   --kl-border-default: 1px solid var(--kl-border);
   --kl-border-subtle-line: 1px solid var(--kl-border-subtle);
+  --kl-card-border: 1px solid var(--kl-border-subtle);
   --kl-focus-ring: 2px solid var(--kl-focus);
 
   /* Shadow */
+  --kl-shadow-soft: 0 8px 24px rgba(22, 22, 22, 0.06);
+  --kl-shadow-card: 0 16px 36px rgba(22, 22, 22, 0.08);
   --kl-shadow-strong: 0 24px 54px rgba(15, 29, 45, 0.12);
 
   /* Z-index */
