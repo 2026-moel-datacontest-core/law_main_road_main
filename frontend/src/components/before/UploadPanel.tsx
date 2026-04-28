@@ -168,7 +168,7 @@ export function UploadPanel({
             disabled={isSubmitting}
             className={styles.primaryAction}
           >
-            {isSubmitting ? '분석 중...' : '분석 시작'}
+            {isSubmitting ? '분석 진행 중' : '분석 시작'}
           </button>
 
           <div className={styles.mockActions}>

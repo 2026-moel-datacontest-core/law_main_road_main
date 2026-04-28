@@ -133,7 +133,7 @@ export default function BeforePage() {
     signInWithGoogle,
     refreshBackendAuth,
   } = useAuth();
-  const uploadRef = useRef<HTMLElement | null>(null);
+  const loadingRef = useRef<HTMLElement | null>(null);
   const resultRef = useRef<HTMLElement | null>(null);
   const [screenState, setScreenState] = useState<BeforeScreenState>('home');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -150,6 +150,7 @@ export default function BeforePage() {
   const [bridgeActionMessage, setBridgeActionMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [beforeAnalyzeAuthMessage, setBeforeAnalyzeAuthMessage] = useState<string | null>(null);
+  const [shouldScrollToLoading, setShouldScrollToLoading] = useState(false);
   const authBusy = isInitializing || isSigningIn || isCheckingBackend;
   const hasBridgeJobId = Boolean(completedReviewJobId);
   const isBackendAuthenticated = backendUser.logged_in;
@@ -174,15 +175,29 @@ export default function BeforePage() {
   }, [review]);
 
   useEffect(() => {
-    if (screenState === 'loading') {
-      uploadRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (screenState !== 'result') {
       return;
     }
 
-    if (screenState === 'result') {
-      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    const frameId = window.requestAnimationFrame(() => {
+      scrollElementIntoView(resultRef.current);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, [screenState]);
+
+  useEffect(() => {
+    if (!shouldScrollToLoading || screenState !== 'loading' || !loadingJob) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      scrollElementIntoView(loadingRef.current);
+      setShouldScrollToLoading(false);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [loadingJob, screenState, shouldScrollToLoading]);
 
   useEffect(() => {
     if (!loadingJob) {
@@ -204,6 +219,7 @@ export default function BeforePage() {
         setScreenState('home');
       }
       setLoadingJob(null);
+      setShouldScrollToLoading(false);
       setIsSubmitting(false);
       return;
     }
@@ -237,6 +253,7 @@ export default function BeforePage() {
         setScreenState('home');
         setLoadingJob(null);
         setCompletedReviewJobId(null);
+        setShouldScrollToLoading(false);
         setIsSubmitting(false);
       }
     }, 1000);
@@ -263,6 +280,7 @@ export default function BeforePage() {
     setBeforeAnalyzeAuthMessage(null);
     clearBridgeActionFeedback();
     setCompletedReviewJobId(null);
+    setShouldScrollToLoading(false);
     setIsSubmitting(true);
     setScreenState('loading');
     setAccessibility(null);
@@ -270,6 +288,7 @@ export default function BeforePage() {
     setSelectedDisability(null);
     const initialJob = createMockJob();
     setLoadingJob(initialJob);
+    setShouldScrollToLoading(true);
 
     const intervalId = window.setInterval(() => {
       setLoadingJob((currentJob) => {
@@ -292,6 +311,7 @@ export default function BeforePage() {
       setErrorMessage('before mock 결과를 불러오지 못했습니다.');
       setCompletedReviewJobId(null);
       setScreenState('home');
+      setShouldScrollToLoading(false);
     } finally {
       setLoadingJob(null);
       setIsSubmitting(false);
@@ -315,6 +335,7 @@ export default function BeforePage() {
     setErrorMessage(null);
     setBeforeAnalyzeAuthMessage(null);
     clearBridgeActionFeedback();
+    setShouldScrollToLoading(false);
     setIsSubmitting(true);
     setScreenState('loading');
     setAccessibility(null);
@@ -331,6 +352,7 @@ export default function BeforePage() {
       }
 
       setLoadingJob(job);
+      setShouldScrollToLoading(true);
     } catch (error) {
       const message =
         error instanceof BeforeApiError
@@ -340,6 +362,7 @@ export default function BeforePage() {
       setScreenState('home');
       setLoadingJob(null);
       setCompletedReviewJobId(null);
+      setShouldScrollToLoading(false);
       setIsSubmitting(false);
     }
   }
@@ -443,6 +466,7 @@ export default function BeforePage() {
     setSelectedDisability(null);
     setErrorMessage(null);
     setAccessibilityError(null);
+    setShouldScrollToLoading(false);
     setIsSubmitting(false);
     setIsAccessibilityLoading(false);
     setIsBridgeSubmitting(false);
@@ -460,6 +484,7 @@ export default function BeforePage() {
     setScreenState('home');
     setLoadingJob(null);
     setCompletedReviewJobId(null);
+    setShouldScrollToLoading(false);
     setIsSubmitting(false);
   }
 
@@ -602,7 +627,7 @@ export default function BeforePage() {
           </div>
         </section>
 
-        <section ref={uploadRef} className={styles.uploadSection} aria-label="before 업로드 섹션">
+        <section className={styles.uploadSection} aria-label="before 업로드 섹션">
           <div className={styles.sectionInner}>
             {errorMessage ? (
               <Notification
@@ -667,7 +692,11 @@ export default function BeforePage() {
         </section>
 
         {screenState === 'loading' ? (
-          <section className={styles.loadingSection} aria-label="before 분석 진행">
+          <section
+            ref={loadingRef}
+            className={styles.loadingSection}
+            aria-label="before 분석 진행"
+          >
             <div className={styles.sectionInner}>
               <LoadingPanel fileCount={selectedFiles.length || 1} job={loadingJob} />
             </div>
@@ -730,6 +759,18 @@ interface BridgeHandoffCtaProps {
   message: string | null;
   onCreate: () => void;
   onSignIn: () => void;
+}
+
+function scrollElementIntoView(element: HTMLElement | null) {
+  if (!element) {
+    return;
+  }
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  element.scrollIntoView({
+    behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    block: 'start',
+  });
 }
 
 function BridgeHandoffCta({

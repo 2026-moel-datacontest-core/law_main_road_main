@@ -1,21 +1,23 @@
 .panel {
   display: grid;
-  gap: 20px;
-  padding: 22px;
-  border-radius: var(--kl-radius-2xl);
-  background: linear-gradient(180deg, #0f172a 0%, #101828 100%);
-  box-shadow: var(--kl-shadow-strong);
-  color: #ffffff;
+  gap: var(--kl-space-6);
+  padding: var(--kl-space-6);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
+  box-shadow: var(--kl-shadow-card);
+  color: var(--kl-text-primary);
 }
 
 .grid {
   display: grid;
-  gap: 24px;
+  gap: var(--kl-space-6);
 }
 
+.header,
 .mainColumn {
   display: grid;
-  gap: 18px;
+  gap: var(--kl-space-4);
 }
 
 .badge,
@@ -23,45 +25,56 @@
 .sideEyebrow {
   display: inline-flex;
   margin: 0;
-  color: rgba(191, 219, 254, 0.9);
+  color: var(--kl-primary);
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.72rem;
+  letter-spacing: 0;
+  font-size: var(--kl-text-caption);
   font-weight: 700;
 }
 
 .title {
   margin: 0;
-  color: #ffffff;
-  font-size: clamp(1.55rem, 2vw, 2.25rem);
-  line-height: 1.1;
-  letter-spacing: -0.05em;
+  color: var(--kl-text-primary);
+  font-size: var(--kl-text-h2);
+  line-height: var(--kl-lh-heading);
+  letter-spacing: 0;
 }
 
 .description,
 .statusText,
-.statusSubtext,
 .stepMessage,
-.sideList {
+.sideText {
   margin: 0;
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--kl-text-secondary);
   font-size: 0.96rem;
   line-height: 1.7;
 }
 
 .statusBox {
-  display: grid;
-  gap: 6px;
-  padding: 16px 18px;
-  border: 1px solid rgba(59, 130, 246, 0.18);
-  border-radius: 20px;
-  background: rgba(59, 130, 246, 0.12);
+  display: flex;
+  gap: var(--kl-space-3);
+  align-items: flex-start;
+  padding: var(--kl-space-4);
+  border: 1px solid rgba(15, 98, 254, 0.22);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-primary-light);
+}
+
+.statusPulse {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--kl-primary);
+  box-shadow: 0 0 0 6px rgba(15, 98, 254, 0.12);
+  animation: pulse 1400ms ease-in-out infinite;
 }
 
 .statusTitle,
 .stepTitle {
   margin: 0;
-  color: #ffffff;
+  color: var(--kl-text-primary);
 }
 
 .statusTitle {
@@ -71,18 +84,21 @@
 
 .stepList {
   display: grid;
-  gap: 12px;
+  gap: var(--kl-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .stepRow {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 14px;
+  gap: var(--kl-space-3);
   align-items: start;
-  padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: var(--kl-space-4);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
 }
 
 .stepIndicator {
@@ -91,29 +107,27 @@
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(15, 23, 42, 0.36);
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.95rem;
-  font-weight: 700;
+  border: var(--kl-border-subtle-line);
+  background: var(--kl-surface-card);
+  color: var(--kl-text-muted);
 }
 
 .stepIndicatorRunning {
-  border-color: rgba(96, 165, 250, 0.28);
-  background: rgba(59, 130, 246, 0.18);
-  color: #bfdbfe;
+  border-color: rgba(15, 98, 254, 0.26);
+  background: var(--kl-primary-light);
+  color: var(--kl-primary);
 }
 
 .stepIndicatorCompleted {
-  border-color: rgba(52, 211, 153, 0.24);
-  background: rgba(16, 185, 129, 0.16);
-  color: #bbf7d0;
+  border-color: rgba(36, 161, 72, 0.24);
+  background: var(--kl-surface-success);
+  color: var(--kl-text-success);
 }
 
 .stepIndicatorFailed {
-  border-color: rgba(248, 113, 113, 0.24);
-  background: rgba(239, 68, 68, 0.16);
-  color: #fecaca;
+  border-color: rgba(218, 30, 40, 0.22);
+  background: var(--kl-surface-danger);
+  color: var(--kl-text-danger);
 }
 
 .stepBody {
@@ -128,24 +142,67 @@
   line-height: 1.4;
 }
 
-.sideColumn {
-  display: grid;
-  gap: 12px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  background: rgba(0, 0, 0, 0.24);
+.spinner {
+  animation: spin 900ms linear infinite;
 }
 
-.sideList {
+.sideColumn {
   display: grid;
-  gap: 10px;
-  padding-left: 18px;
+  gap: var(--kl-space-3);
+  align-content: start;
+  padding: var(--kl-space-4);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-info);
+}
+
+.sideTitle {
+  margin: 0;
+  color: var(--kl-text-primary);
+  font-size: 1.1rem;
+  line-height: var(--kl-lh-heading);
+  letter-spacing: 0;
+}
+
+.sideText {
+  font-size: 0.94rem;
 }
 
 @media (min-width: 1056px) {
   .grid {
     grid-template-columns: minmax(0, 1fr) 320px;
     align-items: start;
+  }
+}
+
+@media (max-width: 671px) {
+  .panel {
+    padding: var(--kl-space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner,
+  .statusPulse {
+    animation: none;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 4px rgba(15, 98, 254, 0.12);
+  }
+
+  50% {
+    opacity: 0.72;
+    box-shadow: 0 0 0 8px rgba(15, 98, 254, 0.08);
   }
 }
