@@ -1,8 +1,7 @@
 .main {
   min-height: calc(100vh - var(--kl-masthead-height));
-  background:
-    radial-gradient(circle at top left, rgba(15, 98, 254, 0.14), transparent 28%),
-    linear-gradient(180deg, #050c18 0%, #091326 26%, #f5f7fb 26.1%, #f5f7fb 100%);
+  background: var(--kl-surface-page);
+  color: var(--kl-text-primary);
 }
 
 .heroSection,
@@ -12,14 +11,15 @@
 }
 
 .heroSection {
-  padding-top: 48px;
-  padding-bottom: 70px;
-  color: var(--kl-text-on-primary);
+  padding-top: var(--kl-space-8);
+  padding-bottom: var(--kl-space-6);
+  border-bottom: var(--kl-border-subtle-line);
+  background: var(--kl-surface-card);
 }
 
 .historySection {
-  margin-top: -38px;
-  padding-bottom: 48px;
+  padding-top: var(--kl-space-6);
+  padding-bottom: var(--kl-space-12);
 }
 
 .sectionInner,
@@ -30,36 +30,32 @@
 
 .eyebrow {
   margin: 0 0 8px;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--kl-primary);
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.72rem;
+  letter-spacing: var(--kl-ls-caption);
+  font-size: var(--kl-text-caption);
   font-weight: 700;
 }
 
 .title {
   max-width: 760px;
   margin: 0;
-  color: var(--kl-text-on-primary);
-  font-size: 2.2rem;
-  line-height: 1;
+  color: var(--kl-text-primary);
+  font-size: 1.875rem;
+  line-height: var(--kl-lh-heading);
   letter-spacing: 0;
 }
 
 .lead {
   max-width: 700px;
-  margin: 18px 0 0;
-  color: rgba(255, 255, 255, 0.76);
+  margin: var(--kl-space-3) 0 0;
+  color: var(--kl-text-secondary);
   font-size: 1rem;
-  line-height: 1.75;
+  line-height: var(--kl-lh-body);
 }
 
 .historySurface {
-  padding: 22px;
-  border: 1px solid rgba(148, 163, 184, 0.32);
-  border-radius: var(--kl-radius-xl);
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: var(--kl-shadow-soft);
+  padding: 0;
 }
 
 @media (min-width: 672px) {
@@ -69,11 +65,7 @@
     padding-left: var(--kl-margin-desktop);
   }
 
-  .historySurface {
-    padding: 28px;
-  }
-
   .title {
-    font-size: 3.2rem;
+    font-size: 1.875rem;
   }
 }

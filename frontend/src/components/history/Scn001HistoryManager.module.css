@@ -1,6 +1,6 @@
 .panel {
   display: grid;
-  gap: 20px;
+  gap: var(--kl-space-6);
 }
 
 .header {
@@ -9,8 +9,8 @@
   gap: 14px;
   align-items: flex-start;
   justify-content: space-between;
-  padding-bottom: 18px;
-  border-bottom: 1px solid #e4e7ec;
+  padding-bottom: var(--kl-space-4);
+  border-bottom: var(--kl-border-subtle-line);
 }
 
 .headerMeta {
@@ -23,7 +23,7 @@
 
 .eyebrow {
   margin: 0 0 8px;
-  color: #475467;
+  color: var(--kl-primary);
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1.4;
@@ -34,7 +34,7 @@
 .title,
 .columnTitle {
   margin: 0;
-  color: #101828;
+  color: var(--kl-text-primary);
   line-height: 1.25;
 }
 
@@ -45,7 +45,7 @@
 .description {
   max-width: 680px;
   margin: 8px 0 0;
-  color: #667085;
+  color: var(--kl-text-secondary);
   font-size: 0.95rem;
   line-height: 1.7;
 }
@@ -68,14 +68,14 @@
 .visibilityPill {
   padding: 6px 10px;
   border: 1px solid rgba(15, 98, 254, 0.22);
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--kl-primary-light);
+  color: var(--kl-primary);
 }
 
 .totalPill {
   padding: 6px 10px;
-  background: #f2f4f7;
-  color: #344054;
+  background: var(--kl-surface-01);
+  color: var(--kl-text-secondary);
 }
 
 .notice,
@@ -133,17 +133,17 @@
 
 .summaryGrid {
   display: grid;
-  gap: 10px;
+  gap: var(--kl-space-3);
 }
 
 .caseSection {
   display: grid;
-  gap: 12px;
+  gap: var(--kl-space-3);
   min-width: 0;
-  padding: 14px;
-  border: 1px solid #eaecf0;
-  border-radius: 8px;
-  background: #fbfcfe;
+  padding: var(--kl-space-4);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
 }
 
 .caseSectionHeader {
@@ -153,8 +153,8 @@
   align-items: center;
   justify-content: space-between;
   min-width: 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e4e7ec;
+  padding-bottom: var(--kl-space-3);
+  border-bottom: var(--kl-border-subtle-line);
 }
 
 .caseSectionHeader > div {
@@ -167,15 +167,15 @@
 
 .columnDescription {
   margin: 4px 0 0;
-  color: #667085;
+  color: var(--kl-text-secondary);
   font-size: 0.84rem;
   line-height: 1.55;
 }
 
 .count {
   padding: 5px 9px;
-  background: #f2f4f7;
-  color: #475467;
+  background: var(--kl-surface-01);
+  color: var(--kl-text-secondary);
 }
 
 .statCard {
@@ -183,22 +183,22 @@
   gap: 3px;
   min-width: 0;
   padding: 12px 14px;
-  border: 1px solid #eaecf0;
-  border-radius: 8px;
-  background: #ffffff;
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
 }
 
 .statLabel,
 .statDescription {
   margin: 0;
-  color: #667085;
+  color: var(--kl-text-secondary);
   font-size: 0.78rem;
   font-weight: 800;
   line-height: 1.4;
 }
 
 .statValue {
-  color: #101828;
+  color: var(--kl-text-primary);
   font-size: 1.2rem;
   line-height: 1.25;
 }
@@ -221,13 +221,13 @@
 
 .card {
   display: grid;
-  gap: 12px;
+  gap: var(--kl-space-3);
   min-width: 0;
-  padding: 14px;
-  border: 1px solid #eaecf0;
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: inset 3px 0 0 #2563eb;
+  padding: var(--kl-space-4);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
+  box-shadow: inset 3px 0 0 var(--kl-primary);
 }
 
 .cardTop {
@@ -246,7 +246,7 @@
 .cardEyebrow,
 .metaLabel {
   margin: 0;
-  color: #667085;
+  color: var(--kl-text-secondary);
   font-size: 0.76rem;
   font-weight: 800;
   line-height: 1.35;
@@ -260,7 +260,7 @@
 
 .cardTitle {
   margin: 0;
-  color: #101828;
+  color: var(--kl-text-primary);
   font-size: 0.98rem;
   font-weight: 850;
   line-height: 1.35;
@@ -289,10 +289,10 @@
   justify-content: center;
   gap: 5px;
   padding: 5px 9px;
-  border: 1px solid #d0d5dd;
+  border: var(--kl-border-default);
   border-radius: var(--kl-radius-sm);
-  background: #ffffff;
-  color: #475467;
+  background: var(--kl-surface-card);
+  color: var(--kl-text-secondary);
   font: inherit;
   font-size: 0.78rem;
   font-weight: 800;
@@ -323,16 +323,16 @@
   gap: 8px;
   min-width: 0;
   padding: 11px 12px;
-  border: 1px solid #eaecf0;
-  border-radius: 8px;
-  background: #f9fafb;
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
 }
 
 .summaryText {
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  color: #101828;
+  color: var(--kl-text-primary);
   font-size: 0.92rem;
   font-weight: 750;
   line-height: 1.6;
@@ -344,7 +344,7 @@
 .caseHint,
 .connectionNote {
   margin: 0;
-  color: #667085;
+  color: var(--kl-text-secondary);
   font-size: 0.86rem;
   line-height: 1.6;
   overflow-wrap: anywhere;
@@ -353,14 +353,14 @@
 .caseDetails {
   min-width: 0;
   border: 1px solid rgba(15, 98, 254, 0.16);
-  border-radius: 8px;
-  background: #f8fafc;
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
   overflow: hidden;
 }
 
 .caseDetailsSummary {
   padding: 11px 12px;
-  color: #344054;
+  color: var(--kl-text-secondary);
   font-size: 0.86rem;
   font-weight: 850;
   line-height: 1.4;
@@ -380,14 +380,14 @@
   min-width: 0;
   padding: 12px;
   border: 1px dashed rgba(15, 98, 254, 0.24);
-  border-radius: 8px;
-  background: #ffffff;
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
 }
 
 .emptyConnectionTitle,
 .connectionTitle {
   margin: 0;
-  color: #101828;
+  color: var(--kl-text-primary);
   font-size: 0.94rem;
   font-weight: 850;
   line-height: 1.35;
@@ -422,7 +422,7 @@
 
 .connectionGrid {
   border-color: rgba(15, 98, 254, 0.16);
-  background: #eff6ff;
+  background: var(--kl-primary-light);
 }
 
 .connectionNote {
@@ -441,13 +441,13 @@
   gap: 3px;
   min-width: 0;
   padding: 8px;
-  border-radius: 8px;
-  background: #f9fafb;
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
 }
 
 .metaItem dt {
   margin: 0;
-  color: #667085;
+  color: var(--kl-text-secondary);
   font-size: 0.76rem;
   font-weight: 800;
   line-height: 1.35;
@@ -455,7 +455,7 @@
 
 .metaItem dd {
   margin: 0;
-  color: #344054;
+  color: var(--kl-text-primary);
   font-size: 0.9rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -488,13 +488,13 @@
   display: grid;
   gap: 3px;
   padding: 8px;
-  border: 1px solid #eaecf0;
-  border-radius: 8px;
-  background: #ffffff;
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
 }
 
 .issueLabel {
-  color: #344054;
+  color: var(--kl-text-primary);
   font-size: 0.86rem;
   font-weight: 850;
   line-height: 1.45;
@@ -502,7 +502,7 @@
 }
 
 .issueDescription {
-  color: #667085;
+  color: var(--kl-text-secondary);
   font-size: 0.82rem;
   line-height: 1.55;
   overflow-wrap: anywhere;
@@ -510,8 +510,8 @@
 
 .tag {
   padding: 5px 9px;
-  background: #f2f4f7;
-  color: #344054;
+  background: var(--kl-surface-01);
+  color: var(--kl-text-secondary);
 }
 
 .actionList {
@@ -519,7 +519,7 @@
   gap: 6px;
   margin: 0;
   padding-left: 18px;
-  color: #344054;
+  color: var(--kl-text-primary);
   font-size: 0.9rem;
   line-height: 1.6;
 }
@@ -531,9 +531,9 @@
 .empty {
   margin: 0;
   padding: 14px;
-  border: 1px dashed #d0d5dd;
-  border-radius: 8px;
-  color: #667085;
+  border: 1px dashed var(--kl-border);
+  border-radius: var(--kl-radius-md);
+  color: var(--kl-text-secondary);
   font-size: 0.94rem;
   line-height: 1.7;
 }
