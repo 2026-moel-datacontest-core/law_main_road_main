@@ -74,7 +74,6 @@ export default function AfterResultPage() {
     state.selected_document_type,
   );
   const [isNavigating, setIsNavigating] = useState(false);
-  const hasCitedArticles = answer ? answer.cited_articles.length > 0 : false;
   const hasGrounding = answer ? hasDraftGrounding(answer) : false;
   const canShowScn001FrozenDraftCta = isScn001FrozenDraftPath({
     answer,
@@ -156,6 +155,9 @@ export default function AfterResultPage() {
     (supportsDraft || canShowScn001FrozenDraftCta);
   const statementSummary = truncateText(state.user_statement || answer.query, 100);
   const canShowAnswer = hasGrounding;
+  const groundedChunks = answer.retrieved_chunks.filter((chunk) =>
+    answer.grounded_context_ids.includes(chunk.context_id),
+  );
   const selectorPanelClassName = canShowScn001FrozenDraftCta
     ? `${styles.selectorPanel} ${styles.selectorPanelStatic}`
     : styles.selectorPanel;
@@ -241,8 +243,41 @@ export default function AfterResultPage() {
               </Notification>
             ) : (
               <>
+                <section className={styles.evidenceSection} aria-labelledby="evidence-title">
+                  <p className={styles.evidenceEyebrow}>Legal basis</p>
+                  <h2 id="evidence-title" className={styles.sectionTitle}>
+                    근거 조문과 출처 컨텍스트
+                  </h2>
+                  <div className={styles.citationList}>
+                    {answer.cited_articles.map((article) => (
+                      <CitationPill key={article} label={article} />
+                    ))}
+                  </div>
+                  {groundedChunks.length > 0 ? (
+                    <ul className={styles.contextList} aria-label="출처 컨텍스트">
+                      {groundedChunks.map((chunk) => (
+                        <li key={chunk.chunk_id}>
+                          <span className={styles.contextId}>#{chunk.context_id}</span>
+                          <span>{chunk.citation_label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : answer.grounded_context_ids.length > 0 ? (
+                    <ul className={styles.contextList} aria-label="출처 컨텍스트">
+                      {answer.grounded_context_ids.map((contextId, index) => (
+                        <li key={`${contextId}-${index}`}>
+                          <span className={styles.contextId}>#{contextId}</span>
+                          <span>근거 컨텍스트</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className={styles.emptyText}>근거 컨텍스트 표시 정보가 없습니다.</p>
+                  )}
+                </section>
+
                 <details className={styles.answerBlock} open>
-                  <summary className={styles.answerSummary}>답변</summary>
+                  <summary className={styles.answerSummary}>답변 요약</summary>
                   <div className={styles.answerBody}>
                     {answer.answer.trim().length > 0 ? (
                       <p>{answer.answer}</p>
@@ -283,21 +318,6 @@ export default function AfterResultPage() {
                 </section>
               </>
             )}
-
-            <section className={styles.section} aria-labelledby="citations-title">
-              <h2 id="citations-title" className={styles.sectionTitle}>
-                인용 조문
-              </h2>
-              {hasCitedArticles ? (
-                <div className={styles.citationList}>
-                  {answer.cited_articles.map((article) => (
-                    <CitationPill key={article} label={article} />
-                  ))}
-                </div>
-              ) : (
-                <p className={styles.emptyText}>확인된 인용 조문이 없습니다.</p>
-              )}
-            </section>
 
             {hasGrounding &&
             activePreset &&
