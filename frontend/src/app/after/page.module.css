@@ -569,6 +569,109 @@
   min-width: 0;
 }
 
+.historyCaseFold {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: var(--kl-radius-md);
+  background: #ffffff;
+  box-shadow: inset 3px 0 0 var(--kl-primary);
+}
+
+.historyCaseFoldSelected {
+  border-color: rgba(22, 163, 74, 0.32);
+  box-shadow: inset 3px 0 0 #16a34a;
+}
+
+.historyCaseSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.historyCaseSummary::-webkit-details-marker {
+  display: none;
+}
+
+.historyCaseSummary:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: -3px;
+}
+
+.historyCaseSummaryText {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.historyCaseSummaryTitle {
+  color: #0f172a;
+  font-size: 0.96rem;
+  font-weight: 850;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.historyCompactSummary {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.historyCaseSummaryMeta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  max-width: 320px;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.historyCaseSummaryMeta > span:not(.historySelectedPill) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  max-width: 100%;
+  padding: 0 8px;
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-surface-01);
+  overflow-wrap: anywhere;
+}
+
+.historyCaseSummaryMeta svg {
+  flex: 0 0 auto;
+  transition: transform 0.16s ease;
+}
+
+.historyCaseFold[open] .historyCaseSummaryMeta svg {
+  transform: rotate(180deg);
+}
+
+.historyCaseDetailBody {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px 16px 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+}
+
 .historyGroupedCard {
   display: grid;
   gap: 14px;
@@ -942,6 +1045,7 @@
   .handoffHeader,
   .formHeader,
   .historySummary,
+  .historyCaseSummary,
   .historyCardTop,
   .historyCardFooter,
   .historyGroupedHeader,
@@ -951,12 +1055,18 @@
   }
 
   .historySummaryMeta,
+  .historyCaseSummaryMeta,
   .historyRetryButton,
   .historyDeleteButton,
   .historySelectButton,
   .historySelectButtonSelected,
   .beforeBridgeLinkButton {
     width: 100%;
+  }
+
+  .historyCaseSummaryMeta {
+    max-width: none;
+    justify-content: flex-start;
   }
 
   .handoffCardTop {

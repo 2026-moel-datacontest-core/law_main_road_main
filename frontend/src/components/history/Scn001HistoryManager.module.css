@@ -219,6 +219,103 @@
   min-width: 0;
 }
 
+.caseFold {
+  min-width: 0;
+  overflow: hidden;
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
+  box-shadow: inset 3px 0 0 var(--kl-primary);
+}
+
+.caseSummary {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding: var(--kl-space-4);
+  cursor: pointer;
+  list-style: none;
+}
+
+.caseSummary::-webkit-details-marker {
+  display: none;
+}
+
+.caseSummary:focus-visible {
+  outline: 3px solid rgba(15, 98, 254, 0.24);
+  outline-offset: -3px;
+}
+
+.caseSummaryText {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.caseSummaryTitle {
+  color: var(--kl-text-primary);
+  font-size: 0.98rem;
+  font-weight: 850;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.compactSummary {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--kl-text-primary);
+  font-size: 0.92rem;
+  font-weight: 750;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.caseSummaryMeta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 320px;
+  color: var(--kl-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.caseSummaryMeta > span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  max-width: 100%;
+  padding: 0 8px;
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-surface-01);
+  overflow-wrap: anywhere;
+}
+
+.caseSummaryMeta svg {
+  flex: 0 0 auto;
+  transition: transform 0.16s ease;
+}
+
+.caseFold[open] .caseSummaryMeta svg {
+  transform: rotate(180deg);
+}
+
+.caseBody {
+  display: grid;
+  gap: var(--kl-space-3);
+  min-width: 0;
+  padding: var(--kl-space-4);
+  border-top: var(--kl-border-subtle-line);
+}
+
 .card {
   display: grid;
   gap: var(--kl-space-3);
@@ -371,7 +468,10 @@
   display: grid;
   gap: 12px;
   min-width: 0;
-  padding: 0 12px 12px;
+  padding: 12px;
+  border: 1px solid rgba(15, 98, 254, 0.16);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
 }
 
 .emptyConnection {
@@ -541,6 +641,25 @@
 @media (min-width: 560px) {
   .summaryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 559px) {
+  .caseSummary,
+  .cardTop,
+  .connectionTop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .caseSummaryMeta {
+    width: 100%;
+    max-width: none;
+    justify-content: flex-start;
+  }
+
+  .deleteButton {
+    width: 100%;
   }
 }
 

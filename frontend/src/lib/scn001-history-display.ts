@@ -28,6 +28,7 @@ export type Scn001CaseHistoryRecord =
       beforeJob: BeforeReviewJobHistoryItem;
       bridgeRuns: BridgeRunHistoryItem[];
       caseSummary: string;
+      compactSummary: string;
       caseIssueDetails: BridgeIssueDisplay[];
       sourceBeforeMissing: false;
       hasKnownBridge: boolean;
@@ -40,6 +41,7 @@ export type Scn001CaseHistoryRecord =
       beforeJob: null;
       bridgeRuns: [BridgeRunHistoryItem];
       caseSummary: string;
+      compactSummary: string;
       caseIssueDetails: BridgeIssueDisplay[];
       sourceBeforeMissing: true;
       hasKnownBridge: true;
@@ -101,6 +103,10 @@ export function buildScn001CaseHistoryRecords(input: {
         beforeJob,
         issueDetails: caseIssueDetails,
       }),
+      compactSummary: buildBeforeCaseCompactSummary({
+        beforeJob,
+        issueDetails: caseIssueDetails,
+      }),
       caseIssueDetails,
       sourceBeforeMissing: false,
       hasKnownBridge: linkedBridgeRuns.length > 0 || beforeJob.has_bridge_run,
@@ -125,6 +131,10 @@ export function buildScn001CaseHistoryRecords(input: {
         beforeJob: null,
         bridgeRuns: [bridgeRun],
         caseSummary: buildBridgeOnlyCaseSituationSummary({
+          bridgeRun,
+          issueDetails: caseIssueDetails,
+        }),
+        compactSummary: buildBridgeOnlyCaseCompactSummary({
           bridgeRun,
           issueDetails: caseIssueDetails,
         }),
@@ -200,6 +210,36 @@ function buildBeforeCaseSituationSummary(input: {
   return reviewSentence ?? '계약서와 실제 근무조건에 관한 추가 확인이 필요한 사건 기록입니다.';
 }
 
+function buildBeforeCaseCompactSummary(input: {
+  beforeJob: BeforeReviewJobHistoryItem;
+  issueDetails: BridgeIssueDisplay[];
+}): string {
+  const issueSummary = buildCompactIssueSummary(input.issueDetails);
+
+  if (issueSummary) {
+    return issueSummary;
+  }
+
+  if (input.beforeJob.overall_result === 'PASS') {
+    return '이전 검토는 큰 위반 가능성이 낮지만 실제 조건 일치 여부를 확인할 수 있습니다.';
+  }
+
+  if (
+    input.beforeJob.overall_result === 'WARNING' ||
+    input.beforeJob.overall_result === 'VIOLATION' ||
+    (input.beforeJob.overall_severity && input.beforeJob.overall_severity !== 'NONE')
+  ) {
+    return '계약서 내용과 실제 근무조건에 추가 확인이 필요한 기록입니다.';
+  }
+
+  const safeSummary = formatBridgeSafeInlineText(input.beforeJob.summary);
+
+  return (
+    shortenInlineText(safeSummary, 72) ??
+    '계약서와 실제 근무조건을 이어서 확인해야 하는 사건입니다.'
+  );
+}
+
 function buildBridgeOnlyCaseSituationSummary(input: {
   bridgeRun: BridgeRunHistoryItem;
   issueDetails: BridgeIssueDisplay[];
@@ -216,6 +256,60 @@ function buildBridgeOnlyCaseSituationSummary(input: {
     issueSentence ??
     '원 Before 요약은 현재 목록에서 불러오지 못했습니다. 추가 확인이 필요한 연결 기록입니다.'
   );
+}
+
+function buildBridgeOnlyCaseCompactSummary(input: {
+  bridgeRun: BridgeRunHistoryItem;
+  issueDetails: BridgeIssueDisplay[];
+}): string {
+  const issueSummary = buildCompactIssueSummary(input.issueDetails);
+
+  if (issueSummary) {
+    return issueSummary;
+  }
+
+  const safeSummary = formatBridgeSafeInlineText(input.bridgeRun.user_visible_summary);
+
+  return (
+    shortenInlineText(safeSummary, 72) ??
+    '이전 검토에서 이어진 연결 후보를 After 질문과 대조할 수 있습니다.'
+  );
+}
+
+function buildCompactIssueSummary(issueDetails: BridgeIssueDisplay[]): string | null {
+  if (issueDetails.length === 0) {
+    return null;
+  }
+
+  const labels = issueDetails.map((issue) => issue.label);
+  const hasMandatoryTerms = labels.some((label) => label.includes('필수 근로조건'));
+  const hasDormitory = labels.some((label) => label.includes('기숙사') || label.includes('숙소'));
+  const hasWage = labels.some((label) => label.includes('임금') || label.includes('공제'));
+  const hasWorkEnvironment = labels.some(
+    (label) => label.includes('차별') || label.includes('폭언') || label.includes('근무환경'),
+  );
+
+  if (hasMandatoryTerms && (hasDormitory || hasWage)) {
+    return '계약서 필수 항목과 숙소·공제 조건 확인이 필요합니다.';
+  }
+
+  if (hasDormitory && hasWage) {
+    return '기숙사 환경과 임금 공제 쟁점이 이어질 수 있습니다.';
+  }
+
+  if (hasDormitory) {
+    return '숙소·기숙사 조건을 실제 근무조건과 함께 확인해야 합니다.';
+  }
+
+  if (hasWage) {
+    return '임금·공제 조건을 계약 내용과 대조해 볼 필요가 있습니다.';
+  }
+
+  if (hasWorkEnvironment) {
+    return '근무환경 쟁점과 실제 조건 차이를 이어서 확인해야 합니다.';
+  }
+
+  return `${formatKoreanList(labels.slice(0, 2))}을(를) 이어서 확인해야 합니다.`;
 }
 
 function buildSituationIssueSentence(issueDetails: BridgeIssueDisplay[]): string | null {
@@ -357,4 +451,17 @@ function optionalText(value: string | null | undefined): string | undefined {
 
 function optionalInlineText(value: string | null | undefined): string | undefined {
   return optionalText(value)?.replace(/\s+/g, ' ');
+}
+
+function shortenInlineText(
+  value: string | null | undefined,
+  maxLength: number,
+): string | undefined {
+  const inlineText = optionalInlineText(value);
+
+  if (!inlineText || inlineText.length <= maxLength) {
+    return inlineText;
+  }
+
+  return `${inlineText.slice(0, maxLength - 3).trimEnd()}...`;
 }

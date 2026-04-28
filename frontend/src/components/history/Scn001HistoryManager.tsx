@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { EyeOff, RefreshCw } from 'lucide-react';
+import { ChevronDown, EyeOff, RefreshCw } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
 import { useFlow } from '@/context/FlowContext';
@@ -393,10 +393,11 @@ function CaseHistoryList({
         </p>
       ) : (
         <ol className={styles.list}>
-          {records.map((record) => (
+          {records.map((record, index) => (
             <CaseHistoryCard
               key={record.caseId}
               record={record}
+              index={index}
               deletingTarget={deletingTarget}
               onDelete={onDelete}
             />
@@ -409,73 +410,90 @@ function CaseHistoryList({
 
 function CaseHistoryCard({
   record,
+  index,
   deletingTarget,
   onDelete,
 }: {
   record: Scn001CaseHistoryRecord;
+  index: number;
   deletingTarget: HistoryDeleteTarget | null;
   onDelete: (target: HistoryDeleteTarget) => void;
 }) {
   const beforeJob = record.beforeJob;
+  const caseLabel = `사건 ${index + 1}`;
 
   return (
     <li className={styles.item}>
-      <article className={styles.card}>
-        <div className={styles.cardTop}>
-          <div className={styles.cardTitleGroup}>
-            <p className={styles.cardEyebrow}>사건 기록</p>
-            <h4 className={styles.cardTitle}>상황 설명</h4>
+      <details className={styles.caseFold}>
+        <summary className={styles.caseSummary}>
+          <span className={styles.caseSummaryText}>
+            <span className={styles.cardEyebrow}>사건 기록</span>
+            <span className={styles.caseSummaryTitle}>{caseLabel}</span>
+            <span className={styles.compactSummary}>{record.compactSummary}</span>
+          </span>
+          <span className={styles.caseSummaryMeta}>
+            <span>
+              {record.bridgeRuns.length > 0
+                ? `연결 후보 ${record.bridgeRuns.length}건`
+                : '연결 후보 없음'}
+            </span>
+            <span>최근 {formatHistoryDateTime(record.updatedAt)}</span>
+            <ChevronDown size={17} aria-hidden="true" />
+          </span>
+        </summary>
+
+        <div className={styles.caseBody}>
+          <div className={styles.cardTop}>
+            <div className={styles.cardTitleGroup}>
+              <p className={styles.cardEyebrow}>기록 상세</p>
+              <h4 className={styles.cardTitle}>상황 설명과 기록 정보</h4>
+            </div>
+            {beforeJob ? (
+              <HistoryDeleteButton
+                label={`사건 기록 숨기기: ${formatInlineText(
+                  beforeJob.summary,
+                  formatHistoryDateTime(beforeJob.created_at),
+                )}`}
+                isDeleting={isHistoryDeletePending(
+                  deletingTarget,
+                  'before',
+                  beforeJob.before_review_job_id,
+                )}
+                disabled={Boolean(deletingTarget)}
+                onDelete={() =>
+                  onDelete({ kind: 'before', id: beforeJob.before_review_job_id })
+                }
+              />
+            ) : null}
           </div>
-          {beforeJob ? (
-            <HistoryDeleteButton
-              label={`사건 기록 숨기기: ${formatInlineText(
-                beforeJob.summary,
-                formatHistoryDateTime(beforeJob.created_at),
-              )}`}
-              isDeleting={isHistoryDeletePending(
-                deletingTarget,
-                'before',
-                beforeJob.before_review_job_id,
-              )}
-              disabled={Boolean(deletingTarget)}
-              onDelete={() =>
-                onDelete({ kind: 'before', id: beforeJob.before_review_job_id })
-              }
-            />
-          ) : null}
-        </div>
 
-        <HistorySummaryBlock
-          title="상황 설명"
-          body={record.caseSummary}
-          fallback="요약이 없는 사건 기록입니다."
-        />
-
-        {record.sourceBeforeMissing ? (
-          <p className={styles.caseHint}>
-            원 Before 요약은 현재 목록에서 불러오지 못했습니다. 표시된 연결 요약만 참고합니다.
-          </p>
-        ) : null}
-
-        <dl className={styles.metaGrid}>
-          {beforeJob ? (
-            <>
-              <HistoryMeta label="검토 판정" value={formatOverallResult(beforeJob.overall_result)} />
-              <HistoryMeta label="심각도" value={formatSeverity(beforeJob.overall_severity)} />
-            </>
-          ) : null}
-          <HistoryMeta
-            label="연결 후보"
-            value={record.bridgeRuns.length > 0 ? `${record.bridgeRuns.length}건` : '없음'}
+          <HistorySummaryBlock
+            title="상황 설명"
+            body={record.caseSummary}
+            fallback="요약이 없는 사건 기록입니다."
           />
-          <HistoryMeta label="최근 갱신" value={formatHistoryDateTime(record.updatedAt)} />
-        </dl>
 
-        <details className={styles.caseDetails}>
-          <summary className={styles.caseDetailsSummary}>
-            쟁점·조항 후보·다음 단계 보기
-          </summary>
-          <div className={styles.caseFlow}>
+          {record.sourceBeforeMissing ? (
+            <p className={styles.caseHint}>
+              원 Before 요약은 현재 목록에서 불러오지 못했습니다. 표시된 연결 요약만 참고합니다.
+            </p>
+          ) : null}
+
+          <dl className={styles.metaGrid}>
+            {beforeJob ? (
+              <>
+                <HistoryMeta label="검토 판정" value={formatOverallResult(beforeJob.overall_result)} />
+                <HistoryMeta label="심각도" value={formatSeverity(beforeJob.overall_severity)} />
+              </>
+            ) : null}
+            <HistoryMeta
+              label="연결 후보"
+              value={record.bridgeRuns.length > 0 ? `${record.bridgeRuns.length}건` : '없음'}
+            />
+            <HistoryMeta label="최근 갱신" value={formatHistoryDateTime(record.updatedAt)} />
+          </dl>
+
+          <section className={styles.caseFlow} aria-label={`${caseLabel} 연결 흐름`}>
             {record.bridgeRuns.length === 0 ? (
               <div className={styles.emptyConnection}>
                 <p className={styles.emptyConnectionTitle}>아직 연결 후보 없음</p>
@@ -486,19 +504,19 @@ function CaseHistoryCard({
                 </p>
               </div>
             ) : (
-              record.bridgeRuns.map((bridgeRun, index) => (
+              record.bridgeRuns.map((bridgeRun, bridgeIndex) => (
                 <CaseBridgeCandidate
                   key={bridgeRun.bridge_run_id}
                   bridgeRun={bridgeRun}
-                  index={index}
+                  index={bridgeIndex}
                   deletingTarget={deletingTarget}
                   onDelete={onDelete}
                 />
               ))
             )}
-          </div>
-        </details>
-      </article>
+          </section>
+        </div>
+      </details>
     </li>
   );
 }

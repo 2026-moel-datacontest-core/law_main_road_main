@@ -1074,10 +1074,11 @@ function AfterHistoryCaseList({
         <p className={styles.historyEmpty}>최근 표시 가능한 사건 기록이 없습니다.</p>
       ) : (
         <ol className={styles.historyGroupedList}>
-          {records.map((record) => (
+          {records.map((record, index) => (
             <AfterHistoryCaseCard
               key={record.caseId}
               record={record}
+              index={index}
               selectedBridgeRunIds={selectedBridgeRunIds}
               deletingTarget={deletingTarget}
               disabled={disabled}
@@ -1094,6 +1095,7 @@ function AfterHistoryCaseList({
 
 function AfterHistoryCaseCard({
   record,
+  index,
   selectedBridgeRunIds,
   deletingTarget,
   disabled,
@@ -1102,6 +1104,7 @@ function AfterHistoryCaseCard({
   onGoToBefore,
 }: {
   record: Scn001CaseHistoryRecord;
+  index: number;
   selectedBridgeRunIds: Set<string>;
   deletingTarget: HistoryDeleteTarget | null;
   disabled: boolean;
@@ -1111,92 +1114,121 @@ function AfterHistoryCaseCard({
 }) {
   const beforeJob = record.beforeJob;
   const bridgeRuns = record.bridgeRuns;
+  const caseLabel = `사건 ${index + 1}`;
+  const isSelected = bridgeRuns.some((bridgeRun) =>
+    selectedBridgeRunIds.has(bridgeRun.bridge_run_id),
+  );
+  const foldClassName = isSelected
+    ? `${styles.historyCaseFold} ${styles.historyCaseFoldSelected}`
+    : styles.historyCaseFold;
 
   return (
     <li className={styles.historyItem}>
-      <article className={styles.historyGroupedCard}>
-        <div className={styles.historyCardTop}>
-          <div className={styles.historyCardTitleGroup}>
-            <p className={styles.historyCardEyebrow}>사건 기록</p>
-            <h4 className={styles.historyCardTitle}>상황 설명</h4>
-          </div>
-          {beforeJob ? (
-            <HistoryDeleteButton
-              label={`사건 기록 숨기기: ${formatInlineText(
-                beforeJob.summary,
-                formatHistoryDateTime(beforeJob.created_at),
-              )}`}
-              isDeleting={isHistoryDeletePending(
-                deletingTarget,
-                'before',
-                beforeJob.before_review_job_id,
-              )}
-              disabled={disabled || Boolean(deletingTarget)}
-              onDelete={() =>
-                onDelete({ kind: 'before', id: beforeJob.before_review_job_id })
-              }
-            />
-          ) : null}
-        </div>
+      <details className={foldClassName}>
+        <summary className={styles.historyCaseSummary}>
+          <span className={styles.historyCaseSummaryText}>
+            <span className={styles.historyCardEyebrow}>사건 기록</span>
+            <span className={styles.historyCaseSummaryTitle}>{caseLabel}</span>
+            <span className={styles.historyCompactSummary}>
+              {record.compactSummary}
+            </span>
+          </span>
+          <span className={styles.historyCaseSummaryMeta}>
+            {isSelected ? (
+              <span className={styles.historySelectedPill}>선택됨</span>
+            ) : null}
+            <span>
+              {bridgeRuns.length > 0 ? `연결 후보 ${bridgeRuns.length}건` : '연결 후보 없음'}
+            </span>
+            <span>최근 {formatHistoryDateTime(record.updatedAt)}</span>
+            <ChevronDown size={17} aria-hidden="true" />
+          </span>
+        </summary>
 
-        <HistorySummaryBlock
-          title="상황 설명"
-          body={record.caseSummary}
-          fallback="요약이 없는 사건 기록입니다."
-        />
-
-        {record.sourceBeforeMissing ? (
-          <p className={styles.beforeBridgeHint}>
-            원 Before 요약은 현재 목록에서 불러오지 못했습니다. 표시된 연결 요약만 참고합니다.
-          </p>
-        ) : null}
-
-        <dl className={styles.historyMetaGrid}>
-          {beforeJob ? (
-            <>
-              <HistoryMeta label="검토 판정" value={formatOverallResult(beforeJob.overall_result)} />
-              <HistoryMeta label="심각도" value={formatSeverity(beforeJob.overall_severity)} />
-            </>
-          ) : null}
-          <HistoryMeta
-            label="연결 후보"
-            value={bridgeRuns.length > 0 ? `${bridgeRuns.length}건` : '없음'}
-          />
-          <HistoryMeta label="최근 갱신" value={formatHistoryDateTime(record.updatedAt)} />
-        </dl>
-
-        <section className={styles.historyCaseFlow} aria-label="사건 연결 흐름">
-          {bridgeRuns.length === 0 ? (
-            <div className={styles.historyBridgeEmptyState}>
-              <p className={styles.historyBridgeEmpty}>아직 연결 후보 없음</p>
-              <p className={styles.beforeBridgeHint}>{getCaseBridgeEmptyHint(record)}</p>
-              {beforeJob?.status === 'completed' ? (
-                <button
-                  className={styles.beforeBridgeLinkButton}
-                  type="button"
-                  onClick={onGoToBefore}
-                  disabled={disabled || Boolean(deletingTarget)}
-                >
-                  Before에서 연결 후보 만들기
-                </button>
-              ) : null}
+        <div className={styles.historyCaseDetailBody}>
+          <div className={styles.historyCardTop}>
+            <div className={styles.historyCardTitleGroup}>
+              <p className={styles.historyCardEyebrow}>사건 상세</p>
+              <h4 className={styles.historyCardTitle}>상황 설명과 연결 후보</h4>
             </div>
-          ) : (
-            bridgeRuns.map((bridgeRun, index) => (
-              <AfterHistoryBridgeCandidate
-                key={bridgeRun.bridge_run_id}
-                bridgeRun={bridgeRun}
-                index={index}
-                selectedBridgeRunIds={selectedBridgeRunIds}
-                deletingTarget={deletingTarget}
-                disabled={disabled}
-                onSelectBridge={onSelectBridge}
-                onDelete={onDelete}
+            {beforeJob ? (
+              <HistoryDeleteButton
+                label={`사건 기록 숨기기: ${formatInlineText(
+                  beforeJob.summary,
+                  formatHistoryDateTime(beforeJob.created_at),
+                )}`}
+                isDeleting={isHistoryDeletePending(
+                  deletingTarget,
+                  'before',
+                  beforeJob.before_review_job_id,
+                )}
+                disabled={disabled || Boolean(deletingTarget)}
+                onDelete={() =>
+                  onDelete({ kind: 'before', id: beforeJob.before_review_job_id })
+                }
               />
-            ))
-          )}
-        </section>
-      </article>
+            ) : null}
+          </div>
+
+          <HistorySummaryBlock
+            title="상황 설명"
+            body={record.caseSummary}
+            fallback="요약이 없는 사건 기록입니다."
+          />
+
+          {record.sourceBeforeMissing ? (
+            <p className={styles.beforeBridgeHint}>
+              원 Before 요약은 현재 목록에서 불러오지 못했습니다. 표시된 연결 요약만 참고합니다.
+            </p>
+          ) : null}
+
+          <dl className={styles.historyMetaGrid}>
+            {beforeJob ? (
+              <>
+                <HistoryMeta label="검토 판정" value={formatOverallResult(beforeJob.overall_result)} />
+                <HistoryMeta label="심각도" value={formatSeverity(beforeJob.overall_severity)} />
+              </>
+            ) : null}
+            <HistoryMeta
+              label="연결 후보"
+              value={bridgeRuns.length > 0 ? `${bridgeRuns.length}건` : '없음'}
+            />
+            <HistoryMeta label="최근 갱신" value={formatHistoryDateTime(record.updatedAt)} />
+          </dl>
+
+          <section className={styles.historyCaseFlow} aria-label={`${caseLabel} 연결 흐름`}>
+            {bridgeRuns.length === 0 ? (
+              <div className={styles.historyBridgeEmptyState}>
+                <p className={styles.historyBridgeEmpty}>아직 연결 후보 없음</p>
+                <p className={styles.beforeBridgeHint}>{getCaseBridgeEmptyHint(record)}</p>
+                {beforeJob?.status === 'completed' ? (
+                  <button
+                    className={styles.beforeBridgeLinkButton}
+                    type="button"
+                    onClick={onGoToBefore}
+                    disabled={disabled || Boolean(deletingTarget)}
+                  >
+                    Before에서 연결 후보 만들기
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              bridgeRuns.map((bridgeRun, bridgeIndex) => (
+                <AfterHistoryBridgeCandidate
+                  key={bridgeRun.bridge_run_id}
+                  bridgeRun={bridgeRun}
+                  index={bridgeIndex}
+                  selectedBridgeRunIds={selectedBridgeRunIds}
+                  deletingTarget={deletingTarget}
+                  disabled={disabled}
+                  onSelectBridge={onSelectBridge}
+                  onDelete={onDelete}
+                />
+              ))
+            )}
+          </section>
+        </div>
+      </details>
     </li>
   );
 }
