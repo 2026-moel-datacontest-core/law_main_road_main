@@ -239,11 +239,13 @@ export default function AfterDraftPage() {
                 {copyStatusMessage}
               </p>
             </div>
-            <DocumentPreview
-              id="document-draft"
-              title={draft.title}
-              renderedText={renderedText}
-            />
+            <div className={styles.documentPreviewShell}>
+              <DocumentPreview
+                id="document-draft"
+                title={draft.title}
+                renderedText={renderedText}
+              />
+            </div>
           </section>
 
           <aside className={styles.sideColumn} aria-label="초안 확인 항목">
