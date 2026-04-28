@@ -3,22 +3,14 @@
 import Link from 'next/link';
 import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowRight,
-  Bell,
-  Cloud,
-  Cpu,
-  Database,
   FileSearch,
   Gavel,
   History as HistoryIcon,
   Menu,
-  MessageSquare,
-  PenTool,
   Search,
-  ShieldCheck,
   X,
 } from 'lucide-react';
 
@@ -34,41 +26,6 @@ const BEFORE_GATE_FIREBASE_CONFIG_MESSAGE =
   '계약서 분석을 사용하려면 Firebase public env 설정이 필요합니다.';
 const BEFORE_GATE_BACKEND_AUTH_MESSAGE =
   '서버 인증 확인이 완료되지 않았습니다. 인증 확인 또는 다시 로그인 후 이용해 주세요.';
-
-const categories = [
-  { id: 'History', icon: HistoryIcon, label: 'History' },
-  { id: 'Before', icon: Search, label: 'Before' },
-  { id: 'After', icon: PenTool, label: 'After' },
-];
-
-const featuredServices = [
-  {
-    title: '사건 기록',
-    desc: '완료된 Before 검토와 Bridge 연결 요약을 사건 단위로 다시 확인합니다.',
-    icon: HistoryIcon,
-    href: '/history',
-  },
-  {
-    title: '계약서 분석',
-    desc: '근로계약서 파일을 올리면 위험 조항과 권리 안내를 확인합니다.',
-    icon: Search,
-    href: '/before',
-  },
-  {
-    title: 'After 문서 준비',
-    desc: '상황 질문에서 조문 근거 답변과 문서 초안 흐름으로 이어집니다.',
-    icon: FileSearch,
-    href: '/after',
-  },
-];
-
-const solutions = [
-  { title: '부당 해고 대응', subtitle: '해고 예고 및 구제 신청 절차 안내', icon: AlertCircle, color: 'red' },
-  { title: '임금 체불 해결', subtitle: '체불 임금 계산 및 고용노동부 진정', icon: Database, color: 'orange' },
-  { title: '직장 내 괴롭힘', subtitle: '증거 수집 및 고충 처리 프로세스', icon: ShieldCheck, color: 'blue' },
-  { title: '근로 시간 준수', subtitle: '연장·야간·휴일 수당 자동 계산', icon: Cpu, color: 'purple' },
-  { title: '연차 유급 휴가', subtitle: '연차 발생 기준 및 사용 권리 확인', icon: Cloud, color: 'teal' },
-];
 
 type BeforeGateHandler = () => void;
 
@@ -100,7 +57,7 @@ function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    const handleScroll = () => setIsScrolled(window.scrollY > 8);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -109,7 +66,7 @@ function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
     <nav className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ''}`}>
       <div className={styles.navInner}>
         <Link href="/" className={styles.brand}>
-          <span className={styles.brandMark}>
+          <span className={styles.brandMark} aria-hidden="true">
             <Gavel size={18} />
           </span>
           <span className={styles.brandText}>
@@ -118,99 +75,110 @@ function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
         </Link>
 
         <div className={styles.navLinks}>
-          <a href="#intro">소개</a>
-          <a href="#services">서비스</a>
-          <a href="#solutions">솔루션</a>
-          <a href="#footer">가이드센터</a>
+          <a href="#intro">개요</a>
+          <a href="#services">작업</a>
+          <a href="#account">계정</a>
         </div>
 
         <div className={styles.navActions}>
           {showHistoryLink ? (
-            <Link href="/history" className={styles.historyButton}>
+            <Link href="/history" className={styles.navTextButton}>
               History
             </Link>
           ) : null}
-          <BeforeGateButton className={styles.loginButton} onBeforeGate={onBeforeGate}>
+          <BeforeGateButton className={styles.navTextButton} onBeforeGate={onBeforeGate}>
             Before
           </BeforeGateButton>
-          <Link href="/after" className={styles.consoleButton}>
+          <Link href="/after" className={styles.navPrimaryButton}>
             After
           </Link>
         </div>
 
-        <button className={styles.mobileMenuButton} onClick={() => setIsMenuOpen((value) => !value)} aria-label="메뉴 열기">
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        <button
+          className={styles.mobileMenuButton}
+          onClick={() => setIsMenuOpen((value) => !value)}
+          aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+          aria-expanded={isMenuOpen}
+          type="button"
+        >
+          {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
-      <AnimatePresence>
-        {isMenuOpen ? (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className={styles.mobileMenu}
+      {isMenuOpen ? (
+        <div className={styles.mobileMenu}>
+          <a href="#intro" onClick={() => setIsMenuOpen(false)}>
+            개요
+          </a>
+          <a href="#services" onClick={() => setIsMenuOpen(false)}>
+            작업
+          </a>
+          <a href="#account" onClick={() => setIsMenuOpen(false)}>
+            계정
+          </a>
+          {showHistoryLink ? <Link href="/history">History</Link> : null}
+          <BeforeGateButton
+            onBeforeGate={() => {
+              setIsMenuOpen(false);
+              onBeforeGate();
+            }}
           >
-            <a href="#intro">소개</a>
-            <a href="#services">서비스</a>
-            <a href="#solutions">솔루션</a>
-            {showHistoryLink ? <Link href="/history">저장 기록 보기</Link> : null}
-            <BeforeGateButton
-              onBeforeGate={() => {
-                setIsMenuOpen(false);
-                onBeforeGate();
-              }}
-            >
-              계약서 분석 시작
-            </BeforeGateButton>
-            <Link href="/after">진정서 작성 시작</Link>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+            Before
+          </BeforeGateButton>
+          <Link href="/after">After</Link>
+        </div>
+      ) : null}
     </nav>
   );
 }
 
 interface HeroProps {
   onBeforeGate: BeforeGateHandler;
+  showHistoryLink: boolean;
 }
 
-function Hero({ onBeforeGate }: HeroProps) {
+function Hero({ onBeforeGate, showHistoryLink }: HeroProps) {
   return (
     <section id="intro" className={styles.hero}>
-      <div className={styles.heroOverlay} />
-      <div className={styles.heroOrbLeft} />
-      <div className={styles.heroOrbRight} />
-      <div className={styles.heroCircle} />
-      <div className={styles.heroSquare} />
-      <div className={styles.heroPlusOne}>+</div>
-      <div className={styles.heroPlusTwo}>+</div>
-      <div className={styles.heroPlusThree}>+</div>
-
-      <div className={styles.heroContent}>
-        <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}>
-          <h1 className={styles.heroTitle}>
-            법대로 AI <span>근로 사건 워크스페이스</span>
-          </h1>
-          <p className={styles.heroDescription}>
-            History, Before, After를 한 흐름으로 연결합니다.
-            <br />
-            계약서 검토와 사후 문서 준비를 사건 단위로 이어서 확인하세요.
-          </p>
-          <div className={styles.heroButtons}>
-            <BeforeGateButton className={styles.heroPrimary} onBeforeGate={onBeforeGate}>
-              계약서 분석 시작
-            </BeforeGateButton>
-            <Link href="/after" className={styles.heroSecondary}>
-              진정서 작성 시작
-            </Link>
+      <div className={styles.container}>
+        <div className={styles.heroGrid}>
+          <div className={styles.heroCopy}>
+            <p className={styles.eyebrow}>K-Labor Shield</p>
+            <h1 className={styles.heroTitle}>법대로 AI 근로 사건 워크스페이스</h1>
+            <p className={styles.heroDescription}>
+              계약서 검토, 사후 질문, 저장 기록 확인을 한 화면에서 시작합니다. After 질문과
+              초안 흐름은 로그인 없이 그대로 사용할 수 있습니다.
+            </p>
+            <div className={styles.heroActions}>
+              {showHistoryLink ? (
+                <Link href="/history" className={styles.secondaryButton}>
+                  History
+                </Link>
+              ) : null}
+              <BeforeGateButton className={styles.secondaryButton} onBeforeGate={onBeforeGate}>
+                Before
+              </BeforeGateButton>
+              <Link href="/after" className={styles.primaryButton}>
+                After
+                <ArrowRight size={18} aria-hidden="true" />
+              </Link>
+            </div>
           </div>
-        </motion.div>
 
-        <div className={styles.heroDots}>
-          <span className={styles.heroDotActive} />
-          <span />
-          <span />
+          <dl className={styles.statusList} aria-label="현재 작업 범위">
+            <div>
+              <dt>History</dt>
+              <dd>{showHistoryLink ? '로그인 확인 완료' : '로그인 후 기록 표시'}</dd>
+            </div>
+            <div>
+              <dt>Before</dt>
+              <dd>서버 인증 확인 후 계약서 분석</dd>
+            </div>
+            <div>
+              <dt>After</dt>
+              <dd>로그인 없이 질문과 초안 흐름 사용</dd>
+            </div>
+          </dl>
         </div>
       </div>
     </section>
@@ -232,6 +200,7 @@ function AccountReadinessSection({
 }: AccountReadinessSectionProps) {
   return (
     <section
+      id="account"
       ref={sectionRef}
       className={styles.accountSection}
       aria-label="SCN-001 계정 연결 준비"
@@ -267,8 +236,8 @@ function AccountReadinessSection({
               </p>
             </div>
             <Link href="/history" className={styles.historyEntryButton}>
-              <HistoryIcon size={18} aria-hidden="true" />
               기록 보기
+              <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </div>
         ) : null}
@@ -277,171 +246,65 @@ function AccountReadinessSection({
   );
 }
 
-interface ServiceNavProps {
+interface TaskSectionProps {
   onBeforeGate: BeforeGateHandler;
+  showHistoryEntry: boolean;
 }
 
-function ServiceNav({ onBeforeGate }: ServiceNavProps) {
-  const [active, setActive] = useState('History');
-
+function TaskSection({ onBeforeGate, showHistoryEntry }: TaskSectionProps) {
   return (
-    <section id="services" className={styles.serviceSection}>
+    <section id="services" className={styles.taskSection}>
       <div className={styles.container}>
-        <div className={styles.serviceHeader}>
-          <h2>
-            효율적인 근로 권익 보호를 위한
-            <br />
-            다양한 서비스를 제공합니다
-          </h2>
+        <div className={styles.sectionHeader}>
+          <p className={styles.eyebrow}>Workspace</p>
+          <h2>필요한 작업을 바로 선택하세요</h2>
+          <p>
+            기록 확인, 계약서 검토, 사후 질문을 분리된 기능처럼 보이게 하지 않고 같은 사건
+            흐름 안에서 이어갑니다.
+          </p>
         </div>
 
-        <div className={styles.serviceTabs}>
-          {categories.map((category) => {
-            const Icon = category.icon;
-            const isActive = active === category.id;
+        <div className={styles.taskGrid}>
+          {showHistoryEntry ? (
+            <Link href="/history" className={styles.taskCard}>
+              <TaskCardContent
+                icon={<HistoryIcon size={24} aria-hidden="true" />}
+                eyebrow="History"
+                title="사건 기록"
+                description="완료된 Before 검토와 Bridge 연결 후보를 사건 단위로 다시 확인합니다."
+                meta="저장 기록 보기"
+              />
+            </Link>
+          ) : (
+            <article className={`${styles.taskCard} ${styles.taskCardDisabled}`}>
+              <TaskCardContent
+                icon={<HistoryIcon size={24} aria-hidden="true" />}
+                eyebrow="History"
+                title="사건 기록"
+                description="Google 로그인과 서버 확인이 완료되면 저장 기록을 볼 수 있습니다."
+                meta="로그인 후 표시"
+              />
+            </article>
+          )}
 
-            return (
-              <button
-                key={category.id}
-                type="button"
-                onClick={() => setActive(category.id)}
-                className={isActive ? styles.serviceTabActive : styles.serviceTab}
-              >
-                <Icon size={22} />
-                <span>{category.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className={styles.serviceLayout}>
-          <div className={styles.serviceFeature}>
-            <div>
-              <h3>{active}</h3>
-              <p>
-                저장 기록, 계약서 검토, 문서 초안을
-                <br />
-                현재 작업 흐름에 맞게 바로 이어갑니다.
-              </p>
-            </div>
-            <div className={styles.serviceFeatureVisual}>
-              <ShieldCheck size={84} />
-            </div>
-          </div>
-
-          <div className={styles.serviceGrid}>
-            {featuredServices.map((service) => {
-              const Icon = service.icon;
-              const cardContent = (
-                <>
-                  <div className={styles.serviceCardIcon}>
-                    <Icon size={24} />
-                  </div>
-                  <div className={styles.serviceCardBody}>
-                    <h4>{service.title}</h4>
-                    <p>{service.desc}</p>
-                  </div>
-                </>
-              );
-
-              if (service.href === '/before') {
-                return (
-                  <BeforeGateButton
-                    key={service.title}
-                    className={styles.serviceCard}
-                    onBeforeGate={onBeforeGate}
-                  >
-                    {cardContent}
-                  </BeforeGateButton>
-                );
-              }
-
-              return (
-                <Link key={service.title} href={service.href} className={styles.serviceCard}>
-                  {cardContent}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SolutionCards() {
-  return (
-    <section id="solutions" className={styles.solutionSection}>
-      <div className={styles.container}>
-        <div className={styles.sectionTop}>
-          <h2>
-            진행 중인 근로 사건을
-            <br />
-            다음 단계로 정리합니다
-          </h2>
-          <Link href="/after" className={styles.solutionButton}>
-            After에서 질문하기
-          </Link>
-        </div>
-
-        <div className={styles.solutionGrid}>
-          {solutions.map((solution) => {
-            const Icon = solution.icon;
-            return (
-              <article key={solution.title} className={styles.solutionCard}>
-                <div className={`${styles.solutionIcon} ${styles[`solution${solution.color}` as keyof typeof styles]}`}>
-                  <Icon size={44} strokeWidth={1.6} />
-                </div>
-                <h3>{solution.title}</h3>
-                <p>{solution.subtitle}</p>
-                <span className={styles.solutionMeta}>After 연결점</span>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-interface PromotionBannersProps {
-  onBeforeGate: BeforeGateHandler;
-}
-
-function PromotionBanners({ onBeforeGate }: PromotionBannersProps) {
-  return (
-    <section className={styles.promotionSection}>
-      <div className={styles.container}>
-        <div className={styles.promotionGrid}>
-          <BeforeGateButton
-            className={`${styles.promoCard} ${styles.promoBlue}`}
-            onBeforeGate={onBeforeGate}
-          >
-            <h4>계약서 분석 바로가기</h4>
-            <p>
-              업로드 후 분석을 시작하고
-              <br />
-              위험 조항과 권리 안내를 확인하세요.
-            </p>
-            <ArrowRight size={20} />
+          <BeforeGateButton className={styles.taskCard} onBeforeGate={onBeforeGate}>
+            <TaskCardContent
+              icon={<Search size={24} aria-hidden="true" />}
+              eyebrow="Before"
+              title="계약서 분석"
+              description="근로계약서 파일을 올리고 위험 조항과 권리 안내를 확인합니다."
+              meta="로그인 필요"
+            />
           </BeforeGateButton>
-          <Link href="/after" className={`${styles.promoCard} ${styles.promoDark}`}>
-            <h4>진정서 작성 바로가기</h4>
-            <p>
-              질문 입력부터 문서 초안까지
-              <br />
-              After 흐름으로 바로 이동합니다.
-            </p>
-            <ArrowRight size={20} />
-          </Link>
-          <Link href="/history" className={`${styles.promoCard} ${styles.promoLight}`}>
-            <h4>사건 기록 확인</h4>
-            <p>
-              완료된 Before와 Bridge 요약을
-              <br />
-              사건 단위로 다시 확인합니다.
-            </p>
-            <ArrowRight size={20} />
+
+          <Link href="/after" className={styles.taskCard}>
+            <TaskCardContent
+              icon={<FileSearch size={24} aria-hidden="true" />}
+              eyebrow="After"
+              title="질문과 문서 초안"
+              description="상황 질문에서 조문 근거 답변과 문서 초안 흐름으로 이어갑니다."
+              meta="로그인 없이 사용"
+            />
           </Link>
         </div>
       </div>
@@ -449,28 +312,62 @@ function PromotionBanners({ onBeforeGate }: PromotionBannersProps) {
   );
 }
 
-interface GlobalSectionProps {
-  onBeforeGate: BeforeGateHandler;
+function TaskCardContent({
+  icon,
+  eyebrow,
+  title,
+  description,
+  meta,
+}: {
+  icon: ReactNode;
+  eyebrow: string;
+  title: string;
+  description: string;
+  meta: string;
+}) {
+  return (
+    <>
+      <span className={styles.taskIcon}>{icon}</span>
+      <span className={styles.taskText}>
+        <span className={styles.taskEyebrow}>{eyebrow}</span>
+        <strong>{title}</strong>
+        <span>{description}</span>
+      </span>
+      <span className={styles.taskMeta}>{meta}</span>
+    </>
+  );
 }
 
-function GlobalSection({ onBeforeGate }: GlobalSectionProps) {
+interface ScopeSectionProps {
+  onBeforeGate: BeforeGateHandler;
+  showHistoryLink: boolean;
+}
+
+function ScopeSection({ onBeforeGate, showHistoryLink }: ScopeSectionProps) {
   return (
-    <section className={styles.globalSection}>
+    <section className={styles.scopeSection}>
       <div className={styles.container}>
-        <div className={styles.globalInner}>
+        <div className={styles.scopePanel}>
           <div>
-            <h3>국내외 근로자가 법대로 플랫폼을 통해 자신의 권익을 보호하고 있습니다.</h3>
-            <p>계약 단계의 검토와 사후 대응 흐름을 하나의 메인 페이지에서 선택할 수 있습니다.</p>
+            <p className={styles.eyebrow}>Current scope</p>
+            <h2>제출 범위에 맞춘 안정 경로</h2>
+            <p>
+              After 질문/초안 흐름은 그대로 유지하고, Before와 History는 서버 인증 확인
+              상태를 기준으로 연결합니다.
+            </p>
           </div>
-          <div className={styles.globalActions}>
-            <BeforeGateButton className={styles.globalButton} onBeforeGate={onBeforeGate}>
-              Before 보기
+          <div className={styles.scopeActions}>
+            {showHistoryLink ? (
+              <Link href="/history" className={styles.secondaryButton}>
+                History
+              </Link>
+            ) : null}
+            <BeforeGateButton className={styles.secondaryButton} onBeforeGate={onBeforeGate}>
+              Before
             </BeforeGateButton>
-            <div className={styles.avatarRow}>
-              <span />
-              <span />
-              <span />
-            </div>
+            <Link href="/after" className={styles.primaryButton}>
+              After
+            </Link>
           </div>
         </div>
       </div>
@@ -480,103 +377,30 @@ function GlobalSection({ onBeforeGate }: GlobalSectionProps) {
 
 interface FooterProps {
   onBeforeGate: BeforeGateHandler;
+  showHistoryLink: boolean;
 }
 
-function Footer({ onBeforeGate }: FooterProps) {
+function Footer({ onBeforeGate, showHistoryLink }: FooterProps) {
   return (
     <footer id="footer" className={styles.footer}>
       <div className={styles.container}>
-        <div className={styles.footerGrid}>
-          <div className={styles.footerBrandBlock}>
+        <div className={styles.footerInner}>
+          <div>
             <div className={styles.footerBrand}>
-              <Gavel size={30} />
+              <Gavel size={24} aria-hidden="true" />
               <span>법대로</span>
             </div>
-            <p>
-              글로벌 근로자와 함께하며
-              <br />
-              정당한 권익 보호를 위해 앞장섭니다.
-            </p>
-            <div className={styles.footerIcons}>
-              <span>
-                <MessageSquare size={18} />
-              </span>
-              <span>
-                <Search size={18} />
-              </span>
-              <span>
-                <Bell size={18} />
-              </span>
-            </div>
+            <p>근로 사건 기록과 문서 준비를 위한 MVP 워크스페이스</p>
           </div>
-
-          <div className={styles.footerColumn}>
-            <h4>Services</h4>
-            <ul>
-              <li>
-                <BeforeGateButton onBeforeGate={onBeforeGate}>계약서 분석기</BeforeGateButton>
-              </li>
-              <li>
-                <Link href="/after">진정서 작성기</Link>
-              </li>
-              <li>
-                <Link href="/history">사건 기록</Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className={styles.footerColumn}>
-            <h4>Company</h4>
-            <ul>
-              <li>
-                <a href="#intro">회사소개</a>
-              </li>
-              <li>
-                <a href="#services">서비스</a>
-              </li>
-              <li>
-                <a href="#solutions">사건 유형</a>
-              </li>
-            </ul>
-          </div>
-
-          <div className={styles.footerColumn}>
-            <h4>Support</h4>
-            <ul>
-              <li>
-                <BeforeGateButton onBeforeGate={onBeforeGate}>Before 시작</BeforeGateButton>
-              </li>
-              <li>
-                <Link href="/after">After 시작</Link>
-              </li>
-              <li>
-                <Link href="/history">기록 보기</Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className={styles.footerColumn}>
-            <h4>Legal</h4>
-            <ul>
-              <li>
-                <a href="#footer">이용약관</a>
-              </li>
-              <li>
-                <a href="#footer">개인정보처리방침</a>
-              </li>
-              <li>
-                <a href="#footer">법적 고지</a>
-              </li>
-            </ul>
-          </div>
+          <nav className={styles.footerLinks} aria-label="하단 주요 화면">
+            {showHistoryLink ? <Link href="/history">History</Link> : null}
+            <BeforeGateButton onBeforeGate={onBeforeGate}>Before</BeforeGateButton>
+            <Link href="/after">After</Link>
+          </nav>
         </div>
-
         <div className={styles.footerBottom}>
-          <p>© 2024 법대로 (law-main-road) Corp. All rights reserved.</p>
-          <div>
-            <span>KR / EN</span>
-            <span>Status</span>
-          </div>
+          <span>KR / EN</span>
+          <span>After 공개 흐름 유지</span>
         </div>
       </div>
     </footer>
@@ -643,18 +467,16 @@ export default function HomePage() {
   return (
     <div className={styles.page}>
       <Navbar onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
-      <Hero onBeforeGate={handleBeforeGate} />
+      <Hero onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
+      <TaskSection onBeforeGate={handleBeforeGate} showHistoryEntry={isBackendAuthenticated} />
       <AccountReadinessSection
         noticeMessage={beforeGateMessage}
         onFocusLoginSection={focusLoginSection}
         sectionRef={accountSectionRef}
         showHistoryEntry={isBackendAuthenticated}
       />
-      <ServiceNav onBeforeGate={handleBeforeGate} />
-      <SolutionCards />
-      <PromotionBanners onBeforeGate={handleBeforeGate} />
-      <GlobalSection onBeforeGate={handleBeforeGate} />
-      <Footer onBeforeGate={handleBeforeGate} />
+      <ScopeSection onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
+      <Footer onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
     </div>
   );
 }
