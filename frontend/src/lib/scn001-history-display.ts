@@ -282,42 +282,22 @@ function buildCompactIssueSummary(issueDetails: BridgeIssueDisplay[]): string | 
   }
 
   const labels = issueDetails.map((issue) => issue.label);
-  const hasMandatoryTerms = labels.some((label) => label.includes('필수 근로조건'));
-  const hasDormitory = labels.some((label) => label.includes('기숙사') || label.includes('숙소'));
-  const hasWage = labels.some((label) => label.includes('임금') || label.includes('공제'));
-  const hasWorkEnvironment = labels.some(
-    (label) => label.includes('차별') || label.includes('폭언') || label.includes('근무환경'),
-  );
+  const issueAxes = getIssueAxes(issueDetails);
+  const conditionAxisText = buildConditionAxisText(issueAxes);
 
-  if (hasMandatoryTerms && hasDormitory && hasWage) {
-    return '계약서 필수 항목과 숙소·공제 조건 확인이 필요합니다.';
+  if (issueAxes.hasMandatoryTerms && conditionAxisText) {
+    return `계약서 필수 항목 및 ${conditionAxisText} 확인이 필요합니다.`;
   }
 
-  if (hasMandatoryTerms && hasDormitory) {
-    return '계약서 필수 항목과 숙소·기숙사 조건 확인이 필요합니다.';
-  }
-
-  if (hasMandatoryTerms && hasWage) {
-    return '계약서 필수 항목과 임금·공제 조건 확인이 필요합니다.';
-  }
-
-  if (hasMandatoryTerms) {
+  if (issueAxes.hasMandatoryTerms) {
     return '계약서 필수 근로조건 누락 가능성을 확인해야 합니다.';
   }
 
-  if (hasDormitory && hasWage) {
-    return '기숙사 환경과 임금 공제 쟁점이 이어질 수 있습니다.';
+  if (conditionAxisText) {
+    return `${conditionAxisText}을 계약 내용과 실제 조건 기준으로 확인할 필요가 있습니다.`;
   }
 
-  if (hasDormitory) {
-    return '숙소·기숙사 조건을 실제 근무조건과 함께 확인해야 합니다.';
-  }
-
-  if (hasWage) {
-    return '임금·공제 조건을 계약 내용과 대조해 볼 필요가 있습니다.';
-  }
-
-  if (hasWorkEnvironment) {
+  if (issueAxes.hasWorkEnvironment) {
     return '근무환경 쟁점과 실제 조건 차이를 이어서 확인해야 합니다.';
   }
 
@@ -331,22 +311,101 @@ function buildSituationIssueSentence(issueDetails: BridgeIssueDisplay[]): string
 
   const labels = issueDetails.map((issue) => issue.label);
   const labelText = formatKoreanList(labels);
-  const hasMandatoryTerms = labels.some((label) => label.includes('필수 근로조건'));
-  const hasDormitory = labels.some((label) => label.includes('기숙사') || label.includes('숙소'));
-  const hasWage = labels.some((label) => label.includes('임금') || label.includes('공제'));
-  const hasWorkEnvironment = labels.some(
-    (label) => label.includes('차별') || label.includes('폭언') || label.includes('근무환경'),
-  );
+  const issueAxes = getIssueAxes(issueDetails);
+  const conditionAxisText = buildConditionAxisText(issueAxes);
 
-  if (hasMandatoryTerms && (hasDormitory || hasWage)) {
-    return '계약서에 필수 근로조건 항목이 빠졌거나, 임금·근로시간·숙소 조건을 확인할 정보가 부족할 수 있어 추가 확인이 필요한 기록입니다.';
+  if (issueAxes.hasMandatoryTerms && conditionAxisText) {
+    return `계약서 필수 항목과 ${conditionAxisText}을 함께 확인할 필요가 있습니다. 계약 내용과 실제 근무조건의 차이가 있는지는 [확인 필요]로 남겨야 합니다.`;
   }
 
-  if (hasDormitory || hasWage || hasWorkEnvironment) {
+  if (issueAxes.hasMandatoryTerms) {
+    return '계약서 필수 근로조건 항목이 충분한지 확인이 필요합니다.';
+  }
+
+  if (conditionAxisText) {
+    return `이전 검토에서 ${conditionAxisText}을 추가 확인할 필요가 있는 기록입니다. 계약 내용과 실제 근무조건의 차이가 있는지는 [확인 필요]로 남겨야 합니다.`;
+  }
+
+  if (issueAxes.hasWorkEnvironment) {
     return `이전 검토에서 ${labelText}을(를) 추가 확인할 필요가 있는 기록입니다. 계약 내용과 실제 근무조건의 차이가 있는지는 [확인 필요]로 남겨야 합니다.`;
   }
 
   return `이전 검토에서 ${labelText}을(를) 추가 확인할 필요가 있는 기록입니다. 구체 자료가 부족한 부분은 추가 확인이 필요합니다.`;
+}
+
+type IssueAxes = {
+  hasMandatoryTerms: boolean;
+  hasDormitory: boolean;
+  hasWageIssue: boolean;
+  hasDeductionIssue: boolean;
+  hasWorkEnvironment: boolean;
+};
+
+function getIssueAxes(issueDetails: BridgeIssueDisplay[]): IssueAxes {
+  const labels = issueDetails.map((issue) => issue.label);
+
+  return {
+    hasMandatoryTerms: labels.some((label) => label.includes('필수 근로조건')),
+    hasDormitory: labels.some((label) => label.includes('기숙사') || label.includes('숙소')),
+    hasWageIssue: labels.some(hasWageIssueLabel),
+    hasDeductionIssue: labels.some(hasDeductionIssueLabel),
+    hasWorkEnvironment: labels.some(
+      (label) => label.includes('차별') || label.includes('폭언') || label.includes('근무환경'),
+    ),
+  };
+}
+
+function hasWageIssueLabel(label: string): boolean {
+  if (hasDeductionIssueLabel(label)) {
+    return false;
+  }
+
+  const normalizedLabel = label.toLowerCase();
+  return (
+    label.includes('임금') ||
+    label.includes('급여') ||
+    normalizedLabel.includes('wage') ||
+    normalizedLabel.includes('salary')
+  );
+}
+
+function hasDeductionIssueLabel(label: string): boolean {
+  const normalizedLabel = label.toLowerCase();
+  return label.includes('공제') || normalizedLabel.includes('deduction');
+}
+
+function buildConditionAxisText(issueAxes: IssueAxes): string | null {
+  const { hasDormitory, hasWageIssue, hasDeductionIssue } = issueAxes;
+
+  if (hasDormitory && hasWageIssue && hasDeductionIssue) {
+    return '숙소·임금·공제 조건';
+  }
+
+  if (hasDormitory && hasWageIssue) {
+    return '숙소 조건과 임금 조건';
+  }
+
+  if (hasDormitory && hasDeductionIssue) {
+    return '숙소 조건과 공제 조건';
+  }
+
+  if (hasWageIssue && hasDeductionIssue) {
+    return '임금·공제 조건';
+  }
+
+  if (hasDormitory) {
+    return '숙소 조건';
+  }
+
+  if (hasWageIssue) {
+    return '임금 조건';
+  }
+
+  if (hasDeductionIssue) {
+    return '공제 조건';
+  }
+
+  return null;
 }
 
 function buildReviewStatusSentence(job: BeforeReviewJobHistoryItem): string | null {
