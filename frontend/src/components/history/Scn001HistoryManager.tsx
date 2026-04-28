@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { RefreshCw, Trash2 } from 'lucide-react';
+import { EyeOff, RefreshCw } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
 import { useFlow } from '@/context/FlowContext';
@@ -187,7 +187,7 @@ export function Scn001HistoryManager() {
       applyLocalHistoryDeletion(target);
       setHistoryMutationMessage({
         kind: 'notice',
-        message: '기록을 목록에서 삭제하고 After 연결 후보에서도 숨겼습니다.',
+        message: '기록과 연결 후보를 목록에서 숨겼습니다.',
       });
       setHistoryRefreshNonce((current) => current + 1);
     } catch (error) {
@@ -423,12 +423,12 @@ function CaseHistoryCard({
       <article className={styles.card}>
         <div className={styles.cardTop}>
           <div className={styles.cardTitleGroup}>
-            <p className={styles.cardEyebrow}>Case record</p>
+            <p className={styles.cardEyebrow}>사건 기록</p>
             <h4 className={styles.cardTitle}>상황 설명</h4>
           </div>
           {beforeJob ? (
             <HistoryDeleteButton
-              label={`사건 기록 삭제: ${formatInlineText(
+              label={`사건 기록 숨기기: ${formatInlineText(
                 beforeJob.summary,
                 formatHistoryDateTime(beforeJob.created_at),
               )}`}
@@ -465,7 +465,7 @@ function CaseHistoryCard({
             </>
           ) : null}
           <HistoryMeta
-            label="법 조항 후보"
+            label="연결 후보"
             value={record.bridgeRuns.length > 0 ? `${record.bridgeRuns.length}건` : '없음'}
           />
           <HistoryMeta label="최근 갱신" value={formatHistoryDateTime(record.updatedAt)} />
@@ -478,7 +478,7 @@ function CaseHistoryCard({
           <div className={styles.caseFlow}>
             {record.bridgeRuns.length === 0 ? (
               <div className={styles.emptyConnection}>
-                <p className={styles.emptyConnectionTitle}>아직 연결된 법 조항 후보 없음</p>
+                <p className={styles.emptyConnectionTitle}>아직 연결 후보 없음</p>
                 <p className={styles.caseHint}>
                   {record.hasKnownBridge
                     ? '연결 후보가 있지만 현재 최근 목록에서는 불러오지 못했습니다.'
@@ -520,11 +520,11 @@ function CaseBridgeCandidate({
     <div className={styles.connectionBlock}>
       <div className={styles.connectionTop}>
         <div>
-          <p className={styles.cardEyebrow}>After connection</p>
+          <p className={styles.cardEyebrow}>After 연결점</p>
           <h5 className={styles.connectionTitle}>After 연결점 {index + 1}</h5>
         </div>
         <HistoryDeleteButton
-          label={`연결 후보 삭제: ${formatInlineText(
+          label={`연결 후보 숨기기: ${formatInlineText(
             displayFields.userVisibleSummary,
             formatHistoryDateTime(bridgeRun.created_at),
           )}`}
@@ -622,8 +622,8 @@ function HistoryDeleteButton({
       disabled={disabled}
       aria-label={label}
     >
-      <Trash2 size={15} aria-hidden="true" />
-      {isDeleting ? '처리 중' : '목록에서 삭제'}
+      <EyeOff size={15} aria-hidden="true" />
+      {isDeleting ? '처리 중' : '목록에서 숨기기'}
     </button>
   );
 }
@@ -790,18 +790,18 @@ function getScn001HistoryErrorMessage(error: unknown): string {
 
 function getScn001HistoryDeleteErrorMessage(error: unknown): string {
   if (error instanceof Scn001HistoryApiError && error.status === 401) {
-    return '로그인 후 기록을 삭제할 수 있습니다. 다시 로그인한 뒤 시도해주세요.';
+    return '로그인 후 기록을 숨길 수 있습니다. 다시 로그인한 뒤 시도해주세요.';
   }
 
-  return '기록 삭제 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+  return '기록 숨기기 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
 }
 
 function getHistoryDeleteConfirmMessage(kind: HistoryDeleteKind): string {
   if (kind === 'before') {
-    return '이 사건 기록을 목록에서 삭제할까요? 삭제 후 연결 후보도 기록 목록과 After 연결 후보에서 보이지 않습니다. 원문이나 식별 정보는 이 화면에 표시하지 않습니다.';
+    return '이 사건 기록을 목록에서 숨길까요? 숨긴 뒤 연결 후보도 기록 목록과 After 연결 후보에서 보이지 않습니다. 원문이나 식별 정보는 이 화면에 표시하지 않습니다.';
   }
 
-  return '이 연결 후보를 목록에서 삭제할까요? 삭제 후 기록 목록과 After 연결 후보에서 보이지 않습니다. 원문이나 식별 정보는 이 화면에 표시하지 않습니다.';
+  return '이 연결 후보를 목록에서 숨길까요? 숨긴 뒤 기록 목록과 After 연결 후보에서 보이지 않습니다. 원문이나 식별 정보는 이 화면에 표시하지 않습니다.';
 }
 
 function isHistoryDeletePending(

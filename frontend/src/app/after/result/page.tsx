@@ -371,6 +371,7 @@ export default function AfterResultPage() {
                         className={isSelected ? styles.radioTileSelected : styles.radioTile}
                         role="radio"
                         aria-checked={isSelected}
+                        aria-label={`${documentType.title}: ${documentType.subtitle}`}
                         tabIndex={0}
                         onClick={() => selectDocumentType(documentType.value)}
                         onKeyDown={(event) => handleTileKeyDown(event, documentType.value)}

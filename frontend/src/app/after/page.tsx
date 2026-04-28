@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, RefreshCw, Trash2 } from 'lucide-react';
+import { ChevronDown, EyeOff, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Masthead } from '@/components/layout/Masthead';
@@ -512,7 +512,7 @@ export default function AfterPage() {
       applyLocalHistoryDeletion(target);
       setHistoryMutationMessage({
         kind: 'notice',
-        message: '기록을 삭제하고 목록에서 숨겼습니다.',
+        message: '기록을 목록에서 숨겼습니다.',
       });
       setHistoryRefreshNonce((current) => current + 1);
     } catch (error) {
@@ -1117,12 +1117,12 @@ function AfterHistoryCaseCard({
       <article className={styles.historyGroupedCard}>
         <div className={styles.historyCardTop}>
           <div className={styles.historyCardTitleGroup}>
-            <p className={styles.historyCardEyebrow}>Case record</p>
+            <p className={styles.historyCardEyebrow}>사건 기록</p>
             <h4 className={styles.historyCardTitle}>상황 설명</h4>
           </div>
           {beforeJob ? (
             <HistoryDeleteButton
-              label={`사건 기록 삭제: ${formatInlineText(
+              label={`사건 기록 숨기기: ${formatInlineText(
                 beforeJob.summary,
                 formatHistoryDateTime(beforeJob.created_at),
               )}`}
@@ -1159,7 +1159,7 @@ function AfterHistoryCaseCard({
             </>
           ) : null}
           <HistoryMeta
-            label="법 조항 후보"
+            label="연결 후보"
             value={bridgeRuns.length > 0 ? `${bridgeRuns.length}건` : '없음'}
           />
           <HistoryMeta label="최근 갱신" value={formatHistoryDateTime(record.updatedAt)} />
@@ -1168,7 +1168,7 @@ function AfterHistoryCaseCard({
         <section className={styles.historyCaseFlow} aria-label="사건 연결 흐름">
           {bridgeRuns.length === 0 ? (
             <div className={styles.historyBridgeEmptyState}>
-              <p className={styles.historyBridgeEmpty}>아직 연결된 법 조항 후보 없음</p>
+              <p className={styles.historyBridgeEmpty}>아직 연결 후보 없음</p>
               <p className={styles.beforeBridgeHint}>{getCaseBridgeEmptyHint(record)}</p>
               {beforeJob?.status === 'completed' ? (
                 <button
@@ -1177,7 +1177,7 @@ function AfterHistoryCaseCard({
                   onClick={onGoToBefore}
                   disabled={disabled || Boolean(deletingTarget)}
                 >
-                  Before에서 후보 만들기
+                  Before에서 연결 후보 만들기
                 </button>
               ) : null}
             </div>
@@ -1232,7 +1232,7 @@ function AfterHistoryBridgeCandidate({
     >
       <div className={styles.historyCardTop}>
         <div className={styles.historyCardTitleGroup}>
-          <p className={styles.historyCardEyebrow}>After connection</p>
+          <p className={styles.historyCardEyebrow}>After 연결점</p>
           <h5 className={styles.historyBridgeSectionTitle}>
             After 연결점 {index + 1}
           </h5>
@@ -1241,7 +1241,7 @@ function AfterHistoryBridgeCandidate({
           <span className={styles.historySelectedPill}>이번 질문에 포함됨</span>
         ) : null}
         <HistoryDeleteButton
-          label={`연결 후보 삭제: ${formatInlineText(
+          label={`연결 후보 숨기기: ${formatInlineText(
             displayFields.userVisibleSummary,
             formatHistoryDateTime(bridgeRun.created_at),
           )}`}
@@ -1333,8 +1333,8 @@ function HistoryDeleteButton({
       disabled={disabled}
       aria-label={label}
     >
-      <Trash2 size={15} aria-hidden="true" />
-      {isDeleting ? '처리 중' : '목록에서 삭제'}
+      <EyeOff size={15} aria-hidden="true" />
+      {isDeleting ? '처리 중' : '목록에서 숨기기'}
     </button>
   );
 }
@@ -1534,18 +1534,18 @@ function getScn001HistoryErrorMessage(error: unknown): string {
 
 function getScn001HistoryDeleteErrorMessage(error: unknown): string {
   if (error instanceof Scn001HistoryApiError && error.status === 401) {
-    return '로그인 후 기록을 삭제할 수 있습니다. 다시 로그인한 뒤 시도해주세요.';
+    return '로그인 후 기록을 숨길 수 있습니다. 다시 로그인한 뒤 시도해주세요.';
   }
 
-  return '기록 삭제 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+  return '기록 숨기기 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
 }
 
 function getHistoryDeleteConfirmMessage(kind: HistoryDeleteKind): string {
   if (kind === 'before') {
-    return '이 Before 기록을 목록에서 삭제할까요? 삭제 후 연결된 Bridge 후보도 보이지 않습니다.';
+    return '이 사건 기록을 목록에서 숨길까요? 숨긴 뒤 연결 후보도 보이지 않습니다.';
   }
 
-  return '이 연결 후보를 목록에서 삭제할까요? 삭제 후 After 연결 후보에서 보이지 않습니다.';
+  return '이 연결 후보를 목록에서 숨길까요? 숨긴 뒤 After 연결 후보에서 보이지 않습니다.';
 }
 
 function isHistoryDeletePending(
