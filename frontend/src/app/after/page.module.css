@@ -512,25 +512,23 @@
   color: #1d4ed8;
 }
 
-.historyColumns {
+.historyGroupedSection {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 }
 
-.historyColumn {
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  min-width: 0;
-}
-
-.historyColumnHeader {
+.historyGroupedHeader,
+.historyBridgeSectionHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+}
+
+.historyGroupedHeader > div,
+.historyBridgeSectionHeader > div {
   min-width: 0;
 }
 
@@ -540,6 +538,14 @@
   font-size: 0.96rem;
   font-weight: 800;
   line-height: 1.35;
+}
+
+.historyGroupedDescription {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .historyEmpty {
@@ -552,7 +558,8 @@
   line-height: 1.6;
 }
 
-.historyList {
+.historyGroupedList,
+.historyBridgeList {
   display: grid;
   gap: 10px;
   min-width: 0;
@@ -561,25 +568,20 @@
   list-style: none;
 }
 
-.historyItem {
+.historyItem,
+.historyBridgeItem {
   min-width: 0;
 }
 
-.historyCard,
-.historyCardSelected {
+.historyGroupedCard {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
-  padding: 14px;
+  padding: 16px;
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 8px;
   background: #ffffff;
-}
-
-.historyCardSelected {
-  border-color: rgba(22, 163, 74, 0.32);
-  background: linear-gradient(180deg, #f7fef9 0%, #ffffff 58%);
-  box-shadow: inset 3px 0 0 #16a34a;
+  box-shadow: inset 3px 0 0 #2563eb;
 }
 
 .historyCardTop,
@@ -617,6 +619,57 @@
   font-size: 0.96rem;
   font-weight: 850;
   line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.historyBridgeSection {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 8px;
+  background: #f8fffd;
+}
+
+.historyBridgeSummary {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(15, 118, 110, 0.14);
+}
+
+.historyBridgeSection > .historyBridgeSummary,
+.historyBridgeList .historyBridgeItem:first-child .historyBridgeSummary {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.historyBridgeSummarySelected {
+  padding-left: 10px;
+  border-left: 3px solid #16a34a;
+}
+
+.historyBridgeSectionTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.94rem;
+  font-weight: 850;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.historyBridgeEmpty {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed rgba(15, 118, 110, 0.24);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.86rem;
+  font-weight: 750;
+  line-height: 1.55;
   overflow-wrap: anywhere;
 }
 
@@ -845,7 +898,9 @@
   .formHeader,
   .historySummary,
   .historyCardTop,
-  .historyCardFooter {
+  .historyCardFooter,
+  .historyGroupedHeader,
+  .historyBridgeSectionHeader {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -857,10 +912,6 @@
   .historySelectButtonSelected,
   .beforeBridgeLinkButton {
     width: 100%;
-  }
-
-  .historyColumns {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .handoffCardTop {

@@ -14,6 +14,7 @@ import {
   Database,
   FileSearch,
   Gavel,
+  History as HistoryIcon,
   Lock,
   Menu,
   MessageSquare,
@@ -136,9 +137,10 @@ function BeforeGateButton({ children, className, onBeforeGate }: BeforeGateButto
 
 interface NavbarProps {
   onBeforeGate: BeforeGateHandler;
+  showHistoryLink: boolean;
 }
 
-function Navbar({ onBeforeGate }: NavbarProps) {
+function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -171,6 +173,11 @@ function Navbar({ onBeforeGate }: NavbarProps) {
           <BeforeGateButton className={styles.loginButton} onBeforeGate={onBeforeGate}>
             Before
           </BeforeGateButton>
+          {showHistoryLink ? (
+            <Link href="/history" className={styles.historyButton}>
+              History
+            </Link>
+          ) : null}
           <Link href="/after" className={styles.consoleButton}>
             After
           </Link>
@@ -200,6 +207,7 @@ function Navbar({ onBeforeGate }: NavbarProps) {
             >
               계약서 분석 시작
             </BeforeGateButton>
+            {showHistoryLink ? <Link href="/history">저장 기록 보기</Link> : null}
             <Link href="/after">진정서 작성 시작</Link>
           </motion.div>
         ) : null}
@@ -258,6 +266,7 @@ interface AccountReadinessSectionProps {
   noticeMessage: string | null;
   onFocusLoginSection: () => void;
   sectionRef: RefObject<HTMLElement | null>;
+  showHistoryEntry: boolean;
 }
 
 function NewsSection() {
@@ -298,6 +307,7 @@ function AccountReadinessSection({
   noticeMessage,
   onFocusLoginSection,
   sectionRef,
+  showHistoryEntry,
 }: AccountReadinessSectionProps) {
   return (
     <section
@@ -323,6 +333,24 @@ function AccountReadinessSection({
           </div>
         ) : null}
         <LoginButton />
+        {showHistoryEntry ? (
+          <div className={styles.historyEntryPanel}>
+            <span className={styles.historyEntryIcon} aria-hidden="true">
+              <HistoryIcon size={20} />
+            </span>
+            <div className={styles.historyEntryText}>
+              <p className={styles.historyEntryEyebrow}>History</p>
+              <h2 className={styles.historyEntryTitle}>저장된 Before / Bridge 기록</h2>
+              <p className={styles.historyEntryDescription}>
+                완료된 계약서 검토와 Bridge 연결 요약을 한 화면에서 확인합니다.
+              </p>
+            </div>
+            <Link href="/history" className={styles.historyEntryButton}>
+              <HistoryIcon size={18} aria-hidden="true" />
+              기록 보기
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -657,6 +685,7 @@ export default function HomePage() {
   const accountSectionRef = useRef<HTMLElement | null>(null);
   const [beforeGateMessage, setBeforeGateMessage] = useState<string | null>(null);
   const authBusy = isInitializing || isSigningIn || isCheckingBackend;
+  const isBackendAuthenticated = backendUser.logged_in;
 
   const focusLoginSection = useCallback(() => {
     window.requestAnimationFrame(() => {
@@ -684,7 +713,7 @@ export default function HomePage() {
       return;
     }
 
-    if (!backendUser.logged_in) {
+    if (!isBackendAuthenticated) {
       setBeforeGateMessage(BEFORE_GATE_BACKEND_AUTH_MESSAGE);
       focusLoginSection();
       return;
@@ -692,22 +721,23 @@ export default function HomePage() {
 
     setBeforeGateMessage(null);
     router.push('/before');
-  }, [authBusy, backendUser.logged_in, firebaseConfigured, firebaseUser, focusLoginSection, router]);
+  }, [authBusy, firebaseConfigured, firebaseUser, focusLoginSection, isBackendAuthenticated, router]);
 
   useEffect(() => {
-    if (firebaseUser && backendUser.logged_in && !authBusy) {
+    if (firebaseUser && isBackendAuthenticated && !authBusy) {
       setBeforeGateMessage(null);
     }
-  }, [authBusy, backendUser.logged_in, firebaseUser]);
+  }, [authBusy, firebaseUser, isBackendAuthenticated]);
 
   return (
     <div className={styles.page}>
-      <Navbar onBeforeGate={handleBeforeGate} />
+      <Navbar onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
       <Hero onBeforeGate={handleBeforeGate} />
       <AccountReadinessSection
         noticeMessage={beforeGateMessage}
         onFocusLoginSection={focusLoginSection}
         sectionRef={accountSectionRef}
+        showHistoryEntry={isBackendAuthenticated}
       />
       <NewsSection />
       <ServiceNav onBeforeGate={handleBeforeGate} />
