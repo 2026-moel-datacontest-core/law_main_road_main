@@ -318,7 +318,6 @@
 .solutionButton:hover,
 .globalButton:hover,
 .serviceCard:hover,
-.newsCard:hover,
 .promoCard:hover {
   transform: translateY(-2px);
 }
@@ -342,7 +341,6 @@
   background: #ffffff !important;
 }
 
-.newsSection,
 .serviceSection,
 .solutionSection {
   padding: 96px 0;
@@ -492,88 +490,6 @@
   letter-spacing: -0.04em;
 }
 
-.arrowButtons {
-  display: flex;
-  gap: 8px;
-}
-
-.arrowButtons button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  background: #ffffff;
-}
-
-.arrowLeft {
-  transform: rotate(180deg);
-}
-
-.newsGrid {
-  display: grid;
-  gap: 24px;
-}
-
-.newsCard {
-  text-decoration: none;
-}
-
-.newsImageWrap {
-  position: relative;
-  height: 260px;
-  margin-bottom: 20px;
-  overflow: hidden;
-  border-radius: 20px;
-}
-
-.newsImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-
-.newsCard:hover .newsImage {
-  transform: scale(1.06);
-}
-
-.newsImageOverlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.16);
-}
-
-.newsTag {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  min-height: 24px;
-  padding: 0 10px;
-  background: #2563eb;
-  color: #ffffff;
-  font-size: 0.68rem;
-  font-weight: 800;
-  line-height: 24px;
-  text-transform: uppercase;
-}
-
-.newsCard h3 {
-  margin: 0 0 8px;
-  color: #111827;
-  font-size: 1.1rem;
-  line-height: 1.5;
-}
-
-.newsCard p {
-  margin: 0;
-  color: #9ca3af;
-  font-size: 0.88rem;
-  font-weight: 600;
-}
-
 .serviceTabs {
   display: flex;
   flex-wrap: wrap;
@@ -686,20 +602,6 @@
   font-size: 1.05rem;
 }
 
-.serviceCardBody h4 span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 18px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-size: 0.64rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
 .serviceCardBody p {
   margin: 0;
   color: #6b7280;
@@ -769,11 +671,16 @@
   line-height: 1.7;
 }
 
-.solutionImage {
-  width: 100%;
-  height: 160px;
-  border-radius: 16px;
-  object-fit: cover;
+.solutionMeta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .promotionSection {
@@ -996,10 +903,6 @@
     flex-direction: row;
     align-items: end;
     justify-content: space-between;
-  }
-
-  .newsGrid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .serviceLayout {

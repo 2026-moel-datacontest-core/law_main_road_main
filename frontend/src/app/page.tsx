@@ -8,18 +8,15 @@ import {
   AlertCircle,
   ArrowRight,
   Bell,
-  ChevronRight,
   Cloud,
   Cpu,
   Database,
   FileSearch,
   Gavel,
   History as HistoryIcon,
-  Lock,
   Menu,
   MessageSquare,
   PenTool,
-  Scale,
   Search,
   ShieldCheck,
   X,
@@ -38,72 +35,30 @@ const BEFORE_GATE_FIREBASE_CONFIG_MESSAGE =
 const BEFORE_GATE_BACKEND_AUTH_MESSAGE =
   '서버 인증 확인이 완료되지 않았습니다. 인증 확인 또는 다시 로그인 후 이용해 주세요.';
 
-const news = [
-  {
-    tag: '서비스 출시',
-    title: '계약서 독소조항 자동 탐색 엔진 업데이트',
-    date: '2024.03.20',
-    img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&q=80&w=800',
-  },
-  {
-    tag: '기능 추가',
-    title: '직종별 맞춤 진정서 템플릿과 입력 흐름을 연결했습니다',
-    date: '2024.03.15',
-    img: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=800',
-  },
-  {
-    tag: '공지사항',
-    title: '무료 법률 상담 서비스와 Before·After 통합 랜딩을 공개했습니다',
-    date: '2024.03.10',
-    img: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800',
-  },
-  {
-    tag: '업데이트',
-    title: '근로기준법 개정 반영과 단일 Vertex 환경 운영 기준 적용',
-    date: '2024.03.05',
-    img: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=800',
-  },
-];
-
 const categories = [
-  { id: 'Featured', icon: ShieldCheck, label: 'Featured' },
-  { id: 'Analysis', icon: Search, label: 'Analysis' },
-  { id: 'Generator', icon: PenTool, label: 'Generator' },
-  { id: 'Storage', icon: Database, label: 'Storage' },
-  { id: 'Consulting', icon: MessageSquare, label: 'Consulting' },
-  { id: 'Security', icon: Lock, label: 'Security' },
+  { id: 'History', icon: HistoryIcon, label: 'History' },
+  { id: 'Before', icon: Search, label: 'Before' },
+  { id: 'After', icon: PenTool, label: 'After' },
 ];
 
 const featuredServices = [
   {
-    title: '계약서 분석기',
-    desc: '근로계약서 파일을 올리면 위험 조항과 권리 안내를 순차적으로 정리합니다.',
+    title: '사건 기록',
+    desc: '완료된 Before 검토와 Bridge 연결 요약을 사건 단위로 다시 확인합니다.',
+    icon: HistoryIcon,
+    href: '/history',
+  },
+  {
+    title: '계약서 분석',
+    desc: '근로계약서 파일을 올리면 위험 조항과 권리 안내를 확인합니다.',
     icon: Search,
     href: '/before',
   },
   {
-    title: '진정서 작성기',
-    desc: '상황을 입력하면 조문 근거 답변과 문서 초안 흐름으로 이어집니다.',
+    title: 'After 문서 준비',
+    desc: '상황 질문에서 조문 근거 답변과 문서 초안 흐름으로 이어집니다.',
     icon: FileSearch,
     href: '/after',
-  },
-  {
-    title: '근로 기록 보관함',
-    desc: '계약서와 증거 자료를 흐름에 따라 안전하게 정리하고 확인할 수 있습니다.',
-    icon: Cloud,
-    href: '/before',
-  },
-  {
-    title: '노무사 매칭',
-    desc: '추가 도움이 필요할 때 결과를 바탕으로 다음 조치를 준비할 수 있습니다.',
-    icon: Scale,
-    href: '/after',
-  },
-  {
-    title: '맞춤형 알림',
-    desc: '계약 검토와 문서 작성 흐름의 핵심 상태를 놓치지 않도록 안내합니다.',
-    icon: Bell,
-    href: '/before',
   },
 ];
 
@@ -234,13 +189,13 @@ function Hero({ onBeforeGate }: HeroProps) {
 
       <div className={styles.heroContent}>
         <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}>
-          <h2 className={styles.heroTitle}>
-            더욱 강력해진 <span>법대로 AI</span>
-          </h2>
+          <h1 className={styles.heroTitle}>
+            법대로 AI <span>근로 사건 워크스페이스</span>
+          </h1>
           <p className={styles.heroDescription}>
-            근로기준법 학습 데이터가 탑재된 법률 어시스턴트를 선보입니다.
+            History, Before, After를 한 흐름으로 연결합니다.
             <br />
-            계약서 분석부터 진정서 작성까지, 근로자의 모든 순간을 함께합니다.
+            계약서 검토와 사후 문서 준비를 사건 단위로 이어서 확인하세요.
           </p>
           <div className={styles.heroButtons}>
             <BeforeGateButton className={styles.heroPrimary} onBeforeGate={onBeforeGate}>
@@ -267,40 +222,6 @@ interface AccountReadinessSectionProps {
   onFocusLoginSection: () => void;
   sectionRef: RefObject<HTMLElement | null>;
   showHistoryEntry: boolean;
-}
-
-function NewsSection() {
-  return (
-    <section className={styles.newsSection}>
-      <div className={styles.container}>
-        <div className={styles.sectionTop}>
-          <h2>법대로의 최신 소식을 확인하세요</h2>
-          <div className={styles.arrowButtons}>
-            <button type="button" aria-label="이전">
-              <ChevronRight size={18} className={styles.arrowLeft} />
-            </button>
-            <button type="button" aria-label="다음">
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.newsGrid}>
-          {news.map((item) => (
-            <article key={item.title} className={styles.newsCard}>
-              <div className={styles.newsImageWrap}>
-                <img src={item.img} alt={item.title} className={styles.newsImage} />
-                <div className={styles.newsImageOverlay} />
-                <div className={styles.newsTag}>{item.tag}</div>
-              </div>
-              <h3>{item.title}</h3>
-              <p>{item.date}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
 }
 
 function AccountReadinessSection({
@@ -361,7 +282,7 @@ interface ServiceNavProps {
 }
 
 function ServiceNav({ onBeforeGate }: ServiceNavProps) {
-  const [active, setActive] = useState('Featured');
+  const [active, setActive] = useState('History');
 
   return (
     <section id="services" className={styles.serviceSection}>
@@ -398,9 +319,9 @@ function ServiceNav({ onBeforeGate }: ServiceNavProps) {
             <div>
               <h3>{active}</h3>
               <p>
-                가장 많이 찾는 {active} 서비스를 확인하고
+                저장 기록, 계약서 검토, 문서 초안을
                 <br />
-                당신의 소중한 권리를 지키세요.
+                현재 작업 흐름에 맞게 바로 이어갑니다.
               </p>
             </div>
             <div className={styles.serviceFeatureVisual}>
@@ -417,10 +338,7 @@ function ServiceNav({ onBeforeGate }: ServiceNavProps) {
                     <Icon size={24} />
                   </div>
                   <div className={styles.serviceCardBody}>
-                    <h4>
-                      {service.title}
-                      <span>Update</span>
-                    </h4>
+                    <h4>{service.title}</h4>
                     <p>{service.desc}</p>
                   </div>
                 </>
@@ -457,17 +375,17 @@ function SolutionCards() {
       <div className={styles.container}>
         <div className={styles.sectionTop}>
           <h2>
-            비즈니스 특성을 고려한
+            진행 중인 근로 사건을
             <br />
-            법률 솔루션을 제안합니다
+            다음 단계로 정리합니다
           </h2>
           <Link href="/after" className={styles.solutionButton}>
-            솔루션 전체 보기
+            After에서 질문하기
           </Link>
         </div>
 
         <div className={styles.solutionGrid}>
-          {solutions.map((solution, index) => {
+          {solutions.map((solution) => {
             const Icon = solution.icon;
             return (
               <article key={solution.title} className={styles.solutionCard}>
@@ -476,11 +394,7 @@ function SolutionCards() {
                 </div>
                 <h3>{solution.title}</h3>
                 <p>{solution.subtitle}</p>
-                <img
-                  src={`https://images.unsplash.com/photo-15${index}9829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=500`}
-                  alt={solution.title}
-                  className={styles.solutionImage}
-                />
+                <span className={styles.solutionMeta}>After 연결점</span>
               </article>
             );
           })}
@@ -520,12 +434,12 @@ function PromotionBanners({ onBeforeGate }: PromotionBannersProps) {
             </p>
             <ArrowRight size={20} />
           </Link>
-          <Link href="/after" className={`${styles.promoCard} ${styles.promoLight}`}>
-            <h4>신규 통합 구조</h4>
+          <Link href="/history" className={`${styles.promoCard} ${styles.promoLight}`}>
+            <h4>사건 기록 확인</h4>
             <p>
-              메인 랜딩 아래에서
+              완료된 Before와 Bridge 요약을
               <br />
-              Before와 After를 함께 운영합니다.
+              사건 단위로 다시 확인합니다.
             </p>
             <ArrowRight size={20} />
           </Link>
@@ -606,10 +520,7 @@ function Footer({ onBeforeGate }: FooterProps) {
                 <Link href="/after">진정서 작성기</Link>
               </li>
               <li>
-                <Link href="/after">판례 검색</Link>
-              </li>
-              <li>
-                <Link href="/after">상담 신청</Link>
+                <Link href="/history">사건 기록</Link>
               </li>
             </ul>
           </div>
@@ -624,7 +535,7 @@ function Footer({ onBeforeGate }: FooterProps) {
                 <a href="#services">서비스</a>
               </li>
               <li>
-                <a href="#solutions">프레스킷</a>
+                <a href="#solutions">사건 유형</a>
               </li>
             </ul>
           </div>
@@ -639,7 +550,7 @@ function Footer({ onBeforeGate }: FooterProps) {
                 <Link href="/after">After 시작</Link>
               </li>
               <li>
-                <a href="#footer">문의하기</a>
+                <Link href="/history">기록 보기</Link>
               </li>
             </ul>
           </div>
@@ -739,7 +650,6 @@ export default function HomePage() {
         sectionRef={accountSectionRef}
         showHistoryEntry={isBackendAuthenticated}
       />
-      <NewsSection />
       <ServiceNav onBeforeGate={handleBeforeGate} />
       <SolutionCards />
       <PromotionBanners onBeforeGate={handleBeforeGate} />
