@@ -583,18 +583,14 @@ export default function BeforePage() {
       <Masthead isLoading={isSubmitting || isBridgeSubmitting} />
       <main id="main-content" tabIndex={-1} className={styles.main}>
         <section className={styles.heroSection} aria-labelledby="before-title">
-          <div className={styles.heroGlowPrimary} />
-          <div className={styles.heroGlowSecondary} />
           <div className={styles.heroInner}>
             <div className={styles.heroCopy}>
               <p className={styles.eyebrow}>Before service</p>
               <h1 id="before-title" className={styles.title}>
-                근로계약서 업로드부터 법령 기반 설명까지 한 흐름으로 확인하세요
+                근로계약서 분석 시작
               </h1>
               <p className={styles.lead}>
-                계약서를 올리면 먼저 업로드 패널에서 파일을 정리하고, 분석을 시작한 뒤에만 진행 상태와
-                결과 섹션이 아래로 이어집니다. 현재 데모 단계에서는 고정 시나리오 기반 결과로 흐름을
-                검증합니다.
+                계약서 파일을 추가하고 분석을 시작하면 진행 상태와 결과가 같은 흐름 안에서 이어집니다.
               </p>
 
               <div className={styles.badgeRow}>
@@ -602,45 +598,7 @@ export default function BeforePage() {
                 <span className={styles.metaItem}>upload first</span>
                 <span className={styles.metaItem}>result on demand</span>
               </div>
-
-              <div className={styles.featureGrid}>
-                <article className={styles.featureCard}>
-                  <h2 className={styles.featureTitle}>업로드 단일 진입</h2>
-                  <p className={styles.featureDescription}>
-                    처음 화면에서는 계약서 파일 선택과 mock 시나리오 실행만 먼저 보여줍니다.
-                  </p>
-                </article>
-                <article className={styles.featureCard}>
-                  <h2 className={styles.featureTitle}>단계별 생성</h2>
-                  <p className={styles.featureDescription}>
-                    분석을 시작한 뒤에만 로딩 패널이 나타나고, 완료 후 결과 섹션이 생성됩니다.
-                  </p>
-                </article>
-                <article className={styles.featureCard}>
-                  <h2 className={styles.featureTitle}>결과 옆 권리 안내</h2>
-                  <p className={styles.featureDescription}>
-                    장애 특화 안내 패널은 결과를 읽는 시점에 맞춰 오른쪽에서 함께 확인합니다.
-                  </p>
-                </article>
-              </div>
             </div>
-
-            <aside className={styles.heroPanel} aria-label="현재 상태">
-              <div className={styles.heroPanelCard}>
-                <p className={styles.panelEyebrow}>Service focus</p>
-                <h2 className={styles.panelTitle}>원본 before_web 흐름에 맞춘 구조</h2>
-                <ul className={styles.panelList}>
-                  <li>업로드 단계에서는 입력 패널만 먼저 노출</li>
-                  <li>분석 시작 후 로딩 패널이 아래 섹션으로 생성</li>
-                  <li>결과가 생기면 결과와 권리 안내가 함께 등장</li>
-                  <li>초기 노출 정보는 업로드 판단에 필요한 내용만 유지</li>
-                </ul>
-              </div>
-              <div className={styles.heroPanelStrip}>
-                <span className={styles.stripLabel}>Flow summary</span>
-                <p>Hero 이후에는 업로드만 먼저 보이고, 나머지 패널은 상태가 바뀌는 시점에 순차적으로 나타납니다.</p>
-              </div>
-            </aside>
           </div>
         </section>
 
@@ -674,8 +632,7 @@ export default function BeforePage() {
                 <p className={styles.infoEyebrow}>Upload step</p>
                 <h2 className={styles.infoTitle}>처음에는 입력 패널 하나만 보입니다</h2>
                 <p className={styles.infoBody}>
-                  원본 `before_web`와 같은 방식으로, 파일을 고르고 분석을 시작하기 전까지는 보조 결과 패널을
-                  먼저 열지 않습니다.
+                  파일을 고르고 분석을 시작하기 전까지는 보조 결과 패널을 먼저 열지 않습니다.
                 </p>
               </section>
 
