@@ -389,6 +389,60 @@
   overflow-wrap: anywhere;
 }
 
+@media (max-width: 671px) {
+  .heroSection {
+    padding-top: 30px;
+    padding-bottom: 48px;
+  }
+
+  .heroInner {
+    gap: 18px;
+  }
+
+  .title {
+    font-size: clamp(2rem, 9vw, 2.55rem);
+    line-height: 1.08;
+    letter-spacing: 0;
+  }
+
+  .lead {
+    margin-top: 14px;
+    font-size: 0.94rem;
+    line-height: 1.62;
+  }
+
+  .badgeRow {
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .documentBadge,
+  .metaItem {
+    min-height: 28px;
+    padding: 4px 10px;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+  }
+
+  .featureGrid,
+  .heroPanel {
+    display: none;
+  }
+
+  .uploadSection {
+    margin-top: -30px;
+    padding-bottom: 22px;
+  }
+
+  .inlineInfoGrid {
+    gap: 14px;
+  }
+
+  .infoCard {
+    padding: 18px;
+  }
+}
+
 @media (min-width: 672px) {
   .heroSection,
   .uploadSection,
