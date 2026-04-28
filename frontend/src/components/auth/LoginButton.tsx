@@ -22,56 +22,33 @@ export function LoginButton() {
     clearError,
   } = useAuth();
   const isBusy = isInitializing || isSigningIn || isCheckingBackend;
+  const isBackendVerified = backendUser.logged_in;
+  const hasFirebaseSession = Boolean(firebaseUser);
   const accountStatusMessage = getAccountStatusMessage({
-    hasFirebaseSession: Boolean(firebaseUser),
-    isBackendVerified: backendUser.logged_in,
+    hasFirebaseSession,
+    isBackendVerified,
   });
+  const panelClassName = [
+    styles.panel,
+    isBackendVerified ? styles.panelVerified : styles.panelNeedsLogin,
+  ].join(' ');
 
   return (
-    <div className={styles.panel}>
+    <div className={panelClassName}>
       <div className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>SCN-001 account readiness</p>
-          <h2 className={styles.title}>Google 로그인 확인</h2>
+          <p className={styles.eyebrow}>{isBackendVerified ? 'Account ready' : 'Account'}</p>
+          <h2 className={styles.title}>
+            {isBackendVerified ? '로그인됨 / 기록 사용 가능' : 'Google 로그인 확인'}
+          </h2>
+          <p className={styles.description}>
+            {isBackendVerified
+              ? 'History, Before, After를 같은 사건 흐름으로 이어볼 수 있습니다.'
+              : '로그인하면 Before 분석 기록과 Bridge 연결을 저장하고 다시 이어볼 수 있습니다.'}
+          </p>
         </div>
-        <StatusPill loggedIn={backendUser.logged_in} isBusy={isBusy} />
+        <StatusPill loggedIn={isBackendVerified} isBusy={isBusy} />
       </div>
-
-      <div className={styles.statusGrid} aria-label="인증 상태">
-        <StatusItem
-          label="Firebase"
-          value={firebaseConfigured ? (firebaseUser ? 'signed_in' : 'signed_out') : 'config_missing'}
-        />
-        <StatusItem
-          label="Backend"
-          value={backendUser.logged_in ? 'logged_in=true' : 'logged_in=false'}
-        />
-        <StatusItem
-          label="users row"
-          value={backendUser.logged_in && backendUser.user_id ? 'upsert ready' : 'not confirmed'}
-        />
-      </div>
-
-      {accountStatusMessage ? (
-        <p className={styles.accountLine}>{accountStatusMessage}</p>
-      ) : null}
-
-      {!firebaseConfigured ? (
-        <div className={styles.configNotice} role="status">
-          <AlertCircle size={18} aria-hidden="true" />
-          <span>Firebase public env 설정 필요: {missingFirebaseConfig.join(', ')}</span>
-        </div>
-      ) : null}
-
-      {errorMessage ? (
-        <div className={styles.error} role="alert">
-          <AlertCircle size={18} aria-hidden="true" />
-          <span>{errorMessage}</span>
-          <button type="button" onClick={clearError} aria-label="오류 메시지 닫기">
-            ×
-          </button>
-        </div>
-      ) : null}
 
       <div className={styles.actions}>
         {!firebaseConfigured ? (
@@ -117,6 +94,41 @@ export function LoginButton() {
           </button>
         )}
       </div>
+
+      {!isBackendVerified ? (
+        <div className={styles.statusGrid} aria-label="인증 상태">
+          <StatusItem
+            label="Google"
+            value={firebaseConfigured ? (hasFirebaseSession ? '로그인됨' : '로그아웃') : '설정 필요'}
+          />
+          <StatusItem
+            label="서버 확인"
+            value={hasFirebaseSession ? '확인 필요' : '로그인 후 확인'}
+          />
+          <StatusItem label="기록" value="로그인 후 사용" />
+        </div>
+      ) : null}
+
+      {accountStatusMessage ? (
+        <p className={styles.accountLine}>{accountStatusMessage}</p>
+      ) : null}
+
+      {!firebaseConfigured ? (
+        <div className={styles.configNotice} role="status">
+          <AlertCircle size={18} aria-hidden="true" />
+          <span>Firebase public env 설정 필요: {missingFirebaseConfig.join(', ')}</span>
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <div className={styles.error} role="alert">
+          <AlertCircle size={18} aria-hidden="true" />
+          <span>{errorMessage}</span>
+          <button type="button" onClick={clearError} aria-label="오류 메시지 닫기">
+            ×
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -135,12 +147,12 @@ function StatusPill({ loggedIn, isBusy }: StatusPillProps) {
     return (
       <span className={styles.successPill}>
         <CheckCircle2 size={16} aria-hidden="true" />
-        backend verified
+        확인 완료
       </span>
     );
   }
 
-  return <span className={styles.neutralPill}>signed out</span>;
+  return <span className={styles.neutralPill}>로그아웃</span>;
 }
 
 interface StatusItemProps {

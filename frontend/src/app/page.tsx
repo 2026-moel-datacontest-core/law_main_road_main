@@ -5,7 +5,6 @@ import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useStat
 import { useRouter } from 'next/navigation';
 import {
   AlertCircle,
-  ArrowRight,
   FileSearch,
   Gavel,
   History as HistoryIcon,
@@ -76,8 +75,8 @@ function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
 
         <div className={styles.navLinks}>
           <a href="#intro">개요</a>
-          <a href="#services">작업</a>
           <a href="#account">계정</a>
+          <a href="#services">작업</a>
         </div>
 
         <div className={styles.navActions}>
@@ -110,11 +109,11 @@ function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
           <a href="#intro" onClick={() => setIsMenuOpen(false)}>
             개요
           </a>
-          <a href="#services" onClick={() => setIsMenuOpen(false)}>
-            작업
-          </a>
           <a href="#account" onClick={() => setIsMenuOpen(false)}>
             계정
+          </a>
+          <a href="#services" onClick={() => setIsMenuOpen(false)}>
+            작업
           </a>
           {showHistoryLink ? <Link href="/history">History</Link> : null}
           <BeforeGateButton
@@ -132,53 +131,18 @@ function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
   );
 }
 
-interface HeroProps {
-  onBeforeGate: BeforeGateHandler;
-  showHistoryLink: boolean;
-}
-
-function Hero({ onBeforeGate, showHistoryLink }: HeroProps) {
+function Hero() {
   return (
     <section id="intro" className={styles.hero}>
       <div className={styles.container}>
-        <div className={styles.heroGrid}>
-          <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}>K-Labor Shield</p>
-            <h1 className={styles.heroTitle}>법대로 AI 근로 사건 워크스페이스</h1>
-            <p className={styles.heroDescription}>
-              계약서 검토, 사후 질문, 저장 기록 확인을 한 화면에서 시작합니다. After 질문과
-              초안 흐름은 로그인 없이 그대로 사용할 수 있습니다.
-            </p>
-            <div className={styles.heroActions}>
-              {showHistoryLink ? (
-                <Link href="/history" className={styles.secondaryButton}>
-                  History
-                </Link>
-              ) : null}
-              <BeforeGateButton className={styles.secondaryButton} onBeforeGate={onBeforeGate}>
-                Before
-              </BeforeGateButton>
-              <Link href="/after" className={styles.primaryButton}>
-                After
-                <ArrowRight size={18} aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-
-          <dl className={styles.statusList} aria-label="현재 작업 범위">
-            <div>
-              <dt>History</dt>
-              <dd>{showHistoryLink ? '로그인 확인 완료' : '로그인 후 기록 표시'}</dd>
-            </div>
-            <div>
-              <dt>Before</dt>
-              <dd>서버 인증 확인 후 계약서 분석</dd>
-            </div>
-            <div>
-              <dt>After</dt>
-              <dd>로그인 없이 질문과 초안 흐름 사용</dd>
-            </div>
-          </dl>
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>K-Labor Shield</p>
+          <h1 className={styles.heroTitle}>법대로 AI 근로 사건 워크스페이스</h1>
+          <p className={styles.heroDescription}>
+            로그인 상태를 먼저 확인하고, 저장 기록 확인과 계약서 검토, 사후 질문을 같은
+            사건 흐름 안에서 이어갑니다. After 질문과 초안 흐름은 로그인 없이도 사용할 수
+            있습니다.
+          </p>
         </div>
       </div>
     </section>
@@ -189,14 +153,12 @@ interface AccountReadinessSectionProps {
   noticeMessage: string | null;
   onFocusLoginSection: () => void;
   sectionRef: RefObject<HTMLElement | null>;
-  showHistoryEntry: boolean;
 }
 
 function AccountReadinessSection({
   noticeMessage,
   onFocusLoginSection,
   sectionRef,
-  showHistoryEntry,
 }: AccountReadinessSectionProps) {
   return (
     <section
@@ -223,24 +185,6 @@ function AccountReadinessSection({
           </div>
         ) : null}
         <LoginButton />
-        {showHistoryEntry ? (
-          <div className={styles.historyEntryPanel}>
-            <span className={styles.historyEntryIcon} aria-hidden="true">
-              <HistoryIcon size={20} />
-            </span>
-            <div className={styles.historyEntryText}>
-              <p className={styles.historyEntryEyebrow}>History</p>
-              <h2 className={styles.historyEntryTitle}>저장된 Before / Bridge 기록</h2>
-              <p className={styles.historyEntryDescription}>
-                완료된 계약서 검토와 Bridge 연결 요약을 한 화면에서 확인합니다.
-              </p>
-            </div>
-            <Link href="/history" className={styles.historyEntryButton}>
-              기록 보기
-              <ArrowRight size={17} aria-hidden="true" />
-            </Link>
-          </div>
-        ) : null}
       </div>
     </section>
   );
@@ -338,43 +282,6 @@ function TaskCardContent({
   );
 }
 
-interface ScopeSectionProps {
-  onBeforeGate: BeforeGateHandler;
-  showHistoryLink: boolean;
-}
-
-function ScopeSection({ onBeforeGate, showHistoryLink }: ScopeSectionProps) {
-  return (
-    <section className={styles.scopeSection}>
-      <div className={styles.container}>
-        <div className={styles.scopePanel}>
-          <div>
-            <p className={styles.eyebrow}>Current scope</p>
-            <h2>제출 범위에 맞춘 안정 경로</h2>
-            <p>
-              After 질문/초안 흐름은 그대로 유지하고, Before와 History는 서버 인증 확인
-              상태를 기준으로 연결합니다.
-            </p>
-          </div>
-          <div className={styles.scopeActions}>
-            {showHistoryLink ? (
-              <Link href="/history" className={styles.secondaryButton}>
-                History
-              </Link>
-            ) : null}
-            <BeforeGateButton className={styles.secondaryButton} onBeforeGate={onBeforeGate}>
-              Before
-            </BeforeGateButton>
-            <Link href="/after" className={styles.primaryButton}>
-              After
-            </Link>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 interface FooterProps {
   onBeforeGate: BeforeGateHandler;
   showHistoryLink: boolean;
@@ -467,15 +374,13 @@ export default function HomePage() {
   return (
     <div className={styles.page}>
       <Navbar onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
-      <Hero onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
-      <TaskSection onBeforeGate={handleBeforeGate} showHistoryEntry={isBackendAuthenticated} />
+      <Hero />
       <AccountReadinessSection
         noticeMessage={beforeGateMessage}
         onFocusLoginSection={focusLoginSection}
         sectionRef={accountSectionRef}
-        showHistoryEntry={isBackendAuthenticated}
       />
-      <ScopeSection onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
+      <TaskSection onBeforeGate={handleBeforeGate} showHistoryEntry={isBackendAuthenticated} />
       <Footer onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
     </div>
   );
