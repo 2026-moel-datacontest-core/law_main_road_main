@@ -83,7 +83,8 @@
 .navActions {
   display: none;
   align-items: center;
-  gap: 14px;
+  flex-shrink: 0;
+  gap: 10px;
 }
 
 .beforeGateAction {
@@ -98,11 +99,15 @@
 }
 
 .loginButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   padding: 0 16px;
   color: #d1d5db;
   font-size: 0.9rem;
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .historyButton {
@@ -114,6 +119,7 @@
   font-size: 0.9rem;
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .historyButton:hover {
@@ -132,6 +138,7 @@
   font-size: 0.9rem;
   font-weight: 800;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .mobileMenuButton {
@@ -152,12 +159,14 @@
 
 .mobileMenu a,
 .mobileMenu button {
+  min-width: 0;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   color: #ffffff;
   font-size: 1.05rem;
   text-decoration: none;
   text-align: left;
+  overflow-wrap: anywhere;
 }
 
 .hero {
@@ -1024,5 +1033,20 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+  }
+}
+
+@media (min-width: 960px) and (max-width: 1120px) {
+  .navLinks {
+    gap: 24px;
+  }
+
+  .loginButton,
+  .historyButton {
+    padding: 0 12px;
+  }
+
+  .consoleButton {
+    padding: 0 20px;
   }
 }

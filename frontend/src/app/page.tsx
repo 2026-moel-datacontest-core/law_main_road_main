@@ -170,14 +170,14 @@ function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
         </div>
 
         <div className={styles.navActions}>
-          <BeforeGateButton className={styles.loginButton} onBeforeGate={onBeforeGate}>
-            Before
-          </BeforeGateButton>
           {showHistoryLink ? (
             <Link href="/history" className={styles.historyButton}>
               History
             </Link>
           ) : null}
+          <BeforeGateButton className={styles.loginButton} onBeforeGate={onBeforeGate}>
+            Before
+          </BeforeGateButton>
           <Link href="/after" className={styles.consoleButton}>
             After
           </Link>
@@ -199,6 +199,7 @@ function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
             <a href="#intro">소개</a>
             <a href="#services">서비스</a>
             <a href="#solutions">솔루션</a>
+            {showHistoryLink ? <Link href="/history">저장 기록 보기</Link> : null}
             <BeforeGateButton
               onBeforeGate={() => {
                 setIsMenuOpen(false);
@@ -207,7 +208,6 @@ function Navbar({ onBeforeGate, showHistoryLink }: NavbarProps) {
             >
               계약서 분석 시작
             </BeforeGateButton>
-            {showHistoryLink ? <Link href="/history">저장 기록 보기</Link> : null}
             <Link href="/after">진정서 작성 시작</Link>
           </motion.div>
         ) : null}
