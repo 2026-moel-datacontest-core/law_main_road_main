@@ -157,7 +157,7 @@ export default function AfterResultPage() {
   const statementSummary = truncateText(state.user_statement || answer.query, 100);
   const canShowAnswer = hasGrounding;
   const selectorPanelClassName = canShowScn001FrozenDraftCta
-    ? styles.selectorPanelStatic
+    ? `${styles.selectorPanel} ${styles.selectorPanelStatic}`
     : styles.selectorPanel;
 
   function selectDocumentType(documentType: DocumentType) {

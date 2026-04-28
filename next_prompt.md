@@ -9,9 +9,9 @@ law_main_road repo root에서 작업해주세요.
 - 2026-04-27
 
 현재 git / 제출 기준 상태:
-- 2026-04-27 frontend polish/docs sync 기준 branch: `experiment/frontend-polish-history-after`.
-- 새 세션 시작 직후 `git status -sb`, `git status --short`, `git branch --show-current`, `git log --oneline -12`로 branch와 clean/dirty 상태를 다시 확인하세요.
-- 작업 branch가 `experiment/frontend-polish-history-after`가 아니거나 `main`이면 중단하고 보고하세요.
+- 새 세션 시작 직후 `git status -sb`, `git status --short`, `git branch --show-current`, `git log --oneline -12`로 현재 branch, clean/dirty 상태, 최신 commit을 다시 확인하세요.
+- `main`, `experiment/frontend-polish-history-after`, 또는 다른 작업 branch 여부만으로 중단하지 말고 현재 git 상태와 최신 commit 기준으로 진행하세요.
+- `experiment/frontend-polish-history-after`를 review 중이면 해당 branch context를 사용하고, main merge 후라면 main의 현재 상태를 기준으로 복구하세요.
 - push는 수행하지 않는다.
 - 최근 중요 커밋:
   - 1a57601 refactor(frontend): remove stale Before history styles
@@ -149,8 +149,8 @@ law_main_road repo root에서 작업해주세요.
   - Before delete removes linked Bridge visible path
   - Bridge context/history does not hide SCN-001/SCN-004 preset buttons
   - exact preset submit keeps fixed answer path priority
-- SCN-001 frontend history/After polish is completed on
-  `experiment/frontend-polish-history-after`:
+- SCN-001 frontend history/After polish changes are completed in the current git
+  history when the polish commits are present:
   - `/after` saved history cards clarify Before situation summary and Bridge
     law/risk explanation using only safe displayed subset fields
   - SCN-001 fixed frozen draft selector/result panel is no longer sticky, while
@@ -520,8 +520,7 @@ npm run dev
 
 ## 참고
 
-이 프롬프트는 현재 `experiment/frontend-polish-history-after` 기준 새 세션을
-빠르게 시작하기 위한 복원 메모다.
+이 프롬프트는 현재 git 상태 기준 새 세션을 빠르게 시작하기 위한 복원 메모다.
 MVP 제출 기준으로는 SCN-004 freeze, SCN-001 protected Bridge answer routing,
 Phase 7E live smoke PASS, Phase 8 regression/preflight/SCN-004 rehearsal PASS,
 sanitized evidence hygiene, full 60 eval evidence, demo preflight PASS가 정리된 상태다.

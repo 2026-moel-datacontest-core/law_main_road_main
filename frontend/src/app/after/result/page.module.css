@@ -151,13 +151,9 @@
   gap: 10px;
 }
 
-.selectorPanel,
-.selectorPanelStatic {
+.selectorPanel {
   display: grid;
   gap: 16px;
-}
-
-.selectorPanel {
   position: sticky;
   top: calc(var(--kl-masthead-height) + 20px);
 }
