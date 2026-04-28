@@ -51,6 +51,8 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
 - SCN-001 frontend history/After polish completed through latest main commits:
   - `8cd1ccb` polished SCN-001 history cards and `c365ca5` clarified SCN-001
     history summaries.
+  - `6263a8e` folded SCN-001 case records, while `f15430c` and `a2d984f`
+    separated wage/deduction summaries so absent issues are not implied.
   - `/after` saved history and `/history` now use an incident-centered single
     card flow instead of separate Before/Bridge list cards or 2-column layout.
   - One incident card shows situation summary, confirmed issues, candidate legal
@@ -75,6 +77,22 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
     `/api/v1/history` unified backend API, live/backend SCN-001 draft generation,
     protected SCN-001 draft endpoint, SCN-005, or Step 3 full retention
     lifecycle.
+- Latest frontend visual redesign is completed through pushed main `fdde441`:
+  - visual foundation token alignment
+  - home visual simplification
+  - `/before`, `/after`, `/history` internal route chrome simplification
+  - `/after/result`, `/after/intake`, `/after/draft` after-flow detail visual polish
+  - draft print CSS specificity fix
+  - Before analysis progress UX
+  - masthead light surface alignment
+  - main page login priority
+- Main page login priority is completed: logged-out first viewport prioritizes
+  Google login CTA, while backend-verified logged-in users keep
+  `History / Before / After` entry order. SCN-004 `/after` remains login-free.
+- Before analysis progress UX is completed: `/before` analysis start scrolls to
+  the progress area, OCR guidance says document quality/length can take about
+  1~2 minutes, raw job id/status/provider/internal error is hidden, and backend
+  OCR/provider/polling contracts remain unchanged.
 - Post-Phase 8 Step 1.6 main page Before entry login gate 완료.
 - Post-Phase 8 actual browser logged-in smoke PASS.
 - SCN-001 protected frontend auth gate hardening 완료: Firebase signed-in 단독이
@@ -105,9 +123,11 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
   - SCN-001 MVP demo includes fixed-preset frozen draft continuity explanation
     and Bridge-origin answer-only continuity explanation where eligible.
   - Bridge-as-Continuity, Not Grounding is the policy boundary.
-  - Current next target is frontend-only UI polish: main page History
-    position/order, final `/after`/`/history`/main card spacing, button labels,
-    fold/collapsible behavior, and mobile width.
+  - Remaining candidates are optional frontend-only visual polish: SCN-004
+    intake/draft internal component surface cleanup, Before
+    Upload/Result/Accessibility panels deep polish, Auth/LoginButton token
+    cleanup nit, History deep density polish, and manual visual QA / print
+    preview.
 
 ## 3. Recommended Sequence
 
@@ -531,10 +551,11 @@ Retention-stream future policy target after this review:
 
 - Cloud storage / GCS lifecycle policy review or orphan classification/cleanup
   policy review remains a later policy candidate for the Step 3 retention stream.
-- The current global next prompt target is frontend-only UI polish: main page
-  History position/order, final `/after`/`/history`/main card spacing, button
-  labels, fold/collapsible behavior, and mobile width, not this
-  retention-stream policy work.
+- The current global remaining work is optional frontend-only visual polish:
+  SCN-004 intake/draft internal component surface cleanup, Before
+  Upload/Result/Accessibility panels deep polish, Auth/LoginButton token cleanup
+  nit, History deep density polish, and manual visual QA / print preview, not
+  this retention-stream policy work.
 
 Recommended sequencing:
 
@@ -577,10 +598,12 @@ Retention-stream note:
 - If the work later returns to Step 3 retention policy, cloud storage / GCS
   lifecycle policy review or orphan classification/cleanup policy review remains
   the next retention-stream candidate.
-- The active next target for this roadmap is frontend-only UI polish: main page
-  History position/order, final `/after`/`/history`/main card spacing, button
-  labels, fold/collapsible behavior, and mobile width. It should not open
-  live/backend SCN-001 draft generation or protected SCN-001 draft endpoint work.
+- The active remaining candidates for this roadmap are optional frontend-only
+  visual polish: SCN-004 intake/draft internal component surface cleanup, Before
+  Upload/Result/Accessibility panels deep polish, Auth/LoginButton token cleanup
+  nit, History deep density polish, and manual visual QA / print preview. They
+  should not open live/backend SCN-001 draft generation or protected SCN-001
+  draft endpoint work.
 
 The policy notes below remain guardrails for future lifecycle work; they are not
 new implementation instructions for this completed MVP soft-delete slice.
@@ -904,9 +927,10 @@ generation, live draft freeze는 열지 않는다.
 - No independent `/bridge` route or Recovery implementation.
 - No live/backend DB schema/migration, protected endpoint path/method/schema, live
   document template, or live QA fixture is finalized here.
-- Current next target is frontend-only UI polish: main page History
-  position/order, final `/after`/`/history`/main card spacing, button labels,
-  fold/collapsible behavior, and mobile width.
+- Remaining candidates are optional frontend-only visual polish: SCN-004
+  intake/draft internal component surface cleanup, Before Upload/Result/
+  Accessibility panels deep polish, Auth/LoginButton token cleanup nit, History
+  deep density polish, and manual visual QA / print preview.
 
 ##### 2. Bridge usage policy
 
@@ -1116,11 +1140,13 @@ not a request to run broad eval now.
 
 The previous frontend-only continuity panel target, `/after` saved history
 selector target, and frontend history/After polish target are completed. Current
-next target is frontend-only UI polish: main page History position/order, final
-`/after`/`/history`/main card spacing, button labels, fold/collapsible behavior,
-and mobile width. This target does not finalize protected SCN-001 draft endpoint
-path/method/schema, open live/backend SCN-001 draft generation, or open SCN-001
-live draft freeze.
+main page login priority and `History / Before / After` logged-in order are also
+completed through `fdde441`. Remaining candidates are optional frontend-only
+visual polish: SCN-004 intake/draft internal component surface cleanup, Before
+Upload/Result/Accessibility panels deep polish, Auth/LoginButton token cleanup
+nit, History deep density polish, and manual visual QA / print preview. These
+candidates do not finalize protected SCN-001 draft endpoint path/method/schema,
+open live/backend SCN-001 draft generation, or open SCN-001 live draft freeze.
 
 ##### 5. Draft affordance policy
 
@@ -1193,8 +1219,8 @@ Candidate quality gate for a future design review:
   `grounded_context_ids`.
 - Bridge/query relevance guard matrix is documented and remains a prerequisite
   before any draft affordance.
-- manual browser rehearsal is required before treating the SCN-001 frozen draft +
-  continuity panel path as final evidence.
+- SCN-001 frozen draft + continuity panel path is completed; manual visual QA /
+  print preview remains an optional residual check.
 - no broad eval unless retrieval/answer behavior or API response contract changes.
 - SCN-004 exact preset, SCN-004 free input, and SCN-004 login-free draft flow must
   remain regression checkpoints.
@@ -1202,33 +1228,32 @@ Candidate quality gate for a future design review:
   `after_query_seed`, token, Firebase uid, provider_subject, email, raw query,
   full answer body, or artifact body recorded.
 
-##### 9. Current next target
+##### 9. Optional visual polish candidates
 
-Current next target is frontend-only UI polish:
+Main page login priority and logged-in `History / Before / After` order are
+completed in pushed main `fdde441`. Remaining work is optional frontend-only
+visual polish:
 
-1. Main page History position/order:
-   - logged-out nav/actions stay `Before / After`.
-   - backend-verified logged-in nav/actions should read `History / Before / After`.
-2. Final UI polish for `/after`, `/history`, and main page:
-   - card spacing.
-   - button labels.
-   - fold/collapsible behavior.
-   - mobile width.
-3. Keep SCN-004 freeze and SCN-001 frozen draft flow untouched.
+1. SCN-004 intake/draft internal component surface cleanup.
+2. Before Upload/Result/Accessibility panels deep polish.
+3. Auth/LoginButton token cleanup nit.
+4. History deep density polish.
+5. Manual visual QA / print preview.
+6. Keep SCN-004 freeze and SCN-001 frozen draft/history/continuity boundaries
+   untouched.
 
 These targets should not code a backend endpoint, finalize schema/migration, open
 live/backend SCN-001 draft generation, open protected SCN-001 draft endpoint
 path/method/schema, open SCN-001 live draft freeze, open SCN-005, or change
 SCN-004 public answer/draft behavior.
 
-Later SCN-001 draft/freeze sequence:
+Later SCN-001 live draft/freeze sequence:
 
-1. Finalize SCN-001 frozen draft + continuity panel + `/after` saved history
-   selector browser evidence.
-2. Document SCN-001 MVP demo rehearsal evidence.
-3. Revisit live/backend SCN-001 document draft design, document type, and quality gate.
-4. Open live SCN-001 draft implementation only after the above review.
-5. Open SCN-001 live draft freeze only after output quality is stable, and keep it
+1. If evidence is reopened, document SCN-001 MVP demo rehearsal without changing
+   the completed frozen draft/history/continuity boundary.
+2. Revisit live/backend SCN-001 document draft design, document type, and quality gate.
+3. Open live SCN-001 draft implementation only after the above review.
+4. Open SCN-001 live draft freeze only after output quality is stable, and keep it
    separate from `SCN-004-DEMO-FREEZE`.
 
 ### Step 5. SCN-001 Live Draft Freeze
@@ -1307,15 +1332,22 @@ Step 4는 live/backend SCN-001 Document Draft Design baseline으로 유지한다
 Bridge/query relevance guard matrix review는 completed/current design baseline으로
 문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity
 panel, `/after` saved Before/Bridge history selector, frontend history/After
-polish는 completed 상태다. 최신 main의 `/after`와 `/history`는 사건 중심 단일
-카드와 사용자 설명형 요약으로 정리됐다. 다음 target은 frontend-only UI polish다.
+polish는 completed 상태다. 최신 main은 `fdde441`까지 push 완료 상태이며
+visual foundation/home/internal route chrome/after-flow detail polish, Before
+progress UX, masthead light alignment, `/after` + `/history` case record fold,
+wage/deduction summary fix, main page login priority가 완료됐다.
 
-UI polish focus:
+Optional visual polish focus:
 
-- main page logged-out nav/actions는 `Before / After`를 유지하고, backend-verified
-  logged-in nav/actions는 `History / Before / After` 순서로 정리하는지
-- `/after`와 `/history`의 사건 중심 단일 카드 spacing, details/fold density,
-  button labels, mobile width가 자연스러운지
+- SCN-004 intake/draft internal component surface cleanup이 필요한지
+- Before Upload/Result/Accessibility panels deep polish가 필요한지
+- Auth/LoginButton token cleanup nit가 필요한지
+- History deep density polish가 필요한지
+- manual visual QA / print preview를 수행할지
+- logged-out 첫 화면은 Google login CTA 우선, backend-verified logged-in
+  nav/actions는 `History / Before / After` 순서를 유지하는지
+- `/after`와 `/history`의 사건 중심 compact summary + details/fold 구조가
+  자연스러운지
 - `/after` saved history selector가 사건 중심 단일 카드와 collapsible UI를
   유지하고, saved Bridge 선택 시 displayed safe subset만 Bridge handoff memory
   state에 넣는지
@@ -1345,9 +1377,10 @@ Current prompt target summary:
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow와 continuity panel은
   completed 상태이며 `/after` saved history selector도 completed 상태다.
 - `/after`와 `/history`는 사건 중심 단일 카드와 사용자 설명형 요약으로 정리됐다.
-- 다음 target은 frontend-only UI polish다: main page History position/order,
-  `/after`/`/history`/main card spacing, button labels, fold/collapsible behavior,
-  and mobile width.
+- 남은 후보는 optional frontend-only visual polish다: SCN-004 intake/draft
+  internal component surface cleanup, Before Upload/Result/Accessibility panels
+  deep polish, Auth/LoginButton token cleanup nit, History deep density polish,
+  and manual visual QA / print preview.
 - Continuity panel은 Bridge -> After answer-only continuity explanation과 fixed
   frozen draft continuity explanation이며, Bridge-as-Continuity, Not Grounding
   정책을 유지한다.

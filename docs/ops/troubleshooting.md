@@ -597,12 +597,26 @@ Evidence hygiene:
 - Bridge는 legal grounding이 아니라 continuity/reference로만 표시한다.
 - raw `after_query_seed`는 계속 null이며 UI/query/storage에 노출하지 않는다.
 
-다음 UI polish 후보:
+최신 visual/progress 상태:
 
-- main page logged-out nav/action은 `Before / After` 유지.
-- backend-verified logged-in nav/action은 `History / Before / After` 순서로 정리.
-- `/after`, `/history`, main page card spacing, button labels,
-  fold/collapsible density, mobile width를 frontend-only로 다룬다.
+- 최신 main `fdde441`까지 visual foundation token alignment, home visual
+  simplification, internal route chrome simplification, after-flow detail visual
+  polish, draft print CSS specificity fix, masthead light surface alignment,
+  main page login priority가 completed 상태다.
+- main page logged-out first viewport는 Google login CTA를 우선 표시한다.
+- backend-verified logged-in nav/action은 `History / Before / After` 순서를
+  유지한다.
+- `/before` 분석 시작 후 진행 상태 영역으로 scrollIntoView한다.
+- OCR은 문서 품질/분량에 따라 1~2분 정도 걸릴 수 있다는 안내를 표시한다.
+- raw job id/status/provider/internal error는 user-facing UI에 노출하지 않는다.
+
+남은 후보:
+
+- SCN-004 intake/draft internal component surface cleanup.
+- Before Upload/Result/Accessibility panels deep polish.
+- Auth/LoginButton token cleanup nit.
+- History deep density polish.
+- manual visual QA / print preview.
 
 주의:
 

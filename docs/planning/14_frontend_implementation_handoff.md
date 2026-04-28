@@ -1,6 +1,6 @@
 # Frontend Implementation Handoff — K-Labor Shield SCN-004 Demo
 
-기준일: `2026-04-24`
+기준일: `2026-04-28`
 대상: Codex / QA handoff
 범위: SCN-004 After flow (4 routes)
 
@@ -8,7 +8,7 @@
 
 ## 0. Current Implementation Status
 
-이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 2026-04-24에는 SCN-001 Phase 6/7 상태와 freeze 보호 정책을 추가 반영했다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
+이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 2026-04-24에는 SCN-001 Phase 6/7 상태와 freeze 보호 정책을 추가 반영했다. 2026-04-28에는 최신 main `fdde441` 기준 visual redesign, Before progress UX, SCN-001 case record fold, main login priority를 반영했다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
 
 현재 코드 위치:
 
@@ -40,6 +40,24 @@
   - `SCN-001-BRIDGE-DEMO`는 eval `SCN-001-Q3`이 아닌 Before/Bridge 발표 연결용 query를 쓰며 fixed/live 여부와 관계없이 answer-only
   - `SCN-004-DEMO-FREEZE`는 eval `SCN-004-Q1`이 아닌 document draft freeze query를 쓰며 fixed/live 여부와 관계없이 기존 SCN-004 draft eligibility 적용
   - SCN-005는 현재 UI preset에서 제외하고 후속 확장 후보로만 유지
+- Latest frontend visual redesign through `fdde441`
+  - visual foundation token alignment
+  - home visual simplification
+  - `/before`, `/after`, `/history` internal route chrome simplification
+  - `/after/result`, `/after/intake`, `/after/draft` detail visual polish
+  - draft print CSS specificity fix
+  - masthead light surface alignment
+- Before analysis progress UX
+  - `/before` scrolls to the progress area after analysis starts
+  - OCR guidance states that document quality/length can make OCR take about 1~2 minutes
+  - raw job id/status/provider/internal error is not exposed
+  - backend OCR/provider/polling contract unchanged
+- SCN-001 `/after` and `/history` case records
+  - incident-centered compact summary + details/fold structure
+  - `/after` focuses on quick selection / After connection
+  - `/history` focuses on record archive / management
+  - wage/deduction summaries are separated so absent issues are not implied
+  - raw key/snake_case/raw `after_query_seed`/real bridge id are not exposed
 
 보류:
 
@@ -49,6 +67,7 @@
 - `/bridge`, Recovery 구현 및 `/before` 추가 기능 확장
 - 현재 SCN-004 freeze 작업 중 SCN-005 문서 타입 확장
 - 팀원 Before / Bridge contract 확인 없는 SCN-001 문서 타입 확장
+- Optional visual polish only: SCN-004 intake/draft internal component surface cleanup, Before Upload/Result/Accessibility panels deep polish, Auth/LoginButton token cleanup nit, History deep density polish, manual visual QA / print preview
 
 SCN-001 Firebase Auth note:
 
@@ -60,9 +79,10 @@ SCN-001 Firebase Auth note:
 
 다음 단계:
 
-- protected bridge answer frontend routing / verification은 별도 후보 작업으로 진행
+- optional visual polish만 별도 작은 patch로 진행
 - SCN-004 happy path / error path / guard path 제출 전 재확인
-- desktop/mobile demo layout 제출 전 재확인
+- desktop/mobile demo layout 및 실제 print preview는 residual manual QA로 재확인 권장
+- backend/API/schema, `/api/v1/history` unified backend API, SCN-001 live/backend draft generation, protected SCN-001 draft endpoint는 열지 않음
 
 ---
 
@@ -223,7 +243,7 @@ Step 4: /after/draft
 **목적**: 사용자가 상황을 자유 진술로 입력하고 법 조문 검색을 시작한다.
 
 **주요 컴포넌트**:
-- 다크 masthead (height: 48px, bg: #161616)
+- light masthead (white/card surface, subtle border, primary text)
 - 서비스 intro band (Gray 10 surface)
 - 메인 입력 textarea (min-height: 160px, 10자 미만 soft warning)
 - 발표용 프리셋 버튼 2개 (ghost 스타일, 클릭 시 고정 텍스트 자동 입력 + selected_preset_id 저장)
@@ -254,7 +274,7 @@ Step 4: /after/draft
 **목적**: answer 응답을 표시하고 사용자가 문서 타입을 선택한다.
 
 **주요 컴포넌트**:
-- masthead (sticky)
+- light masthead (sticky)
 - 검색 요약 band (user_statement 첫 100자 표시)
 - answer 섹션 (접힘/펼침 가능, 긴 답변)
 - key_points 섹션 (bullet list)
@@ -283,7 +303,7 @@ Step 4: /after/draft
 **목적**: 선택된 문서 타입에 맞는 최소 사건 정보를 입력받는다. 개인정보 수집 기능이 아니라 초안 placeholder를 줄이기 위한 선택 입력이다.
 
 **주요 컴포넌트**:
-- masthead (sticky)
+- light masthead (sticky)
 - 문서 타입 badge band
 - 섹션 A: 당사자 정보 (기본 접힘, "비워두면 [확인 필요]로 표시됩니다")
   - label은 "근로자 이름 또는 표시명", "회사명 또는 표시명"처럼 placeholder 입력을 허용한다.
@@ -331,7 +351,7 @@ Step 4: /after/draft
 **목적**: 생성된 문서 초안을 검토하고 부족한 정보와 증거 체크리스트를 확인한다.
 
 **주요 컴포넌트**:
-- masthead (sticky)
+- light masthead (sticky)
 - draft header band: 제목, document_type badge, recipient, disclaimer
 - disclaimer band: "이 문서는 제출 전 검토용 초안입니다." (Yellow 10 bg)
 - document preview: rendered_text를 `<article>` 안에 IBM Plex Sans로 표시 (white surface)
@@ -495,6 +515,8 @@ required defaults:
   --kl-surface-info: #edf5ff;
   --kl-surface-success: #defbe6;
   --kl-surface-danger: #fff1f1;
+  --kl-surface-card: #ffffff;
+  --kl-surface-page: #f4f4f4;
 
   /* Text */
   --kl-text-primary: #161616;
@@ -524,7 +546,7 @@ required defaults:
   --kl-focus: #0f62fe;
 
   /* Masthead */
-  --kl-masthead-bg: #161616;
+  /* Current masthead uses the light card surface. */
   --kl-masthead-height: 48px;
 
   /* Typography */
@@ -572,12 +594,15 @@ required defaults:
   --kl-document-width: 720px;
   --kl-margin-desktop: 64px;
   --kl-margin-mobile: 16px;
+  --kl-page-gutter: clamp(var(--kl-margin-mobile), 4vw, var(--kl-margin-desktop));
 
   /* Interactive sizes */
   --kl-interactive-height: 48px;
   --kl-sticky-bar-height: 80px;
 
   /* Radius */
+  --kl-radius-sm: 4px;
+  --kl-radius-md: 8px;
   --kl-radius-control: 0px;
   --kl-radius-card: 0px;
   --kl-radius-pill: 24px;
@@ -612,7 +637,8 @@ required defaults:
 ### 핵심 Component Rules
 
 **Masthead**
-- height: 48px, bg: #161616, color: white
+- height: 48px, bg: white/card surface, color: primary text
+- subtle bottom border; active nav/focus states use primary-light/focus ring
 - sticky top: 0, z-index: var(--kl-z-masthead)
 - 서비스명 + 간단 nav
 
@@ -1235,4 +1261,4 @@ uvicorn backend.main:app --reload
 
 ---
 
-*이 문서는 2026-04-24 기준 K-Labor Shield SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록과 2026-04-20 presentation-local preset 기준은 evolution history로 보존한다. backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*
+*이 문서는 2026-04-28 기준 K-Labor Shield SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록, 2026-04-20 presentation-local preset 기준, 2026-04-24 SCN-001 protected answer/linkage 기준은 evolution history로 보존한다. 최신 main `fdde441`까지의 frontend visual/progress/history polish는 frontend-only 상태이며 backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*
