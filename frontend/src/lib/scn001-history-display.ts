@@ -289,8 +289,20 @@ function buildCompactIssueSummary(issueDetails: BridgeIssueDisplay[]): string | 
     (label) => label.includes('차별') || label.includes('폭언') || label.includes('근무환경'),
   );
 
-  if (hasMandatoryTerms && (hasDormitory || hasWage)) {
+  if (hasMandatoryTerms && hasDormitory && hasWage) {
     return '계약서 필수 항목과 숙소·공제 조건 확인이 필요합니다.';
+  }
+
+  if (hasMandatoryTerms && hasDormitory) {
+    return '계약서 필수 항목과 숙소·기숙사 조건 확인이 필요합니다.';
+  }
+
+  if (hasMandatoryTerms && hasWage) {
+    return '계약서 필수 항목과 임금·공제 조건 확인이 필요합니다.';
+  }
+
+  if (hasMandatoryTerms) {
+    return '계약서 필수 근로조건 누락 가능성을 확인해야 합니다.';
   }
 
   if (hasDormitory && hasWage) {
