@@ -72,6 +72,20 @@ type HistoryMutationMessage = { kind: 'notice' | 'error'; message: string };
 const SCN001_AFTER_HISTORY_LIMIT = 10;
 const SCN001_AFTER_HISTORY_BACKEND_AUTH_MESSAGE =
   '서버 인증 확인이 완료되지 않아 기록을 불러올 수 없습니다. 인증 확인 또는 다시 로그인 후 시도해주세요.';
+const afterGuidanceCards = [
+  {
+    title: '질문 먼저',
+    description: '궁금한 노동법 상황을 한 문장으로 적어 주세요.',
+  },
+  {
+    title: '근거와 함께',
+    description: '답변과 함께 참고 조문과 출처 컨텍스트를 확인합니다.',
+  },
+  {
+    title: '필요하면 초안',
+    description: '가능한 경우 사건 정보 입력 후 문서 초안으로 이어집니다.',
+  },
+] as const;
 
 export default function AfterPage() {
   const router = useRouter();
@@ -644,6 +658,14 @@ export default function AfterPage() {
             <p className={styles.lead}>
               현재 상황을 적으면 관련 조문과 주의사항을 먼저 확인합니다.
             </p>
+            <div className={styles.guidanceGrid} aria-label="After 진행 안내">
+              {afterGuidanceCards.map((card) => (
+                <article key={card.title} className={styles.guidanceCard}>
+                  <h2 className={styles.guidanceTitle}>{card.title}</h2>
+                  <p className={styles.guidanceDescription}>{card.description}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -692,9 +714,9 @@ export default function AfterPage() {
             >
               <div className={styles.formHeader}>
                 <div>
-                  <p className={styles.eyebrow}>Step 1</p>
+                  <p className={styles.eyebrow}>질문 작성</p>
                   <h2 id="statement-title" className={styles.sectionTitle}>
-                    상황 입력
+                    노동법 질문 입력
                   </h2>
                 </div>
                 <span className={styles.counter}>{characterCount}자</span>

@@ -1,4 +1,5 @@
 .main {
+  --after-entry-width: 800px;
   min-height: calc(100vh - var(--kl-masthead-height));
   background: var(--kl-surface-page);
   color: var(--kl-text-primary);
@@ -51,6 +52,49 @@
   color: var(--kl-text-secondary);
   font-size: 1rem;
   line-height: var(--kl-lh-body);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.guidanceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: var(--after-entry-width);
+  margin-top: var(--kl-space-2);
+}
+
+.guidanceCard {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: var(--kl-border-subtle-line);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
+  text-align: left;
+}
+
+.guidanceTitle {
+  margin: 0;
+  color: var(--kl-text-primary);
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.guidanceDescription {
+  margin: 0;
+  color: var(--kl-text-secondary);
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.62;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .formBand {
@@ -66,7 +110,7 @@
   display: grid;
   gap: 16px;
   width: 100%;
-  max-width: 840px;
+  max-width: var(--after-entry-width);
   margin: 0 auto;
 }
 
@@ -261,7 +305,7 @@
   display: grid;
   gap: 18px;
   width: 100%;
-  max-width: 840px;
+  max-width: var(--after-entry-width);
   margin: 0 auto;
   padding: var(--kl-space-6);
   border: var(--kl-card-border);
@@ -363,7 +407,7 @@
 .historyGatePanel,
 .historyPanel {
   width: 100%;
-  max-width: 840px;
+  max-width: var(--after-entry-width);
   margin: 0 auto;
   min-width: 0;
   border: var(--kl-card-border);
@@ -1093,6 +1137,10 @@
 }
 
 @media (max-width: 671px) {
+  .guidanceGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .handoffHeader,
   .formHeader,
   .historySummary,
