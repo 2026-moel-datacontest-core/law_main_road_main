@@ -137,10 +137,13 @@ export default function AfterPage() {
     () => new Set(bridgeItems.map((item) => item.bridge_run_id)),
     [bridgeItems],
   );
+
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
       const focusTarget = textareaRef.current ?? mainRef.current;
-      focusTarget?.focus();
+      focusTarget?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     });
 
     return () => window.cancelAnimationFrame(frameId);
