@@ -45,7 +45,26 @@
 
 .heroInner {
   display: grid;
-  gap: 16px;
+  gap: 18px;
+}
+
+.heroHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.heroBody {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 920px;
 }
 
 .badge,
@@ -113,16 +132,18 @@
 
 .heroDescription {
   color: rgba(255, 255, 255, 0.76);
+  max-width: 860px;
+  line-height: 1.75;
 }
 
-.heroActions {
+.heroActionRow {
   position: relative;
   z-index: 1;
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  align-content: start;
-  justify-items: start;
-  min-width: 0;
+  align-items: center;
+  width: 100%;
 }
 
 .heroStatusGroup {
@@ -130,20 +151,21 @@
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .heroAccessibilityButton,
 .heroResetButton {
   justify-content: center;
-  width: 100%;
   height: auto;
   white-space: normal;
   text-align: center;
 }
 
 .heroAccessibilityButton {
-  min-height: 42px;
-  padding: 8px 14px;
+  min-height: 44px;
+  padding: 9px 16px;
   border-color: rgba(147, 197, 253, 0.42);
   background: rgba(59, 130, 246, 0.16);
   color: #dbeafe;
@@ -157,7 +179,7 @@
 
 .heroResetButton {
   min-height: 38px;
-  padding: 6px 12px;
+  padding: 7px 12px;
   border-color: rgba(255, 255, 255, 0.08);
   background: transparent;
   color: rgba(255, 255, 255, 0.68);
@@ -345,7 +367,7 @@
   gap: 12px;
 }
 
-.heroCopy,
+.heroBody,
 .issueHeader > div,
 .evidenceButton > div {
   min-width: 0;
@@ -476,24 +498,20 @@
   }
 }
 
+@media (max-width: 671px) {
+  .heroActionRow {
+    display: grid;
+  }
+
+  .heroAccessibilityButton,
+  .heroResetButton {
+    width: 100%;
+  }
+}
+
 @media (min-width: 1056px) {
-  .heroInner {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-  }
-
-  .heroActions {
-    justify-items: stretch;
-    min-width: 220px;
-  }
-
-  .heroStatusGroup {
-    justify-content: flex-end;
-  }
-
   .issueHeader {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
   }
-
 }

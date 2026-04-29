@@ -50,19 +50,22 @@ export function ResultPanel({
       <section className={styles.heroCard} aria-labelledby="before-result-title">
         <div className={styles.heroGlow} />
         <div className={styles.heroInner}>
-          <div className={styles.heroCopy}>
+          <div className={styles.heroHeader}>
             <span className={styles.badge}>Review result</span>
+            <div className={styles.heroStatusGroup}>
+              <StatusBadge kind="status" value={review.overall_result} />
+              <StatusBadge kind="severity" value={review.overall_severity} />
+            </div>
+          </div>
+
+          <div className={styles.heroBody}>
             <h2 id="before-result-title" className={styles.heroTitle}>
               {review.headline}
             </h2>
             <p className={styles.heroDescription}>{review.plain_language_summary}</p>
           </div>
 
-          <div className={styles.heroActions}>
-            <div className={styles.heroStatusGroup}>
-              <StatusBadge kind="status" value={review.overall_result} />
-              <StatusBadge kind="severity" value={review.overall_severity} />
-            </div>
+          <div className={styles.heroActionRow}>
             {accessibilityPanel && onAccessibilityCtaClick ? (
               <Button
                 type="button"
@@ -70,7 +73,7 @@ export function ResultPanel({
                 onClick={onAccessibilityCtaClick}
                 className={styles.heroAccessibilityButton}
               >
-                권리·지원 안내 보기
+                장애 관련 권리·지원 안내 보기
               </Button>
             ) : null}
             <Button
