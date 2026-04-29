@@ -28,8 +28,23 @@
 
 ## 포함 범위
 
-현재 구현 기준일: `2026-04-24`
-MVP 범위 업데이트 기준일: `2026-04-24`
+현재 구현 기준일: `2026-04-29`
+MVP 범위 업데이트 기준일: `2026-04-29`
+
+현재 코드 기반 checkpoint:
+
+- SCN-004 After document draft demo freeze는 유지된다.
+- SCN-001 Firebase Auth protected path는 Before/Bridge/After answer linkage,
+  read-only history, `/after` saved history selector, `/history` archive, MVP
+  soft-delete까지 구현되어 있다.
+- protected Bridge answer frontend routing / verification은 더 이상 후보가
+  아니라 완료 상태다.
+- exact `SCN-001-BRIDGE-DEMO` fixed preset은 frontend-local
+  `workplace_change_reason_summary` frozen draft flow를 제공한다.
+- live/backend SCN-001 draft generation과 protected SCN-001 draft endpoint는
+  여전히 Minimum MVP에 포함하지 않는다.
+- Step 3 full retention lifecycle, independent `/bridge`, Recovery, SCN-005,
+  auth persistence 변경은 열지 않았다.
 
 진화 기록:
 
@@ -37,6 +52,17 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - 2026-04-20에는 이 기준 위에 presentation-local preset, free-input eligibility guard, demo preflight, full 60 answer evidence report가 추가됐다.
 - 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다.
 - 2026-04-24에는 SCN-001 Phase 4/5/6A~6F와 Phase 7A~7B가 완료됐다. Vertex IAM/credential issue는 runtime resolved이며 residual runtime risk는 transient `provider_timeout`이다.
+- 2026-04-27~28에는 backend-verified auth gate hardening, read-only history,
+  MVP soft-delete, `/after` saved history selector, `/history` archive,
+  SCN-001 fixed-preset frozen draft, continuity panel, frontend history/visual
+  polish가 완료됐다.
+- 2026-04-29에는 최신 main `85d10fa` 기준 Before/After/History/Main integrated
+  UI polish, `DESIGN.md` visual guide, contrast/disclaimer fixes, and
+  accessibility legal-basis blocker fix가 완료됐다. Backend/API/schema,
+  SCN-004 exact/free input flow, `/api/v1/answer`, `/api/v1/documents/draft`,
+  Firebase `inMemoryPersistence`, Web Storage policy, live/backend SCN-001 draft
+  generation, protected SCN-001 draft endpoint, `/api/v1/history`, and Step 3
+  full retention lifecycle은 변경/개방하지 않았다.
 
 ### 현재 구현된 demo scope
 
@@ -48,8 +74,20 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - `/api/v1/documents/draft` 기반 문서 초안 생성
 - `rendered_text`, `missing_fields`, `cautions`, `evidence_checklist`, `cited_articles` 표시
 - 초안 복사 / 인쇄
+- `/before` protected actual analysis / Bridge CTA
+- `/after` saved Before/Bridge history selector for backend-verified users
+- `/history` SCN-001 record archive
+- MVP soft-delete for Before/Bridge records
+- integrated frontend UI polish:
+  - Before upload-first first screen, OCR 1~2분 guidance, loading scroll,
+    result/accessibility layout cleanup, hardcoded default accessibility legal
+    basis removal
+  - After centered entry, guidance cards, restored disclaimer, saved-history
+    accent contrast
+  - History centered folded incident cards with blue left accent
+  - Main H1/lead/nav typography cleanup and compact flow strip
 - presentation-local preset:
-  - `SCN-001-BRIDGE-DEMO`: answer-only bridge handoff 설명용
+  - `SCN-001-BRIDGE-DEMO`: exact fixed preset은 frontend-local frozen draft flow 제공, modified/live and Bridge-origin paths는 answer-only
   - `SCN-004-DEMO-FREEZE`: main demo / document draft freeze용
 - SCN-004 free input document eligibility guard
 - demo preflight script
@@ -75,7 +113,9 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - Bridge-origin answer query는 displayed safe subset plus user question만 사용한다
 - Bridge-origin all-unchecked submission도 sticky `answer_origin = "bridge_handoff"`를 유지하며 answer-only / draft disabled다
 - `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary bridge_run_id이며 multi-bridge full provenance는 Post-MVP join table 후보
-- SCN-001은 우선 answer-only로 안정화
+- SCN-001 Bridge-origin/live path는 answer-only로 안정화
+- exact `SCN-001-BRIDGE-DEMO` fixed preset은 frontend-local frozen draft flow를
+  제공하지만 live/backend SCN-001 draft generation은 열지 않음
 - SCN-004 document draft flow는 로그인 없이 그대로 유지
 - SCN-004 regression이 없어야 함
 - Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지
@@ -87,13 +127,23 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - Phase 6A~6F: Bridge -> After answer-only handoff, live subset PASS with retry
 - Phase 7A: `AfterArtifactLinkage` optional persistence plumbing
 - Phase 7B: protected bridge answer endpoint
+- Phase 7C~7E: protected bridge answer frontend helper/routing and live smoke
+- Post-Phase 8: backend-verified gates, read-only history, MVP soft-delete,
+  `/after` saved selector, `/history` archive, SCN-001 fixed-preset frozen draft,
+  continuity panel
 
 다음 후보:
 
-- protected bridge answer frontend routing / verification
-- Phase 8 regression / demo preflight / manual rehearsal when behavior changes require it
+- frontend-only visual polish without changing SCN-004 freeze or public contracts
+- live/backend SCN-001 draft generation은 별도 phase 설계 전까지 not opened
+- Phase regression / demo preflight / manual rehearsal when behavior changes require it
 
-아래 Before / Bridge는 제품 구조상 MVP 범위다. 현재 frontend에는 `/before`와 SCN-001 Before -> Bridge -> After answer-only handoff가 포함되어 있다. 추가 frontend 확장, protected bridge answer frontend routing, 독립 `/bridge` route는 SCN-004 freeze를 유지한 별도 단계에서 진행한다. SCN-001 연결은 `/api/v1/answer`와 `/api/v1/documents/draft` contract 변경 없이 answer-only 경로부터 고정한다.
+아래 Before / Bridge는 제품 구조상 MVP 범위다. 현재 frontend에는 `/before`,
+`/after` saved history selector, `/history`, SCN-001 Before -> Bridge -> After
+answer-only handoff, protected Bridge answer routing이 포함되어 있다. 독립
+`/bridge` route와 live/backend SCN-001 draft generation은 SCN-004 freeze를
+유지한 별도 단계에서만 검토한다. SCN-001 live path는 `/api/v1/answer`와
+`/api/v1/documents/draft` contract 변경 없이 answer-only 경로부터 고정한다.
 
 ### Before
 
@@ -116,7 +166,8 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - 다음 행동 안내
 - 필요 증빙 항목 제시
 - SCN-001은 Bridge safe summary를 displayed safe subset query로 변환해 answer path에 전달. raw `after_query_seed`는 answer query에 넣지 않음
-- SCN-001 문서 초안 생성은 Minimum MVP에 포함하지 않음
+- live/backend SCN-001 문서 초안 생성은 Minimum MVP에 포함하지 않음
+- exact `SCN-001-BRIDGE-DEMO` frozen draft는 frontend-local demo path로만 포함
 - SCN-004 문서 초안 생성:
   - 고용노동청 임금체불 진정서 초안
   - 노동위원회 부당해고 구제신청 이유서 초안
@@ -164,7 +215,10 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - Firebase uid as `provider_subject` 기반 user linkage
 - SCN-001 `Before -> Bridge -> After` answer-only 연결
 - SCN-001 protected bridge answer endpoint
-- 팀원 Before / Bridge 코드 확인 후 연결되는 route와 payload adapter
+- SCN-001 protected read-only history endpoints
+- SCN-001 MVP soft-delete endpoints
+- SCN-001 fixed-preset frontend-local frozen draft path
+- current `/before` route and Bridge payload adapter integrated in main frontend/backend
 
 ### 조건부 포함
 
@@ -185,7 +239,7 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - agent loop 고도화
 - 다국어 UI 확장
 - 프론트엔드 polishing
-- 팀원 Before / Bridge 코드 확인 전 임의 frontend 확장
+- SCN-004 freeze를 흔드는 임의 frontend 확장
 
 ### MVP 이후 인프라 / 운영
 
@@ -221,7 +275,7 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - full production infra를 MVP 필수 조건으로 보는 것
 - raw 계약서 / OCR 전문 / full result artifact의 사용자 이력 기본 노출
 - artifact retention / access-control 정책 확정 및 운영화
-- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장 또는 protected bridge answer frontend routing
+- SCN-004 freeze 기준을 흔드는 SCN-001 추가 frontend 확장
 - SCN-001 문서 타입의 독단적 확장 또는 SCN-004 draft contract와 혼합 구현
 - 현재 SCN-004 demo freeze 유지 중 `/bridge` frontend 본 구현 및 `/before` 추가 기능 확장
 
@@ -241,7 +295,8 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - answer-derived document draft 2종이 `missing_legal_basis=[]` 유지
 - 데모 중단 없이 SCN-004 시연 가능
 - `SCN-004-DEMO-FREEZE` exact preset path는 fixed answer fixture를 사용해 `/api/v1/answer` 호출 없이 재현 가능
-- `SCN-001-BRIDGE-DEMO`는 answer-only로 동작하며 SCN-004 문서 초안 UI를 열지 않음
+- `SCN-001-BRIDGE-DEMO` exact fixed path는 frontend-local frozen draft flow로
+  동작하고, modified/live and Bridge-origin paths는 answer-only로 동작함
 - full 60 answer evidence 기준 `FAIL=0`, citation grounding / context id clean
 
 ### Firebase Auth 이후 Minimum MVP 성공 기준
@@ -293,10 +348,10 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 - OAuth access token / refresh token 장기 저장 없음
 - 검색된 법령 근거 포함
 - retrieval 실제 동작
-- SCN-001 확장 시 팀원 Before / Bridge 코드와 frontend adapter contract 정합성 확보
+- SCN-001 추가 확장 시 현재 `/before` / Bridge adapter contract 정합성 확보
 - `/api/v1/answer`와 `/api/v1/documents/draft` public contract 변경 없음
 - SCN-004 login-free document draft flow regression 없음
-- SCN-001 문서 초안 생성은 성공 기준에 포함하지 않음
+- live/backend SCN-001 문서 초안 생성은 성공 기준에 포함하지 않음
 - raw 계약서 / OCR 전문 / full result artifact는 사용자 이력에 기본 노출하지 않음
 - artifact retention / access-control은 Minimum MVP 완료 조건이 아니라 별도 보안 / 운영 설계로 둠
 
@@ -324,7 +379,8 @@ MVP 범위 업데이트 기준일: `2026-04-24`
 11. Phase 4 완료: SCN-001 protected bridge-runs endpoint + `BeforeHandoffDTO` extraction
 12. Phase 5 완료: Before review user linkage
 13. Phase 6A~6F 완료: Bridge -> After answer-only handoff
-14. Phase 7A~7B 완료: `after_artifact_runs` linkage plumbing + protected bridge answer endpoint
-15. protected bridge answer frontend routing / verification
-16. Phase 8: SCN-004 regression preflight / manual rehearsal 유지
-17. SCN-001 전용 문서 초안 생성 여부를 Strong MVP / optional extension으로 별도 결정
+14. Phase 7A~7E 완료: `after_artifact_runs` linkage plumbing, protected bridge answer endpoint, frontend helper/routing, live smoke
+15. Post-Phase 8 완료: backend-verified gates, read-only history, MVP soft-delete, `/after` saved selector, `/history` archive
+16. SCN-001 exact fixed-preset frontend-local frozen draft 완료
+17. Phase regression / demo preflight / manual rehearsal 유지
+18. live/backend SCN-001 전용 문서 초안 생성 여부는 Strong MVP / optional extension으로 별도 결정

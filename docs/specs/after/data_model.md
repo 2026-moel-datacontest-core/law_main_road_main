@@ -4,6 +4,15 @@
 - 기준: main backend/frontend 현재 코드
 - 범위: main After/RAG data model and runtime state boundary
 
+2026-04-29 code-based note:
+
+- `KLaborShieldFlowState` now includes Bridge handoff state and
+  `answer_origin`.
+- SCN-001 protected history and MVP soft-delete use backend DB records, but raw
+  Bridge payloads and raw `after_query_seed` are not exposed in UI/query/storage.
+- exact `SCN-001-BRIDGE-DEMO` frozen draft is built from frontend fixture +
+  deterministic template and user intake, not from the backend draft endpoint.
+
 이 문서는 `z_before_begin/`의 Before/Begin artifact/data model이 아니라 main `backend/` FastAPI, `frontend/` Next.js, PostgreSQL `law_chunks` corpus, runtime API payload, frontend React memory state가 이루는 After/RAG 데이터 모델을 정리한다. Before/Begin의 contract artifact storage, OCR output, review artifact와 섞지 않는다.
 
 ## 1. Scope
@@ -215,7 +224,7 @@ Important semantics:
 | Preset | Runtime behavior |
 |---|---|
 | `SCN-004-DEMO-FREEZE` exact path | fixed fixture 사용. `/api/v1/answer` 호출 없음. |
-| `SCN-001-BRIDGE-DEMO` exact path | fixed answer-only fixture 사용. `/api/v1/answer` 호출 없음. |
+| `SCN-001-BRIDGE-DEMO` exact path | fixed answer fixture + frontend-local frozen draft template 사용. `/api/v1/answer` 호출 없음. `/api/v1/documents/draft` 호출 없음. |
 | modified preset path | `top_k=10`, `ef_search=100`, live `/api/v1/answer` 호출. |
 | free input path | `top_k=5`, `ef_search=100`, live `/api/v1/answer` 호출. |
 
@@ -556,14 +565,14 @@ Purpose:
 
 - `scenarioPresetAnswers.json` stores presentation-local fixed `AnswerResponse`-like payloads.
 - `scenarioPresets.ts` owns preset metadata such as `supportsDraft` and `recommendedTopK`, plus the `fixedAnswer` relationship to the JSON fixture.
-- demo freeze and answer-only bridge handoff stability
+- demo freeze and SCN-001 exact frozen draft stability
 - exact preset path에서 live model drift와 provider availability를 피함
 
 Preset metadata and fixed fixture relationship:
 
 | Preset | Scenario | `supportsDraft` metadata | `recommendedTopK` metadata | Fixed fixture source | Boundary |
 |---|---|---:|---:|---|---|
-| `SCN-001-BRIDGE-DEMO` | `SCN-001` | `false` | `10` | `scenarioPresetAnswers.json` | Before/Bridge handoff explanation용 answer-only preset. |
+| `SCN-001-BRIDGE-DEMO` | `SCN-001` | frontend-local frozen draft only | `10` | `scenarioPresetAnswers.json` | exact fixed path는 `workplace_change_reason_summary` frozen draft 가능. modified/live and Bridge-origin paths는 answer-only. |
 | `SCN-004-DEMO-FREEZE` | `SCN-004` | `true` | `10` | `scenarioPresetAnswers.json` | main demo / document draft freeze preset. |
 
 Runtime path:
@@ -580,7 +589,7 @@ Boundary notes:
 - exact path는 `/api/v1/answer` 호출 없음.
 - fixture `model_name`이 `gemini-2.5-flash`로 표시될 수 있어도 runtime call이 아니다.
 - modified preset text or free input은 live `/api/v1/answer`를 호출하므로 fixed fixture와 live answer 결과 차이가 날 수 있다.
-- `SCN-001-BRIDGE-DEMO`는 fixed/live 여부와 관계없이 current frontend에서 answer-only다.
+- `SCN-001-BRIDGE-DEMO` exact fixed path는 frontend-local frozen draft를 만들 수 있다. Modified/live and Bridge-origin paths는 answer-only다.
 
 ## 12. Storage / Persistence / Privacy
 
@@ -655,6 +664,6 @@ law_chunks DB + embedding
 - TODO: FlowState memory-only로 refresh/direct URL 취약. 현재 route guard redirects are expected behavior, not persistence.
 - TODO: `source_context_ids` fallback semantics는 downstream UI/문서에서 오해하지 않도록 유지해야 한다. 특히 response-level fallback을 citation별 retrieved chunk mapping과 동일하다고 단정하지 않는다.
 - TODO: SCN-004 draft eligibility guard 유지 필요. `hasDraftGrounding()`만으로는 supported document type evidence를 보장하지 않는다.
-- TODO: integrated data model은 팀원 Before/Begin and Bridge 통합 후 확정한다.
+- TODO: live/backend SCN-001 draft data model, full retention lifecycle, and any unified history API remain future design work.
 - TODO: local/self-hosted LLM은 현재 After data model에 포함되지 않는다. Current implemented After answer/embedding path는 Vertex AI Gemini 기준이다.
 - TODO: backend enum에는 SCN-004 외 문서 타입이 더 있지만 current frontend는 SCN-004 두 문서 타입만 노출한다. SCN-005/SCN-001 document type 확장은 별도 contract review 후 문서화한다.

@@ -12,6 +12,15 @@ Current state:
 - `after/` detailed specs are completed/reviewed against the current main `frontend/` + `backend/` implementation.
 - `integrated/` documents are candidate/placeholder documents only. They are not a final source of truth until team merge is complete and the real integrated contracts are confirmed.
 
+2026-04-29 note:
+
+- Current code-based public docs are in `docs/github/`.
+- Current internal status checkpoint is
+  `docs/planning/23_code_based_status_2026_04_29.md`.
+- Some detailed specs preserve older After-only wording. Where there is a
+  conflict, the 2026-04-29 code-based note in each file and the checkpoint take
+  precedence.
+
 ## Scope Split
 
 | Folder | Current status | Scope |

@@ -1,6 +1,6 @@
 # Frontend Implementation Handoff — K-Labor Shield SCN-004 Demo
 
-기준일: `2026-04-28`
+기준일: `2026-04-29`
 대상: Codex / QA handoff
 범위: SCN-004 After flow (4 routes)
 
@@ -8,7 +8,7 @@
 
 ## 0. Current Implementation Status
 
-이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 2026-04-24에는 SCN-001 Phase 6/7 상태와 freeze 보호 정책을 추가 반영했다. 2026-04-28에는 최신 main `fdde441` 기준 visual redesign, Before progress UX, SCN-001 case record fold, main login priority를 반영했다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
+이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 2026-04-24에는 SCN-001 Phase 6/7 상태와 freeze 보호 정책을 추가 반영했다. 2026-04-28에는 최신 main `fdde441` 기준 visual redesign, Before progress UX, SCN-001 case record fold, main login priority를 반영했다. 2026-04-29에는 최신 main `85d10fa` 기준 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer fixes, and accessibility legal-basis blocker fix를 반영했다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
 
 현재 코드 위치:
 
@@ -40,11 +40,22 @@
   - `SCN-001-BRIDGE-DEMO`는 eval `SCN-001-Q3`이 아닌 Before/Bridge 발표 연결용 query를 쓰며 fixed/live 여부와 관계없이 answer-only
   - `SCN-004-DEMO-FREEZE`는 eval `SCN-004-Q1`이 아닌 document draft freeze query를 쓰며 fixed/live 여부와 관계없이 기존 SCN-004 draft eligibility 적용
   - SCN-005는 현재 UI preset에서 제외하고 후속 확장 후보로만 유지
-- Latest frontend visual redesign through `fdde441`
+- Latest integrated frontend visual/UI polish through `85d10fa`
+  - DESIGN.md is the current visual guide: token-first,
+    neutral/dense/evidence-led, with disclaimers/uncertainty prominent
   - visual foundation token alignment
   - home visual simplification
+  - Main H1/lead/nav typography cleanup and compact flow strip
   - `/before`, `/after`, `/history` internal route chrome simplification
+  - Before first screen upload focus, local server/demo copy removal, examples
+    preserved, result/accessibility section cleanup
+  - After entry centering, guidance cards, preset display label cleanup while
+    preserving preset id/query, entry disclaimer restoration
+  - After saved history connection accent states: unselected primary blue,
+    selected success green
+  - History centered layout, readable folded incident cards, blue left accent
   - `/after/result`, `/after/intake`, `/after/draft` detail visual polish
+  - warning/status contrast fixes
   - draft print CSS specificity fix
   - masthead light surface alignment
 - Before analysis progress UX
@@ -52,6 +63,9 @@
   - OCR guidance states that document quality/length can make OCR take about 1~2 minutes
   - raw job id/status/provider/internal error is not exposed
   - backend OCR/provider/polling contract unchanged
+- Before accessibility legal-basis blocker fix
+  - hardcoded default accessibility legal basis removed
+  - no backend/API/schema or document draft contract change
 - SCN-001 `/after` and `/history` case records
   - incident-centered compact summary + details/fold structure
   - `/after` focuses on quick selection / After connection
@@ -67,7 +81,7 @@
 - `/bridge`, Recovery 구현 및 `/before` 추가 기능 확장
 - 현재 SCN-004 freeze 작업 중 SCN-005 문서 타입 확장
 - 팀원 Before / Bridge contract 확인 없는 SCN-001 문서 타입 확장
-- Optional visual polish only: SCN-004 intake/draft internal component surface cleanup, Before Upload/Result/Accessibility panels deep polish, Auth/LoginButton token cleanup nit, History deep density polish, manual visual QA / print preview
+- Residual visual QA only: manual visual QA / print preview and small token/a11y nits that do not touch route behavior, SCN-004 freeze, SCN-001 frozen draft/history/continuity boundaries, backend/API/schema, auth persistence, or Web Storage policy
 
 SCN-001 Firebase Auth note:
 
@@ -451,7 +465,7 @@ SCN-004 free-input document eligibility guard:
 - 이때 "현재 문서 초안 지원 범위 밖" 안내를 표시하고 document type 선택과 `/after/intake` 진입을 막는다.
 - eligibility는 frontend helper에서 `query`, `cited_articles`, grounded `retrieved_chunks`의 SCN-004 핵심 조문/키워드로 판단한다.
 - 지원 신호는 해고, 서면통지, 해고예고, 노동위원회, 임금체불, 퇴직금, 금품청산, 14일 및 `근로기준법 제23조·제26조·제27조·제28조·제36조·제37조`, `근로자퇴직급여 보장법 제9조`, `근로기준법 시행규칙 제5조`다.
-- `SCN-001-BRIDGE-DEMO` preset은 fixed/live 여부와 관계없이 `supportsDraft=false`로 answer-only 처리한다.
+- `SCN-001-BRIDGE-DEMO` exact fixed preset은 frontend-local frozen draft flow를 제공한다. Modified/live SCN-001 and Bridge-origin paths는 answer-only / draft disabled로 유지한다.
 - `SCN-004-DEMO-FREEZE` preset과 preset 없는 자유 입력은 기존 SCN-004 eligibility를 적용한다.
 - SCN-005 / SCN-001 문서 타입 추가가 아니며 backend contract를 변경하지 않는다.
 - Real Bridge handoff screen submission은 all unchecked라도 sticky `answer_origin = "bridge_handoff"`를 유지한다.
@@ -1261,4 +1275,4 @@ uvicorn backend.main:app --reload
 
 ---
 
-*이 문서는 2026-04-28 기준 K-Labor Shield SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록, 2026-04-20 presentation-local preset 기준, 2026-04-24 SCN-001 protected answer/linkage 기준은 evolution history로 보존한다. 최신 main `fdde441`까지의 frontend visual/progress/history polish는 frontend-only 상태이며 backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*
+*이 문서는 2026-04-29 기준 K-Labor Shield SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록, 2026-04-20 presentation-local preset 기준, 2026-04-24 SCN-001 protected answer/linkage 기준, 2026-04-28 `fdde441` visual/progress/history polish 기준은 evolution history로 보존한다. 최신 main `85d10fa`까지의 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer/accessibility blocker fixes는 frontend-only 상태이며 backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*

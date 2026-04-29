@@ -1,11 +1,13 @@
 # Demo Scenario
 
-기준일: `2026-04-20`
+기준일: `2026-04-29`
 
 ## Main Demo
 
 현재 제출 전 main demo path는 `SCN-004-DEMO-FREEZE` After document draft로 둔다.
-`SCN-001-BRIDGE-DEMO`는 Before/Bridge handoff 설명용 answer-only preset이며, 신규 문서 타입 확장이 아니라 발표 연결점을 보강하는 범위다.
+`SCN-001-BRIDGE-DEMO` exact fixed preset은 Before/Bridge handoff 설명과
+frontend-local 사업장 변경 사유 정리서 초안 흐름을 보여준다. modified/live
+and Bridge-origin paths는 answer-only로 유지한다.
 SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지한다.
 
 시나리오:
@@ -25,7 +27,8 @@ Before/Bridge handoff 설명용 preset:
 
 - id: `SCN-001-BRIDGE-DEMO`
 - 역할: 계약서 분석에서 표준근로계약서 미사용, 기숙사 정보 누락, 숙소비 공제 위험이 표시된 뒤 After 질문으로 이어지는 연결점
-- 정책: fixed/live 여부와 관계없이 answer-only, SCN-001 문서 타입 구현 없음
+- 정책: exact fixed path는 frontend-local frozen draft flow, modified/live and
+  Bridge-origin paths는 answer-only, live/backend SCN-001 draft generation 없음
 - query:
 
 ```text
@@ -39,7 +42,7 @@ Before/Bridge handoff 설명용 preset:
 - preset exact path: 선택된 preset이 있고 textarea 값이 preset `query`와 정확히 같으면 fixed `AnswerResponse` fixture를 사용한다. 이 경우 `/api/v1/answer`를 호출하지 않는다.
 - preset modified path: preset 버튼을 누른 뒤 문장을 수정하면 live `/api/v1/answer`를 호출한다. 현재 frontend preset은 모두 `recommendedTopK=10`, `ef_search=100`이다.
 - free input path: preset 없이 직접 입력하면 live `/api/v1/answer`를 호출하고 `top_k=5`, `ef_search=100`을 사용한다.
-- `SCN-001-BRIDGE-DEMO`는 eval `SCN-001-Q3`이 아니라 Before/Bridge 발표 연결용 query를 쓰는 presentation-local preset이다. fixed/live 여부와 관계없이 answer-only다.
+- `SCN-001-BRIDGE-DEMO`는 eval `SCN-001-Q3`이 아니라 Before/Bridge 발표 연결용 query를 쓰는 presentation-local preset이다. exact fixed path는 frontend-local frozen draft flow를 제공하고, modified/live and Bridge-origin paths는 answer-only다.
 - `SCN-004-DEMO-FREEZE`는 eval `SCN-004-Q1`이 아니라 document draft freeze용 query를 쓰는 presentation-local preset이다. fixed/live 여부와 관계없이 `getScn004DraftEligibility(answer)` 기준으로 기존 document draft 2종을 필터링한다.
 - `SCN-004-DEMO-FREEZE` exact preset은 기존 freeze 기준을 유지한다: `cited_articles=6`, `grounded_context_ids=[1, 2, 3, 5, 10, 4]`, `retrieval_total=10`, `model_name=gemini-2.5-flash`.
 - SCN-005는 현재 preset 버튼과 frontend fixed answer fixture에서 제외한다. 후속 확장 후보로만 설명한다.
@@ -142,7 +145,9 @@ python backend/verify/check_answer_generation.py "해고를 당했는데 서면�
 - `SCN-004-DEMO-FREEZE` fixed answer는 `cited_articles=6`, `grounded_context_ids=[1, 2, 3, 5, 10, 4]`를 유지한다.
 - `SCN-004-DEMO-FREEZE` modified는 live `/api/v1/answer`를 `top_k=10`, `ef_search=100`으로 호출하고, SCN-004 eligibility에 따라 두 문서 타입을 표시한다.
 - `SCN-001-BRIDGE-DEMO` unchanged는 fixed answer fixture를 사용하고, modified는 live `/api/v1/answer`를 `top_k=10`, `ef_search=100`으로 호출한다.
-- `SCN-001-BRIDGE-DEMO`는 fixed/live 여부와 관계없이 answer-only이며 SCN-004 문서 초안 선택지를 표시하지 않는다.
+- `SCN-001-BRIDGE-DEMO` exact fixed path는 frontend-local frozen draft flow를
+  제공하고, modified/live and Bridge-origin paths는 answer-only이며 SCN-004
+  문서 초안 선택지를 표시하지 않는다.
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지한다.
 - 직접 자유 입력은 live `/api/v1/answer`를 `top_k=5`, `ef_search=100`으로 호출한다.
 - SCN-004 draft flow에서 wage / unfair 문서 생성, copy, print, direct URL guard, Web Storage 미사용을 확인했다.
@@ -155,7 +160,7 @@ python backend/verify/check_answer_generation.py "해고를 당했는데 서면�
 - `/after/result`: `cited_articles=6`, `grounded_context_ids=[1, 2, 3, 5, 10, 4]`, 문서 타입 2개 표시
 - draft output: 임금체불 진정서 `source_context_ids=[5, 10]`, `cited_articles=2`, `missing_legal_basis=[]`, `rendered_text` 989자; 부당해고 이유서 `source_context_ids=[1, 2, 3, 4]`, `cited_articles=4`, `missing_legal_basis=[]`, `rendered_text` 1138자
 - 두 draft 모두 copy 성공과 `window.print()` 호출 확인
-- `다른 문서 타입으로 생성하기`는 `/after/result` 복귀와 answer state 유지를 확인했고, `SCN-001-BRIDGE-DEMO`는 fixed answer-only / `/api/v1/answer` 호출 없음 / 문서 선택 UI 없음 확인
+- `다른 문서 타입으로 생성하기`는 `/after/result` 복귀와 answer state 유지를 확인했고, `SCN-001-BRIDGE-DEMO` exact fixed path는 `/api/v1/answer` 호출 없이 frontend-local frozen draft CTA를 제공함을 확인
 - direct URL guard: `/after/result`, `/after/intake`, `/after/draft` state 없음 -> `/after`; Web Storage는 `localStorage.length=0`, `sessionStorage.length=0`
 - cleanup 후 backend `localhost:8000`, frontend `localhost:5090` connection refused 확인
 - Freeze 판단: SCN-004 demo freeze 유지, 문서의 main demo 클릭 순서와 실제 화면 흐름 일치
@@ -262,7 +267,11 @@ npm run dev
 목적:
 
 - Before/Bridge가 넘겨줄 위험 신호가 After 질문으로 이어지는 흐름을 설명한다.
-- 현재는 Bridge 연결점으로 preset id와 질문을 고정해둔 상태다.
+- exact fixed preset에서는 frontend-local 사업장 변경 사유 정리서 초안까지 이어지는
+  frozen draft flow를 보여준다.
+- modified/live and Bridge-origin paths는 answer-only / draft disabled를 유지한다.
+- live/backend SCN-001 draft generation과 protected SCN-001 draft endpoint는 열지
+  않는다.
 
 클릭 순서:
 
@@ -270,13 +279,18 @@ npm run dev
 2. `SCN-001-BRIDGE-DEMO` preset 클릭
 3. `법 조문 찾기` 클릭
 4. `/after/result`에서 answer, key_points, cautions, cited_articles 확인
-5. 문서 초안 선택지가 표시되지 않는 것이 정상임을 확인
+5. exact fixed preset의 frontend-local `workplace_change_reason_summary` draft CTA가
+   표시되는지 확인
+6. `/after/intake`에서 선택 입력 후 `/after/draft`로 이동
+7. `/after/draft`에서 사업장 변경 사유 정리서 초안과 continuity panel 확인
+8. 이 flow가 backend/LLM 및 `/api/v1/documents/draft`를 호출하지 않는
+   frontend-local frozen path임을 설명
 
 발표 멘트:
 
-- “이 경로는 현재 answer-only입니다.”
-- “사업장 변경 사유서/상담용 요약서는 Before/Bridge output contract 확정 후 별도 확장합니다.”
-- “현재는 Bridge 연결점으로 preset id와 질문을 고정해둔 상태입니다.”
+- “이 exact preset은 SCN-001 제품 이야기를 보여주는 frozen draft path입니다.”
+- “실제 live/backend SCN-001 문서 생성은 아직 열지 않았고, protected draft endpoint도 정의하지 않았습니다.”
+- “Bridge 정보는 continuity/reference일 뿐이고, 현재 답변의 법적 근거를 새로 만들지 않습니다.”
 
 ## Modified Preset / Free Input
 
@@ -323,16 +337,16 @@ npm run dev
    - 멘트: “WSL Playwright Chromium을 우선 사용하고, 실패 시 원인과 필요한 사용자 조치를 확인합니다.”
 5. 시간이 부족할 때
    - SCN-004 result + wage draft 하나만 보여준다.
-   - SCN-001은 말로만 Bridge handoff 후보라고 설명한다.
+   - SCN-001은 fixed-preset frozen draft 또는 Bridge handoff product story를
+     짧게 설명한다.
 
 ## Out Of Demo Scope
 
-- `/before`
 - `/bridge`
 - Recovery
 - SCN-005 문서 타입은 현재 SCN-004 live demo path 밖이며 freeze 기준을 유지한 별도 확장 후보
 - SCN-005 preset UI는 현재 제외
-- SCN-001 문서 타입은 구현하지 않음. 팀원 Before / Bridge contract 확인 후 별도 확장 후보로만 검토
+- live/backend SCN-001 문서 초안 생성과 protected SCN-001 draft endpoint는 구현하지 않음
 - sessionStorage backup/restore
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response` Web Storage 저장
 - 실제 제출 / PDF 다운로드

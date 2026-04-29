@@ -4,6 +4,14 @@
 - 기준: main `frontend/src/app` After routes + `docs/specs/after/requirements.md`, `api_spec.md`, `data_model.md`
 - 범위: main `frontend/`의 After 화면 기획. `z_before_begin/` Before/Begin 화면과 future integrated 화면은 별도 문서 범위다.
 
+2026-04-29 code-based note:
+
+- Current route surface includes `/before` and `/history` in addition to the
+  After routes listed below.
+- `/after` now has a backend-verified saved history selector for SCN-001.
+- exact `SCN-001-BRIDGE-DEMO` fixed path can continue to a frontend-local
+  frozen draft flow. Modified/live and Bridge-origin paths remain answer-only.
+
 ## 1. 문서 목적
 
 이 문서는 K-Labor Shield **After 화면 기획서**다. 새 UI 제안서가 아니라 현재 main `frontend/src/app`에 구현된 After route, 화면 상태, 사용자 액션, API 호출, 표시 데이터를 코드 기준으로 정리한다.
@@ -26,7 +34,7 @@
 
 1. 사용자는 `/after`에서 preset을 선택하거나 free input을 입력한다.
 2. exact `SCN-004-DEMO-FREEZE` preset이면 `frontend/src/lib/scenarioPresetAnswers.json`의 fixed `AnswerResponse`-like payload를 사용하고 `/api/v1/answer`를 호출하지 않는다.
-3. exact `SCN-001-BRIDGE-DEMO` preset도 fixed fixture를 사용하지만 answer-only preset이므로 draft flow로 가지 않는다.
+3. exact `SCN-001-BRIDGE-DEMO` preset도 fixed fixture를 사용하며 frontend-local frozen draft flow로 이어질 수 있다. 이 path는 backend/LLM 또는 `/api/v1/documents/draft`를 호출하지 않는다.
 4. preset 문구를 수정했거나 free input이면 `fetchAnswer()`가 live `POST /api/v1/answer`를 호출한다.
 5. `/after/result`에서 answer/result를 확인한다.
 6. `hasDraftGrounding(answer)`가 false인 ungrounded 상태이면 answer/key_points/cautions 본문을 표시하지 않고 “근거 확인 필요” 및 “문서 초안 진행 불가” no-answer/no-draft guard와 재입력 안내를 보여준다.
@@ -42,7 +50,7 @@ flowchart TD
   A["/ static entry"] --> B["/after"]
   B --> C{"preset exact?"}
   C -->|SCN-004-DEMO-FREEZE exact| D["fixed fixture\nscenarioPresetAnswers.json"]
-  C -->|SCN-001-BRIDGE-DEMO exact| E["fixed fixture\nanswer-only"]
+  C -->|SCN-001-BRIDGE-DEMO exact| E["fixed fixture\nfrontend-local frozen draft"]
   C -->|modified preset/free input| F["live POST /api/v1/answer"]
   D --> G["SET_ANSWER -> /after/result"]
   E --> G
@@ -101,16 +109,16 @@ flowchart TD
 | validation/guard | `answer_response`가 없으면 `/after`로 replace. `hasDraftGrounding(answer)`는 `cited_articles.length > 0` AND `grounded_context_ids.length > 0` 확인. `getScn004DraftEligibility(answer)`는 wage/dismissal evidence pattern으로 SCN-004 document type availability를 계산. |
 | loading/error/empty state | missing answer direct URL은 `처음 단계로 이동합니다.` 표시 후 redirect. navigating 중 draft CTA loading. answer body/key_points/cautions empty list fallback text 있음. |
 | 다음 route | selected document type이 available이고 grounded/supported이면 `/after/intake`. reset은 `/after`. |
-| TODO/제약 | ungrounded와 unsupported UI 상태를 계속 분리해야 한다. `SCN-001-BRIDGE-DEMO`는 answer-only 설명용이며 document type selector를 열지 않는다. |
+| TODO/제약 | ungrounded와 unsupported UI 상태를 계속 분리해야 한다. `SCN-001-BRIDGE-DEMO` exact fixed path는 frontend-local frozen draft selector를 열 수 있고, modified/live and Bridge-origin paths는 answer-only로 유지한다. |
 
 `/after/result` 상태 분기는 다음처럼 고정한다.
 
 | 상태 | 조건 | 화면 동작 |
 |---|---|---|
 | grounded + supported SCN-004 document type | `hasDraftGrounding(answer) === true`, preset `supportsDraft !== false`, `getScn004DraftEligibility(answer)`가 하나 이상의 document type true | answer/key_points/cautions/citations 표시. eligible document type tile과 draft CTA 활성 가능. |
-| grounded but unsupported | `hasDraftGrounding(answer) === true`, 그러나 `supportsDraft=false` 또는 eligible SCN-004 document type 없음 | answer/key_points/cautions/citations 표시. draft CTA 없음 또는 비활성. answer-only로 종료. |
+| grounded but unsupported | `hasDraftGrounding(answer) === true`, 그러나 current path가 draft를 지원하지 않거나 eligible SCN-004 document type 없음 | answer/key_points/cautions/citations 표시. draft CTA 없음 또는 비활성. answer-only로 종료. |
 | ungrounded | `hasDraftGrounding(answer) === false` | answer/key_points/cautions 본문을 표시하지 않음. “근거 확인 필요”와 “문서 초안 진행 불가” warning 표시. citation section은 현재 response의 `cited_articles` 유무에 따라 empty/label 표시. 재입력 안내 후 `/after`로 돌아가게 한다. |
-| `SCN-001-BRIDGE-DEMO` | active preset `supportsDraft=false` | fixed/live 여부와 관계없이 answer-only. SCN-004 draft flow로 가지 않는다. |
+| `SCN-001-BRIDGE-DEMO` | exact fixed preset and non-exact paths | exact fixed path는 frontend-local frozen draft flow로 갈 수 있다. modified/live and Bridge-origin paths는 answer-only이며 SCN-004 draft flow로 가지 않는다. |
 
 `hasDraftGrounding()`과 `getScn004DraftEligibility()`의 역할은 다르다. `hasDraftGrounding()`은 draft flow를 시작하기 위한 최소 grounding check이고, `getScn004DraftEligibility()`는 grounded answer가 현재 frontend에서 지원하는 SCN-004 문서 타입 근거 패턴을 갖는지 확인한다. grounding만으로 문서 타입 지원을 보장하지 않는다.
 
@@ -205,11 +213,11 @@ Storage boundary:
 - modified preset/free input은 `fetchAnswer()`를 통해 live `/api/v1/answer`를 호출할 수 있다.
 - preset modified path는 `top_k=10`, `ef_search=100`이다.
 - free input path는 `top_k=5`, `ef_search=100`이다.
-- `SCN-001-BRIDGE-DEMO`는 `supportsDraft=false`인 answer-only preset이며 current frontend에서 draft flow로 가지 않는다.
+- `SCN-001-BRIDGE-DEMO` exact fixed path는 frontend-local frozen draft flow를 제공한다. Modified/live and Bridge-origin paths는 answer-only이며 SCN-004 draft flow로 가지 않는다.
 
 | Preset | Exact query 동작 | Draft support | Next result behavior |
 |---|---|---:|---|
-| `SCN-001-BRIDGE-DEMO` | `scenarioPresetAnswers.json` fixed fixture | false | grounded answer를 표시할 수 있어도 answer-only |
+| `SCN-001-BRIDGE-DEMO` | `scenarioPresetAnswers.json` fixed fixture | frontend-local frozen draft only | exact fixed path는 `workplace_change_reason_summary` frozen draft 가능. modified/live and Bridge-origin paths는 answer-only |
 | `SCN-004-DEMO-FREEZE` | `scenarioPresetAnswers.json` fixed fixture | true | SCN-004 eligibility가 통과한 document type 선택 가능 |
 
 ## 7. `/after/result` 상태 분기 상세
@@ -227,7 +235,7 @@ Storage boundary:
    - `hasDraftGrounding()`을 대체하지 않는다. grounding이 있어도 SCN-004 evidence pattern이 없으면 unsupported answer-only다.
 
 3. preset `supportsDraft`:
-   - active preset이 `SCN-001-BRIDGE-DEMO`이면 `supportsDraft=false`로 draft selector를 막는다.
+   - active preset이 `SCN-001-BRIDGE-DEMO`이면 exact fixed path만 frontend-local frozen draft selector를 열고, modified/live and Bridge-origin paths는 draft selector를 막는다.
    - active preset이 없으면 기본적으로 draft support를 true로 보되, `hasDraftGrounding()`과 `getScn004DraftEligibility()`가 통과해야 실제 selector가 열린다.
 
 상태별 화면:
@@ -237,7 +245,7 @@ Storage boundary:
 | grounded + supported SCN-004 | 표시 | 표시 | eligible type만 표시 | 다음 단계에서 만들 문서를 선택 |
 | grounded but unsupported | 표시 | 표시 | 표시 안 함/비활성 | 현재 문서 초안 지원 범위 밖 또는 답변 확인 전용 프리셋 |
 | ungrounded | 숨김 | response에 있으면 표시, 없으면 empty | 표시 안 함/비활성 | “근거 확인 필요”, “문서 초안 진행 불가” |
-| `SCN-001-BRIDGE-DEMO` | grounded면 표시 | 표시 | 표시 안 함/비활성 | 답변 확인 전용 프리셋 |
+| `SCN-001-BRIDGE-DEMO` | grounded면 표시 | 표시 | exact fixed path only | frontend-local frozen draft; modified/live and Bridge-origin paths는 답변 확인 전용 |
 
 ## 8. `/after/intake` 상세
 
@@ -330,7 +338,7 @@ After privacy boundary는 Before/Begin upload/OCR/review privacy boundary와 다
 - TODO: integrated screen plan은 팀 merge 후 재작성한다.
 - TODO: local/self-hosted LLM은 현재 After 화면 범위 밖이다.
 - TODO: frontend direct `/api/v1/retrieve` client/type mirror가 필요하면 별도 contract review 후 추가한다.
-- TODO: `/` home 본문은 static scaffold라 `/after` 진입 CTA가 본문에 없다. 현재 route 구현 기준으로만 기록한다.
+- TODO: `/` home은 85d10fa 기준 H1/lead, nav typography, compact flow strip이 정리됐다. 별도 API/schema 변경 없이 visual QA와 copy drift만 후속 점검한다.
 
 ## 13. Acceptance Criteria
 

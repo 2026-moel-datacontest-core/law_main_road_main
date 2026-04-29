@@ -1,6 +1,6 @@
 # Document Draft Plan
 
-기준일: `2026-04-24`
+기준일: `2026-04-29`
 
 ## 목적
 
@@ -9,6 +9,11 @@
 - 기존 `/api/v1/answer` contract와 retrieval / answer generation service를 변경하지 않고, 사건 사실관계 구조화 레이어를 별도로 둔다.
 - 현재 구현 완료 상태를 기준으로 frontend QA에서 확인해야 할 contract를 고정한다.
 - 2026-04-17 초기 document draft 구현/QA 기록과 2026-04-20 presentation fixed path / preflight 기준은 보존하고, 2026-04-24 SCN-001 Phase 6/7 상태를 현재 기준으로 추가한다.
+- 2026-04-29 기준 exact `SCN-001-BRIDGE-DEMO` fixed preset은
+  frontend-local deterministic `workplace_change_reason_summary` frozen draft
+  flow를 제공한다. 이 flow는 backend/LLM을 호출하지 않고
+  `/api/v1/documents/draft`도 호출하지 않는다. live/backend SCN-001 draft
+  generation과 protected SCN-001 draft endpoint는 여전히 not opened 상태다.
 
 관련 기준 문서:
 
@@ -76,8 +81,8 @@
   - 임금체불 진정서: `source_context_ids=[5, 10]`, `cited_articles=2`, `missing_legal_basis=[]`
   - 부당해고 이유서: `source_context_ids=[1, 2, 3, 4]`, `cited_articles=4`, `missing_legal_basis=[]`
 - `check_document_draft.py`는 backend verify fixture 기준 smoke이므로 answer-derived fixture 숫자가 presentation fixed preset browser dry-run 값과 다를 수 있다. 이 차이는 정상이며 발표 demo freeze 기준은 browser dry-run fixed preset path 값으로 확인한다.
-- SCN-004 free input은 answer 근거에 맞는 문서 타입만 표시한다. SCN-004 범위 밖 자유 입력, `SCN-001-BRIDGE-DEMO`, SCN-005 계열 질문은 answer-only로 처리한다.
-- `SCN-001-BRIDGE-DEMO`는 Before/Bridge handoff 설명용 answer-only preset이며 SCN-001 문서 타입 구현이 아니다.
+- SCN-004 free input은 answer 근거에 맞는 문서 타입만 표시한다. SCN-004 범위 밖 자유 입력, `SCN-001-BRIDGE-DEMO` modified/live and Bridge-origin paths, SCN-005 계열 질문은 answer-only로 처리한다.
+- `SCN-001-BRIDGE-DEMO` exact fixed preset은 frontend-local frozen draft flow를 제공하지만, live/backend SCN-001 문서 타입 구현은 아니다.
 - SCN-005 문서 타입은 현재 구현하지 않고 후속 확장 후보로만 유지한다.
 
 ### Answer-derived legal basis fixture 재캡처
@@ -624,6 +629,6 @@ MVP에서는 `CaseIntake`를 request 중심 이름으로 사용하고, 향후 �
 - PDF / HWP export
 - 제출기관별 실제 양식 반영
 - SCN-005 문서 타입 확장
-- 팀원 Before / Bridge contract 확인 후 SCN-001 문서 타입 확장
-- Firebase Auth Google Sign-In 기반 최소 로그인은 SCN-001 protected path 전용 공통 인증 capability로 유지한다. Phase 4/5/6A~6F와 Phase 7A~7B는 완료됐으며, document draft schema와 SCN-004 demo freeze는 변경하지 않았다. `/api/v1/answer` public contract와 `/api/v1/documents/draft` contract도 unchanged다. SCN-001 document draft는 열지 않는다. Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback, Kakao OAuth는 후속 provider 후보
+- live/backend SCN-001 document draft generation and protected SCN-001 draft endpoint
+- Firebase Auth Google Sign-In 기반 최소 로그인은 SCN-001 protected path 전용 공통 인증 capability로 유지한다. Phase 4/5/6A~6F, Phase 7A~7E, read-only history, MVP soft-delete, `/after` saved selector, `/history` archive는 완료됐으며, document draft schema와 SCN-004 demo freeze는 변경하지 않았다. `/api/v1/answer` public contract와 `/api/v1/documents/draft` contract도 unchanged다. live/backend SCN-001 document draft는 열지 않는다. Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback, Kakao OAuth는 후속 provider 후보
 - sessionStorage backup/restore 없는 상태에서 demo 운영 문구 정리

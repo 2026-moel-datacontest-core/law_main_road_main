@@ -8,7 +8,7 @@
 
 ## 현재 진행 상태
 
-기준일: `2026-04-28`
+기준일: `2026-04-29`
 
 현재 `ops` 문서 기준으로 정리된 상태는 아래와 같다.
 
@@ -34,19 +34,27 @@
   user는 collapsible saved history section에서 saved Bridge를 선택할 수 있고,
   displayed safe subset만 Bridge handoff memory state에 추가된다. `/after` history
   list의 Before/Bridge soft-delete는 기존 protected DELETE helper를 사용한다.
-- 최신 frontend history polish 반영: `fdde441` 기준 `/after` saved history와
+- 최신 frontend history polish 반영: `85d10fa` 기준 `/after` saved history와
   `/history`는 Before/Bridge 분리형 list/card가 아니라 사건 중심 compact summary
   + details/fold 구조다. 사건 요약, 확인된 쟁점, 참고할 법 조항 후보, 권장 다음
   단계, After 질문과 연결점을 한 카드에서 사용자 설명형 문장으로 보여준다.
-- 최신 main `fdde441`까지 visual redesign 반영: visual foundation token
-  alignment, home visual simplification, `/before`/`/after`/`/history` internal
-  route chrome simplification, `/after/result`/`/after/intake`/`/after/draft`
-  after-flow detail visual polish, draft print CSS specificity fix, masthead
-  light surface alignment, main page login priority 완료.
+- 최신 main `85d10fa`까지 visual/UI polish 반영: DESIGN.md visual guide,
+  visual foundation token alignment, home visual simplification, Main
+  H1/lead/nav typography cleanup, compact flow strip, `/before`/`/after`/
+  `/history` internal route chrome simplification, Before upload-first first
+  screen, After entry centering/guidance cards/disclaimer restoration, After
+  saved-history accent contrast, History centered folded cards with blue left
+  accent, `/after/result`/`/after/intake`/`/after/draft` after-flow detail visual
+  polish, draft print CSS specificity fix, masthead light surface alignment,
+  main page login priority 완료.
 - Before analysis progress UX 반영: `/before` 분석 시작 후 진행 상태 영역으로
   scrollIntoView, OCR은 문서 품질/분량에 따라 1~2분 정도 걸릴 수 있다는 안내 표시,
   raw job id/status/provider/internal error 비노출, backend OCR/provider/polling
   contract 변경 없음.
+- Before first screen local server/demo copy 제거, examples 기능 유지,
+  result/accessibility section layout 정리, hardcoded default accessibility legal
+  basis 제거 완료. Backend/API/schema 및 `/api/v1/documents/draft` contract 변경
+  없음.
 - `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, unknown
   snake_case는 raw key로 노출하지 않고 한국어 label/description 또는 readable
   fallback으로 표시한다. Bridge는 legal grounding이 아니라 continuity/reference로만
@@ -357,12 +365,8 @@ path/method/schema는 NOT opened 상태로 둔다.
 
 현재 남은 후보:
 
-1. optional frontend-only visual polish
-   - SCN-004 intake/draft internal component surface cleanup
-   - Before Upload/Result/Accessibility panels deep polish
-   - Auth/LoginButton token cleanup nit
-   - History deep density polish
-2. manual visual QA / print preview
+1. manual visual QA / print preview
+2. small token/a11y nits if needed
 3. backend/API/schema 작업은 열지 않음
 
 Continuity panel scope:
@@ -379,16 +383,12 @@ Continuity panel scope:
 
 별도 작은 작업이 필요하면 아래 후보를 서로 섞지 않고 처리한다.
 
-1. SCN-004 intake/draft internal component surface cleanup
-2. Before Upload/Result/Accessibility panels deep polish
-3. Auth/LoginButton token cleanup nit
-4. History deep density polish
-5. manual visual QA / print preview
-6. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
-7. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
-8. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
-9. `before` / `after` artifact의 향후 GCS 전환 기준 정리
-10. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
+1. manual visual QA / print preview
+2. 제출 전 필요 시 `bash scripts/demo_preflight.sh`와 SCN-004 manual rehearsal 재실행
+3. `starting.sh` 기준 실제 실행 예시/출력 예시를 `quick_start.md`에 보강
+4. `provider_timeout` retry/backoff hardening이 필요하면 runtime troubleshooting에 분리 기록
+5. `before` / `after` artifact의 향후 GCS 전환 기준 정리
+6. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
 
 Step 2B-3, Step 3 full retention lifecycle implementation, live/backend SCN-001
 document draft implementation은 아직 열지 않는다. Frozen draft + continuity panel

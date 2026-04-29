@@ -1,6 +1,6 @@
 # K-Labor Shield — Current Project Architecture
 
-기준일: `2026-04-24` 또는 현재 repo 기준
+기준일: `2026-04-29` 또는 현재 repo 기준
 
 ## 1. 문서 목적
 
@@ -10,8 +10,10 @@
 
 정확한 현재 상태 요약:
 
-- Current architecture has one primary Next.js/FastAPI surface: `/before` + `/after` in `frontend/`, and `backend/` FastAPI with mounted Before stack plus SCN-001 protected Bridge endpoints.
-- Bridge는 protected `bridge_runs` route/service, `/before` result CTA, `/after` Bridge handoff cards, Phase 7B protected Bridge answer endpoint까지 구현됐다. 독립 `/bridge` UI와 SCN-001 document draft는 후속 범위다.
+- Current architecture has one primary Next.js/FastAPI surface: `/before` + `/after` + `/history` in `frontend/`, and `backend/` FastAPI with mounted Before stack plus SCN-001 protected Bridge/history endpoints.
+- Latest main `85d10fa` includes integrated visual/UI polish: `DESIGN.md` token-first guide, Before first screen upload focus and OCR 1~2분 progress copy, After entry centered guidance/disclaimer, History centered fold cards with blue accent, Main H1/lead/nav/compact flow strip cleanup, contrast fixes, and removal of hardcoded default accessibility legal basis.
+- Bridge는 protected `bridge_runs` route/service, `/before` result CTA, `/after` Bridge handoff cards, Phase 7E protected Bridge answer frontend routing, `/after` saved history selector, `/history` archive, MVP soft-delete까지 구현됐다. 독립 `/bridge` UI와 live/backend SCN-001 document draft는 후속 범위다.
+- exact `SCN-001-BRIDGE-DEMO` fixed preset has a frontend-local deterministic `workplace_change_reason_summary` frozen draft path. It does not call backend/LLM or `/api/v1/documents/draft`.
 - After draft path does not call Vertex AI.
 - Before contract upload path currently uses Vertex AI for OCR and LLM-based content review.
 - Phase 6F live subset PASS with retry. Vertex IAM/credential issue is runtime resolved; residual runtime risk is transient `provider_timeout`.
@@ -100,7 +102,7 @@ raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected Bridge answer 
 | Before async upload | Next.js `/before` upload -> `POST /api/v1/before/review/jobs` -> polling `GET /api/v1/before/review/jobs/{job_id}` | Vertex AI OCR + 기본 Vertex LLM content review | `backend/data/before_artifacts/runs/<run_id>/`에 업로드 원본과 산출물 저장 | main 앱 구현 |
 | Before sync review | Client -> `POST /api/v1/before/review` | Vertex AI OCR + 기본 Vertex LLM content review | `backend/data/before_artifacts/runs/<run_id>/`에 업로드 원본과 산출물 저장 | main backend API |
 | Before accessibility | Result screen -> `POST /api/v1/before/accessibility/recommendations` | 기본 추천 엔진, Vertex OCR/LLM 경로와 별도 | 선택 입력 기반 result panel 확장 | main 앱 구현 |
-| Bridge handoff | `/before` result CTA -> `POST /api/v1/scn001/bridge-runs` -> `/after` Bridge cards -> answer-only result | answer path uses displayed safe subset plus user question; raw seed excluded | `bridge_runs`, optional `after_artifact_runs.user_id/source_bridge_run_id` via protected endpoint | Phase 6A~6F, Phase 7A~7B backend 구현 |
+| Bridge handoff | `/before` result CTA or `/after` saved history selector -> `POST /api/v1/scn001/bridge-runs` / protected history APIs -> `/after` Bridge cards -> protected or public answer-only result | answer path uses displayed safe subset plus user question; raw seed excluded | `bridge_runs`, optional `after_artifact_runs.user_id/source_bridge_run_id` via protected endpoint | Phase 6A~6F, Phase 7A~7E, history selector/archive, MVP soft-delete 구현 |
 
 SCN-004 draft flow is additionally gated by document-type eligibility. The frontend uses `getScn004DraftEligibility()` on `/after/result` to expose only wage-complaint or unfair-dismissal draft types supported by the answer evidence. The evidence check is not only `cited_articles` / `grounded_context_ids` presence; eligibility is calculated from SCN-004 wage/dismissal patterns in the answer query, `cited_articles`, and grounded `retrieved_chunks`. `/after/intake` rechecks the selected document type before building the draft request and again before submit, so grounded free input outside the supported SCN-004 document types remains answer-only and does not enter the draft flow.
 
@@ -203,7 +205,7 @@ flowchart LR
 | 구간 | Vertex AI 사용 여부 | 설명 |
 |---|---:|---|
 | After exact preset `SCN-004-DEMO-FREEZE` | 미사용 | fixed `AnswerResponse` fixture를 사용하므로 `/api/v1/answer`를 호출하지 않는다. |
-| After exact preset `SCN-001-BRIDGE-DEMO` | 미사용 | answer-only handoff 설명용 fixed fixture 경로다. |
+| After exact preset `SCN-001-BRIDGE-DEMO` | 미사용 | frontend-local `workplace_change_reason_summary` frozen draft path다. Backend/LLM과 `/api/v1/documents/draft`를 호출하지 않는다. |
 | After modified preset | 사용 | `/api/v1/answer`가 Shared Retrieval Service로 Vertex query embedding과 PostgreSQL/pgvector search를 수행한 뒤 default answer model `gemini-2.5-flash`로 answer generation을 수행한다. |
 | After free input | 사용 | `/api/v1/answer`가 `top_k=5`, `ef_search=100`으로 Shared Retrieval Service + answer path를 실행한다. |
 | Main `POST /api/v1/retrieve` | 사용 | public retrieve endpoint가 Shared Retrieval Service를 통해 query embedding에 `gemini-embedding-001`을 사용하고 PostgreSQL + pgvector에서 검색한다. |

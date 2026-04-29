@@ -4,6 +4,15 @@
 - 기준: main backend/frontend 현재 코드
 - 범위: main After/RAG API surface
 
+2026-04-29 code-based note:
+
+- Current backend also exposes `GET /api/v1/auth/me`, mounted Before endpoints
+  under `/api/v1/before`, and protected SCN-001 history/Bridge endpoints.
+- Protected Bridge answer is implemented at
+  `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`.
+- exact `SCN-001-BRIDGE-DEMO` frozen draft is frontend-local and does not call
+  `/api/v1/documents/draft`.
+
 이 문서는 `z_before_begin/`의 Before/Begin contract review API가 아니라, main `backend/` FastAPI와 main `frontend/` Next.js After/RAG flow가 사용하는 API contract를 정리한다. Before/Begin API와 endpoint, schema, Vertex 사용 경계를 섞지 않는다.
 
 ## 1. Scope
@@ -210,7 +219,7 @@ answer router
 | Path | Current frontend behavior |
 |---|---|
 | `SCN-004-DEMO-FREEZE` exact preset | fixed `AnswerResponse` fixture from `scenarioPresetAnswers.json`; `/api/v1/answer` not called |
-| `SCN-001-BRIDGE-DEMO` exact preset | fixed answer-only fixture; `/api/v1/answer` not called; draft unsupported |
+| `SCN-001-BRIDGE-DEMO` exact preset | fixed answer fixture; `/api/v1/answer` not called; frontend-local frozen draft can be built without `/api/v1/documents/draft` |
 | presentation preset modified path | `top_k=10`, `ef_search=100`, calls `/api/v1/answer` |
 | free input path | `top_k=5`, `ef_search=100`, calls `/api/v1/answer` |
 
@@ -355,7 +364,7 @@ Article key labels:
 | Route | Guard |
 |---|---|
 | `/after/result` | `hasDraftGrounding()` checks `cited_articles.length > 0` and `grounded_context_ids.length > 0`; `getScn004DraftEligibility()` filters SCN-004 document types |
-| `/after/result` | `SCN-001-BRIDGE-DEMO` has `supportsDraft=false`, so answer-only |
+| `/after/result` | `SCN-001-BRIDGE-DEMO` exact fixed path can open frontend-local frozen draft; modified/live and Bridge-origin paths are answer-only |
 | `/after/result` | supported SCN-004 document type is shown only when wage or dismissal evidence pattern matches query/citations/grounded chunks |
 | `/after/intake` | answer missing -> `/after`; no grounding, no document type, or selected type not eligible -> `/after/result` |
 | `/after/intake` submit | re-runs `getScn004DraftEligibility(answer)` before `fetchDraft()` |
@@ -465,7 +474,7 @@ TODO: local/server/access log policy for raw payloads should be reviewed before 
 | `/api/v1/retrieve` | user `query` can be sent to Vertex query embedding (`gemini-embedding-001`) |
 | `/api/v1/answer` modified/free input | user `query` can be sent to Vertex query embedding and Gemini answer generation (`gemini-2.5-flash` by default) |
 | `SCN-004-DEMO-FREEZE` exact preset | fixed fixture; `/api/v1/answer` not called; Vertex not used |
-| `SCN-001-BRIDGE-DEMO` exact preset | fixed fixture; answer-only; Vertex not used |
+| `SCN-001-BRIDGE-DEMO` exact preset | fixed fixture; frontend-local frozen draft can be built; `/api/v1/documents/draft` and Vertex not used |
 | `/after/intake` -> `/api/v1/documents/draft` | draft request may contain case facts, but draft endpoint itself does not call Vertex |
 
 **After draft path does not call Vertex AI.** z_before_begin Before/Begin과 달리 After draft는 deterministic backend layer다. 단, draft의 `legal_basis`는 이전 `/api/v1/answer` 결과에 의존할 수 있으므로, modified/free input answer path에서 이미 Vertex를 사용했을 수 있다.
@@ -492,7 +501,7 @@ TODO: local/server/access log policy for raw payloads should be reviewed before 
 - TODO: `/api/v1/answer` model output drift 가능성 유지. `gemini-2.5-flash` output can change, and grounding validation mitigates but does not make answer wording fixed.
 - TODO: fixed fixture와 live answer 결과 차이 가능성 유지. `SCN-004-DEMO-FREEZE` exact path is frozen fixture; modified/free input calls live model path.
 - TODO: SCN-004 draft eligibility guard 유지 필요. `hasDraftGrounding()` alone is not enough; keep `getScn004DraftEligibility()` route and submit guards.
-- TODO: integrated API는 팀원 Before/Begin and Bridge integration 후 확정한다.
+- TODO: live/backend SCN-001 draft API, unified history API, and full retention lifecycle APIs remain future design work.
 - TODO: local/self-hosted LLM은 현재 After MVP API에 포함되지 않는다.
 - TODO: public `AnswerRequest`에 `model_name`을 노출할지 여부는 backend/schema review 후에만 결정한다. 현재 public schema는 `model_name`을 받지 않는다.
 - TODO: frontend direct `/api/v1/retrieve` client/type mirror가 필요하면 별도 contract review 후 추가한다.

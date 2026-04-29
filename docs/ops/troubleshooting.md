@@ -573,7 +573,7 @@ Evidence hygiene:
 - Step 3 full retention lifecycle, hard delete, file purge, artifact retrieval
   UI/API도 열지 않는다.
 
-## 2026-04-28 SCN-001 History Card / Summary Notes
+## 2026-04-29 Integrated UI Polish / Blocker Fix Notes
 
 목적:
 
@@ -581,6 +581,9 @@ Evidence hygiene:
   Before/Bridge 분리형 list/card가 아니라 사건 중심 단일 카드 구조다.
 - 한 사건 카드에서 사건 요약, 확인된 쟁점, 참고할 법 조항 후보, 권장 다음
   단계, After 질문과 연결점을 사용자 설명형 문장으로 보여준다.
+- 최신 main `85d10fa` 기준 Before/After/History/Main integrated UI polish,
+  DESIGN.md visual guide, contrast/disclaimer fixes, and accessibility
+  legal-basis blocker fix가 완료됐다.
 
 확인 포인트:
 
@@ -599,24 +602,34 @@ Evidence hygiene:
 
 최신 visual/progress 상태:
 
-- 최신 main `fdde441`까지 visual foundation token alignment, home visual
+- `DESIGN.md`는 token-first, neutral/dense/evidence-led, disclaimers/
+  uncertainty prominent 기준의 visual guide다.
+- 최신 main `85d10fa`까지 visual foundation token alignment, home visual
   simplification, internal route chrome simplification, after-flow detail visual
   polish, draft print CSS specificity fix, masthead light surface alignment,
   main page login priority가 completed 상태다.
+- Before first screen은 upload 중심으로 정리됐고 local server/demo copy는
+  제거됐으며 examples 기능은 유지된다.
 - main page logged-out first viewport는 Google login CTA를 우선 표시한다.
 - backend-verified logged-in nav/action은 `History / Before / After` 순서를
   유지한다.
+- Main H1/lead/nav typography가 정리됐고 compact flow strip이 추가됐다.
+- `/after` entry는 중앙 정렬, guidance cards, preset display label 개선,
+  disclaimer 복구 상태다. Preset id/query는 변경하지 않았다.
+- `/after` saved history 연결점 accent는 unselected primary blue, selected
+  success green을 사용한다.
+- `/history`는 중앙 정렬, 사건 fold card 가독성 개선, blue left accent를
+  반영한다.
 - `/before` 분석 시작 후 진행 상태 영역으로 scrollIntoView한다.
 - OCR은 문서 품질/분량에 따라 1~2분 정도 걸릴 수 있다는 안내를 표시한다.
 - raw job id/status/provider/internal error는 user-facing UI에 노출하지 않는다.
+- hardcoded default accessibility legal basis는 제거됐다. Accessibility UI는
+  backend/API/schema 변경 없이 실제 response 또는 전달된 legal basis만 표시한다.
 
 남은 후보:
 
-- SCN-004 intake/draft internal component surface cleanup.
-- Before Upload/Result/Accessibility panels deep polish.
-- Auth/LoginButton token cleanup nit.
-- History deep density polish.
 - manual visual QA / print preview.
+- small token/a11y nits if needed.
 
 주의:
 

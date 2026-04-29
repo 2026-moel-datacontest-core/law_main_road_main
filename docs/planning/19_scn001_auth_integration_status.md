@@ -1,6 +1,6 @@
 # SCN-001 Auth Integration Status
 
-기준일: `2026-04-28`
+기준일: `2026-04-29`
 
 ## Purpose
 
@@ -32,7 +32,7 @@
 | SCN-001 continuity panel | completed | `f574e6b` adds continuity panel on `/after/result` and `/after/draft`. It preserves Bridge-as-Continuity, Not Grounding and does not create or modify legal basis, citations, source/grounded context ids, or retrieved chunks |
 | `/after` saved history selector | completed | `2ec5488` shows saved Before/Bridge history on `/after` for backend-verified logged-in users. The section is collapsible, saved Bridge selection uses only the displayed safe subset for Bridge handoff memory state, Before/Bridge soft-delete uses existing protected DELETE helpers, exact preset submit keeps fixed answer priority, and SCN-004 public flow remains unchanged |
 | SCN-001 history/After frontend polish | completed | `f38aea6` clarifies `/after` saved history cards, `3822da2` makes the SCN-001 fixed-draft result panel non-sticky while preserving SCN-004 selector behavior, `d8ea907` polishes `/history`, `903ec4f` improves nav/delete accessibility, `1a57601` removes stale `/before` embedded-history CSS, `8cd1ccb` polishes SCN-001 history cards, `c365ca5` clarifies SCN-001 history summaries, `6263a8e` folds SCN-001 case records, and `f15430c`/`a2d984f` fix overbroad wage/deduction summaries. `/after` saved history and `/history` now use incident-centered compact summary + details/fold cards with user-facing Korean explanations instead of separate Before/Bridge list cards or raw status/key output. Frontend-only; public API contracts, auth persistence, storage policy, `/api/v1/history` unified backend API, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, Step 3 full retention lifecycle, and SCN-004 freeze remain unchanged |
-| Frontend visual redesign / progress UX / main login priority | completed | Latest main is pushed through `fdde441`. Completed visual foundation token alignment, home visual simplification, `/before`/`/after`/`/history` internal route chrome simplification, `/after/result`/`/after/intake`/`/after/draft` detail visual polish, draft print CSS specificity fix, Before analysis progress UX, masthead light surface alignment, and main page login priority. Logged-out first viewport prioritizes Google login CTA; backend-verified logged-in users keep `History / Before / After` entry order. `/before` analysis start scrolls to the progress area and shows OCR 1~2 minute guidance without exposing raw job id/status/provider/internal error. Backend OCR/provider/polling contracts, backend/API/schema, RAG/data, and SCN-004 public contracts remain unchanged |
+| Frontend visual/UI polish / progress UX / main login priority | completed | Latest main is pushed through `85d10fa`. Completed DESIGN.md visual guide alignment, visual foundation token alignment, home visual simplification, Main H1/lead/nav typography cleanup and compact flow strip, `/before`/`/after`/`/history` internal route chrome simplification, Before upload-first first screen with local server/demo copy removed and examples preserved, `/after/result`/`/after/intake`/`/after/draft` detail visual polish, After entry centering/guidance cards/preset display label cleanup/disclaimer restoration, After saved-history connection accent contrast (unselected primary blue, selected success green), History centered layout/readable folded cards/blue left accent, warning/status contrast fixes, draft print CSS specificity fix, Before analysis progress UX, masthead light surface alignment, main page login priority, and removal of hardcoded default accessibility legal basis. Logged-out first viewport prioritizes Google login CTA; backend-verified logged-in users keep `History / Before / After` entry order. `/before` analysis start scrolls to the progress area and shows OCR 1~2 minute guidance without exposing raw job id/status/provider/internal error. Backend OCR/provider/polling contracts, backend/API/schema, RAG/data, auth persistence, Web Storage policy, and SCN-004 public contracts remain unchanged |
 
 ## Current Git History References
 
@@ -87,6 +87,19 @@ Recent relevant commits after history rewrite:
 - `f15430c` fix(frontend): avoid overbroad case summaries
 - `a2d984f` fix(frontend): separate wage and deduction summaries
 - `fdde441` refactor(frontend): prioritize login on home page
+- `bef62a1` refactor(frontend): focus Before upload entry
+- `2f80614` refactor(frontend): refine Before upload focus
+- `759dbb9` refactor(frontend): clarify Before support guidance
+- `a9b307c` refactor(frontend): focus After entry layout
+- `63b60c4` fix(frontend): distinguish After history accent states
+- `debf4b4` refactor(frontend): align After entry guidance
+- `1fc4131` refactor(frontend): align History page layout
+- `1d58c78` refactor(frontend): polish main page hierarchy
+- `831730e` refactor(frontend): align UI polish with design guide
+- `21de4b6` fix(frontend): improve After status contrast
+- `3f7911c` docs(frontend): update design polish guide
+- `2e5dd19` fix(frontend): restore After entry disclaimer
+- `85d10fa` fix(frontend): avoid hardcoded accessibility legal basis
 
 ## Phase 6F Evidence Summary
 
@@ -244,7 +257,7 @@ Implemented behavior:
 
 ## Incident-centered History UI Status
 
-2026-04-28 latest main is pushed through `fdde441`. The SCN-001 history surfaces
+2026-04-29 latest main is pushed through `85d10fa`. The SCN-001 history surfaces
 are now aligned around an incident-centered compact summary + details/fold model.
 
 Current `/after` behavior:
@@ -289,6 +302,8 @@ Main page state:
   Before/history actions.
 - Backend-verified logged-in users keep `History / Before / After` entry order.
 - SCN-004 `/after` preset/free input remains login-free.
+- Later integrated polish cleaned up H1/lead/nav typography and added a compact
+  flow strip without changing auth or route behavior.
 
 Before progress UX:
 
@@ -296,6 +311,20 @@ Before progress UX:
 - OCR guidance says document quality/length can make OCR take about 1~2 minutes.
 - Raw job id/status/provider/internal error is not shown to the user.
 - Backend OCR/provider/polling contract remains unchanged.
+- Before first screen is upload-focused, local server/demo copy was removed,
+  examples remain available, result/accessibility sections were cleaned up, and
+  the hardcoded default accessibility legal basis blocker was removed.
+
+After entry / history visual status:
+
+- `/after` entry is centered, includes guidance cards, keeps preset id/query
+  unchanged while improving display labels, and has the entry disclaimer restored.
+- `/after` saved history connection uses primary blue for unselected and success
+  green for selected state.
+- `/history` is centered with readable folded incident cards and a blue left
+  accent.
+- DESIGN.md is the visual guide: token-first, neutral/dense/evidence-led, and
+  explicit that disclaimers/uncertainty stay prominent.
 
 Evidence hygiene:
 
@@ -385,11 +414,9 @@ Displayed safe subset:
   SCN-001-BRIDGE-DEMO exact fixed preset frozen draft, continuity panel, and
   `/after` saved history selector are completed frontend-local/protected-history
   paths, not live/backend draft generation.
-- Current remaining candidates are optional frontend-only visual polish:
-  SCN-004 intake/draft internal component surface cleanup, Before
-  Upload/Result/Accessibility panels deep polish, Auth/LoginButton token cleanup
-  nit, History deep density polish, and manual visual QA / print preview.
-  Backend/API/schema work remains closed for these candidates.
+- Current remaining candidates are docs/QA oriented: manual visual QA / print
+  preview and small token/a11y nits only. Backend/API/schema work remains closed
+  for these candidates.
 
 ## Do Not Mix
 

@@ -78,6 +78,59 @@
 
 ## Current Status
 
+기준일: `2026-04-29`
+
+현재 코드 기준 최신 checkpoint는
+[`23_code_based_status_2026_04_29.md`](23_code_based_status_2026_04_29.md)다.
+아래 요약은 이 checkpoint와 실제 backend/frontend route surface를 기준으로
+갱신했다.
+
+- legalize-kr submodule, chunking Step 1~10, `backend/data/law_chunks/all_chunks.json`
+  기준선 유지
+- current live corpus: `1722` chunks, `selected_as_of = 2026-04-11`
+- FastAPI parent app + mounted Before sub-app 구조 구현:
+  - parent app: retrieval / auth / answer / document draft / SCN-001 protected routers
+  - Before sub-app: `/api/v1/before`
+- implemented public API:
+  - `POST /api/v1/retrieve`
+  - `POST /api/v1/answer`
+  - `POST /api/v1/documents/draft`
+- implemented auth/protected API:
+  - `GET /api/v1/auth/me`
+  - `GET/POST/DELETE /api/v1/scn001/*` Before/Bridge history and Bridge answer routes
+- implemented Before API:
+  - `POST /api/v1/before/review`
+  - `POST /api/v1/before/review/jobs`
+  - `GET /api/v1/before/review/jobs/{job_id}`
+  - `POST /api/v1/before/accessibility/recommendations`
+- frontend routes implemented:
+  - `/`, `/before`, `/after`, `/after/result`, `/after/intake`, `/after/draft`, `/history`
+- SCN-004 login-free After document draft flow remains the main public demo path.
+- SCN-001 Firebase Auth protected path is implemented through backend-verified
+  auth gates, Before/Bridge history, protected Bridge answer routing, `/after`
+  saved history selector, `/history` record archive, and MVP soft-delete.
+- exact `SCN-001-BRIDGE-DEMO` fixed preset now provides frontend-local
+  deterministic `workplace_change_reason_summary` frozen draft flow.
+- latest main `85d10fa` completes integrated frontend UI polish and blocker
+  fixes:
+  - Before first screen is upload-focused, local server/demo copy is removed,
+    examples remain available, analysis loading scroll and OCR 1~2분 guidance are
+    in place, result/accessibility sections are cleaner, and hardcoded default
+    accessibility legal basis is removed.
+  - After entry is centered, has guidance cards, keeps preset id/query stable
+    while improving display labels, restores the entry disclaimer, and uses
+    primary-blue unselected / success-green selected saved-history accents.
+  - History is centered with readable folded incident cards and blue left accent.
+  - Main page H1/lead/nav typography is cleaner and includes a compact flow
+    strip.
+  - `DESIGN.md` is the visual guide: token-first, neutral/dense/evidence-led,
+    and explicit about keeping disclaimers and uncertainty prominent.
+- live/backend SCN-001 document draft generation, protected SCN-001 draft
+  endpoint, independent `/bridge`, Recovery, SCN-005 frontend expansion, and
+  Step 3 full retention lifecycle remain not opened.
+
+## Historical Status Snapshot
+
 기준일: `2026-04-24`
 
 - legalize-kr submodule 연결 완료
@@ -200,86 +253,61 @@ Evolution note:
 
 ## Next Step
 
-현재 RAG refinement, SCN-004 문서 초안 backend, SCN-004 After frontend 구현, SCN-004 QA/content/frontend rehearsal은 완료 상태로 본다. SCN-001 Firebase Auth Phase 0~5, Phase 6A~6F, Phase 7A~7B도 완료 상태로 본다. 다음 후보 구현 단계의 중심은 **SCN-004 demo freeze를 유지한 protected bridge answer frontend routing / verification**이다.
+현재 구현 기준의 다음 작업은 기능 확장보다 문서 정리, demo freeze 보호,
+선택적 frontend-only polish다.
 
-### Step 0. Baseline freeze / 운영 기준 고정
+### Step 0. Baseline freeze 유지
 
-- 현재 RAG 기준선을 고정한다.
-  - retrieval full 60: `hit@5 = 60/60`
-- answer full 60: `citation_grounding_clean = 60/60`, `gold_citation_hit = 60/60`, `expected_point_strict_coverage = 137/153`
-- answer evidence full 60: `PASS=44`, `PARTIAL=16`, `FAIL=0`; PARTIAL은 expected point 일부 누락이며 MVP blocker가 아님
-- 일반 API 기본값은 `top_k=5`, `ef_search=100`으로 유지한다.
-- SCN demo preset은 `top_k=10`, `ef_search=100`을 명시한다.
-- `SCN-004` After document draft flow를 제출 전 핵심 demo path로 관리한다.
-- `SCN-004-DEMO-FREEZE` exact preset path는 fixed answer fixture를 사용한다.
-- `SCN-001-BRIDGE-DEMO`는 answer-only Bridge handoff 설명용으로 유지한다.
-- 이후 RAG 수정은 QA에서 regression이 확인되거나 필수 근거 누락이 재현될 때만 좁게 진행한다.
+- public `/api/v1/answer` contract unchanged
+- public `/api/v1/documents/draft` contract unchanged
+- SCN-004 login-free After draft flow 유지
+- SCN-001 protected Bridge answer/history/frozen draft boundary 유지
+- Firebase Auth frontend persistence는 `inMemoryPersistence` 유지
 
-### Step 1. Backend contract 재확인
+### Step 1. GitHub-facing 문서 정리
 
-- `/api/v1/answer` 응답 schema와 frontend `AnswerResponse` 타입 정합성을 유지한다.
-- `/api/v1/documents/draft` 응답 schema와 frontend `DocumentDraftResponse` 타입 정합성을 유지한다.
-- `buildLegalBasis()`가 `grounded_context_ids`에 해당하는 `retrieved_chunks`만 전달하는지 유지 확인한다.
-- `buildCaseIntake()`가 빈 문자열 row를 제거하고 기본 object/list를 채우는지 유지 확인한다.
-- `check_document_draft.py`로 manual fixture와 answer-derived fixture smoke를 유지한다.
+- `docs/planning/*`는 작업 기준/phase 기록으로 유지한다.
+- GitHub에 보여줄 문서는 `docs/github/` 아래에 별도 정리한다.
+- 공개 문서에는 token, Firebase uid, provider_subject, raw email, raw query,
+  full answer/draft body, real bridge id, artifact body를 기록하지 않는다.
 
-### Step 2. Frontend flow 재확인
+### Step 2. Verification
 
-- `/after` preset / 자유 입력의 `top_k` 분기를 유지한다.
-- `/after/result` citation 없음 / grounded context 없음 guard를 유지한다.
-- `/after/intake` 빈 필드 허용과 draft submit payload를 유지한다.
-- `/after/draft` rendered_text, missing_fields, cautions, evidence_checklist, cited_articles 표시를 유지한다.
-- direct URL guard:
-  - `/after/result`에 state 없음 -> `/after`
-  - `/after/intake`에 answer 없음 -> `/after`
-  - `/after/intake`에 document_type 없음 -> `/after/result`
-  - `/after/draft`에 draft 없음 -> `/after`
-- copy / print 동작과 print disclaimer 확인
+문서-only 변경에서는 broad full eval을 기본 실행하지 않는다.
 
-### Step 3. Scope freeze
+Focused checks:
 
-- Phase 3C 이후 확장 작업은 보류한다.
-  - sessionStorage backup/restore
-  - transition animation
-  - `/bridge`, Recovery frontend 확장 및 `/before` 추가 기능 확장
-  - 현재 SCN-004 freeze 작업 중 SCN-005 문서 타입 추가
-  - 팀원 Before / Bridge contract 확인 없는 SCN-001 문서 타입 추가
-- 개인정보 저장 금지 원칙을 유지한다.
-- raw `user_statement`, `answer_response`, `case_intake`, `draft_response`는 Web Storage에 저장하지 않는다.
+```bash
+python -c "from backend.main import app; print('import_ok')"
+python backend/verify/check_document_draft.py
+cd frontend
+npm run build
+```
 
-### Step 4. Demo readiness
+Demo preflight:
 
-- backend:
-  - `python backend/verify/check_document_draft.py`
-  - 필요 시 SCN-004 answer smoke
-- frontend:
-  - `npm run build`
-  - local dev server에서 desktop/mobile smoke
-- QA 통과 후 발표용 입력 문구, 기대 citation, fallback 문구를 문서화한다.
+```bash
+bash scripts/demo_preflight.sh
+```
 
-### Step 5. SCN-001 Phase 7B current contract
+### Step 3. Residual visual QA
 
-- `require_current_user` dependency를 사용할 수 있다.
-- `users`와 `bridge_runs` schema가 있다.
-- `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` linkage column이 있다.
-- `BeforeHandoffDTO`와 `BridgeOutputDTO` contract draft가 `docs/planning/16_scn001_before_bridge_contract.md`에 있다.
-- `/api/v1/auth/me` backend verification과 frontend Google login capability가 있다.
-- Phase 4/5/6/7A/7B에서는 SCN-004 flow, `/api/v1/answer`, `/api/v1/documents/draft` contract를 변경하지 않았다.
-- Phase 7B protected bridge answer endpoint는 `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`이다.
-- Phase 7B endpoint는 Firebase Bearer auth를 요구하고, missing/unowned bridge_run은 404로 masking한다.
-- Phase 7B endpoint는 `AnswerResponse`-compatible response를 반환하고, linked artifact persistence 실패 시 success로 위장하지 않는다.
-- public `/api/v1/answer`는 bridge_run_id/auth/provenance field를 받지 않는다.
-- `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary bridge_run_id이며, multi-bridge full provenance는 Post-MVP join table 후보로 둔다.
-- raw OCR, raw contract, raw `after_query_seed`, raw answer/draft payload를 persistent 저장하지 않는다.
-- frontend Web Storage에 token/auth state나 raw flow payload를 저장하지 않는다.
+- manual visual QA / print preview
+- small token/a11y nits only if they preserve the current route behavior
 
-### Step 6. 후순위 / 하지 말아야 할 것
+위 항목은 SCN-004 freeze, SCN-001 frozen draft/history/continuity boundary,
+backend/API/schema를 건드리지 않는 경우에만 진행한다.
 
-- 남은 answer eval partial 16개는 현재 데모 blocker가 아니므로 문서 초안 작업보다 우선하지 않는다.
-- hybrid retrieval, reranker, broad decomposition은 현재 baseline을 유지한 채 필요성이 확인될 때만 검토한다.
-- `SCN-002` 자동 숫자 판정형 데모에 필요한 추가 source 또는 structured data 설계는 계속 범위 밖으로 둔다.
-- SCN-004 freeze와 무관한 frontend 신규 화면, 직접 회원가입/직접 로그인 UI, 관리자 기능, 운영 보안 고도화는 QA 이후로 미룬다.
-- Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 유지한다. Firebase session cookie / Identity Platform OIDC / multi-provider linking은 Future/Post-MVP로 둔다.
+### Step 4. Still not opened
+
+- SCN-001 live/backend document draft generation
+- protected SCN-001 draft endpoint path/method/schema
+- Step 3 full retention lifecycle
+- independent `/bridge`
+- Recovery 본 구현
+- SCN-005 frontend preset / document draft 확장
+- auth persistence 변경
+- provider_timeout retry/backoff full hardening
 
 ---
 

@@ -92,7 +92,7 @@
   - Bridge context/history가 있어도 SCN-001/SCN-004 preset buttons는 계속 표시
   - exact preset submit은 fixed answer path가 우선
 - SCN-001 frontend history/After polish 완료:
-  - latest main is pushed through `fdde441`
+  - latest main is pushed through `85d10fa`
   - `8cd1ccb` polished SCN-001 history cards and `c365ca5` clarified SCN-001 history summaries on latest main
   - `6263a8e` folded SCN-001 case records, `f15430c`/`a2d984f` fixed overbroad wage/deduction summaries, and `fdde441` prioritized login on the home page
   - `/after` saved history and `/history` now use an incident-centered single card flow instead of separate Before/Bridge list or 2-column cards
@@ -104,11 +104,18 @@
   - failed/running Before jobs are hidden from the user-facing list; Bridge records linked to fetched non-completed Before jobs are hidden; Bridge-only records whose source Before is outside the fetch window remain visible
   - main page login priority is completed: logged-out first viewport prioritizes Google login CTA, and backend-verified logged-in users keep `History / Before / After` entry order
   - frontend-only; no backend contract, auth persistence, Web Storage, `/api/v1/history` unified backend API, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, Step 3 full retention lifecycle, or SCN-004 freeze change
-- Latest frontend visual redesign 완료:
+- Latest integrated frontend visual/UI polish 완료:
   - visual foundation token alignment
+  - DESIGN.md visual guide alignment: token-first, neutral/dense/evidence-led, disclaimers/uncertainty prominent
   - home visual simplification
+  - main H1/lead cleanup, nav typography cleanup, compact flow strip
   - `/before`, `/after`, `/history` internal route chrome simplification
+  - Before first screen upload focus, local server/demo copy removal, examples preserved, result/accessibility section layout cleanup
+  - After entry centered layout, guidance cards, preset display label cleanup while keeping preset id/query unchanged, entry disclaimer restoration
+  - After saved history connection accent states: unselected primary blue, selected success green
+  - History centered layout, readable folded incident cards, blue left accent
   - `/after/result`, `/after/intake`, `/after/draft` after-flow detail visual polish
+  - warning/status contrast fixes
   - draft print CSS specificity fix
   - masthead light surface alignment; stale masthead wording should not be used for current UI
 - Before analysis progress UX 완료:
@@ -116,6 +123,9 @@
   - OCR은 문서 품질/분량에 따라 1~2분 정도 걸릴 수 있다는 안내 표시
   - raw job id/status/provider/internal error 노출 없음
   - backend OCR/provider/polling contract 변경 없음
+- Before accessibility blocker fix 완료:
+  - hardcoded default accessibility legal basis 제거
+  - accessibility recommendation UI는 backend/API/schema 변경 없이 실제 response/passed-in legal basis만 표시
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow 완료:
   - `/after -> /after/result -> /after/intake -> /after/draft`
   - document type: `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안
@@ -129,7 +139,7 @@
 - SCN-001 live/backend draft generation and protected SCN-001 draft endpoint path/method/schema remain NOT opened:
   - SCN-004 `/after` draft behavior unchanged
   - SCN-004 public `/api/v1/documents/draft` flow unchanged
-  - remaining candidates are optional frontend-only visual polish: SCN-004 intake/draft internal component surface cleanup, Before Upload/Result/Accessibility panels deep polish, Auth/LoginButton token cleanup nit, History deep density polish, and manual visual QA / print preview without touching SCN-004 freeze or SCN-001 frozen draft/history/continuity boundaries
+  - remaining candidates are docs/QA oriented: manual visual QA / print preview and small token/a11y nits without touching SCN-004 freeze or SCN-001 frozen draft/history/continuity boundaries
 
 ## 핵심 원칙
 

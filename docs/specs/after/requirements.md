@@ -4,6 +4,18 @@
 - 기준: main `frontend/` + `backend/` 현재 구현
 - 관련 source of truth: `docs/specs/after/api_spec.md`, `docs/specs/after/data_model.md`
 
+2026-04-29 code-based note:
+
+- Current main frontend now includes `/before`, `/after`, `/history`, protected
+  SCN-001 Bridge answer routing, `/after` saved history selector, MVP
+  soft-delete, and exact `SCN-001-BRIDGE-DEMO` frontend-local frozen draft flow.
+- Older rows below that describe `SCN-001-BRIDGE-DEMO` as answer-only apply to
+  modified/live and Bridge-origin paths only. The exact fixed preset path now
+  supports frontend-local `workplace_change_reason_summary` draft generation
+  without backend/LLM or `/api/v1/documents/draft`.
+- live/backend SCN-001 draft generation and protected SCN-001 draft endpoint
+  remain not implemented.
+
 ## 1. 문서 목적
 
 이 문서는 K-Labor Shield **After** 기능의 요구정의서다. 현재 main `frontend/` Next.js 앱과 main `backend/` FastAPI 구현을 기준으로, 법률 질의에서 근거 답변과 지원 문서 초안까지 이어지는 MVP 요구사항을 정리한다.
@@ -16,7 +28,7 @@
 
 After 사용자는 이미 사건이나 상담 상황을 가지고 있고, 본인의 진술에 대해 법령 근거 기반 답변을 받은 뒤, 지원되는 경우 제출 전 검토용 문서 초안으로 이어가려는 사람이다. 현재 MVP의 중심 시나리오는 **SCN-004 임금체불/부당해고 관련 After flow**다.
 
-`SCN-004-DEMO-FREEZE`는 main demo와 document draft freeze를 위한 preset이다. exact preset path에서는 fixed `AnswerResponse` fixture를 사용해 발표 재현성을 우선한다. Fixed `AnswerResponse`-like payload source는 `frontend/src/lib/scenarioPresetAnswers.json`이고, `supportsDraft`, `recommendedTopK`, `fixedAnswer` 연결 metadata owner는 `frontend/src/lib/scenarioPresets.ts`다. `SCN-001-BRIDGE-DEMO`는 Before/Bridge handoff 설명용 answer-only preset이며, 현재 After MVP에서 draft flow로 이어지지 않는다.
+`SCN-004-DEMO-FREEZE`는 main demo와 document draft freeze를 위한 preset이다. exact preset path에서는 fixed `AnswerResponse` fixture를 사용해 발표 재현성을 우선한다. Fixed `AnswerResponse`-like payload source는 `frontend/src/lib/scenarioPresetAnswers.json`이고, `supportsDraft`, `recommendedTopK`, `fixedAnswer` 연결 metadata owner는 `frontend/src/lib/scenarioPresets.ts`다. `SCN-001-BRIDGE-DEMO` exact fixed path는 frontend-local frozen draft flow를 제공하지만 backend/LLM 또는 `/api/v1/documents/draft`를 호출하지 않는다. Modified/live and Bridge-origin paths는 answer-only로 유지한다.
 
 After MVP는 최종 법률 자문, 위법성 확정 판단, 소송 자동화가 아니다. 사용자가 제공한 사실과 검색된 법령 근거를 바탕으로 설명과 문서 초안 작성을 보조하는 제품이다.
 
@@ -26,7 +38,7 @@ After MVP는 최종 법률 자문, 위법성 확정 판단, 소송 자동화가 
 |---|---|
 | Entry | `/after`에서 질문 입력, SCN preset 선택, free input 입력을 제공한다. |
 | Fixed preset | `SCN-004-DEMO-FREEZE` exact preset은 `frontend/src/lib/scenarioPresetAnswers.json`의 fixed `AnswerResponse`-like fixture를 사용하고 `/api/v1/answer`를 호출하지 않는다. |
-| Answer-only preset | `SCN-001-BRIDGE-DEMO`는 Before/Bridge handoff 설명용 answer-only preset이며 draft flow로 가지 않는다. |
+| SCN-001 fixed preset | `SCN-001-BRIDGE-DEMO` exact fixed path는 frontend-local frozen draft flow로 갈 수 있다. modified/live and Bridge-origin paths는 answer-only다. |
 | Live answer | modified preset과 free input은 `POST /api/v1/answer`를 호출할 수 있다. |
 | Retrieval API | `/api/v1/retrieve`는 별도 public retrieval endpoint로 존재한다. |
 | Shared retrieval | `/api/v1/answer`는 public `/api/v1/retrieve` endpoint를 HTTP로 재호출하지 않고 shared retrieval service를 직접 사용한다. |
@@ -52,7 +64,7 @@ After MVP는 최종 법률 자문, 위법성 확정 판단, 소송 자동화가 
 flowchart TD
   A["/after 진입"] --> B{"preset exact?"}
   B -->|SCN-004-DEMO-FREEZE exact| C["fixed AnswerResponse fixture 표시"]
-  B -->|SCN-001-BRIDGE-DEMO exact| D["fixed answer-only fixture 표시"]
+  B -->|SCN-001-BRIDGE-DEMO exact| D["fixed fixture + frontend-local frozen draft path"]
   B -->|modified preset/free input| E["POST /api/v1/answer live answer"]
   C --> F["/after/result 근거 답변 확인"]
   D --> F
@@ -94,7 +106,7 @@ flowchart TD
 | AF-FR-006 | result 화면은 grounded answer, key points, cautions, cited articles를 표시해야 한다. | 구현됨 | `/after/result`, `AnswerResponse` | `cited_articles` 또는 `grounded_context_ids`가 없으면 answer/key points/cautions 본문을 표시하지 않고 no-answer/no-draft guard를 적용한다. |
 | AF-FR-007 | draft eligibility guard는 grounding과 SCN-004 evidence pattern을 모두 확인해야 한다. | 구현됨 | `hasDraftGrounding()`, `getScn004DraftEligibility()` | `hasDraftGrounding()`만으로는 충분하지 않다. |
 | AF-FR-008 | 지원되는 document type만 선택지로 보여야 한다. | 구현됨 | `/after/result`, `DocumentType` | 현재 frontend 노출은 `labor_office_wage_complaint`, `labor_commission_unfair_dismissal_brief` 두 가지다. |
-| AF-FR-009 | `SCN-001-BRIDGE-DEMO`는 fixed/live 여부와 관계없이 answer-only로 처리해야 한다. | 구현됨 | `supportsDraft=false`, `/after/result` | Before/Bridge handoff 설명용이며 SCN-001 document type 구현이 아니다. |
+| AF-FR-009 | `SCN-001-BRIDGE-DEMO` exact fixed path는 frontend-local frozen draft flow를 제공하고, modified/live and Bridge-origin paths는 answer-only로 처리해야 한다. | 구현됨 | `scenarioPresetDrafts.ts`, `/after/result`, `/after/intake`, `/after/draft` | live/backend SCN-001 document draft generation은 구현하지 않는다. |
 | AF-FR-010 | case intake는 문서 타입별 사실관계와 증거 입력을 수집해야 한다. | 구현됨 | `/after/intake`, `CaseIntakeFormValues`, `buildCaseIntake()` | 연락처, 계좌번호, 외국인등록번호 등 직접 식별 정보는 필수 수집하지 않는다. |
 | AF-FR-011 | intake submit은 `buildLegalBasis()`와 `buildCaseIntake()` 결과만 draft endpoint에 보내야 한다. | 구현됨 | `DocumentDraftRequest`, `LegalBasisInput`, `CaseIntake` | `LegalBasisInput.retrieved_chunks`는 grounded context id에 포함된 chunk만 전달한다. `/after/intake` submit 직전에 selected document type eligibility를 재검증하고, false이면 `fetchDraft()`를 호출하지 않는다. |
 | AF-FR-012 | document draft generation은 deterministic backend builder로 동작해야 한다. | 구현됨 | `POST /api/v1/documents/draft`, `build_document_draft()` | Vertex/retrieval/answer_generation 호출 금지. |
@@ -120,6 +132,7 @@ flowchart TD
 | AF-NFR-009 | print/copy usability | `rendered_text`는 copy와 browser print에 적합해야 하며, 제출 전 검토용 disclaimer를 유지한다. |
 | AF-NFR-010 | error handling | answer/draft 호출 실패, direct URL access, unsupported answer, ungrounded no-answer/no-draft 상태를 사용자가 복구 가능한 방식으로 처리한다. |
 | AF-NFR-011 | reproducibility | demo path, fixed fixture, `top_k`/`ef_search` 규칙, SCN-004 eligibility guard를 유지해 제출 전 재현성을 보장한다. |
+| AF-NFR-012 | visual guide alignment | `DESIGN.md` 기준으로 token-first, neutral/dense/evidence-led UI를 유지하고 disclaimer/uncertainty를 눈에 띄게 둔다. |
 
 ## 8. Privacy / Vertex / Draft Boundary
 
@@ -127,7 +140,7 @@ flowchart TD
 
 `/api/v1/answer`는 modified preset 또는 free input의 사용자 query를 Vertex embedding과 Gemini answer generation으로 보낼 수 있다. 기본 answer model은 현재 `gemini-2.5-flash`이며, public `AnswerRequest`에는 `model_name` field가 없다.
 
-`SCN-004-DEMO-FREEZE` exact preset은 fixed fixture를 사용하고 `/api/v1/answer`를 호출하지 않는다. 따라서 exact preset path 자체는 live Vertex query embedding 또는 Gemini answer generation을 호출하지 않는다. `SCN-001-BRIDGE-DEMO`도 fixed answer-only preset이며 draft flow로 들어가지 않는다.
+`SCN-004-DEMO-FREEZE` exact preset은 fixed fixture를 사용하고 `/api/v1/answer`를 호출하지 않는다. 따라서 exact preset path 자체는 live Vertex query embedding 또는 Gemini answer generation을 호출하지 않는다. `SCN-001-BRIDGE-DEMO` exact preset도 fixed fixture를 사용하며, frontend-local frozen draft flow는 backend/LLM이나 `/api/v1/documents/draft`를 호출하지 않는다.
 
 `/api/v1/documents/draft`는 Vertex AI, retrieval service, answer_generation service를 호출하지 않는다. 이 endpoint는 request의 `legal_basis`와 `case_intake`만 사용한다. 단, `legal_basis`는 이전 live `/api/v1/answer` 호출 결과에서 유래했을 수 있으므로, modified/free input answer path에서 이미 Vertex를 사용했을 수 있다.
 

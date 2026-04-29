@@ -6,7 +6,7 @@
 law_main_road repo root에서 작업해주세요.
 
 기준일:
-- 2026-04-28
+- 2026-04-29
 
 현재 git / 제출 기준 상태:
 - 새 세션 시작 직후 `git status -sb`, `git status --short`, `git branch --show-current`, `git log --oneline -12`로 현재 branch, clean/dirty 상태, 최신 commit을 다시 확인하세요.
@@ -14,6 +14,20 @@ law_main_road repo root에서 작업해주세요.
 - `experiment/frontend-polish-history-after`를 review 중이면 해당 branch context를 사용하고, main merge 후라면 main의 현재 상태를 기준으로 복구하세요.
 - push는 수행하지 않는다.
 - 최근 중요 커밋:
+  - 85d10fa fix(frontend): avoid hardcoded accessibility legal basis
+  - 2e5dd19 fix(frontend): restore After entry disclaimer
+  - 3f7911c docs(frontend): update design polish guide
+  - 21de4b6 fix(frontend): improve After status contrast
+  - 831730e refactor(frontend): align UI polish with design guide
+  - 1d58c78 refactor(frontend): polish main page hierarchy
+  - 1fc4131 refactor(frontend): align History page layout
+  - debf4b4 refactor(frontend): align After entry guidance
+  - d4a69b5 fix(frontend): reset Before and After scroll on entry
+  - 63b60c4 fix(frontend): distinguish After history accent states
+  - a9b307c refactor(frontend): focus After entry layout
+  - 759dbb9 refactor(frontend): clarify Before support guidance
+  - 2f80614 refactor(frontend): refine Before upload focus
+  - bef62a1 refactor(frontend): focus Before upload entry
   - fdde441 refactor(frontend): prioritize login on home page
   - a2d984f fix(frontend): separate wage and deduction summaries
   - f15430c fix(frontend): avoid overbroad case summaries
@@ -168,14 +182,15 @@ law_main_road repo root에서 작업해주세요.
   - exact preset submit keeps fixed answer path priority
 - SCN-001 frontend history/After polish changes are completed in the current git
   history when the polish commits are present:
-  - latest main is pushed through `fdde441 refactor(frontend): prioritize login
-    on home page`
+  - latest main is pushed through `85d10fa fix(frontend): avoid hardcoded
+    accessibility legal basis`
   - latest main includes `8cd1ccb feat(frontend): polish SCN-001 history cards`,
     `c365ca5 feat(frontend): clarify SCN-001 history summaries`,
     `6263a8e refactor(frontend): fold SCN-001 case records`,
     `f15430c fix(frontend): avoid overbroad case summaries`,
-    `a2d984f fix(frontend): separate wage and deduction summaries`, and
-    `fdde441 refactor(frontend): prioritize login on home page`
+    `a2d984f fix(frontend): separate wage and deduction summaries`,
+    `fdde441 refactor(frontend): prioritize login on home page`, and the later
+    integrated UI polish / contrast / disclaimer / accessibility blocker fixes
   - `/after` saved history and `/history` now use incident-centered single cards,
     not separate Before/Bridge list cards or 2-column layout
   - one incident card shows situation summary, confirmed issues, candidate legal
@@ -205,23 +220,39 @@ law_main_road repo root에서 작업해주세요.
     `/api/v1/history` unified backend API, live/backend SCN-001 draft generation,
     protected SCN-001 draft endpoint, Step 3 full retention lifecycle, or
     SCN-004 freeze behavior changed
-- Latest frontend visual redesign is completed through `fdde441`:
+- Latest integrated frontend visual/UI polish is completed through `85d10fa`:
+  - DESIGN.md visual guide alignment: token-first, neutral/dense/evidence-led,
+    disclaimers/uncertainty prominent
   - visual foundation token alignment
   - home visual simplification
+  - Main H1/lead/nav typography cleanup and compact flow strip
   - `/before`, `/after`, `/history` internal route chrome simplification
+  - Before first screen upload focus, local server/demo copy removal, examples preserved,
+    result/accessibility layout cleanup
+  - After entry centered layout, guidance cards, preset display label cleanup
+    while keeping id/query unchanged, entry disclaimer restored
+  - After saved history connection accent states: unselected primary blue,
+    selected success green
+  - History centered layout, readable folded incident cards, blue left accent
   - `/after/result`, `/after/intake`, `/after/draft` after-flow detail visual polish
+  - warning/status contrast fixes
   - draft print CSS specificity fix
   - masthead light surface alignment
+  - hardcoded default accessibility legal basis removed
 - Before analysis progress UX is completed:
   - `/before` analysis start scrolls to the progress area
   - OCR guidance says document quality/length can take about 1~2 minutes
   - raw job id/status/provider/internal error is not exposed
   - backend OCR/provider/polling contract unchanged
+- Before first screen focus is completed:
+  - local server/demo copy removed
+  - upload centered first screen
+  - examples remain available
+  - result/accessibility section layout cleaned up
+  - hardcoded default accessibility legal basis removed
 - Remaining candidates:
-  - optional frontend-only visual polish: SCN-004 intake/draft internal component
-    surface cleanup, Before Upload/Result/Accessibility panels deep polish,
-    Auth/LoginButton token cleanup nit, History deep density polish, and manual
-    visual QA / print preview
+  - manual visual QA / print preview
+  - small token/a11y nits if needed
   - backend/API/schema work remains closed
 
 현재 구현 API:
@@ -415,9 +446,10 @@ SCN-001 `/history` record archive 기준:
   fallback, not raw keys.
 
 Main page history entry 기준:
-- Main page login priority is completed in `fdde441`.
+- Main page login priority is completed through `85d10fa`.
 - Logged-out first viewport prioritizes the Google login CTA.
 - Backend-verified logged-in users keep `History / Before / After` entry order.
+- H1/lead/nav typography cleanup and compact flow strip are completed.
 - SCN-004 `/after` remains login-free.
 
 Free input 정책:
@@ -536,14 +568,10 @@ npm run dev
 - 파일 수정이 필요하면 먼저 수정 범위를 보고하세요.
 
 다음 실질 후보 작업 우선순위:
-1. Optional frontend-only visual polish
-   - SCN-004 intake/draft internal component surface cleanup
-   - Before Upload/Result/Accessibility panels deep polish
-   - Auth/LoginButton token cleanup nit
-   - History deep density polish
+1. Manual visual QA / print preview
    - SCN-004 freeze와 SCN-001 frozen draft/history/continuity boundary는 건드리지 않음
    - backend/API/schema 작업은 열지 않음
-2. Manual visual QA / print preview
+2. Small token/a11y nits if needed
    - 실제 브라우저 print preview는 residual manual check로 유지
    - `SCN-004-DEMO-FREEZE` exact/free input flow와 login-free behavior를 확인
 3. Submission/final demo preflight 재실행 및 presentation rehearsal
@@ -602,12 +630,11 @@ Bridge/query relevance guard matrix review도 completed/current design baseline�
 문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, stale OCR
 review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history
 selector, SCN-001 frontend history/After polish는 completed 상태다. 최신 main은
-`fdde441`까지 push 완료 상태이며 visual foundation/home/internal route
+`85d10fa`까지 push 완료 상태이며 visual foundation/home/internal route
 chrome/after-flow detail polish, Before progress UX, masthead light alignment,
 `/after` + `/history` case record fold, wage/deduction summary fix, main page
-login priority가 완료됐다. 남은 후보는 optional frontend-only visual polish다:
-SCN-004 intake/draft internal component surface cleanup, Before
-Upload/Result/Accessibility panels deep polish, Auth/LoginButton token cleanup
-nit, History deep density polish, and manual visual QA / print preview.
+login priority, integrated Before/After/History/Main UI polish, DESIGN.md visual
+guide, contrast/disclaimer fixes, and accessibility legal-basis blocker fix가
+완료됐다. 남은 후보는 manual visual QA / print preview와 small token/a11y nit뿐이다.
 live/backend SCN-001 document draft implementation, protected SCN-001 draft endpoint
 확정, live SCN-001 draft generation/freeze는 아직 열지 않는다.

@@ -1,10 +1,20 @@
 # After Flow
 
-기준일: `2026-04-20`
+기준일: `2026-04-29`
 
 ## 현재 구현 상태
 
-SCN-004 After flow는 backend와 frontend가 연결된 demo path까지 구현 완료됐고, QA/content/frontend rehearsal을 통과했다.
+SCN-004 After flow는 backend와 frontend가 연결된 demo path까지 구현 완료됐고, QA/content/frontend rehearsal을 통과했다. 추가로 SCN-001 protected Bridge answer routing, `/after` saved history selector, fixed-preset frozen draft path가 코드에 반영되어 있다.
+
+Latest main `85d10fa` 기준 After entry polish:
+
+- page entry is centered and uses guidance cards.
+- preset display labels were clarified while preserving preset id/query.
+- entry disclaimer was restored.
+- saved history connection accents use primary blue before selection and success
+  green after selection.
+- contrast fixes are frontend-only and do not change `/api/v1/answer` or
+  `/api/v1/documents/draft`.
 
 구현 route:
 
@@ -13,16 +23,27 @@ SCN-004 After flow는 backend와 frontend가 연결된 demo path까지 구현 �
 - `/after/intake`
 - `/after/draft`
 
+연결 route:
+
+- `/before`
+- `/history`
+
 연동 API:
 
 - `POST /api/v1/answer`
 - `POST /api/v1/documents/draft`
+- `GET /api/v1/auth/me`
+- `GET /api/v1/scn001/before-review-jobs`
+- `GET /api/v1/scn001/bridge-runs`
+- `DELETE /api/v1/scn001/before-review-jobs/{before_review_job_id}`
+- `DELETE /api/v1/scn001/bridge-runs/{bridge_run_id}`
+- `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`
 
 ## 사용자 흐름
 
 1. 사용자가 해고, 임금, 퇴직금, 사업장 변경 등 상황을 자유 진술로 입력한다.
 2. 발표용 presentation-local preset exact path는 fixed answer fixture를 사용한다.
-   - `SCN-001-BRIDGE-DEMO`: eval `SCN-001-Q3`이 아닌 Before/Bridge 발표 연결용 query, answer-only
+   - `SCN-001-BRIDGE-DEMO`: eval `SCN-001-Q3`이 아닌 Before/Bridge 발표 연결용 query, exact fixed path는 frontend-local frozen draft flow, modified/live and Bridge-origin paths는 answer-only
    - `SCN-004-DEMO-FREEZE`: eval `SCN-004-Q1`이 아닌 document draft freeze용 query, SCN-004 draft eligibility 적용
 3. preset 문장을 수정하면 `top_k=10`, 일반 자유 입력은 `top_k=5`로 `/api/v1/answer`를 호출한다.
 4. 결과 화면에서 grounded answer, key points, cautions, cited_articles를 확인한다.
@@ -33,16 +54,24 @@ SCN-004 After flow는 backend와 frontend가 연결된 demo path까지 구현 �
 7. 사건 정보는 선택 입력으로 받고, 빈 필드는 제출을 막지 않는다.
 8. `/api/v1/documents/draft`가 facts, legal_basis, request, evidence_checklist, missing_fields, cautions, rendered_text를 반환한다.
 9. 사용자는 초안을 검토하고 복사 또는 인쇄할 수 있다.
+10. backend-verified logged-in user는 `/after`에서 saved Before/Bridge history를
+    펼쳐 Bridge handoff memory state에 safe subset만 추가할 수 있다.
+11. checked Bridge submit은 protected Bridge answer endpoint를 호출하고,
+    all-unchecked submit은 public answer fallback을 쓰지만 `bridge_handoff`
+    origin과 answer-only 정책을 유지한다.
 
 ## Guardrails
 
 - 검색되지 않은 조문을 초안에 추가하지 않는다.
 - 사용자가 말하지 않은 날짜, 금액, 사업장명, 당사자명은 확인 필요로 둔다.
 - 법률 판단 확정 문구를 피하고 제출 전 검토용 초안으로 표시한다.
-- `SCN-001-BRIDGE-DEMO` preset은 fixed/live 여부와 관계없이 answer-only로 유지한다.
+- `SCN-001-BRIDGE-DEMO` exact fixed preset은 frontend-local frozen draft flow를 제공한다.
+- `SCN-001-BRIDGE-DEMO` modified/live path와 Bridge-origin path는 answer-only로 유지한다.
 - `SCN-004-DEMO-FREEZE` preset과 preset 없는 자유 입력만 SCN-004 draft eligibility를 적용한다.
 - SCN-005는 현재 frontend preset UI에서 제외하고 후속 확장 후보로만 유지한다.
 - raw user_statement, answer_response, case_intake, draft_response는 Web Storage에 저장하지 않는다.
+- raw Bridge payload, raw `after_query_seed`, token, Firebase uid, provider_subject,
+  email, real bridge id는 UI/query/storage/docs에 노출하지 않는다.
 
 ## 현재 freeze 기준
 
