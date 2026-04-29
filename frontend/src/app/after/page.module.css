@@ -1,5 +1,6 @@
 .main {
   --after-entry-width: 800px;
+  --after-selected-success-text: #166534;
   min-height: calc(100vh - var(--kl-masthead-height));
   background: var(--kl-surface-page);
   color: var(--kl-text-primary);
@@ -394,7 +395,7 @@
 }
 
 .warningText {
-  color: var(--kl-text-warning);
+  color: var(--kl-text-primary);
 }
 
 .presetRow {
@@ -843,7 +844,7 @@
   padding: 0 10px;
   border-radius: var(--kl-radius-sm);
   background: var(--kl-surface-success);
-  color: var(--kl-text-success);
+  color: var(--after-selected-success-text);
   font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.35;
@@ -1013,7 +1014,7 @@
 .historySelectButtonSelected {
   border: 1px solid var(--kl-success);
   background: var(--kl-surface-success);
-  color: var(--kl-text-success);
+  color: var(--after-selected-success-text);
   cursor: default;
 }
 
@@ -1046,6 +1047,13 @@
   color: var(--kl-text-muted);
   background: var(--kl-surface-02);
   border-color: var(--kl-border-subtle);
+}
+
+.historySelectButtonSelected:disabled {
+  cursor: default;
+  border-color: var(--kl-success);
+  background: var(--kl-surface-success);
+  color: var(--after-selected-success-text);
 }
 
 .historyMetaGrid {
