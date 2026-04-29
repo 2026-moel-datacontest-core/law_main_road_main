@@ -4,9 +4,69 @@ import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
-import type { BeforeReviewResult } from '@/types/before';
+import type { BeforeReviewEvidence, BeforeReviewResult } from '@/types/before';
 
 import styles from './ResultPanel.module.css';
+
+type EvidenceCopyScenario = 'foreignWorker' | 'partTime' | 'disabledWorker';
+
+const MOCK_REVIEW_EVIDENCE_SCENARIOS: Record<string, EvidenceCopyScenario> = {
+  '5f0d77f5-foreign-worker-demo': 'foreignWorker',
+  'e4a0fb62-cbb4-4136-ac6a-8a96fb66050f': 'partTime',
+  '54a00490-5cfc-4371-87d1-00985108ceb7': 'disabledWorker',
+};
+
+const SCENARIO_EVIDENCE_COPY: Record<
+  EvidenceCopyScenario,
+  Array<{ title: string; excerpt: string }>
+> = {
+  foreignWorker: [
+    {
+      title: '표준근로계약서와 핵심 조건 확인',
+      excerpt:
+        '표준근로계약서 여부와 계약 언어, 임금·근로시간·숙소 조건이 서면에 적혀 있는지 확인합니다.',
+    },
+    {
+      title: '권리 제한으로 이어질 수 있는 조항 확인',
+      excerpt:
+        '숙소비 공제, 여권 보관, 사업장 이동 제한처럼 실제 근무 중 권리 제한으로 이어질 수 있는 조항을 확인합니다.',
+    },
+    {
+      title: '빠진 근로조건 확인',
+      excerpt:
+        '계약기간, 근로장소, 업무내용, 휴게시간, 휴일처럼 계약서에서 빠진 항목이 있는지 확인합니다.',
+    },
+  ],
+  partTime: [
+    {
+      title: '임금 산정에 필요한 항목 확인',
+      excerpt:
+        '시급, 근로시간, 휴게시간, 주휴수당 등 임금 산정에 필요한 항목이 계약서에 적혀 있는지 확인합니다.',
+    },
+    {
+      title: '실제 근무와 수당 조건 확인',
+      excerpt:
+        '수습 기간, 공제 항목, 연장·야간·휴일근로 수당 조건이 실제 근무와 맞는지 확인합니다.',
+    },
+    {
+      title: '계약 기간 표시 확인',
+      excerpt:
+        '근로 시작일과 종료일 또는 기간의 정함이 없는 계약인지가 문서에서 분명하게 확인되는지 살펴봅니다.',
+    },
+  ],
+  disabledWorker: [
+    {
+      title: '직무·시간·임금 조건 확인',
+      excerpt:
+        '직무, 근로시간, 임금 조건이 장애를 이유로 불리하게 정해진 부분이 없는지 확인합니다.',
+    },
+    {
+      title: '편의 제공과 근무환경 확인',
+      excerpt:
+        '필요한 편의 제공, 안전한 근무환경, 의사소통 지원이 계약·근무 조건에서 빠져 있지 않은지 확인합니다.',
+    },
+  ],
+};
 
 interface ResultPanelProps {
   review: BeforeReviewResult;
@@ -173,12 +233,13 @@ export function ResultPanel({
         <section className={styles.card}>
           <div className={styles.sectionHeader}>
             <p className={styles.sectionEyebrow}>Evidence toggle</p>
-            <h3 className={styles.sectionTitle}>근거와 원문</h3>
+            <h3 className={styles.sectionTitle}>근거와 확인 포인트</h3>
           </div>
 
           <div className={styles.evidenceList}>
             {review.evidence.map((evidence, index) => {
               const isOpen = openEvidenceIndex === index;
+              const displayEvidence = getScenarioEvidenceCopy(review, evidence, index);
 
               return (
                 <div key={evidence.title} className={styles.evidenceCard}>
@@ -189,14 +250,14 @@ export function ResultPanel({
                   >
                     <div>
                       <p className={styles.evidenceIndex}>Evidence {index + 1}</p>
-                      <h4 className={styles.evidenceTitle}>{evidence.title}</h4>
+                      <h4 className={styles.evidenceTitle}>{displayEvidence.title}</h4>
                     </div>
                     <span className={styles.evidenceToggle}>{isOpen ? '접기' : '열기'}</span>
                   </button>
 
                   {isOpen ? (
                     <div className={styles.evidenceBody}>
-                      <pre className={styles.evidenceExcerpt}>{evidence.excerpt}</pre>
+                      <p className={styles.evidenceExcerpt}>{displayEvidence.excerpt}</p>
                     </div>
                   ) : null}
                 </div>
@@ -233,6 +294,21 @@ export function ResultPanel({
       </div>
     </div>
   );
+}
+
+function getScenarioEvidenceCopy(
+  review: BeforeReviewResult,
+  evidence: BeforeReviewEvidence,
+  index: number,
+): BeforeReviewEvidence {
+  const scenario = getEvidenceCopyScenario(review);
+  const displayCopy = scenario ? SCENARIO_EVIDENCE_COPY[scenario][index] : null;
+
+  return displayCopy ?? evidence;
+}
+
+function getEvidenceCopyScenario(review: BeforeReviewResult): EvidenceCopyScenario | null {
+  return MOCK_REVIEW_EVIDENCE_SCENARIOS[review.review_id] ?? null;
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
