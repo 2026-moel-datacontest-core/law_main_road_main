@@ -1,12 +1,11 @@
 .panel {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   width: 100%;
-  padding: 22px;
-  border-radius: var(--kl-radius-2xl);
-  border: var(--kl-card-border);
-  background: var(--kl-surface-card);
-  box-shadow: var(--kl-shadow-card);
+  padding: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f6f9fd 100%);
   color: var(--kl-text-primary);
   word-break: keep-all;
   overflow-wrap: break-word;
@@ -14,7 +13,7 @@
 
 .header {
   display: grid;
-  gap: 12px;
+  gap: 6px;
 }
 
 .badge,
@@ -32,11 +31,7 @@
 
 .badge {
   align-self: start;
-  padding: 6px 12px;
-  border: 1px solid rgba(15, 98, 254, 0.18);
-  border-radius: 999px;
-  background: var(--kl-primary-light);
-  color: var(--kl-primary);
+  color: #667085;
 }
 
 .title,
@@ -50,7 +45,7 @@
 }
 
 .title {
-  font-size: 1.55rem;
+  font-size: 1.4rem;
 }
 
 .cardTitle {
@@ -86,7 +81,7 @@
 .emptyState,
 .infoBox,
 .warningBox {
-  border: var(--kl-card-border);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 22px;
 }
 
@@ -103,7 +98,7 @@
 .selectorLabel,
 .overviewEyebrow,
 .cardKind {
-  color: var(--kl-primary);
+  color: #667085;
 }
 
 .optionRow,
@@ -157,33 +152,29 @@
 
 .overviewCard,
 .nextStepCard {
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-card);
 }
 
 .recommendationCard {
   display: grid;
   gap: 12px;
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-card);
 }
 
 .recommendationRight {
-  border-color: rgba(15, 98, 254, 0.18);
-  background: var(--kl-primary-light);
+  border-left-color: rgba(15, 98, 254, 0.28);
 }
 
 .recommendationSupport {
-  border-color: rgba(36, 161, 72, 0.18);
-  background: var(--kl-surface-success);
+  border-left-color: rgba(36, 161, 72, 0.28);
 }
 
 .recommendationQuestion {
-  border-color: rgba(245, 158, 11, 0.2);
-  background: #fffbeb;
+  border-left-color: rgba(245, 158, 11, 0.3);
 }
 
 .recommendationLaw {
-  border-color: rgba(15, 98, 254, 0.14);
-  background: var(--kl-surface-info);
+  border-left-color: rgba(15, 98, 254, 0.24);
 }
 
 .recommendationHeader {

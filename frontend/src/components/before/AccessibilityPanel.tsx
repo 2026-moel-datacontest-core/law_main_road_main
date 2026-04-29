@@ -36,11 +36,11 @@ export function AccessibilityPanel({
       <div className={styles.header}>
         <span className={styles.badge}>Accessibility extension</span>
         <h2 id="before-accessibility-title" className={styles.title}>
-          장애 특성을 반영한 권리·지원 안내를 받으시겠어요?
+          접근성 지원 안내
         </h2>
         <p className={styles.description}>
-          결과 화면 옆에서 함께 확인하는 보조 패널입니다. 장애 유형을 고르면 상황에 맞는 권리,
-          지원, 확인 질문을 카드로 정리해서 보여줍니다.
+          장애 유형을 고르면 현재 결과와 함께 확인할 권리, 지원, 확인 질문을 카드로
+          정리해서 보여줍니다.
         </p>
       </div>
 

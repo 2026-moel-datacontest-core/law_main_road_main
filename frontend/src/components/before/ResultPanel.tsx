@@ -59,9 +59,27 @@ export function ResultPanel({
           </div>
 
           <div className={styles.heroActions}>
-            <StatusBadge kind="status" value={review.overall_result} />
-            <StatusBadge kind="severity" value={review.overall_severity} />
-            <Button type="button" variant="ghost" onClick={onReset} disabled={resetDisabled}>
+            <div className={styles.heroStatusGroup}>
+              <StatusBadge kind="status" value={review.overall_result} />
+              <StatusBadge kind="severity" value={review.overall_severity} />
+            </div>
+            {accessibilityPanel && onAccessibilityCtaClick ? (
+              <Button
+                type="button"
+                variant="tertiary"
+                onClick={onAccessibilityCtaClick}
+                className={styles.heroAccessibilityButton}
+              >
+                권리·지원 안내 보기
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onReset}
+              disabled={resetDisabled}
+              className={styles.heroResetButton}
+            >
               새 분석으로 돌아가기
             </Button>
           </div>
@@ -147,21 +165,6 @@ export function ResultPanel({
             ))}
           </div>
 
-          {accessibilityPanel && onAccessibilityCtaClick ? (
-            <div className={styles.accessibilityCta}>
-              <p className={styles.accessibilityCtaHint}>
-                아래 보조 안내 영역으로 이동합니다.
-              </p>
-              <Button
-                type="button"
-                variant="tertiary"
-                onClick={onAccessibilityCtaClick}
-                className={styles.accessibilityCtaButton}
-              >
-                장애 특성을 반영한 권리·지원 안내를 받으시겠어요?
-              </Button>
-            </div>
-          ) : null}
         </section>
 
         <section className={styles.card}>

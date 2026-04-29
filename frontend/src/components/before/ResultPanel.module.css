@@ -116,10 +116,62 @@
 }
 
 .heroActions {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  justify-items: start;
+  min-width: 0;
+}
+
+.heroStatusGroup {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
+}
+
+.heroAccessibilityButton,
+.heroResetButton {
+  justify-content: center;
+  width: 100%;
+  height: auto;
+  white-space: normal;
+  text-align: center;
+}
+
+.heroAccessibilityButton {
+  min-height: 42px;
+  padding: 8px 14px;
+  border-color: rgba(147, 197, 253, 0.42);
+  background: rgba(59, 130, 246, 0.16);
+  color: #dbeafe;
+}
+
+.heroAccessibilityButton:hover:not(:disabled) {
+  border-color: rgba(191, 219, 254, 0.64);
+  background: rgba(96, 165, 250, 0.22);
+  color: #ffffff;
+}
+
+.heroResetButton {
+  min-height: 38px;
+  padding: 6px 12px;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.heroResetButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.heroAccessibilityButton span:last-child,
+.heroResetButton span:last-child {
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .badgeBase {
@@ -331,41 +383,6 @@
   overflow-wrap: break-word;
 }
 
-.accessibilityCta {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 16px;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.accessibilityCtaHint {
-  margin: 0;
-  color: #667085;
-  font-size: 0.94rem;
-  line-height: 1.6;
-  word-break: keep-all;
-  overflow-wrap: break-word;
-}
-
-.accessibilityCtaButton {
-  flex: 0 1 auto;
-  justify-content: center;
-  min-width: min(100%, 320px);
-  height: auto;
-  min-height: 44px;
-  padding-top: 9px;
-  padding-bottom: 9px;
-  text-align: center;
-  white-space: normal;
-}
-
-.accessibilityCta .accessibilityCtaButton span:last-child {
-  word-break: keep-all;
-  overflow-wrap: break-word;
-}
-
 .accessibilityPanelSlot {
   display: grid;
   min-width: 0;
@@ -459,21 +476,19 @@
   }
 }
 
-@media (max-width: 671px) {
-  .accessibilityCta {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .accessibilityCtaButton {
-    width: 100%;
-  }
-}
-
 @media (min-width: 1056px) {
   .heroInner {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
+  }
+
+  .heroActions {
+    justify-items: stretch;
+    min-width: 220px;
+  }
+
+  .heroStatusGroup {
+    justify-content: flex-end;
   }
 
   .issueHeader {
