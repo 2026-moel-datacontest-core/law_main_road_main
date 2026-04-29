@@ -277,16 +277,16 @@ export function Scn001HistoryManager() {
     <section className={styles.panel} aria-labelledby="history-page-title">
       <div className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>SCN-001 history</p>
+          <p className={styles.eyebrow}>사건 기록</p>
           <h2 id="history-page-title" className={styles.title}>
             내 사건 기록
           </h2>
           <p className={styles.description}>
-            완료되어 다시 확인할 수 있는 상황 설명과 After로 이어볼 참고 후보만 표시합니다.
+            완료된 Before 검토와 After로 이어볼 연결 후보를 안전하게 표시 가능한 범위로 모아둡니다.
           </p>
         </div>
         <div className={styles.headerMeta} aria-label="기록 표시 범위">
-          <span className={styles.visibilityPill}>완료/표시 가능</span>
+          <span className={styles.visibilityPill}>표시 가능한 기록</span>
           {isBackendAuthenticated && historyStatus === 'success' ? (
             <span className={styles.totalPill}>총 {totalHistoryCount}건</span>
           ) : null}
@@ -323,14 +323,14 @@ export function Scn001HistoryManager() {
         <>
           <div className={styles.summaryGrid} aria-label="기록 요약">
             <HistoryStat
-              label="사건 기록"
+              label="사건 묶음"
               value={`${caseRecords.length}건`}
-              description="표시 가능한 사건 묶음"
+              description="완료된 검토와 연결 후보"
             />
             <HistoryStat
-              label="연결 후보"
+              label="After 연결 후보"
               value={`${bridgeHistory.length}건`}
-              description="After에서 참고할 후보"
+              description="질문에 이어볼 참고 맥락"
             />
           </div>
           <CaseHistoryList
@@ -381,7 +381,7 @@ function CaseHistoryList({
         <div>
           <h3 className={styles.columnTitle}>사건 중심 기록</h3>
           <p className={styles.columnDescription}>
-            상황 설명 아래에서 쟁점, 참고할 법 조항 후보, 권장 다음 단계를 한 번에 확인합니다.
+            상황 설명, 확인된 쟁점, 참고할 법 조항 후보, 권장 다음 단계를 한 카드에서 확인합니다.
           </p>
         </div>
         <span className={styles.count}>{records.length}건</span>
@@ -427,7 +427,7 @@ function CaseHistoryCard({
       <details className={styles.caseFold}>
         <summary className={styles.caseSummary}>
           <span className={styles.caseSummaryText}>
-            <span className={styles.cardEyebrow}>사건 기록</span>
+            <span className={styles.cardEyebrow}>사건 요약</span>
             <span className={styles.caseSummaryTitle}>{caseLabel}</span>
             <span className={styles.compactSummary}>{record.compactSummary}</span>
           </span>
@@ -557,7 +557,7 @@ function CaseBridgeCandidate({
       </div>
 
       <HistorySummaryBlock
-        title="연결 요약"
+        title="After 질문과 연결점"
         body={displayFields.connectionSummary}
         fallback="연결 요약이 없습니다."
       />

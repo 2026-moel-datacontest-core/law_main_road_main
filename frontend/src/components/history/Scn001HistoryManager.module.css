@@ -1,6 +1,8 @@
 .panel {
   display: grid;
   gap: var(--kl-space-6);
+  width: 100%;
+  min-width: 0;
 }
 
 .header {
@@ -25,10 +27,9 @@
   margin: 0 0 8px;
   color: var(--kl-primary);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.4;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .title,
@@ -40,6 +41,7 @@
 
 .title {
   font-size: 1.45rem;
+  font-weight: 700;
 }
 
 .description {
@@ -60,7 +62,7 @@
   align-items: center;
   border-radius: 999px;
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
@@ -122,7 +124,7 @@
   color: inherit;
   font: inherit;
   font-size: 0.86rem;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -163,6 +165,7 @@
 
 .columnTitle {
   font-size: 1rem;
+  font-weight: 700;
 }
 
 .columnDescription {
@@ -193,18 +196,19 @@
   margin: 0;
   color: var(--kl-text-secondary);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.4;
 }
 
 .statValue {
   color: var(--kl-text-primary);
   font-size: 1.2rem;
+  font-weight: 700;
   line-height: 1.25;
 }
 
 .statDescription {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .list {
@@ -222,10 +226,10 @@
 .caseFold {
   min-width: 0;
   overflow: hidden;
-  border: var(--kl-card-border);
+  border: 1px solid rgba(15, 98, 254, 0.2);
   border-radius: var(--kl-radius-md);
   background: var(--kl-surface-card);
-  box-shadow: inset 3px 0 0 var(--kl-primary);
+  box-shadow: inset 4px 0 0 var(--kl-primary);
 }
 
 .caseSummary {
@@ -257,7 +261,7 @@
 .caseSummaryTitle {
   color: var(--kl-text-primary);
   font-size: 0.98rem;
-  font-weight: 850;
+  font-weight: 700;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -265,10 +269,10 @@
 .compactSummary {
   display: -webkit-box;
   overflow: hidden;
-  color: var(--kl-text-primary);
+  color: var(--kl-text-secondary);
   font-size: 0.92rem;
-  font-weight: 750;
-  line-height: 1.55;
+  font-weight: 500;
+  line-height: 1.68;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -284,7 +288,7 @@
   max-width: 320px;
   color: var(--kl-text-secondary);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -324,7 +328,7 @@
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
   background: var(--kl-surface-card);
-  box-shadow: inset 3px 0 0 var(--kl-primary);
+  box-shadow: inset 4px 0 0 var(--kl-primary);
 }
 
 .cardTop {
@@ -345,21 +349,20 @@
   margin: 0;
   color: var(--kl-text-secondary);
   font-size: 0.76rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.35;
 }
 
 .cardEyebrow {
   margin-bottom: 4px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .cardTitle {
   margin: 0;
   color: var(--kl-text-primary);
   font-size: 0.98rem;
-  font-weight: 850;
+  font-weight: 700;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -392,7 +395,7 @@
   color: var(--kl-text-secondary);
   font: inherit;
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.2;
   overflow-wrap: anywhere;
   cursor: pointer;
@@ -429,10 +432,10 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  color: var(--kl-text-primary);
+  color: var(--kl-text-secondary);
   font-size: 0.92rem;
-  font-weight: 750;
-  line-height: 1.6;
+  font-weight: 500;
+  line-height: 1.68;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -459,7 +462,7 @@
   padding: 11px 12px;
   color: var(--kl-text-secondary);
   font-size: 0.86rem;
-  font-weight: 850;
+  font-weight: 700;
   line-height: 1.4;
   cursor: pointer;
 }
@@ -489,7 +492,7 @@
   margin: 0;
   color: var(--kl-text-primary);
   font-size: 0.94rem;
-  font-weight: 850;
+  font-weight: 700;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -498,8 +501,9 @@
   display: grid;
   gap: 10px;
   min-width: 0;
-  padding-top: 12px;
-  border-top: 1px solid rgba(148, 163, 184, 0.24);
+  padding: 12px 0 0 12px;
+  border-left: 3px solid var(--kl-primary);
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
 }
 
 .connectionBlock:first-child {
@@ -527,7 +531,7 @@
 
 .connectionNote {
   font-size: 0.82rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .metaGrid {
@@ -549,7 +553,7 @@
   margin: 0;
   color: var(--kl-text-secondary);
   font-size: 0.76rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.35;
 }
 
@@ -596,7 +600,7 @@
 .issueLabel {
   color: var(--kl-text-primary);
   font-size: 0.86rem;
-  font-weight: 850;
+  font-weight: 700;
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
