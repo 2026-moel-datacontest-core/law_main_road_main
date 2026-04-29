@@ -137,11 +137,9 @@ function Hero() {
       <div className={styles.container}>
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>K-Labor Shield</p>
-          <h1 className={styles.heroTitle}>법대로 AI 근로 사건 워크스페이스</h1>
+          <h1 className={styles.heroTitle}>법대로 AI</h1>
           <p className={styles.heroDescription}>
-            로그인 상태를 먼저 확인하고, 저장 기록 확인과 계약서 검토, 사후 질문을 같은
-            사건 흐름 안에서 이어갑니다. After 질문과 초안 흐름은 로그인 없이도 사용할 수
-            있습니다.
+            근로계약서 검토부터 노동법 질문, 사건 기록까지 이어서 확인합니다.
           </p>
         </div>
       </div>
@@ -250,6 +248,42 @@ function TaskSection({ onBeforeGate, showHistoryEntry }: TaskSectionProps) {
               meta="로그인 없이 사용"
             />
           </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FlowSection() {
+  const flowItems = [
+    {
+      title: '계약서 검토',
+      description: 'Before에서 계약서 위험 조항과 확인할 내용을 정리합니다.',
+    },
+    {
+      title: '법 조항 연결',
+      description: '필요한 경우 Before 기록을 After 질문의 참고 맥락으로 이어갑니다.',
+    },
+    {
+      title: '질문·초안 작성',
+      description: 'After에서 조문 근거를 확인하고 가능한 문서 초안으로 이어집니다.',
+    },
+  ];
+
+  return (
+    <section className={styles.flowSection} aria-labelledby="flow-heading">
+      <div className={styles.container}>
+        <div className={styles.flowHeader}>
+          <p className={styles.eyebrow}>Flow</p>
+          <h2 id="flow-heading">진행 흐름</h2>
+        </div>
+        <div className={styles.flowStrip}>
+          {flowItems.map((item) => (
+            <article className={styles.flowItem} key={item.title}>
+              <strong>{item.title}</strong>
+              <p>{item.description}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>
@@ -381,6 +415,7 @@ export default function HomePage() {
         sectionRef={accountSectionRef}
       />
       <TaskSection onBeforeGate={handleBeforeGate} showHistoryEntry={isBackendAuthenticated} />
+      <FlowSection />
       <Footer onBeforeGate={handleBeforeGate} showHistoryLink={isBackendAuthenticated} />
     </div>
   );

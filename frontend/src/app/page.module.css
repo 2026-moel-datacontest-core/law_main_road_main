@@ -91,7 +91,7 @@
 .navTextButton,
 .navPrimaryButton {
   font-size: var(--kl-text-body);
-  font-weight: 700;
+  font-weight: 600;
   line-height: var(--kl-lh-body-short);
   letter-spacing: 0;
   white-space: nowrap;
@@ -145,8 +145,10 @@
 
 .navTextButton,
 .navPrimaryButton {
+  min-height: 36px;
+  padding: 0 var(--kl-space-3);
   font-size: var(--kl-text-body);
-  font-weight: 700;
+  font-weight: 600;
   line-height: var(--kl-lh-body-short);
 }
 
@@ -154,6 +156,13 @@
 .secondaryButton {
   border: var(--kl-border-default);
   background: var(--kl-surface-card);
+}
+
+.navTextButton {
+  color: var(--kl-text-secondary);
+}
+
+.secondaryButton {
   color: var(--kl-text-primary);
 }
 
@@ -202,22 +211,27 @@
   min-width: 0;
   padding: var(--kl-space-2) 0;
   color: var(--kl-text-primary);
-  font-size: var(--kl-text-body-lg);
-  font-weight: 700;
+  font-size: var(--kl-text-body);
+  font-weight: 600;
   text-decoration: none;
   text-align: left;
-  overflow-wrap: anywhere;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .hero {
-  padding: var(--kl-space-12) 0 var(--kl-space-6);
+  padding: var(--kl-space-8) 0 var(--kl-space-6);
+  border-bottom: var(--kl-border-subtle-line);
   background: var(--kl-surface-card);
 }
 
 .heroCopy {
   display: grid;
-  gap: var(--kl-space-5);
-  max-width: 820px;
+  gap: var(--kl-space-3);
+  justify-items: center;
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .eyebrow {
@@ -231,21 +245,25 @@
 }
 
 .heroTitle {
-  max-width: 900px;
+  max-width: 780px;
   margin: 0;
   color: var(--kl-text-primary);
-  font-size: clamp(2.25rem, 5vw, 4.25rem);
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
   font-weight: 700;
-  line-height: 1.08;
+  line-height: var(--kl-lh-heading);
   letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .heroDescription {
   max-width: 720px;
   margin: 0;
   color: var(--kl-text-secondary);
-  font-size: 1.08rem;
-  line-height: 1.75;
+  font-size: 1rem;
+  line-height: var(--kl-lh-body);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .taskSection {
@@ -275,6 +293,8 @@
   font-weight: 700;
   line-height: var(--kl-lh-heading);
   letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .sectionHeader p {
@@ -282,6 +302,8 @@
   color: var(--kl-text-secondary);
   font-size: var(--kl-text-body-lg);
   line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .taskGrid {
@@ -350,12 +372,77 @@
   color: var(--kl-text-primary);
   font-size: 1.35rem;
   line-height: var(--kl-lh-heading);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .taskText span:last-child {
   color: var(--kl-text-secondary);
   font-size: var(--kl-text-body-lg);
   line-height: 1.65;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.flowSection {
+  padding: 0 0 var(--kl-page-section-padding);
+  background: var(--kl-surface-page);
+}
+
+.flowHeader {
+  display: grid;
+  gap: var(--kl-space-2);
+  margin-bottom: var(--kl-space-4);
+}
+
+.flowHeader h2 {
+  margin: 0;
+  color: var(--kl-text-primary);
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  font-weight: 700;
+  line-height: var(--kl-lh-heading);
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.flowStrip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+  border: var(--kl-border-subtle-line);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
+}
+
+.flowItem {
+  display: grid;
+  gap: var(--kl-space-2);
+  min-width: 0;
+  padding: var(--kl-space-4);
+}
+
+.flowItem + .flowItem {
+  border-top: var(--kl-border-subtle-line);
+}
+
+.flowItem strong {
+  color: var(--kl-text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: var(--kl-lh-body-short);
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.flowItem p {
+  margin: 0;
+  color: var(--kl-text-secondary);
+  font-size: var(--kl-text-body);
+  line-height: var(--kl-lh-body);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .taskMeta {
@@ -476,6 +563,15 @@
 @media (min-width: 760px) {
   .taskGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .flowStrip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .flowItem + .flowItem {
+    border-top: 0;
+    border-left: var(--kl-border-subtle-line);
   }
 
   .beforeGateNotice {
