@@ -745,9 +745,7 @@
   display: grid;
   gap: 12px;
   min-width: 0;
-  padding: 12px 0 0 12px;
-  border-left: 2px solid
-    color-mix(in srgb, var(--kl-primary) 34%, var(--kl-border-subtle));
+  padding-top: 12px;
   border-top: 1px solid rgba(148, 163, 184, 0.22);
 }
 
@@ -757,8 +755,8 @@
 }
 
 .historyBridgeCandidateSelected {
-  border-left-width: 3px;
-  border-left-color: var(--kl-primary);
+  padding-left: 10px;
+  border-left: 3px solid var(--kl-success);
 }
 
 .historyBridgeEmptyState {
