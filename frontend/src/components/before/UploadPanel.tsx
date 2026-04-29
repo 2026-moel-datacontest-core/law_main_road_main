@@ -29,8 +29,8 @@ const infoTiles = [
     description: '이미지는 최대 5장까지 올릴 수 있고, 전체 업로드 용량은 20MB를 넘길 수 없습니다.',
   },
   {
-    title: 'Mock review 고정',
-    description: '이 단계에서는 고정 시나리오 결과로 UI 머지를 먼저 검증합니다.',
+    title: '진행 상태 확인',
+    description: '분석을 시작하면 OCR과 항목 검토 진행 상태가 같은 화면에서 이어집니다.',
   },
 ];
 
@@ -73,13 +73,12 @@ export function UploadPanel({
           <div>
             <p className={styles.eyebrow}>Upload contract</p>
             <h2 id="before-upload-title" className={styles.title}>
-              사진 여러 장이나 PDF 한 장을 올리고 분석 흐름을 시작하세요
+              계약서 파일을 올리고 분석을 시작하세요
             </h2>
             <p className={styles.description}>
               `jpg`, `png`, `pdf`를 지원합니다. 이미지 여러 장은 같은 계약서의 페이지
               순서대로 유지해 주세요. 이미지는 최대 5장, PDF는 1개만 업로드할 수 있으며
-              파일당 최대 10MB, 전체 최대 20MB까지 허용됩니다. 예시 시나리오 버튼으로
-              먼저 화면 흐름을 확인한 뒤 실제 업로드 방식으로 확장할 수 있습니다.
+              파일당 최대 10MB, 전체 최대 20MB까지 허용됩니다.
             </p>
           </div>
         </div>
@@ -88,8 +87,8 @@ export function UploadPanel({
           <div className={styles.dropIcon}>+</div>
           <h3 className={styles.dropTitle}>파일을 드래그하거나 클릭해서 추가</h3>
           <p className={styles.dropDescription}>
-            업로드 후 분석 시작을 누르면 `/before` 흐름에서 진행 상태와 결과 화면을 확인할 수 있습니다.
-            이미지 5장 이하 또는 PDF 1개만 선택해 주세요.
+            업로드 후 분석 시작을 누르면 진행 상태와 결과 화면을 확인할 수 있습니다. 이미지 5장
+            이하 또는 PDF 1개만 선택해 주세요.
           </p>
           <input
             type="file"
@@ -99,16 +98,6 @@ export function UploadPanel({
             onChange={handleInput}
           />
         </label>
-
-        <div className={styles.infoGrid}>
-          {infoTiles.map((tile) => (
-            <article key={tile.title} className={styles.infoTile}>
-              <div className={styles.infoMark} />
-              <h3 className={styles.infoTitle}>{tile.title}</h3>
-              <p className={styles.infoDescription}>{tile.description}</p>
-            </article>
-          ))}
-        </div>
 
         <div className={styles.fileSection}>
           <div className={styles.fileHeader}>
@@ -185,26 +174,17 @@ export function UploadPanel({
             ))}
           </div>
         </div>
+
+        <div className={styles.infoGrid}>
+          {infoTiles.map((tile) => (
+            <article key={tile.title} className={styles.infoTile}>
+              <div className={styles.infoMark} />
+              <h3 className={styles.infoTitle}>{tile.title}</h3>
+              <p className={styles.infoDescription}>{tile.description}</p>
+            </article>
+          ))}
+        </div>
       </section>
-
-      <aside className={styles.sideCard} aria-label="before 로컬 모드 안내">
-    <div className={styles.sideInner}>
-      <div>
-        <p className={styles.sideEyebrow}>Local server mode</p>
-        <h3 className={styles.sideTitle}>같은 브랜드 안에서 계약서 분석 경험을 먼저 확인합니다</h3>
-        <p className={styles.sideDescription}>
-          업로드, 분석 진행, 결과 확인, 권리 안내가 한 서비스 안에서 자연스럽게 이어지도록
-          구성했습니다. 실제 연동 전에도 전체 UX 리듬을 먼저 확인할 수 있습니다.
-        </p>
-      </div>
-
-      <ol className={styles.sideList}>
-        <li>1. 계약서 파일을 올리거나 예시 시나리오를 선택합니다.</li>
-        <li>2. 분석 단계가 순서대로 진행되는 화면을 확인합니다.</li>
-        <li>3. 결과 카드와 권리·지원 안내를 함께 검토합니다.</li>
-      </ol>
-    </div>
-  </aside>
     </div>
   );
 }

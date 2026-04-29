@@ -1,13 +1,16 @@
 .grid {
   display: grid;
+  width: 100%;
+  max-width: 1040px;
   gap: 24px;
+  margin: 0 auto;
 }
 
-.primaryCard,
-.sideCard {
+.primaryCard {
   display: grid;
-  gap: 20px;
-  padding: 22px;
+  gap: 22px;
+  width: 100%;
+  padding: clamp(20px, 3vw, 32px);
   border-radius: var(--kl-radius-2xl);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--kl-shadow-strong);
@@ -19,7 +22,6 @@
 }
 
 .eyebrow,
-.sideEyebrow,
 .fileTitle {
   margin: 0;
   color: #667085;
@@ -30,30 +32,19 @@
   text-transform: uppercase;
 }
 
-.title,
-.sideTitle {
+.title {
   margin: 0;
   color: #101828;
-  line-height: 1.15;
-  letter-spacing: -0.05em;
-}
-
-.title {
   font-size: clamp(1.45rem, 2vw, 1.95rem);
-}
-
-.sideTitle {
-  font-size: 1.35rem;
-  color: #ffffff;
+  line-height: 1.15;
+  letter-spacing: 0;
 }
 
 .description,
 .dropDescription,
 .infoDescription,
-.sideDescription,
 .fileSize,
-.emptyState,
-.sideList {
+.emptyState {
   margin: 0;
   color: #667085;
   font-size: 0.96rem;
@@ -64,7 +55,7 @@
   display: grid;
   justify-items: center;
   gap: 12px;
-  padding: 34px 22px;
+  padding: clamp(32px, 5vw, 48px) clamp(18px, 4vw, 36px);
   border: 1px dashed rgba(15, 23, 42, 0.18);
   border-radius: 28px;
   background: linear-gradient(180deg, #fbfdff 0%, #f3f8ff 100%);
@@ -321,30 +312,6 @@
   opacity: 0.6;
 }
 
-.sideCard {
-  background: linear-gradient(180deg, #0f172a 0%, #101828 100%);
-}
-
-.sideInner {
-  display: grid;
-  gap: 20px;
-}
-
-.sideEyebrow {
-  color: rgba(191, 219, 254, 0.9);
-}
-
-.sideDescription,
-.sideList {
-  color: rgba(255, 255, 255, 0.76);
-}
-
-.sideList {
-  display: grid;
-  gap: 10px;
-  padding-left: 18px;
-}
-
 @media (max-width: 671px) {
   .mockActions {
     display: grid;
@@ -358,14 +325,12 @@
 }
 
 @media (min-width: 768px) {
+  .actionBar {
+    grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr);
+    align-items: center;
+  }
+
   .infoGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1056px) {
-  .grid {
-    grid-template-columns: minmax(0, 1fr) 320px;
-    align-items: start;
   }
 }

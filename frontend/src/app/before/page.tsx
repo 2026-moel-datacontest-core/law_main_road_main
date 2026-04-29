@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { AccessibilityPanel } from '@/components/before/AccessibilityPanel';
@@ -11,7 +10,6 @@ import { ResultPanel } from '@/components/before/ResultPanel';
 import { UploadPanel } from '@/components/before/UploadPanel';
 import { Masthead } from '@/components/layout/Masthead';
 import { Button } from '@/components/ui/Button';
-import { DisclaimerBanner } from '@/components/ui/DisclaimerBanner';
 import { Notification } from '@/components/ui/Notification';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { useAuth } from '@/context/AuthContext';
@@ -615,7 +613,7 @@ export default function BeforePage() {
                 근로계약서 분석 시작
               </h1>
               <p className={styles.lead}>
-                계약서 파일을 추가하고 분석을 시작하면 진행 상태와 결과가 같은 흐름 안에서 이어집니다.
+                계약서 파일을 올리면 분석 진행과 결과를 이어서 확인할 수 있습니다.
               </p>
 
               <div className={styles.badgeRow}>
@@ -651,43 +649,6 @@ export default function BeforePage() {
               onSignIn={() => void handleBeforeSignIn()}
               onLoadMock={(scenario) => void handleLoadMock(scenario)}
             />
-
-            <div className={styles.inlineInfoGrid}>
-              <section className={styles.infoCard}>
-                <p className={styles.infoEyebrow}>Upload step</p>
-                <h2 className={styles.infoTitle}>처음에는 입력 패널 하나만 보입니다</h2>
-                <p className={styles.infoBody}>
-                  파일을 고르고 분석을 시작하기 전까지는 보조 결과 패널을 먼저 열지 않습니다.
-                </p>
-              </section>
-
-              <DisclaimerBanner>
-                <p>
-                  현재 화면은 계약서 분석 흐름을 미리 확인하는 데모 버전입니다. 실제 계약 문서를 업로드하기
-                  전에는 예시 결과와 안내 카드를 먼저 살펴보세요.
-                </p>
-              </DisclaimerBanner>
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.historySection} aria-labelledby="before-history-shortcut-title">
-          <div className={styles.sectionInner}>
-            <div className={styles.historyShortcut}>
-              <div>
-                <p className={styles.historyShortcutEyebrow}>SCN-001 history</p>
-                <h2 id="before-history-shortcut-title" className={styles.historyShortcutTitle}>
-                  이전 기록은 History에서 확인
-                </h2>
-                <p className={styles.historyShortcutBody}>
-                  완료된 Before 검토와 Bridge 연결 기록의 확인/삭제는 별도 History 화면에서 관리합니다.
-                </p>
-              </div>
-              <Link className={styles.historyShortcutLink} href="/history">
-                History 열기
-                <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-            </div>
           </div>
         </section>
 
