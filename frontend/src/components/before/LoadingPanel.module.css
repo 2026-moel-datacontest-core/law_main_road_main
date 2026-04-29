@@ -1,6 +1,7 @@
 .panel {
   display: grid;
   gap: var(--kl-space-6);
+  width: 100%;
   padding: var(--kl-space-6);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
@@ -153,7 +154,7 @@
   padding: var(--kl-space-4);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-info);
+  background: var(--kl-surface-01);
 }
 
 .sideTitle {
@@ -170,8 +171,7 @@
 
 @media (min-width: 1056px) {
   .grid {
-    grid-template-columns: minmax(0, 1fr) 320px;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

@@ -1,5 +1,6 @@
 .stack {
   display: grid;
+  width: 100%;
   gap: 20px;
 }
 
@@ -9,6 +10,7 @@
   position: relative;
   overflow: hidden;
   display: grid;
+  width: 100%;
   gap: 18px;
   padding: 22px;
   border-radius: var(--kl-radius-2xl);
@@ -75,7 +77,7 @@
   margin: 0;
   color: #101828;
   line-height: 1.15;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 .heroTitle {
@@ -215,6 +217,31 @@
   gap: 16px;
 }
 
+.mainColumn,
+.sideColumn {
+  display: contents;
+}
+
+.mainColumn > .card:first-of-type {
+  order: 1;
+}
+
+.sideColumn > .sideCard {
+  order: 2;
+}
+
+.mainColumn > .card:nth-of-type(2) {
+  order: 3;
+}
+
+.mainColumn > .card:nth-of-type(3) {
+  order: 4;
+}
+
+.sideColumn > .warningCard {
+  order: 5;
+}
+
 .sectionHeader {
   display: grid;
   gap: 6px;
@@ -316,6 +343,7 @@
   position: relative;
   overflow: hidden;
   display: grid;
+  width: 100%;
   gap: 18px;
   padding: 22px;
   border-radius: var(--kl-radius-2xl);
@@ -390,6 +418,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .issueList {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  }
+
   .uploadGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -406,8 +438,4 @@
     align-items: start;
   }
 
-  .grid {
-    grid-template-columns: minmax(0, 1fr) 320px;
-    align-items: start;
-  }
 }

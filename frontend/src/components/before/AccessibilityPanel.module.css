@@ -3,9 +3,10 @@
   gap: 18px;
   padding: 22px;
   border-radius: var(--kl-radius-2xl);
-  background: linear-gradient(180deg, #0f172a 0%, #101828 100%);
-  box-shadow: var(--kl-shadow-strong);
-  color: #ffffff;
+  border: var(--kl-card-border);
+  background: var(--kl-surface-card);
+  box-shadow: var(--kl-shadow-card);
+  color: var(--kl-text-primary);
 }
 
 .header {
@@ -29,18 +30,18 @@
 .badge {
   align-self: start;
   padding: 6px 12px;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(15, 98, 254, 0.18);
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.12);
-  color: #bfdbfe;
+  background: var(--kl-primary-light);
+  color: var(--kl-primary);
 }
 
 .title,
 .cardTitle {
   margin: 0;
-  color: #ffffff;
+  color: var(--kl-text-primary);
   line-height: 1.15;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 .title {
@@ -68,7 +69,7 @@
 .cardDescription,
 .emptyState,
 .infoBox {
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--kl-text-secondary);
 }
 
 .selectorBlock,
@@ -78,7 +79,7 @@
 .emptyState,
 .infoBox,
 .warningBox {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: var(--kl-card-border);
   border-radius: 22px;
 }
 
@@ -95,7 +96,7 @@
 .selectorLabel,
 .overviewEyebrow,
 .cardKind {
-  color: rgba(191, 219, 254, 0.9);
+  color: var(--kl-primary);
 }
 
 .optionRow,
@@ -108,10 +109,10 @@
 .optionChip {
   min-height: 38px;
   padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: var(--kl-border-subtle-line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  color: #e2e8f0;
+  background: var(--kl-surface-card);
+  color: var(--kl-text-secondary);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -123,20 +124,20 @@
 
 .optionChip:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(15, 98, 254, 0.22);
+  color: var(--kl-primary);
 }
 
 .optionChipActive {
-  border-color: rgba(96, 165, 250, 0.28);
-  background: rgba(59, 130, 246, 0.18);
-  color: #ffffff;
+  border-color: rgba(15, 98, 254, 0.28);
+  background: var(--kl-primary-light);
+  color: var(--kl-primary);
 }
 
 .warningBox {
-  border-color: rgba(251, 191, 36, 0.18);
-  background: rgba(245, 158, 11, 0.12);
-  color: #fef3c7;
+  border-color: rgba(245, 158, 11, 0.2);
+  background: #fffbeb;
+  color: #92400e;
 }
 
 .cardStack {
@@ -146,33 +147,33 @@
 
 .overviewCard,
 .nextStepCard {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--kl-surface-01);
 }
 
 .recommendationCard {
   display: grid;
   gap: 12px;
-  background: rgba(0, 0, 0, 0.24);
+  background: var(--kl-surface-01);
 }
 
 .recommendationRight {
-  border-color: rgba(96, 165, 250, 0.16);
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.16) 0%, rgba(15, 23, 42, 0.24) 100%);
+  border-color: rgba(15, 98, 254, 0.18);
+  background: var(--kl-primary-light);
 }
 
 .recommendationSupport {
-  border-color: rgba(52, 211, 153, 0.16);
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.14) 0%, rgba(15, 23, 42, 0.24) 100%);
+  border-color: rgba(36, 161, 72, 0.18);
+  background: var(--kl-surface-success);
 }
 
 .recommendationQuestion {
-  border-color: rgba(251, 191, 36, 0.16);
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.14) 0%, rgba(15, 23, 42, 0.24) 100%);
+  border-color: rgba(245, 158, 11, 0.2);
+  background: #fffbeb;
 }
 
 .recommendationLaw {
-  border-color: rgba(167, 139, 250, 0.16);
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.14) 0%, rgba(15, 23, 42, 0.24) 100%);
+  border-color: rgba(15, 98, 254, 0.14);
+  background: var(--kl-surface-info);
 }
 
 .recommendationHeader {
@@ -183,17 +184,17 @@
 }
 
 .cardArrow {
-  color: #93c5fd;
+  color: var(--kl-primary);
   font-size: 1.3rem;
   line-height: 1;
 }
 
 .cardHint {
   padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: var(--kl-border-subtle-line);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.05);
-  color: #e2e8f0;
+  background: var(--kl-surface-card);
+  color: var(--kl-text-secondary);
 }
 
 .lawRef {
@@ -201,10 +202,10 @@
   align-items: center;
   min-height: 28px;
   padding: 0 10px;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(15, 98, 254, 0.18);
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.12);
-  color: #bfdbfe;
+  background: var(--kl-primary-light);
+  color: var(--kl-primary);
   font-size: 0.76rem;
   font-weight: 700;
 }
