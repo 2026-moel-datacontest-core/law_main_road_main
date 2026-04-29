@@ -10,7 +10,7 @@
 
 .title {
   margin: 0;
-  color: var(--kl-text-warning);
+  color: var(--kl-text-primary);
   font-size: 1rem;
   font-weight: 700;
   line-height: var(--kl-lh-heading);

@@ -72,7 +72,7 @@
   border-left: 4px solid var(--kl-warning);
   border-radius: var(--kl-radius-md);
   background: var(--kl-surface-warning);
-  color: var(--kl-text-warning);
+  color: var(--kl-text-primary);
 }
 
 .grid {
