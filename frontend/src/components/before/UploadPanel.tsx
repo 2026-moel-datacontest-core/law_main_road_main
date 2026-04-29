@@ -1,6 +1,6 @@
 'use client';
 
-import type { ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
 
 import type { BeforeMockScenario } from '@/types/before';
 
@@ -34,10 +34,29 @@ const infoTiles = [
   },
 ];
 
-const mockButtons: Array<{ scenario: BeforeMockScenario; label: string }> = [
-  { scenario: 'sen0', label: '외국인 사례' },
-  { scenario: 'sen1', label: '아르바이트 사례' },
-  { scenario: 'sen2', label: '장애인 사례' },
+const caseGuides: Array<{
+  scenario: BeforeMockScenario;
+  label: string;
+  description: string;
+}> = [
+  {
+    scenario: 'sen0',
+    label: '외국인 근로자',
+    description:
+      '체류자격, 근무 장소, 임금 공제 항목이 계약서 설명과 실제 근무 조건에서 서로 맞는지 확인이 필요합니다.',
+  },
+  {
+    scenario: 'sen1',
+    label: '아르바이트',
+    description:
+      '시급, 주휴수당, 휴게시간, 근로일 변경 방식이 문서에 빠짐없이 적혀 있는지 확인이 필요합니다.',
+  },
+  {
+    scenario: 'sen2',
+    label: '장애인 근로자',
+    description:
+      '업무 내용, 근무시간, 필요한 편의 제공 여부가 계약서와 현장 안내에서 함께 확인되어야 합니다.',
+  },
 ];
 
 export function UploadPanel({
@@ -52,6 +71,10 @@ export function UploadPanel({
   onSignIn,
   onLoadMock,
 }: UploadPanelProps) {
+  const [selectedGuide, setSelectedGuide] = useState<BeforeMockScenario>('sen0');
+  const activeGuide =
+    caseGuides.find((guide) => guide.scenario === selectedGuide) ?? caseGuides[0];
+
   function handleInput(event: ChangeEvent<HTMLInputElement>) {
     const nextFiles = Array.from(event.target.files ?? []);
     if (!nextFiles.length) {
@@ -64,6 +87,11 @@ export function UploadPanel({
 
   function removeFile(index: number) {
     onFilesChange(files.filter((_, currentIndex) => currentIndex !== index));
+  }
+
+  function handleGuideClick(scenario: BeforeMockScenario) {
+    setSelectedGuide(scenario);
+    onLoadMock(scenario);
   }
 
   return (
@@ -159,20 +187,6 @@ export function UploadPanel({
           >
             {isSubmitting ? '분석 진행 중' : '분석 시작'}
           </button>
-
-          <div className={styles.mockActions}>
-            {mockButtons.map((button) => (
-              <button
-                key={button.scenario}
-                type="button"
-                onClick={() => onLoadMock(button.scenario)}
-                disabled={isSubmitting}
-                className={styles.secondaryAction}
-              >
-                {button.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className={styles.infoGrid}>
@@ -184,6 +198,36 @@ export function UploadPanel({
             </article>
           ))}
         </div>
+      </section>
+
+      <section className={styles.caseGuide} aria-labelledby="before-case-guide-title">
+        <div className={styles.caseGuideHeader}>
+          <p className={styles.caseGuideEyebrow}>Example scenarios</p>
+          <h3 id="before-case-guide-title" className={styles.caseGuideTitle}>
+            계약서 유형별 확인 포인트
+          </h3>
+        </div>
+
+        <div className={styles.caseTabs} role="group" aria-label="계약서 사례 선택">
+          {caseGuides.map((guide) => {
+            const isSelected = guide.scenario === selectedGuide;
+
+            return (
+              <button
+                key={guide.scenario}
+                type="button"
+                onClick={() => handleGuideClick(guide.scenario)}
+                disabled={isSubmitting}
+                className={`${styles.caseTab} ${isSelected ? styles.caseTabSelected : ''}`}
+                aria-pressed={isSelected}
+              >
+                {guide.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <p className={styles.caseDescription}>{activeGuide.description}</p>
       </section>
     </div>
   );
