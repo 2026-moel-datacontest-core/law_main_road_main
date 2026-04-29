@@ -14,6 +14,8 @@ interface ResultPanelProps {
   onReset: () => void;
   resetDisabled?: boolean;
   bridgeAction?: ReactNode;
+  accessibilityPanel?: ReactNode;
+  onAccessibilityCtaClick?: () => void;
 }
 
 export function ResultPanel({
@@ -22,6 +24,8 @@ export function ResultPanel({
   onReset,
   resetDisabled = false,
   bridgeAction,
+  accessibilityPanel,
+  onAccessibilityCtaClick,
 }: ResultPanelProps) {
   const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(0);
 
@@ -83,127 +87,143 @@ export function ResultPanel({
       </section>
 
       <div className={styles.grid}>
-        <div className={styles.mainColumn}>
-          <section className={styles.card}>
-            <div className={styles.sectionHeader}>
-              <p className={styles.sectionEyebrow}>Issue cards</p>
-              <h3 className={styles.sectionTitle}>핵심 문제 요약</h3>
-            </div>
+        <section className={styles.card}>
+          <div className={styles.sectionHeader}>
+            <p className={styles.sectionEyebrow}>Issue cards</p>
+            <h3 className={styles.sectionTitle}>핵심 문제 요약</h3>
+          </div>
 
-            <div className={styles.issueList}>
-              {issueCards.length ? (
-                issueCards.map((issue) => (
-                  <article key={`${issue.title}-${issue.law_ref}`} className={styles.issueCard}>
-                    <div className={styles.issueHeader}>
-                      <div>
-                        <h4 className={styles.issueTitle}>{issue.title}</h4>
-                        {issue.law_ref ? <p className={styles.issueLawRef}>{issue.law_ref}</p> : null}
-                      </div>
-                      <div className={styles.issueBadges}>
-                        <StatusBadge kind="status" value={issue.status} />
-                        <StatusBadge kind="severity" value={issue.severity} />
-                      </div>
+          <div className={styles.issueList}>
+            {issueCards.length ? (
+              issueCards.map((issue) => (
+                <article key={`${issue.title}-${issue.law_ref}`} className={styles.issueCard}>
+                  <div className={styles.issueHeader}>
+                    <div>
+                      <h4 className={styles.issueTitle}>{issue.title}</h4>
+                      {issue.law_ref ? <p className={styles.issueLawRef}>{issue.law_ref}</p> : null}
                     </div>
-                    <p className={styles.issueDescription}>{issue.description}</p>
-                  </article>
-                ))
-              ) : (
-                <div className={styles.emptyPositive}>
-                  현재 결과 기준으로 바로 수정이 필요한 핵심 이슈는 없습니다.
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className={styles.card}>
-            <div className={styles.sectionHeader}>
-              <p className={styles.sectionEyebrow}>Recommended actions</p>
-              <h3 className={styles.sectionTitle}>권장 조치</h3>
-            </div>
-
-            <div className={styles.actionList}>
-              {review.recommended_actions.map((action) => (
-                <div key={action} className={styles.actionItem}>
-                  {action}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className={styles.card}>
-            <div className={styles.sectionHeader}>
-              <p className={styles.sectionEyebrow}>Evidence toggle</p>
-              <h3 className={styles.sectionTitle}>근거와 원문</h3>
-            </div>
-
-            <div className={styles.evidenceList}>
-              {review.evidence.map((evidence, index) => {
-                const isOpen = openEvidenceIndex === index;
-
-                return (
-                  <div key={evidence.title} className={styles.evidenceCard}>
-                    <button
-                      type="button"
-                      onClick={() => setOpenEvidenceIndex(isOpen ? null : index)}
-                      className={styles.evidenceButton}
-                    >
-                      <div>
-                        <p className={styles.evidenceIndex}>Evidence {index + 1}</p>
-                        <h4 className={styles.evidenceTitle}>{evidence.title}</h4>
-                      </div>
-                      <span className={styles.evidenceToggle}>{isOpen ? '접기' : '열기'}</span>
-                    </button>
-
-                    {isOpen ? (
-                      <div className={styles.evidenceBody}>
-                        <pre className={styles.evidenceExcerpt}>{evidence.excerpt}</pre>
-                      </div>
-                    ) : null}
+                    <div className={styles.issueBadges}>
+                      <StatusBadge kind="status" value={issue.status} />
+                      <StatusBadge kind="severity" value={issue.severity} />
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
-        </div>
-
-        <aside className={styles.sideColumn}>
-          <section className={styles.sideCard}>
-            <div className={styles.sectionHeader}>
-              <p className={styles.sectionEyebrow}>Summary notes</p>
-              <h3 className={styles.sectionTitle}>전체 평가</h3>
-            </div>
-
-            <div className={styles.summaryList}>
-              {review.overall_assessment.map((line) => (
-                <div key={line} className={styles.summaryItem}>
-                  {line}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {review.ocr_warnings && review.ocr_warnings.length > 0 ? (
-            <section className={styles.warningCard}>
-              <div className={styles.sectionHeader}>
-                <p className={styles.sectionEyebrow}>OCR warnings</p>
-                <h3 className={styles.sectionTitle}>OCR 확인 필요</h3>
+                  <p className={styles.issueDescription}>{issue.description}</p>
+                </article>
+              ))
+            ) : (
+              <div className={styles.emptyPositive}>
+                현재 결과 기준으로 바로 수정이 필요한 핵심 이슈는 없습니다.
               </div>
+            )}
+          </div>
+        </section>
 
-              <div className={styles.warningList}>
-                {review.ocr_warnings.map((warning) => (
-                  <div key={warning.field} className={styles.warningItem}>
-                    <p className={styles.warningField}>{warning.field}</p>
-                    <p className={styles.warningNote}>{warning.note}</p>
-                    <p className={styles.warningMeta}>
-                      structured: {String(warning.structured)} / corrected:{' '}
-                      {String(warning.corrected)}
-                    </p>
-                  </div>
-                ))}
+        <section className={styles.card}>
+          <div className={styles.sectionHeader}>
+            <p className={styles.sectionEyebrow}>Summary notes</p>
+            <h3 className={styles.sectionTitle}>전체 평가</h3>
+          </div>
+
+          <div className={styles.summaryList}>
+            {review.overall_assessment.map((line) => (
+              <div key={line} className={styles.summaryItem}>
+                {line}
               </div>
-            </section>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.card}>
+          <div className={styles.sectionHeader}>
+            <p className={styles.sectionEyebrow}>Recommended actions</p>
+            <h3 className={styles.sectionTitle}>권장 조치</h3>
+          </div>
+
+          <div className={styles.actionList}>
+            {review.recommended_actions.map((action) => (
+              <div key={action} className={styles.actionItem}>
+                {action}
+              </div>
+            ))}
+          </div>
+
+          {accessibilityPanel && onAccessibilityCtaClick ? (
+            <div className={styles.accessibilityCta}>
+              <p className={styles.accessibilityCtaHint}>
+                아래 보조 안내 영역으로 이동합니다.
+              </p>
+              <Button
+                type="button"
+                variant="tertiary"
+                onClick={onAccessibilityCtaClick}
+                className={styles.accessibilityCtaButton}
+              >
+                장애 특성을 반영한 권리·지원 안내를 받으시겠어요?
+              </Button>
+            </div>
           ) : null}
-        </aside>
+        </section>
+
+        <section className={styles.card}>
+          <div className={styles.sectionHeader}>
+            <p className={styles.sectionEyebrow}>Evidence toggle</p>
+            <h3 className={styles.sectionTitle}>근거와 원문</h3>
+          </div>
+
+          <div className={styles.evidenceList}>
+            {review.evidence.map((evidence, index) => {
+              const isOpen = openEvidenceIndex === index;
+
+              return (
+                <div key={evidence.title} className={styles.evidenceCard}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenEvidenceIndex(isOpen ? null : index)}
+                    className={styles.evidenceButton}
+                  >
+                    <div>
+                      <p className={styles.evidenceIndex}>Evidence {index + 1}</p>
+                      <h4 className={styles.evidenceTitle}>{evidence.title}</h4>
+                    </div>
+                    <span className={styles.evidenceToggle}>{isOpen ? '접기' : '열기'}</span>
+                  </button>
+
+                  {isOpen ? (
+                    <div className={styles.evidenceBody}>
+                      <pre className={styles.evidenceExcerpt}>{evidence.excerpt}</pre>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {accessibilityPanel ? (
+          <div className={styles.accessibilityPanelSlot}>{accessibilityPanel}</div>
+        ) : null}
+
+        {review.ocr_warnings && review.ocr_warnings.length > 0 ? (
+          <section className={styles.warningCard}>
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionEyebrow}>OCR warnings</p>
+              <h3 className={styles.sectionTitle}>OCR 확인 필요</h3>
+            </div>
+
+            <div className={styles.warningList}>
+              {review.ocr_warnings.map((warning) => (
+                <div key={warning.field} className={styles.warningItem}>
+                  <p className={styles.warningField}>{warning.field}</p>
+                  <p className={styles.warningNote}>{warning.note}</p>
+                  <p className={styles.warningMeta}>
+                    structured: {String(warning.structured)} / corrected:{' '}
+                    {String(warning.corrected)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </div>
   );

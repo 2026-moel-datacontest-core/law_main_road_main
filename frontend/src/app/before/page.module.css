@@ -1,8 +1,7 @@
 .main {
-  --before-main-column-width: 800px;
-  --before-aside-width: 300px;
+  --before-main-column-width: 880px;
   --before-layout-gap: 24px;
-  --before-result-max-width: 1124px;
+  --before-result-max-width: 920px;
   min-height: calc(100vh - var(--kl-masthead-height));
   background: var(--kl-surface-page);
   color: var(--kl-text-primary);
@@ -49,6 +48,8 @@
   font-size: clamp(1.5rem, 3vw, 1.875rem);
   line-height: var(--kl-lh-heading);
   letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .lead {
@@ -57,6 +58,8 @@
   color: var(--kl-text-secondary);
   font-size: 1rem;
   line-height: var(--kl-lh-body);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .badgeRow {
@@ -126,9 +129,12 @@
   max-width: var(--before-main-column-width);
 }
 
+.resultSection .sectionInner {
+  max-width: var(--before-result-max-width);
+}
+
 .loadingSection .sectionInner > *,
-.resultPrimary,
-.resultAside {
+.resultPrimary {
   width: 100%;
 }
 
@@ -138,8 +144,12 @@
 }
 
 .resultPrimary,
-.resultAside {
+.accessibilityAnchor {
   min-width: 0;
+}
+
+.accessibilityAnchor {
+  scroll-margin-top: calc(var(--kl-masthead-height) + var(--kl-space-4));
 }
 
 .bridgeCta {
@@ -166,8 +176,10 @@
   margin: 0;
   color: #ffffff;
   font-size: 1.2rem;
-  line-height: 1.25;
-  letter-spacing: -0.03em;
+  line-height: 1.32;
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .bridgeCtaDescription,
@@ -177,6 +189,8 @@
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.65;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .bridgeCtaDescription {
@@ -207,7 +221,8 @@
   min-width: 0;
   align-items: center;
   gap: 8px;
-  overflow-wrap: anywhere;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 671px) {
@@ -254,21 +269,6 @@
   .resultSection {
     padding-right: var(--kl-margin-desktop);
     padding-left: var(--kl-margin-desktop);
-  }
-
-}
-
-@media (min-width: 1056px) {
-  .resultSection .sectionInner {
-    max-width: var(--before-result-max-width);
-  }
-
-  .resultGrid {
-    grid-template-columns:
-      minmax(0, var(--before-main-column-width))
-      minmax(280px, var(--before-aside-width));
-    align-items: start;
-    justify-content: center;
   }
 
 }

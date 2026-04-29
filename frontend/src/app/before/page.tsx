@@ -133,6 +133,7 @@ export default function BeforePage() {
   } = useAuth();
   const loadingRef = useRef<HTMLElement | null>(null);
   const resultRef = useRef<HTMLElement | null>(null);
+  const accessibilityRef = useRef<HTMLDivElement | null>(null);
   const [screenState, setScreenState] = useState<BeforeScreenState>('home');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loadingJob, setLoadingJob] = useState<BeforeReviewJob | null>(null);
@@ -472,6 +473,10 @@ export default function BeforePage() {
     clearBridgeActionFeedback();
   }
 
+  function handleAccessibilityCtaClick() {
+    scrollElementIntoView(accessibilityRef.current);
+  }
+
   function clearBridgeActionFeedback() {
     setBridgeActionStatus('idle');
     setBridgeActionMessage(null);
@@ -674,6 +679,18 @@ export default function BeforePage() {
                     overviewCards={overviewCards}
                     onReset={handleReset}
                     resetDisabled={isBridgeSubmitting}
+                    onAccessibilityCtaClick={handleAccessibilityCtaClick}
+                    accessibilityPanel={
+                      <div ref={accessibilityRef} className={styles.accessibilityAnchor}>
+                        <AccessibilityPanel
+                          selectedDisability={selectedDisability}
+                          recommendation={accessibility}
+                          isLoading={isAccessibilityLoading}
+                          errorMessage={accessibilityError}
+                          onSelectDisability={(option) => void handleSelectDisability(option)}
+                        />
+                      </div>
+                    }
                     bridgeAction={
                       <BridgeHandoffCta
                         hasJobId={hasBridgeJobId}
@@ -690,16 +707,6 @@ export default function BeforePage() {
                     }
                   />
                 </div>
-
-                <aside className={styles.resultAside}>
-                  <AccessibilityPanel
-                    selectedDisability={selectedDisability}
-                    recommendation={accessibility}
-                    isLoading={isAccessibilityLoading}
-                    errorMessage={accessibilityError}
-                    onSelectDisability={(option) => void handleSelectDisability(option)}
-                  />
-                </aside>
               </div>
             </div>
           </section>

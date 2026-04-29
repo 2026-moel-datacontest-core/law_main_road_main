@@ -5,8 +5,7 @@
 }
 
 .heroCard,
-.card,
-.sideCard {
+.card {
   position: relative;
   overflow: hidden;
   display: grid;
@@ -16,6 +15,8 @@
   border-radius: var(--kl-radius-2xl);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--kl-shadow-strong);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .heroCard {
@@ -76,13 +77,17 @@
 .evidenceTitle {
   margin: 0;
   color: #101828;
-  line-height: 1.15;
+  line-height: 1.25;
   letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .heroTitle {
   color: #ffffff;
   font-size: clamp(1.65rem, 2.4vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.18;
 }
 
 .sectionTitle {
@@ -102,6 +107,8 @@
   margin: 0;
   font-size: 0.96rem;
   line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .heroDescription {
@@ -199,6 +206,8 @@
   color: #ffffff;
   font-size: 1rem;
   line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .grid {
@@ -206,8 +215,6 @@
   gap: 20px;
 }
 
-.mainColumn,
-.sideColumn,
 .issueList,
 .actionList,
 .evidenceList,
@@ -215,31 +222,6 @@
 .warningList {
   display: grid;
   gap: 16px;
-}
-
-.mainColumn,
-.sideColumn {
-  display: contents;
-}
-
-.mainColumn > .card:first-of-type {
-  order: 1;
-}
-
-.sideColumn > .sideCard {
-  order: 2;
-}
-
-.mainColumn > .card:nth-of-type(2) {
-  order: 3;
-}
-
-.mainColumn > .card:nth-of-type(3) {
-  order: 4;
-}
-
-.sideColumn > .warningCard {
-  order: 5;
 }
 
 .sectionHeader {
@@ -311,11 +293,19 @@
   gap: 12px;
 }
 
+.heroCopy,
+.issueHeader > div,
+.evidenceButton > div {
+  min-width: 0;
+}
+
 .issueLawRef {
   margin: 6px 0 0;
   color: #667085;
   font-size: 0.9rem;
   line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .issueBadges {
@@ -337,6 +327,48 @@
   background: #ecfdf3;
   color: #027a48;
   line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.accessibilityCta {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.accessibilityCtaHint {
+  margin: 0;
+  color: #667085;
+  font-size: 0.94rem;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.accessibilityCtaButton {
+  flex: 0 1 auto;
+  justify-content: center;
+  min-width: min(100%, 320px);
+  height: auto;
+  min-height: 44px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+  text-align: center;
+  white-space: normal;
+}
+
+.accessibilityCta .accessibilityCtaButton span:last-child {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.accessibilityPanelSlot {
+  display: grid;
+  min-width: 0;
 }
 
 .warningCard {
@@ -350,6 +382,8 @@
   border: 1px solid rgba(245, 158, 11, 0.2);
   background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
   box-shadow: var(--kl-shadow-strong);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .warningField {
@@ -367,6 +401,8 @@
   color: #7c2d12;
   font-size: 0.95rem;
   line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .warningMeta {
@@ -409,7 +445,7 @@
 .evidenceExcerpt {
   color: #475467;
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 @media (min-width: 672px) {
@@ -418,12 +454,19 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .issueList {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  }
-
   .uploadGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 671px) {
+  .accessibilityCta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .accessibilityCtaButton {
+    width: 100%;
   }
 }
 

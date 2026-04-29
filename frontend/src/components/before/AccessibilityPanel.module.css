@@ -1,12 +1,15 @@
 .panel {
   display: grid;
   gap: 18px;
+  width: 100%;
   padding: 22px;
   border-radius: var(--kl-radius-2xl);
   border: var(--kl-card-border);
   background: var(--kl-surface-card);
   box-shadow: var(--kl-shadow-card);
   color: var(--kl-text-primary);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .header {
@@ -40,8 +43,10 @@
 .cardTitle {
   margin: 0;
   color: var(--kl-text-primary);
-  line-height: 1.15;
+  line-height: 1.25;
   letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .title {
@@ -62,6 +67,8 @@
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .description,
@@ -115,6 +122,9 @@
   color: var(--kl-text-secondary);
   font: inherit;
   font-weight: 700;
+  line-height: 1.4;
+  word-break: keep-all;
+  overflow-wrap: break-word;
   cursor: pointer;
   transition:
     transform 160ms ease,
@@ -208,6 +218,9 @@
   color: var(--kl-primary);
   font-size: 0.76rem;
   font-weight: 700;
+  line-height: 1.35;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 671px) {
