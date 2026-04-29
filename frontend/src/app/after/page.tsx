@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 
 import { Masthead } from '@/components/layout/Masthead';
 import { Button } from '@/components/ui/Button';
-import { DisclaimerBanner } from '@/components/ui/DisclaimerBanner';
 import { Notification } from '@/components/ui/Notification';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { useAuth } from '@/context/AuthContext';
@@ -729,11 +728,13 @@ export default function AfterPage() {
                     key={preset.id}
                     type="button"
                     variant={selectedPresetId === preset.id ? 'secondary' : 'ghost'}
+                    className={styles.presetButton}
                     onClick={() => handlePresetClick(preset.id)}
                     disabled={isLoading}
                     aria-pressed={selectedPresetId === preset.id}
                   >
-                    {preset.label}
+                    <span className={styles.presetButtonLabel}>{preset.label}</span>
+                    <span className={styles.presetButtonMeta}>{preset.id}</span>
                   </Button>
                 ))}
               </div>
@@ -755,7 +756,12 @@ export default function AfterPage() {
               ) : null}
 
               <div className={styles.actionRow}>
-                <Button type="submit" isLoading={isLoading} disabled={!canSubmit}>
+                <Button
+                  type="submit"
+                  className={styles.submitButton}
+                  isLoading={isLoading}
+                  disabled={!canSubmit}
+                >
                   {hasBridgeHandoffItems && !isExactPresetSubmission
                     ? '이 내용으로 조문 찾기 →'
                     : '법 조문 찾기 →'}
@@ -781,12 +787,6 @@ export default function AfterPage() {
               onDelete={(target) => void handleDeleteHistoryRecord(target)}
               onGoToBefore={goToBefore}
             />
-          </div>
-        </section>
-
-        <section className={styles.disclaimerBand}>
-          <div className={styles.formShell}>
-            <DisclaimerBanner />
           </div>
         </section>
       </main>
