@@ -14,16 +14,16 @@
   padding: 22px;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
-  box-shadow: var(--kl-shadow-soft);
+  background: var(--kl-surface-elevated);
+  box-shadow: var(--kl-shadow-surface);
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
 .heroCard {
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
   color: var(--kl-text-primary);
-  box-shadow: inset 4px 0 0 var(--kl-primary), var(--kl-shadow-soft);
+  box-shadow: inset 4px 0 0 var(--kl-primary), var(--kl-shadow-surface);
 }
 
 .heroGlow {
@@ -259,7 +259,7 @@
   padding: 16px 18px;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .overviewLabel,
@@ -311,7 +311,7 @@
 .uploadCard {
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .issueCard,
@@ -414,7 +414,7 @@
   border-radius: var(--kl-radius-md);
   border: 1px solid var(--kl-warning);
   background: var(--kl-surface-warning);
-  box-shadow: var(--kl-shadow-soft);
+  box-shadow: var(--kl-shadow-surface);
   word-break: keep-all;
   overflow-wrap: break-word;
 }

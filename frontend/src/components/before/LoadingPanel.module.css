@@ -5,8 +5,8 @@
   padding: var(--kl-space-6);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
-  box-shadow: var(--kl-shadow-soft);
+  background: var(--kl-surface-elevated);
+  box-shadow: var(--kl-shadow-surface);
   color: var(--kl-text-primary);
 }
 
@@ -99,7 +99,7 @@
   padding: var(--kl-space-4);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .stepIndicator {
@@ -109,7 +109,7 @@
   height: 34px;
   border-radius: 999px;
   border: var(--kl-border-subtle-line);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
   color: var(--kl-text-muted);
 }
 
@@ -154,7 +154,7 @@
   padding: var(--kl-space-4);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .sideTitle {

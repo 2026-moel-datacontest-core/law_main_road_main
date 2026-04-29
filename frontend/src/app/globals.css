@@ -11,6 +11,9 @@
   --kl-surface-danger: #fff1f1;
   --kl-surface-card: #ffffff;
   --kl-surface-page: #f4f8fb;
+  --kl-surface-workspace: #eaf2f7;
+  --kl-surface-band: #f7fafc;
+  --kl-surface-elevated: #ffffff;
 
   /* Text */
   --kl-text-primary: #161616;
@@ -113,6 +116,7 @@
   --kl-focus-ring: 2px solid var(--kl-focus);
 
   /* Shadow */
+  --kl-shadow-surface: 0 1px 2px rgba(15, 47, 79, 0.04), 0 8px 20px rgba(15, 47, 79, 0.045);
   --kl-shadow-soft: 0 8px 24px rgba(15, 47, 79, 0.06);
   --kl-shadow-card: 0 14px 32px rgba(15, 47, 79, 0.08);
   --kl-shadow-strong: 0 20px 44px rgba(15, 47, 79, 0.1);
@@ -144,13 +148,13 @@
 
 html {
   min-height: 100%;
-  background: var(--kl-bg);
+  background: var(--kl-surface-workspace);
 }
 
 body {
   min-height: 100%;
   margin: 0;
-  background: var(--kl-bg);
+  background: var(--kl-surface-workspace);
   color: var(--kl-text-primary);
   font-family: var(--kl-font-sans);
   font-size: var(--kl-text-body-lg);

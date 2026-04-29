@@ -2,7 +2,7 @@
   --after-entry-width: 800px;
   --after-selected-success-text: var(--kl-text-success);
   min-height: calc(100vh - var(--kl-masthead-height));
-  background: var(--kl-surface-page);
+  background: var(--kl-surface-workspace);
   color: var(--kl-text-primary);
 }
 
@@ -18,7 +18,8 @@
 .intro {
   padding: var(--kl-space-8) 0 var(--kl-space-6);
   border-bottom: var(--kl-border-subtle-line);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-band);
+  box-shadow: inset 0 -1px 0 var(--kl-border-subtle);
 }
 
 .introInner {
@@ -73,7 +74,8 @@
   padding: 14px 16px;
   border: var(--kl-border-subtle-line);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-elevated);
+  box-shadow: var(--kl-shadow-surface);
   text-align: left;
 }
 
@@ -100,6 +102,7 @@
 
 .formBand {
   padding: var(--kl-space-6) 0 var(--kl-space-12);
+  background: var(--kl-surface-workspace);
 }
 
 .formShell {
@@ -132,7 +135,7 @@
   padding: 0 12px;
   border: var(--kl-border-subtle-line);
   border-radius: var(--kl-radius-sm);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
   color: var(--kl-text-secondary);
   font-size: 0.82rem;
   font-weight: 600;
@@ -151,7 +154,8 @@
   padding: var(--kl-space-4);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
+  box-shadow: var(--kl-shadow-surface);
 }
 
 .handoffCardTop {
@@ -311,7 +315,8 @@
   padding: var(--kl-space-6);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
+  box-shadow: var(--kl-shadow-surface);
 }
 
 .entryDisclaimer {
@@ -451,7 +456,8 @@
   min-width: 0;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
+  box-shadow: var(--kl-shadow-surface);
 }
 
 .historyGatePanel {
@@ -666,13 +672,13 @@
   overflow: hidden;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
-  box-shadow: inset 3px 0 0 var(--kl-primary);
+  background: var(--kl-surface-elevated);
+  box-shadow: inset 3px 0 0 var(--kl-primary), var(--kl-shadow-surface);
 }
 
 .historyCaseFoldSelected {
   border-color: var(--kl-success);
-  box-shadow: inset 3px 0 0 var(--kl-success);
+  box-shadow: inset 3px 0 0 var(--kl-success), var(--kl-shadow-surface);
 }
 
 .historyCaseSummary {
@@ -771,8 +777,8 @@
   padding: 16px;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
-  box-shadow: inset 3px 0 0 var(--kl-primary);
+  background: var(--kl-surface-elevated);
+  box-shadow: inset 3px 0 0 var(--kl-primary), var(--kl-shadow-surface);
 }
 
 .historyCardTop,
@@ -820,7 +826,7 @@
   padding: 12px;
   border: var(--kl-border-subtle-line);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .historyBridgeCandidate {
@@ -902,7 +908,7 @@
   padding: 12px;
   border: var(--kl-border-subtle-line);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .historySummaryLabel,
@@ -936,7 +942,7 @@
   padding: 12px;
   border: var(--kl-border-subtle-line);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .historyConnectionNote {
@@ -1108,7 +1114,7 @@
   min-width: 0;
   padding: 8px;
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .historyMetaItem dt {

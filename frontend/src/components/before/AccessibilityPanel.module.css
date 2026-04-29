@@ -5,8 +5,9 @@
   padding: 18px;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
   color: var(--kl-text-primary);
+  box-shadow: var(--kl-shadow-surface);
   word-break: keep-all;
   overflow-wrap: break-word;
 }
@@ -152,13 +153,13 @@
 
 .overviewCard,
 .nextStepCard {
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-band);
 }
 
 .recommendationCard {
   display: grid;
   gap: 12px;
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-band);
 }
 
 .recommendationRight {
@@ -194,7 +195,7 @@
   padding: 12px 14px;
   border: var(--kl-border-subtle-line);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
   color: var(--kl-text-secondary);
 }
 

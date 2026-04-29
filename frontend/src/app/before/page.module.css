@@ -3,7 +3,7 @@
   --before-layout-gap: 24px;
   --before-result-max-width: 920px;
   min-height: calc(100vh - var(--kl-masthead-height));
-  background: var(--kl-surface-page);
+  background: var(--kl-surface-workspace);
   color: var(--kl-text-primary);
 }
 
@@ -11,7 +11,8 @@
   position: relative;
   padding: var(--kl-space-8) var(--kl-margin-mobile) var(--kl-space-6);
   border-bottom: var(--kl-border-subtle-line);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-band);
+  box-shadow: inset 0 -1px 0 var(--kl-border-subtle);
 }
 
 .heroInner,
@@ -98,6 +99,7 @@
 .uploadSection,
 .resultSection {
   padding: var(--kl-space-6) var(--kl-margin-mobile) 0;
+  background: var(--kl-surface-workspace);
 }
 
 .uploadSection {
@@ -106,6 +108,7 @@
 
 .loadingSection {
   padding: var(--kl-space-6) var(--kl-margin-mobile) 0;
+  background: var(--kl-surface-workspace);
   scroll-margin-top: calc(var(--kl-masthead-height) + var(--kl-space-4));
 }
 

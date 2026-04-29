@@ -145,7 +145,8 @@
   padding: var(--kl-space-4);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
+  box-shadow: var(--kl-shadow-surface);
 }
 
 .caseSectionHeader {
@@ -188,7 +189,7 @@
   padding: 12px 14px;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
 }
 
 .statLabel,
@@ -228,8 +229,8 @@
   overflow: hidden;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
-  box-shadow: inset 3px 0 0 var(--kl-primary);
+  background: var(--kl-surface-elevated);
+  box-shadow: inset 3px 0 0 var(--kl-primary), var(--kl-shadow-surface);
 }
 
 .caseSummary {
@@ -327,8 +328,8 @@
   padding: var(--kl-space-4);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
-  box-shadow: inset 3px 0 0 var(--kl-primary);
+  background: var(--kl-surface-elevated);
+  box-shadow: inset 3px 0 0 var(--kl-primary), var(--kl-shadow-surface);
 }
 
 .cardTop {
@@ -425,7 +426,7 @@
   padding: 11px 12px;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .summaryText {
@@ -454,7 +455,7 @@
   min-width: 0;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
   overflow: hidden;
 }
 
@@ -474,7 +475,7 @@
   padding: 12px;
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .emptyConnection {
@@ -546,7 +547,7 @@
   min-width: 0;
   padding: 8px;
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-01);
+  background: var(--kl-surface-band);
 }
 
 .metaItem dt {

@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
   overflow-x: hidden;
-  background: var(--kl-surface-page);
+  background: var(--kl-surface-workspace);
   color: var(--kl-text-primary);
 }
 
@@ -19,13 +19,13 @@
   top: 0;
   z-index: var(--kl-z-masthead);
   border-bottom: var(--kl-border-subtle-line);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
   color: var(--kl-text-primary);
   transition: box-shadow var(--kl-duration-base) var(--kl-ease-enter);
 }
 
 .navbarScrolled {
-  box-shadow: var(--kl-shadow-soft);
+  box-shadow: var(--kl-shadow-surface);
 }
 
 .navInner {
@@ -222,7 +222,8 @@
 .hero {
   padding: var(--kl-space-8) 0 var(--kl-space-6);
   border-bottom: var(--kl-border-subtle-line);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-band);
+  box-shadow: inset 0 -1px 0 var(--kl-border-subtle);
 }
 
 .heroCopy {
@@ -268,11 +269,13 @@
 
 .taskSection {
   padding: var(--kl-page-section-padding) 0;
+  background: var(--kl-surface-workspace);
 }
 
 .accountSection {
   padding: 0 0 var(--kl-page-section-padding);
-  background: var(--kl-surface-page);
+  border-bottom: var(--kl-border-subtle-line);
+  background: var(--kl-surface-band);
 }
 
 .accountSection:focus {
@@ -319,10 +322,10 @@
   padding: var(--kl-space-6);
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
   color: var(--kl-text-primary);
   text-decoration: none;
-  box-shadow: var(--kl-shadow-soft);
+  box-shadow: var(--kl-shadow-surface);
   transition:
     border-color var(--kl-duration-base) var(--kl-ease-enter),
     box-shadow var(--kl-duration-base) var(--kl-ease-enter);
@@ -387,7 +390,8 @@
 .flowSection {
   padding: 0 0 var(--kl-page-section-padding);
   border-top: var(--kl-border-subtle-line);
-  background: var(--kl-surface-01);
+  border-bottom: var(--kl-border-subtle-line);
+  background: var(--kl-surface-band);
 }
 
 .flowHeader {
@@ -413,7 +417,8 @@
   overflow: hidden;
   border: var(--kl-border-subtle-line);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
+  box-shadow: var(--kl-shadow-surface);
 }
 
 .flowItem {
@@ -504,7 +509,7 @@
 .footer {
   padding: var(--kl-space-12) 0 var(--kl-space-8);
   border-top: var(--kl-border-subtle-line);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-elevated);
 }
 
 .footerInner {
