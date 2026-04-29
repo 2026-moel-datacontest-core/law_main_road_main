@@ -1266,12 +1266,16 @@ function AfterHistoryBridgeCandidate({
         <div className={styles.historyCardTitleGroup}>
           <p className={styles.historyCardEyebrow}>After 연결점</p>
           <h5 className={styles.historyBridgeSectionTitle}>
-            After 연결점 {index + 1}
+            <span>After 연결점 {index + 1}</span>
+            {isSelected ? (
+              <span
+                className={`${styles.historySelectedPill} ${styles.historySelectedPillInline}`}
+              >
+                이번 질문에 포함됨
+              </span>
+            ) : null}
           </h5>
         </div>
-        {isSelected ? (
-          <span className={styles.historySelectedPill}>이번 질문에 포함됨</span>
-        ) : null}
         <HistoryDeleteButton
           label={`연결 후보 숨기기: ${formatInlineText(
             displayFields.userVisibleSummary,

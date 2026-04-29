@@ -745,7 +745,9 @@
   display: grid;
   gap: 12px;
   min-width: 0;
-  padding-top: 12px;
+  padding: 12px 0 0 12px;
+  border-left: 2px solid
+    color-mix(in srgb, var(--kl-primary) 34%, var(--kl-border-subtle));
   border-top: 1px solid rgba(148, 163, 184, 0.22);
 }
 
@@ -755,8 +757,8 @@
 }
 
 .historyBridgeCandidateSelected {
-  padding-left: 10px;
-  border-left: 3px solid #16a34a;
+  border-left-width: 3px;
+  border-left-color: var(--kl-primary);
 }
 
 .historyBridgeEmptyState {
@@ -766,6 +768,10 @@
 }
 
 .historyBridgeSectionTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   margin: 0;
   color: #0f172a;
   font-size: 0.94rem;
@@ -801,6 +807,12 @@
   font-weight: 850;
   line-height: 1.35;
   overflow-wrap: anywhere;
+}
+
+.historySelectedPillInline {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 0.72rem;
 }
 
 .historySummaryBlock {
