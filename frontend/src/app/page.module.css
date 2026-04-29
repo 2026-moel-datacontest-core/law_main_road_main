@@ -272,7 +272,7 @@
 
 .accountSection {
   padding: 0 0 var(--kl-page-section-padding);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-page);
 }
 
 .accountSection:focus {
@@ -386,7 +386,8 @@
 
 .flowSection {
   padding: 0 0 var(--kl-page-section-padding);
-  background: var(--kl-surface-page);
+  border-top: var(--kl-border-subtle-line);
+  background: var(--kl-surface-01);
 }
 
 .flowHeader {

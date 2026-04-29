@@ -11,9 +11,10 @@
   gap: 22px;
   width: 100%;
   padding: clamp(20px, 3vw, 32px);
-  border-radius: var(--kl-radius-2xl);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: var(--kl-shadow-strong);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
+  box-shadow: var(--kl-shadow-soft);
 }
 
 .header {
@@ -24,7 +25,7 @@
 .eyebrow,
 .fileTitle {
   margin: 0;
-  color: #667085;
+  color: var(--kl-text-muted);
   font-size: 0.74rem;
   font-weight: 700;
   line-height: 1.4;
@@ -34,7 +35,7 @@
 
 .title {
   margin: 0;
-  color: #101828;
+  color: var(--kl-text-primary);
   font-size: clamp(1.45rem, 2vw, 1.95rem);
   line-height: 1.15;
   letter-spacing: 0;
@@ -46,7 +47,7 @@
 .fileSize,
 .emptyState {
   margin: 0;
-  color: #667085;
+  color: var(--kl-text-secondary);
   font-size: 0.96rem;
   line-height: 1.7;
 }
@@ -56,9 +57,9 @@
   justify-items: center;
   gap: 12px;
   padding: clamp(32px, 5vw, 48px) clamp(18px, 4vw, 36px);
-  border: 1px dashed rgba(15, 23, 42, 0.18);
-  border-radius: 28px;
-  background: linear-gradient(180deg, #fbfdff 0%, #f3f8ff 100%);
+  border: 1px dashed var(--kl-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
   text-align: center;
   cursor: pointer;
   transition:
@@ -69,8 +70,8 @@
 
 .dropzone:hover {
   transform: translateY(-1px);
-  border-color: rgba(15, 98, 254, 0.24);
-  box-shadow: 0 18px 36px rgba(15, 98, 254, 0.1);
+  border-color: var(--kl-primary);
+  box-shadow: var(--kl-shadow-soft);
 }
 
 .dropIcon {
@@ -78,10 +79,10 @@
   place-items: center;
   width: 56px;
   height: 56px;
-  border-radius: 999px;
-  border: 1px solid rgba(15, 98, 254, 0.14);
-  background: #ffffff;
-  color: #0f62fe;
+  border-radius: var(--kl-radius-md);
+  border: 1px solid var(--kl-border-subtle);
+  background: var(--kl-surface-card);
+  color: var(--kl-primary);
   font-size: 1.8rem;
   line-height: 1;
 }
@@ -90,7 +91,7 @@
 .infoTitle,
 .fileName {
   margin: 0;
-  color: #101828;
+  color: var(--kl-text-primary);
 }
 
 .dropTitle {
@@ -111,16 +112,16 @@
   display: grid;
   gap: 10px;
   padding: 18px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 22px;
-  background: linear-gradient(180deg, #fbfdff 0%, #f6f9fd 100%);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
 }
 
 .infoMark {
   width: 14px;
   height: 14px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #0f62fe 0%, #1f7bf2 100%);
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-primary);
 }
 
 .infoTitle {
@@ -142,7 +143,7 @@
 }
 
 .fileCount {
-  color: #667085;
+  color: var(--kl-text-secondary);
   font-size: 0.9rem;
 }
 
@@ -157,9 +158,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 20px;
-  background: rgba(248, 250, 252, 0.9);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
 }
 
 .fileMeta {
@@ -180,10 +181,10 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(16, 24, 40, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #475467;
+  border: var(--kl-border-subtle-line);
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-surface-card);
+  color: var(--kl-text-secondary);
   font: inherit;
   cursor: pointer;
   transition:
@@ -194,23 +195,23 @@
 
 .removeButton:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(194, 39, 39, 0.16);
-  color: #c22727;
+  border-color: var(--kl-danger);
+  color: var(--kl-text-danger);
 }
 
 .emptyState {
   padding: 18px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 20px;
-  background: rgba(248, 250, 252, 0.9);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-01);
 }
 
 .errorBox {
   padding: 14px 16px;
-  border: 1px solid rgba(194, 39, 39, 0.14);
-  border-radius: 18px;
-  background: #fff3f2;
-  color: #b42318;
+  border: 1px solid var(--kl-danger);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-danger);
+  color: var(--kl-text-danger);
   font-size: 0.94rem;
   line-height: 1.6;
 }
@@ -222,15 +223,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border: 1px solid rgba(15, 98, 254, 0.16);
-  border-radius: 18px;
-  background: #eff6ff;
+  border: 1px solid var(--kl-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-info);
 }
 
 .authNoticeText {
   flex: 1 1 240px;
   margin: 0;
-  color: #1849a9;
+  color: var(--kl-text-primary);
   font-size: 0.94rem;
   line-height: 1.6;
 }
@@ -238,10 +239,10 @@
 .authNoticeAction {
   min-height: 38px;
   padding: 0 14px;
-  border: 1px solid rgba(15, 98, 254, 0.18);
-  border-radius: 999px;
-  background: #ffffff;
-  color: #0f62fe;
+  border: 1px solid var(--kl-primary);
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-surface-card);
+  color: var(--kl-primary);
   font: inherit;
   font-size: 0.94rem;
   font-weight: 700;
@@ -254,20 +255,20 @@
 
 .authNoticeAction:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(15, 98, 254, 0.34);
+  border-color: var(--kl-primary-hover);
 }
 
 .actionBar {
   display: flex;
   justify-content: center;
   padding-top: 18px;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: var(--kl-border-subtle-line);
 }
 
 .primaryAction,
 .secondaryAction {
   min-height: 46px;
-  border-radius: 999px;
+  border-radius: var(--kl-radius-sm);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -282,10 +283,10 @@
 .primaryAction {
   min-width: 320px;
   padding: 0 28px;
-  border: 1px solid rgba(15, 98, 254, 0.18);
-  background: linear-gradient(135deg, #0f62fe 0%, #1f7bf2 100%);
-  color: #ffffff;
-  box-shadow: 0 18px 36px rgba(15, 98, 254, 0.18);
+  border: 1px solid var(--kl-primary);
+  background: var(--kl-primary);
+  color: var(--kl-text-on-primary);
+  box-shadow: none;
 }
 
 .primaryAction:hover:not(:disabled),
@@ -295,9 +296,9 @@
 
 .secondaryAction {
   padding: 0 16px;
-  border: 1px solid rgba(16, 24, 40, 0.08);
-  background: rgba(255, 255, 255, 0.92);
-  color: #344054;
+  border: var(--kl-border-default);
+  background: var(--kl-surface-card);
+  color: var(--kl-text-primary);
 }
 
 .primaryAction:disabled,
@@ -314,9 +315,9 @@
   gap: 14px;
   width: 100%;
   padding: 20px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.86);
+  border: var(--kl-card-border);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
 }
 
 .caseGuideHeader {
@@ -326,7 +327,7 @@
 
 .caseGuideEyebrow {
   margin: 0;
-  color: #667085;
+  color: var(--kl-text-muted);
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1.4;
@@ -336,7 +337,7 @@
 
 .caseGuideTitle {
   margin: 0;
-  color: #101828;
+  color: var(--kl-text-primary);
   font-size: 1rem;
   line-height: 1.45;
 }
@@ -350,10 +351,10 @@
 .caseTab {
   min-height: 42px;
   padding: 0 12px;
-  border: 1px solid rgba(16, 24, 40, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #344054;
+  border: var(--kl-border-subtle-line);
+  border-radius: var(--kl-radius-sm);
+  background: var(--kl-surface-card);
+  color: var(--kl-text-primary);
   font: inherit;
   font-size: 0.92rem;
   font-weight: 700;
@@ -368,20 +369,20 @@
 
 .caseTab:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(15, 98, 254, 0.22);
-  color: #0f62fe;
+  border-color: var(--kl-primary);
+  color: var(--kl-primary);
 }
 
 .caseTabSelected {
-  border-color: rgba(15, 98, 254, 0.28);
-  background: #eff6ff;
-  color: #0f62fe;
-  box-shadow: inset 0 0 0 1px rgba(15, 98, 254, 0.08);
+  border-color: var(--kl-primary);
+  background: var(--kl-primary-light);
+  color: var(--kl-primary);
+  box-shadow: inset 0 0 0 1px var(--kl-primary);
 }
 
 .caseDescription {
   margin: 0;
-  color: #475467;
+  color: var(--kl-text-secondary);
   font-size: 0.94rem;
   line-height: 1.65;
 }

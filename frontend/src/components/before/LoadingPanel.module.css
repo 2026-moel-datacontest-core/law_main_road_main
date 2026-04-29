@@ -6,7 +6,7 @@
   border: var(--kl-card-border);
   border-radius: var(--kl-radius-md);
   background: var(--kl-surface-card);
-  box-shadow: var(--kl-shadow-card);
+  box-shadow: var(--kl-shadow-soft);
   color: var(--kl-text-primary);
 }
 
@@ -56,9 +56,9 @@
   gap: var(--kl-space-3);
   align-items: flex-start;
   padding: var(--kl-space-4);
-  border: 1px solid rgba(15, 98, 254, 0.22);
+  border: 1px solid var(--kl-border);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-primary-light);
+  background: var(--kl-surface-info);
 }
 
 .statusPulse {
@@ -68,7 +68,7 @@
   margin-top: 7px;
   border-radius: 999px;
   background: var(--kl-primary);
-  box-shadow: 0 0 0 6px rgba(15, 98, 254, 0.12);
+  box-shadow: 0 0 0 6px var(--kl-primary-light);
   animation: pulse 1400ms ease-in-out infinite;
 }
 
@@ -114,19 +114,19 @@
 }
 
 .stepIndicatorRunning {
-  border-color: rgba(15, 98, 254, 0.26);
+  border-color: var(--kl-primary);
   background: var(--kl-primary-light);
   color: var(--kl-primary);
 }
 
 .stepIndicatorCompleted {
-  border-color: rgba(36, 161, 72, 0.24);
+  border-color: var(--kl-success);
   background: var(--kl-surface-success);
   color: var(--kl-text-success);
 }
 
 .stepIndicatorFailed {
-  border-color: rgba(218, 30, 40, 0.22);
+  border-color: var(--kl-danger);
   background: var(--kl-surface-danger);
   color: var(--kl-text-danger);
 }
@@ -198,11 +198,11 @@
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 0 4px rgba(15, 98, 254, 0.12);
+    box-shadow: 0 0 0 4px var(--kl-primary-light);
   }
 
   50% {
     opacity: 0.72;
-    box-shadow: 0 0 0 8px rgba(15, 98, 254, 0.08);
+    box-shadow: 0 0 0 8px var(--kl-surface-info);
   }
 }

@@ -1,6 +1,6 @@
 .main {
   --after-entry-width: 800px;
-  --after-selected-success-text: #166534;
+  --after-selected-success-text: var(--kl-text-success);
   min-height: calc(100vh - var(--kl-masthead-height));
   background: var(--kl-surface-page);
   color: var(--kl-text-primary);
@@ -329,7 +329,7 @@
   border: var(--kl-border-subtle-line);
   border-left: 3px solid var(--kl-warning);
   border-radius: var(--kl-radius-md);
-  background: var(--kl-surface-card);
+  background: var(--kl-surface-warning);
 }
 
 .entryDisclaimerTitle,

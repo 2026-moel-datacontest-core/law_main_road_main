@@ -84,7 +84,7 @@
 }
 
 .documentBadge {
-  border: 1px solid rgba(15, 98, 254, 0.22);
+  border: 1px solid var(--kl-border);
   background: var(--kl-primary-light);
   color: var(--kl-primary);
 }
@@ -164,7 +164,7 @@
 
 .bridgeCtaEyebrow {
   margin: 0;
-  color: rgba(191, 219, 254, 0.78);
+  color: var(--kl-primary);
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1.4;
@@ -174,7 +174,7 @@
 
 .bridgeCtaTitle {
   margin: 0;
-  color: #ffffff;
+  color: var(--kl-text-primary);
   font-size: 1.2rem;
   line-height: 1.32;
   letter-spacing: 0;
@@ -194,19 +194,19 @@
 }
 
 .bridgeCtaDescription {
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--kl-text-secondary);
 }
 
 .bridgeCtaNotice {
-  color: #bfdbfe;
+  color: var(--kl-text-primary);
 }
 
 .bridgeCtaError {
-  color: #fecaca;
+  color: var(--kl-text-danger);
 }
 
 .bridgeCtaSuccess {
-  color: #bbf7d0;
+  color: var(--kl-text-success);
 }
 
 .bridgeCtaActions {

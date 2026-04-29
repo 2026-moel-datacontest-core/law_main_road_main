@@ -3,14 +3,14 @@
 :root {
   /* Background & Surface */
   --kl-bg: #ffffff;
-  --kl-surface-01: #f4f4f4;
-  --kl-surface-02: #e0e0e0;
-  --kl-surface-warning: #fcf4d6;
-  --kl-surface-info: #edf5ff;
-  --kl-surface-success: #defbe6;
+  --kl-surface-01: #eef3f7;
+  --kl-surface-02: #dde6ee;
+  --kl-surface-warning: #fff4cc;
+  --kl-surface-info: #e8f1f8;
+  --kl-surface-success: #e6f4ed;
   --kl-surface-danger: #fff1f1;
   --kl-surface-card: #ffffff;
-  --kl-surface-page: #f4f4f4;
+  --kl-surface-page: #f4f8fb;
 
   /* Text */
   --kl-text-primary: #161616;
@@ -19,25 +19,25 @@
   --kl-text-placeholder: #8d8d8d;
   --kl-text-on-dark: #f4f4f4;
   --kl-text-on-primary: #ffffff;
-  --kl-text-warning: #b28600;
-  --kl-text-danger: #da1e28;
-  --kl-text-success: #24a148;
+  --kl-text-warning: #7a5a00;
+  --kl-text-danger: #b42318;
+  --kl-text-success: #0f7a52;
 
   /* Interactive */
-  --kl-primary: #0f62fe;
-  --kl-primary-hover: #0353e9;
-  --kl-primary-active: #002d9c;
-  --kl-primary-light: #edf5ff;
+  --kl-primary: #1d70b8;
+  --kl-primary-hover: #0f4f84;
+  --kl-primary-active: #0b2f4f;
+  --kl-primary-light: #e8f1f8;
 
   /* Status */
   --kl-warning: #f1c21b;
-  --kl-danger: #da1e28;
-  --kl-success: #24a148;
+  --kl-danger: #ca3535;
+  --kl-success: #0f7a52;
 
   /* Border */
-  --kl-border: #c6c6c6;
-  --kl-border-subtle: #e0e0e0;
-  --kl-focus: #0f62fe;
+  --kl-border: #c8d3df;
+  --kl-border-subtle: #dce4ec;
+  --kl-focus: #1d70b8;
 
   /* Masthead */
   --kl-masthead-bg: #161616;
@@ -113,9 +113,9 @@
   --kl-focus-ring: 2px solid var(--kl-focus);
 
   /* Shadow */
-  --kl-shadow-soft: 0 8px 24px rgba(22, 22, 22, 0.06);
-  --kl-shadow-card: 0 16px 36px rgba(22, 22, 22, 0.08);
-  --kl-shadow-strong: 0 24px 54px rgba(15, 29, 45, 0.12);
+  --kl-shadow-soft: 0 8px 24px rgba(15, 47, 79, 0.06);
+  --kl-shadow-card: 0 14px 32px rgba(15, 47, 79, 0.08);
+  --kl-shadow-strong: 0 20px 44px rgba(15, 47, 79, 0.1);
 
   /* Z-index */
   --kl-z-masthead: 100;

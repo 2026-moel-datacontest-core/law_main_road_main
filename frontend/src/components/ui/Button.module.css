@@ -45,12 +45,15 @@
 }
 
 .secondary {
-  color: var(--kl-text-on-dark);
-  background: var(--kl-text-secondary);
+  color: var(--kl-primary);
+  background: var(--kl-primary-light);
+  border-color: var(--kl-primary);
 }
 
 .secondary:hover:not(:disabled) {
-  background: var(--kl-text-primary);
+  color: var(--kl-primary-hover);
+  background: var(--kl-surface-info);
+  border-color: var(--kl-primary-hover);
 }
 
 .tertiary {
