@@ -105,9 +105,45 @@ If the main page is visually expanded later, use either a real product screensho
 composition or a generated bitmap image that communicates labor/legal support.
 Do not use abstract gradient-only hero art.
 
+### Known Legacy Drift
+
+The following files predate this direction and visually contradict it. They
+should be reworked, not used as references:
+
+- `frontend/src/components/before/ResultPanel.module.css` uses a dark gradient
+  hero card, decorative blur/glow treatment, large radii, and route-local hex
+  colors. Removing the dark surface requires auditing
+  `frontend/src/app/before/page.module.css` `.bridgeCta*` rules in the same
+  patch, because those rules currently assume light text on a dark background.
+- `frontend/src/components/before/UploadPanel.module.css` uses gradient
+  dropzones/buttons, pill-like radii, hover lift effects, and route-local color
+  values.
+- `frontend/src/components/before/AccessibilityPanel.module.css` uses gradient
+  panel surfaces, large radii, and route-local color values.
+- `frontend/src/components/draft/DocumentPreview.module.css` uses a gradient
+  document surface, large radius, hardcoded colors, and shadow treatment that
+  weakens the legal document workspace tone. Its `@media print` rules and
+  `.printDisclaimer` behavior are part of the SCN-004 print/disclaimer freeze
+  and must not be removed.
+- `frontend/src/components/auth/LoginButton.module.css` redefines primary and
+  status colors outside the `--kl-*` token surface.
+
+Polish patches should bring these files into the `--kl-*` token surface. Do not
+treat their current visual output as the approved baseline.
+
 ## 4. Color System
 
 ### Current Implementation Tokens
+
+The full `--kl-*` token surface is defined in
+`frontend/src/app/globals.css`. The table below lists the tokens most relevant
+to visual decisions, but components must respect the entire token set, including
+`--kl-surface-01`, `--kl-surface-02`, `--kl-surface-warning`,
+`--kl-surface-info`, `--kl-surface-success`, `--kl-surface-danger`,
+`--kl-text-warning`, `--kl-text-danger`, `--kl-text-success`,
+`--kl-primary-hover`, and `--kl-primary-active`. Status pills, notice surfaces,
+result severity badges, and evidence/caution borders should use existing tokens
+rather than redefining route-local hex values.
 
 The current frontend already defines the working `--kl-*` palette:
 
@@ -159,10 +195,14 @@ Recommended accent behavior:
 - Coral/red: destructive actions and true risk only.
 - Neutral blue-gray: history folds, secondary panels, supporting structure.
 
-### Future Token Remap Candidate
+### Future Token Value Remap Candidate
 
-If the project reopens visual token work, consider this calmer public-service
-palette. Apply it only through `frontend/src/app/globals.css` tokens.
+The token names below already exist in `frontend/src/app/globals.css`. This
+section proposes future value changes only, not new token names. Any change
+should be a single token-remap patch followed by full route screenshot
+regression. Token names like `--kl-primary`, `--kl-primary-hover`,
+`--kl-primary-light`, and `--kl-surface-01` are not new; only their values would
+change.
 
 The current `#0f62fe` primary is acceptable for MVP stability, but it reads as
 more IBM/technical than legal/public-service. Do not remap it casually. If token
@@ -226,7 +266,12 @@ Rules:
 
 ### Cards
 
-- Cards may use `--kl-radius-md` up to 8px when it helps polish.
+- Cards should use `--kl-radius-md` (8px) as the maximum radius.
+- `--kl-radius-lg` (12px), `--kl-radius-xl` (20px), `--kl-radius-2xl` (24px),
+  and `--kl-radius-pill` (24px) exist in `globals.css` for legacy or narrow
+  component needs; do not apply them to new card or panel surfaces.
+- `--kl-radius-pill` is acceptable only on tag/chip-shaped controls smaller than
+  32px tall. `--kl-radius-control` (0px) remains the button/control radius.
 - Avoid large round cards and bubbly surfaces.
 - Borders should usually do the structural work. Use shadows sparingly for
   actual elevation or home-page presentation, not every internal panel.
@@ -255,6 +300,10 @@ Rules:
   oversized red areas.
 - Icon buttons should use familiar icons with accessible names/tooltips.
 - Do not use decorative icon containers when plain icons are enough.
+- The current `frontend/src/components/ui/Button.module.css` `.secondary`
+  variant fills with `--kl-text-secondary`, which contradicts the neutral
+  outline/subtle-surface rule. Polish work that depends on credible secondary
+  actions should rework that variant instead of styling around it.
 
 ## 7. Route Guidance
 
@@ -340,6 +389,12 @@ Rules:
   legal terms should wrap cleanly.
 - Avoid placeholder-only instructions. Labels must remain visible.
 - Use plain language for warnings and legal uncertainty.
+- Today, `--kl-focus` is the same value as `--kl-primary` (`#0f62fe`).
+  Components that use primary color for selected state and border can produce
+  stacked blue treatments when keyboard-focused. A future remap should give
+  `--kl-focus` a value distinct from `--kl-primary` so focus reads as keyboard
+  navigation, not as part of the selected state. Until then, polish work should
+  not add extra blue borders or shadows to interactive elements.
 
 ## 9. Visual Do And Do Not
 
@@ -388,8 +443,10 @@ Use this when asking an agent to continue visual work:
 
 Good focused prompts:
 
-- "Polish `/history` card density using incident-centered cards, folds, and
-  restrained semantic color. Do not change API data mapping."
+- "Audit `Scn001HistoryManager.module.css` for hardcoded notice/error/status
+  colors and remap them to existing `--kl-surface-info`,
+  `--kl-surface-danger`, and `--kl-surface-success` tokens. Do not change API
+  data mapping or fold structure."
 - "Polish `/after/draft` document workspace so preview, missing fields,
   cautions, checklist, copy, and print feel visually aligned. Do not change draft
   data or print contract."
@@ -407,3 +464,13 @@ Verification for design-only changes:
 - `cd frontend && npm run build` when CSS/TSX changes are made
 - Manual browser screenshots for desktop and mobile when layout or tokens change
 - Print preview rehearsal when `/after/draft` or print CSS changes
+- When touching `frontend/src/components/draft/DocumentPreview.*`, preserve the
+  `@media print` block and `.printDisclaimer` print behavior. Losing these can
+  silently break the SCN-004 print/disclaimer flow without failing build.
+- When touching `frontend/src/components/before/ResultPanel.*` or removing its
+  dark hero surface, audit `frontend/src/app/before/page.module.css`
+  `.bridgeCta*` rules in the same patch; their current light text colors assume
+  a dark background.
+- Do not rewrite route-level layout JSX as part of a CSS polish patch. CSS-only
+  patches preserve route gating, history selector logic, freeze policies, and
+  saved-history privacy more reliably than JSX rewrites.
