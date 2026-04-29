@@ -19,7 +19,7 @@
   top: 0;
   z-index: var(--kl-z-masthead);
   border-bottom: var(--kl-border-subtle-line);
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--kl-surface-card);
   color: var(--kl-text-primary);
   transition: box-shadow var(--kl-duration-base) var(--kl-ease-enter);
 }
@@ -464,7 +464,7 @@
   gap: var(--kl-space-3);
   margin-bottom: var(--kl-space-4);
   padding: var(--kl-space-4);
-  border: 1px solid #ffb3b8;
+  border: 1px solid var(--kl-danger);
   border-radius: var(--kl-radius-md);
   background: var(--kl-surface-danger);
   color: var(--kl-text-danger);
