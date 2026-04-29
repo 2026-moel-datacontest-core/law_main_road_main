@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { Masthead } from '@/components/layout/Masthead';
 import { Button } from '@/components/ui/Button';
+import { DisclaimerBanner } from '@/components/ui/DisclaimerBanner';
 import { Notification } from '@/components/ui/Notification';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { useAuth } from '@/context/AuthContext';
@@ -793,6 +794,18 @@ export default function AfterPage() {
                 </Button>
               </div>
             </form>
+
+            <div className={styles.entryDisclaimer}>
+              <DisclaimerBanner>
+                <p className={styles.entryDisclaimerTitle}>
+                  이 서비스는 법률 판단을 확정하지 않습니다.
+                </p>
+                <p className={styles.entryDisclaimerBody}>
+                  답변과 문서 초안은 참고용이며, 실제 제출 전 사실관계와 관할 기관
+                  안내를 확인하세요.
+                </p>
+              </DisclaimerBanner>
+            </div>
 
             <AfterHistorySelector
               firebaseConfigured={firebaseConfigured}

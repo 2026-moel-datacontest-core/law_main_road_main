@@ -314,6 +314,44 @@
   background: var(--kl-surface-card);
 }
 
+.entryDisclaimer {
+  width: 100%;
+  max-width: var(--after-entry-width);
+  min-width: 0;
+  margin: 0 auto;
+}
+
+.entryDisclaimer aside {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: var(--kl-border-subtle-line);
+  border-left: 3px solid var(--kl-warning);
+  border-radius: var(--kl-radius-md);
+  background: var(--kl-surface-card);
+}
+
+.entryDisclaimerTitle,
+.entryDisclaimerBody {
+  margin: 0;
+  line-height: 1.65;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.entryDisclaimerTitle {
+  color: var(--kl-text-primary);
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.entryDisclaimerBody {
+  color: var(--kl-text-secondary);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
 .formHeader {
   display: flex;
   align-items: end;
