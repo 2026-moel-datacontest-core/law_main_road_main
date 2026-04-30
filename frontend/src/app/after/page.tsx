@@ -5,6 +5,7 @@ import { ChevronDown, EyeOff, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Masthead } from '@/components/layout/Masthead';
+import { WorkspaceSidebar } from '@/components/layout/WorkspaceSidebar';
 import { Button } from '@/components/ui/Button';
 import { DisclaimerBanner } from '@/components/ui/DisclaimerBanner';
 import { Notification } from '@/components/ui/Notification';
@@ -73,19 +74,10 @@ type HistoryMutationMessage = { kind: 'notice' | 'error'; message: string };
 const SCN001_AFTER_HISTORY_LIMIT = 10;
 const SCN001_AFTER_HISTORY_BACKEND_AUTH_MESSAGE =
   '서버 인증 확인이 완료되지 않아 기록을 불러올 수 없습니다. 인증 확인 또는 다시 로그인 후 시도해주세요.';
-const afterGuidanceCards = [
-  {
-    title: '질문 먼저',
-    description: '궁금한 노동법 상황을 한 문장으로 적어 주세요.',
-  },
-  {
-    title: '근거와 함께',
-    description: '답변과 함께 참고 조문과 출처 컨텍스트를 확인합니다.',
-  },
-  {
-    title: '필요하면 초안',
-    description: '가능한 경우 사건 정보 입력 후 문서 초안으로 이어집니다.',
-  },
+const consultationFlowSteps = [
+  '검토 결과',
+  '법령 후보',
+  'AI 상담',
 ] as const;
 
 export default function AfterPage() {
@@ -152,13 +144,13 @@ export default function AfterPage() {
     () => new Set(bridgeItems.map((item) => item.bridge_run_id)),
     [bridgeItems],
   );
+  const hasRememberedBeforeReview = Boolean(state.before_review.review);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
       const focusTarget = textareaRef.current ?? mainRef.current;
       focusTarget?.focus({ preventScroll: true });
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     });
 
     return () => window.cancelAnimationFrame(frameId);
@@ -245,27 +237,29 @@ export default function AfterPage() {
 
   const helperText = useMemo(() => {
     if (selectedPreset) {
+      const presetTitle = getPresetDisplayTitle(selectedPreset.id);
+
       if (isPresetQueryMatched) {
-        return `${selectedPreset.label} 프리셋이 입력되었습니다. 그대로 제출하면 고정 데모 답변을 사용합니다.`;
+        return `${presetTitle} 예시가 입력되었습니다. 그대로 제출하면 준비된 상담 결과를 사용합니다.`;
       }
 
       return hasIncludedBridgeItems
-        ? `${selectedPreset.label} 프리셋을 바탕으로 수정 중입니다. 체크된 이전 검토 요약도 함께 사용합니다.`
-        : `${selectedPreset.label} 프리셋을 바탕으로 수정 중입니다.`;
+        ? `${presetTitle} 예시를 바탕으로 수정 중입니다. 체크된 검토 결과 맥락도 함께 사용합니다.`
+        : `${presetTitle} 예시를 바탕으로 수정 중입니다.`;
     }
 
     if (hasIncludedBridgeItems) {
       return characterCount === 0
-        ? '체크된 검토 요약을 바탕으로 조문을 찾을 수 있습니다. 필요한 내용을 추가로 적어도 됩니다.'
-        : '체크된 검토 요약과 추가 질문을 함께 사용합니다.';
+        ? '체크된 계약서 검토 결과를 바탕으로 상담을 시작할 수 있습니다. 필요한 내용을 추가로 적어도 됩니다.'
+        : '체크된 계약서 검토 결과와 추가 질문을 함께 참고합니다.';
     }
 
     if (hasBridgeHandoffItems && characterCount === 0) {
-      return '검토 요약을 포함하지 않으려면 추가 질문을 10자 이상 입력해주세요.';
+      return '검토 결과를 포함하지 않으려면 추가 질문을 10자 이상 입력해주세요.';
     }
 
     if (isShort) {
-      return '상황을 10자 이상 입력하면 법 조문 찾기를 시작할 수 있습니다.';
+      return '상황을 10자 이상 입력하면 상담을 시작할 수 있습니다.';
     }
 
     return '해고, 임금, 퇴직금, 사업장 변경, 육아휴직처럼 핵심 사실을 함께 적어주세요.';
@@ -433,7 +427,7 @@ export default function AfterPage() {
     if (!idTokenRequest) {
       throw new BridgeApiError(
         401,
-        'Bridge 답변 생성에는 로그인이 필요합니다. 다시 로그인한 뒤 시도해주세요.',
+        '연결된 검토 결과로 답변을 만들려면 로그인이 필요합니다. 다시 로그인한 뒤 시도해주세요.',
         false,
       );
     }
@@ -491,14 +485,27 @@ export default function AfterPage() {
     setErrorState(null);
   }
 
-  function handleSelectBridgeHistory(bridgeRun: BridgeRunHistoryItem) {
+  function handleToggleBridgeHistory(bridgeRun: BridgeRunHistoryItem) {
+    if (selectedBridgeRunIds.has(bridgeRun.bridge_run_id)) {
+      dispatch({
+        type: 'REMOVE_BRIDGE_HANDOFF_ITEM',
+        payload: { bridge_run_id: bridgeRun.bridge_run_id },
+      });
+      setHistoryMutationMessage({
+        kind: 'notice',
+        message: '검토 결과 맥락을 이번 질문에서 제외했습니다.',
+      });
+      setErrorState(null);
+      return;
+    }
+
     dispatch({
       type: 'ADD_BRIDGE_HANDOFF_ITEM',
       payload: bridgeHistoryItemToHandoffItem(bridgeRun),
     });
     setHistoryMutationMessage({
       kind: 'notice',
-      message: '사건 연결점을 이번 질문에 포함했습니다. 위 체크박스에서 포함 여부를 조정할 수 있습니다.',
+      message: '검토 결과 맥락을 이번 질문에 포함했습니다. 체크박스에서 포함 여부를 조정할 수 있습니다.',
     });
     setErrorState(null);
   }
@@ -641,73 +648,81 @@ export default function AfterPage() {
     router.push('/before');
   }
 
+  function startNewConsultation() {
+    dispatch({ type: 'RESET' });
+    setStatement('');
+    setSelectedPresetId(null);
+    setErrorState(null);
+    setHistoryMutationMessage(null);
+    router.push('/after');
+  }
+
   return (
     <>
       <SkipLink />
       <Masthead isLoading={isLoading} />
       <main id="main-content" ref={mainRef} tabIndex={-1} className={styles.main}>
-        <section className={styles.intro} aria-labelledby="after-title">
-          <div className={styles.introInner}>
-            <p className={styles.eyebrow}>
-              {hasBridgeHandoffItems
-                ? 'After flow · Bridge handoff'
-                : 'After flow · Scenario presets'}
-            </p>
-            <h1 id="after-title" className={styles.title}>
-              상황에 맞는 노동권 조문 찾기
-            </h1>
-            <p className={styles.lead}>
-              현재 상황을 적으면 관련 조문과 주의사항을 먼저 확인합니다.
-            </p>
-            <div className={styles.guidanceGrid} aria-label="After 진행 안내">
-              {afterGuidanceCards.map((card) => (
-                <article key={card.title} className={styles.guidanceCard}>
-                  <h2 className={styles.guidanceTitle}>{card.title}</h2>
-                  <p className={styles.guidanceDescription}>{card.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+        <div className={styles.workspaceShell}>
+          <WorkspaceSidebar
+            activeItem="after"
+            actionLabel="새 상담 시작"
+            actionDescription="AI 법률 상담 질문 입력 화면으로 이동"
+            actionDisabled={isLoading}
+            onAction={startNewConsultation}
+            ariaLabel="AI 법률 상담 메뉴"
+            summary={
+              <>
+                <span>Current workspace</span>
+                <strong>AI 법률 상담</strong>
+                <p>
+                  질문 입력 후 참고 조문, 주의사항, 가능한 문서 초안 흐름으로 이어집니다.
+                </p>
+              </>
+            }
+          />
 
-        <section className={styles.formBand} aria-labelledby="statement-title">
-          <div className={styles.formShell}>
-            {hasBridgeHandoffItems ? (
-              <section
-                className={styles.handoffPanel}
-                aria-labelledby="bridge-handoff-title"
-              >
-                <div className={styles.handoffHeader}>
-                  <div>
-                    <p className={styles.eyebrow}>Bridge handoff</p>
-                    <h2 id="bridge-handoff-title" className={styles.sectionTitle}>
-                      이번 질문에 포함할 이전 기록
-                    </h2>
-                  </div>
-                  <span className={styles.handoffCount}>
-                    {isExactPresetSubmission
-                      ? '고정 프리셋 우선'
-                      : `${includedBridgeItemCount}/${bridgeItems.length} 포함`}
-                  </span>
-                </div>
+          <section className={styles.consultWorkspace} aria-labelledby="after-title">
+            <header className={styles.workspaceHeader}>
+              <div className={styles.workspaceHeaderCopy}>
+                <h1 id="after-title" className={styles.title}>
+                  AI 법률 상담
+                </h1>
+                <p className={styles.lead}>
+                  질문을 입력하면 관련 조문 후보, 핵심 포인트, 주의사항을 함께 확인합니다.
+                </p>
+              </div>
+              <ol className={styles.flowSteps} aria-label="상담 진행 흐름">
+                {consultationFlowSteps.map((step) => (
+                  <li key={step}>
+                    {step === '검토 결과' ? (
+                      <button
+                        type="button"
+                        className={`${styles.flowStep} ${styles.flowStepButton}`}
+                        onClick={goToBefore}
+                        aria-label={
+                          hasRememberedBeforeReview
+                            ? '이전 계약서 검토 결과로 이동'
+                            : '계약서 검토 화면으로 이동'
+                        }
+                      >
+                        {step}
+                      </button>
+                    ) : (
+                      <span
+                        className={
+                          step === 'AI 상담' ? styles.flowStepActive : styles.flowStep
+                        }
+                        aria-current={step === 'AI 상담' ? 'step' : undefined}
+                      >
+                        {step}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </header>
 
-                <div className={styles.handoffList}>
-                  {bridgeItems.map((item, index) => (
-                    <BridgeHandoffCard
-                      key={item.bridge_run_id}
-                      item={item}
-                      index={index}
-                      itemCount={bridgeItems.length}
-                      disabled={isLoading}
-                      fixedPresetMode={isExactPresetSubmission}
-                      onIncludedChange={handleBridgeIncludedChange}
-                      onExclude={handleBridgeExclude}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
+            <section className={styles.formSection} aria-labelledby="statement-title">
             <form
               className={styles.form}
               onSubmit={handleSubmit}
@@ -715,16 +730,16 @@ export default function AfterPage() {
             >
               <div className={styles.formHeader}>
                 <div>
-                  <p className={styles.eyebrow}>질문 작성</p>
+                  <p className={styles.eyebrow}>Question</p>
                   <h2 id="statement-title" className={styles.sectionTitle}>
-                    노동법 질문 입력
+                    질문 입력
                   </h2>
                 </div>
                 <span className={styles.counter}>{characterCount}자</span>
               </div>
 
               <label className={styles.label} htmlFor="statement">
-                {hasBridgeHandoffItems ? '추가 질문' : '한국어 진술'}
+                {hasBridgeHandoffItems ? '추가 질문' : '상담 질문'}
               </label>
               <textarea
                 id="statement"
@@ -759,8 +774,12 @@ export default function AfterPage() {
                     disabled={isLoading}
                     aria-pressed={selectedPresetId === preset.id}
                   >
-                    <span className={styles.presetButtonLabel}>{preset.label}</span>
-                    <span className={styles.presetButtonMeta}>{preset.id}</span>
+                    <span className={styles.presetButtonLabel}>
+                      {getPresetDisplayTitle(preset.id)}
+                    </span>
+                    <span className={styles.presetButtonMeta}>
+                      {getPresetDisplayMeta(preset.id)}
+                    </span>
                   </Button>
                 ))}
               </div>
@@ -788,9 +807,7 @@ export default function AfterPage() {
                   isLoading={isLoading}
                   disabled={!canSubmit}
                 >
-                  {hasBridgeHandoffItems && !isExactPresetSubmission
-                    ? '이 내용으로 조문 찾기 →'
-                    : '법 조문 찾기 →'}
+                  상담 시작
                 </Button>
               </div>
             </form>
@@ -821,14 +838,98 @@ export default function AfterPage() {
               deletingTarget={historyDeleteTarget}
               disabled={isLoading}
               onRetry={retryHistoryLoad}
-              onSelectBridge={handleSelectBridgeHistory}
+              onSelectBridge={handleToggleBridgeHistory}
               onDelete={(target) => void handleDeleteHistoryRecord(target)}
               onGoToBefore={goToBefore}
             />
-          </div>
-        </section>
+            </section>
+          </section>
+
+          <AfterConsultContextPanel
+            bridgeItems={bridgeItems}
+            includedBridgeItemCount={includedBridgeItemCount}
+            isExactPresetSubmission={isExactPresetSubmission}
+            disabled={isLoading}
+            onIncludedChange={handleBridgeIncludedChange}
+            onExclude={handleBridgeExclude}
+          />
+        </div>
       </main>
     </>
+  );
+}
+
+interface AfterConsultContextPanelProps {
+  bridgeItems: BridgeHandoffItem[];
+  includedBridgeItemCount: number;
+  isExactPresetSubmission: boolean;
+  disabled: boolean;
+  onIncludedChange: (item: BridgeHandoffItem, includeInQuery: boolean) => void;
+  onExclude: (item: BridgeHandoffItem) => void;
+}
+
+function AfterConsultContextPanel({
+  bridgeItems,
+  includedBridgeItemCount,
+  isExactPresetSubmission,
+  disabled,
+  onIncludedChange,
+  onExclude,
+}: AfterConsultContextPanelProps) {
+  const hasBridgeHandoffItems = bridgeItems.length > 0;
+
+  return (
+    <aside className={styles.contextPanel} aria-label="상담 context">
+      <div className={styles.contextHeader}>
+        <p className={styles.contextEyebrow}>Consult context</p>
+        <h2>RESULT CONTEXT</h2>
+      </div>
+
+      {hasBridgeHandoffItems ? (
+        <section className={styles.handoffPanel} aria-labelledby="bridge-handoff-title">
+          <div className={styles.handoffHeader}>
+            <div>
+              <p className={styles.eyebrow}>연결된 계약서 검토</p>
+              <h3 id="bridge-handoff-title" className={styles.contextSectionTitle}>
+                검토 결과 맥락
+              </h3>
+            </div>
+            <span className={styles.handoffCount}>
+              {isExactPresetSubmission
+                ? '예시 질문 우선'
+                : `${includedBridgeItemCount}/${bridgeItems.length} 참고`}
+            </span>
+          </div>
+
+          <div className={styles.handoffList}>
+            {bridgeItems.map((item, index) => (
+              <BridgeHandoffCard
+                key={item.bridge_run_id}
+                item={item}
+                index={index}
+                itemCount={bridgeItems.length}
+                disabled={disabled}
+                fixedPresetMode={isExactPresetSubmission}
+                onIncludedChange={onIncludedChange}
+                onExclude={onExclude}
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className={styles.contextEmptyCard} aria-label="연결된 계약서 검토 없음">
+          <strong>연결된 계약서 검토 없음</strong>
+          <p>질문만으로 상담을 시작할 수 있습니다.</p>
+        </section>
+      )}
+
+      <div className={styles.contextNotice}>
+        <p>
+          연결된 검토 결과는 표시된 요약, 주요 항목, 참고 조항 후보만 사용합니다.
+          최종 법률 판단이 아닙니다.
+        </p>
+      </div>
+    </aside>
   );
 }
 
@@ -855,14 +956,14 @@ function BridgeHandoffCard({
   const titleId = `bridge-handoff-card-title-${index}`;
   const displayFields = getBridgeHandoffDisplayFields(item);
   const title =
-    itemCount > 1 ? `사건 기록 요약 ${index + 1}` : '사건 기록 요약';
+    itemCount > 1 ? `연결된 검토 ${index + 1}` : '연결된 검토';
 
   return (
     <article className={styles.handoffCard} aria-labelledby={titleId}>
       <div className={styles.handoffCardTop}>
         <div className={styles.handoffCardTitleGroup}>
           <p className={styles.handoffCardEyebrow}>
-            이전 상황 설명 + 참고 법 조항 후보
+            검토 결과 맥락 + 참고 조항 후보
           </p>
           <h3 id={titleId} className={styles.handoffCardTitle}>
             {title}
@@ -875,7 +976,7 @@ function BridgeHandoffCard({
           onClick={() => onExclude(item)}
           disabled={disabled}
         >
-          이번 질문에서 제외
+          상담에서 제외
         </button>
       </div>
 
@@ -889,15 +990,15 @@ function BridgeHandoffCard({
         />
         <span>
           {fixedPresetMode
-            ? '고정 프리셋 제출에서는 이 요약을 질문에 넣지 않음'
-            : '이 검토 요약을 이번 질문에 포함'}
+            ? '예시 질문 제출에서는 검토 결과를 질문에 넣지 않음'
+            : '계약서 검토 결과를 함께 참고'}
         </span>
       </label>
 
       <p className={styles.handoffSummary}>{displayFields.userVisibleSummary}</p>
 
       <div className={styles.handoffMetaGrid}>
-        <HandoffMetaList title="주요 쟁점" values={displayFields.issueLabels} />
+        <HandoffMetaList title="주요 위험·누락 항목" values={displayFields.issueLabels} />
         <HandoffMetaList title="참고할 법 조항 후보" values={displayFields.lawRefs} />
         <HandoffMetaList
           title="권장 다음 행동"
@@ -907,8 +1008,8 @@ function BridgeHandoffCard({
 
       <p className={styles.handoffNote}>
         {fixedPresetMode
-          ? '프리셋 문장을 수정하거나 프리셋 선택을 바꾸면 체크된 요약을 다시 질문에 사용할 수 있습니다.'
-          : '현재 질문에서만 제외됩니다.'}
+          ? '예시 질문을 수정하면 체크된 검토 결과를 다시 질문에 사용할 수 있습니다.'
+          : '표시된 요약과 후보만 현재 질문에 포함됩니다.'}
       </p>
     </article>
   );
@@ -1216,7 +1317,7 @@ function AfterHistoryCaseCard({
 
           {record.sourceBeforeMissing ? (
             <p className={styles.beforeBridgeHint}>
-              원 Before 요약은 현재 목록에서 불러오지 못했습니다. 표시된 연결 요약만 참고합니다.
+              원 계약서 검토 요약은 현재 목록에서 불러오지 못했습니다. 표시된 연결 요약만 참고합니다.
             </p>
           ) : null}
 
@@ -1246,7 +1347,7 @@ function AfterHistoryCaseCard({
                     onClick={onGoToBefore}
                     disabled={disabled || Boolean(deletingTarget)}
                   >
-                    Before에서 연결 후보 만들기
+                    계약서 검토에서 연결 후보 만들기
                   </button>
                 ) : null}
               </div>
@@ -1302,9 +1403,9 @@ function AfterHistoryBridgeCandidate({
     >
       <div className={styles.historyCardTop}>
         <div className={styles.historyCardTitleGroup}>
-          <p className={styles.historyCardEyebrow}>After 연결점</p>
+          <p className={styles.historyCardEyebrow}>상담 연결점</p>
           <h5 className={styles.historyBridgeSectionTitle}>
-            <span>After 연결점 {index + 1}</span>
+            <span>상담 연결점 {index + 1}</span>
             {isSelected ? (
               <span
                 className={`${styles.historySelectedPill} ${styles.historySelectedPillInline}`}
@@ -1330,7 +1431,7 @@ function AfterHistoryBridgeCandidate({
       </div>
 
       <HistorySummaryBlock
-        title="After 질문과 연결점"
+        title="질문과 연결점"
         body={displayFields.connectionSummary}
         fallback="연결 요약이 없습니다."
       />
@@ -1342,7 +1443,7 @@ function AfterHistoryBridgeCandidate({
       </div>
 
       <p className={styles.historyConnectionNote}>
-        법적 근거 확정이 아니라 After 질문에 이어볼 참고 맥락입니다.
+        법적 근거 확정이 아니라 이번 상담 질문에 이어볼 참고 맥락입니다.
       </p>
 
       <div className={styles.historyCardFooter}>
@@ -1351,8 +1452,11 @@ function AfterHistoryBridgeCandidate({
           className={isSelected ? styles.historySelectButtonSelected : styles.historySelectButton}
           type="button"
           aria-pressed={isSelected}
+          aria-label={
+            isSelected ? '이미 포함됨, 클릭하면 이번 질문에서 제외' : '이번 질문에 포함'
+          }
           onClick={() => onSelectBridge(bridgeRun)}
-          disabled={disabled || Boolean(deletingTarget) || isSelected}
+          disabled={disabled || Boolean(deletingTarget)}
         >
           {isSelected ? '이미 포함됨' : '이번 질문에 포함'}
         </button>
@@ -1366,7 +1470,7 @@ function getCaseBridgeEmptyHint(record: Scn001CaseHistoryRecord): string {
     return '연결 후보가 있지만 현재 최근 목록에서는 불러오지 못했습니다.';
   }
 
-  return 'Before 화면에서 이 사건의 참고 법 조항 후보를 만든 뒤 After 질문에 이어볼 수 있습니다.';
+  return '계약서 검토 화면에서 이 사건의 참고 법 조항 후보를 만든 뒤 상담 질문에 이어볼 수 있습니다.';
 }
 
 function HistorySummaryBlock({
@@ -1587,7 +1691,7 @@ function getAfterHistoryGateMessage(input: {
     return SCN001_AFTER_HISTORY_BACKEND_AUTH_MESSAGE;
   }
 
-  return '로그인하지 않아도 SCN-004 질문과 프리셋은 그대로 사용할 수 있습니다.';
+  return '로그인하지 않아도 예시 질문과 자유 상담은 그대로 사용할 수 있습니다.';
 }
 
 function getScn001HistoryErrorMessage(error: unknown): string {
@@ -1619,7 +1723,7 @@ function getHistoryDeleteConfirmMessage(kind: HistoryDeleteKind): string {
     return '이 사건 기록을 목록에서 숨길까요? 숨긴 뒤 연결 후보도 보이지 않습니다.';
   }
 
-  return '이 연결 후보를 목록에서 숨길까요? 숨긴 뒤 After 연결 후보에서 보이지 않습니다.';
+  return '이 연결 후보를 목록에서 숨길까요? 숨긴 뒤 상담 연결 후보에서 보이지 않습니다.';
 }
 
 function isHistoryDeletePending(
@@ -1680,6 +1784,24 @@ function formatInlineText(value: string | null | undefined, fallback: string): s
 function optionalInlineText(value: string | null | undefined): string | undefined {
   const trimmed = value?.replace(/\r\n?/g, '\n').trim();
   return trimmed && trimmed.length > 0 ? trimmed.replace(/\s+/g, ' ') : undefined;
+}
+
+function getPresetDisplayTitle(presetId: ScenarioPresetId): string {
+  switch (presetId) {
+    case 'SCN-001-BRIDGE-DEMO':
+      return '사업장 변경 사유 상담';
+    case 'SCN-004-DEMO-FREEZE':
+      return '임금체불·부당해고 상담';
+  }
+}
+
+function getPresetDisplayMeta(presetId: ScenarioPresetId): string {
+  switch (presetId) {
+    case 'SCN-001-BRIDGE-DEMO':
+      return '계약서 검토 결과를 함께 참고하는 예시';
+    case 'SCN-004-DEMO-FREEZE':
+      return '문서 초안까지 이어지는 예시';
+  }
 }
 
 function getAnswerSubmissionError(error: unknown): {

@@ -14,13 +14,13 @@ export function Scn001ContinuityPanel({
 }: Scn001ContinuityPanelProps) {
   return (
     <section className={styles.panel} aria-labelledby={titleId}>
-      <p className={styles.eyebrow}>Bridge-as-Continuity / Not Grounding</p>
+      <p className={styles.eyebrow}>연결된 검토 결과</p>
       <h2 id={titleId} className={styles.title}>
-        이전 계약서 검토와 이번 질문이 이어지는 지점
+        이전 계약서 검토와 이어지는 내용
       </h2>
       <p className={styles.description}>
-        이전 Before 검토 내용은 사건 배경과 흐름을 이해하기 위한 보조 설명입니다.
-        현재 답변과 초안의 법적 근거는 화면에 표시된 인용 조문과 근거 컨텍스트에
+        이전 계약서 검토 내용은 사건 배경과 흐름을 이해하기 위한 보조 설명입니다.
+        현재 답변과 초안의 법적 근거는 화면에 표시된 근거 조문과 출처 컨텍스트에
         한정됩니다.
       </p>
 

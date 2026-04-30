@@ -6,6 +6,9 @@ interface DocumentPreviewProps {
   id?: string;
   title: string;
   renderedText: string;
+  actions?: ReactNode;
+  notice?: ReactNode;
+  meta?: ReactNode;
 }
 
 const CONFIRMATION_PLACEHOLDER_PATTERN = /(\[[^\]\n]*확인 필요[^\]\n]*\])/g;
@@ -29,17 +32,29 @@ function renderDocumentContent(content: string): ReactNode {
   });
 }
 
-export function DocumentPreview({ id, title, renderedText }: DocumentPreviewProps) {
+export function DocumentPreview({
+  id,
+  title,
+  renderedText,
+  actions,
+  notice,
+  meta,
+}: DocumentPreviewProps) {
   const content = renderedText.trim();
 
   return (
     <section className={styles.section} aria-labelledby="document-preview-title">
       <div className={styles.header}>
-        <p className={styles.eyebrow}>초안 본문</p>
-        <h2 id="document-preview-title" className={styles.title}>
-          {title}
-        </h2>
+        <div className={styles.headerCopy}>
+          <p className={styles.eyebrow}>문서 미리보기</p>
+          <h2 id="document-preview-title" className={styles.title}>
+            {title}
+          </h2>
+          {meta ? <div className={styles.meta}>{meta}</div> : null}
+        </div>
+        {actions ? <div className={styles.actions}>{actions}</div> : null}
       </div>
+      {notice ? <div className={styles.notice}>{notice}</div> : null}
       <article
         id={id}
         className={styles.paper}

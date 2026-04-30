@@ -35,3 +35,9 @@
   background: var(--kl-primary-light);
   text-decoration: none;
 }
+
+@media print {
+  .skipLinks {
+    display: none !important;
+  }
+}

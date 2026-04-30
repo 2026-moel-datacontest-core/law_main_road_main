@@ -8,9 +8,15 @@ import type {
   LegalBasisInput,
 } from './api';
 import type { BridgeHandoffItem, BridgeHandoffState } from './bridge-handoff';
+import type { BeforeReviewResult } from './before';
 import type { ScenarioPresetId } from '@/lib/scenarioPresets';
 
 export type AnswerOrigin = 'regular_after' | 'bridge_handoff';
+
+export interface BeforeReviewMemoryState {
+  review: BeforeReviewResult | null;
+  completed_review_job_id: string | null;
+}
 
 export interface KLaborShieldFlowState {
   user_statement: string;
@@ -24,6 +30,7 @@ export interface KLaborShieldFlowState {
   evidence_status_map: Record<string, EvidenceUiStatus>;
   draft_response: DocumentDraftResponse | null;
   bridge_handoff: BridgeHandoffState;
+  before_review: BeforeReviewMemoryState;
 }
 
 export type FlowAction =
@@ -52,4 +59,6 @@ export type FlowAction =
     }
   | { type: 'REMOVE_BRIDGE_HANDOFF_ITEM'; payload: { bridge_run_id: string } }
   | { type: 'CLEAR_BRIDGE_HANDOFF' }
+  | { type: 'SET_BEFORE_REVIEW_RESULT'; payload: BeforeReviewMemoryState }
+  | { type: 'CLEAR_BEFORE_REVIEW_RESULT' }
   | { type: 'RESET' };

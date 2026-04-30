@@ -1,6 +1,5 @@
 'use client';
 
-import { Gavel } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -24,10 +23,10 @@ export function Masthead({ isLoading = false }: MastheadProps) {
       <div className={styles.inner}>
         <Link className={styles.brand} href="/">
           <span className={styles.mark} aria-hidden="true">
-            <Gavel size={18} />
+            법
           </span>
           <span className={styles.brandText}>
-            법대로 <span className={styles.brandSub}>law-main-road</span>
+            법대로 AI <span className={styles.brandSub}>Legal workspace</span>
           </span>
         </Link>
         <nav className={styles.nav} aria-label="주요 화면">

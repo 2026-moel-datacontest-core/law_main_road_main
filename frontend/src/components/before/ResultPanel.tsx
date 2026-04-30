@@ -1,14 +1,57 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ChevronDown } from 'lucide-react';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/Button';
-import type { BeforeReviewEvidence, BeforeReviewResult } from '@/types/before';
+import type {
+  BeforeReviewEvidence,
+  BeforeReviewResult,
+  BeforeReviewStatus,
+  BeforeSeverity,
+} from '@/types/before';
 
 import styles from './ResultPanel.module.css';
 
 type EvidenceCopyScenario = 'foreignWorker' | 'partTime' | 'disabledWorker';
+export type BeforeReviewIssueTone = 'danger' | 'warning' | 'success';
+type EvidenceTone = BeforeReviewIssueTone | 'neutral';
+
+export interface BeforeReviewIssueSource {
+  title: string;
+  status: BeforeReviewStatus;
+  severity: BeforeSeverity;
+  law_ref: string;
+  description: string;
+}
+
+type IssueCard = BeforeReviewIssueSource;
+
+export interface BeforeReviewDisplayIssue extends BeforeReviewIssueSource {
+  tag: string | null;
+  tone: BeforeReviewIssueTone;
+}
+
+interface ClausePreviewSentence {
+  text: string;
+  highlighted: boolean;
+}
+
+interface ClausePreviewBlock {
+  title: string;
+  neutralSentences: string[];
+  highlightedSentence: string | null;
+  sentences: ClausePreviewSentence[];
+  issue: BeforeReviewDisplayIssue | null;
+  status: BeforeReviewStatus | null;
+  severity: BeforeSeverity | null;
+  tag: string | null;
+  tone: EvidenceTone;
+  lawRef: string | null;
+  sourceLabel: string;
+  fallbackNote: string | null;
+}
 
 const MOCK_REVIEW_EVIDENCE_SCENARIOS: Record<string, EvidenceCopyScenario> = {
   '5f0d77f5-foreign-worker-demo': 'foreignWorker',
@@ -70,230 +113,916 @@ const SCENARIO_EVIDENCE_COPY: Record<
 
 interface ResultPanelProps {
   review: BeforeReviewResult;
-  overviewCards: Array<{ label: string; value: string }>;
   onReset: () => void;
+  onIssueSelect?: (tag: string) => void;
+  accessibilityDisclosure?: ReactNode;
   resetDisabled?: boolean;
-  bridgeAction?: ReactNode;
-  accessibilityPanel?: ReactNode;
-  onAccessibilityCtaClick?: () => void;
 }
 
 export function ResultPanel({
   review,
-  overviewCards,
   onReset,
+  onIssueSelect,
+  accessibilityDisclosure = null,
   resetDisabled = false,
-  bridgeAction,
-  accessibilityPanel,
-  onAccessibilityCtaClick,
 }: ResultPanelProps) {
-  const [openEvidenceIndex, setOpenEvidenceIndex] = useState<number | null>(0);
+  const [isEvidenceDisclosureOpen, setIsEvidenceDisclosureOpen] = useState(false);
+  const [isReviewNotesOpen, setIsReviewNotesOpen] = useState(false);
+  const [expandedClauseKeys, setExpandedClauseKeys] = useState<Set<string>>(() => new Set());
 
-  const issueCards = useMemo(() => {
-    if (review.important_points.length) {
-      return review.important_points;
-    }
+  const taggedIssueCards = useMemo(() => buildBeforeReviewDisplayIssues(review), [review]);
+  const clausePreviewBlocks = useMemo<ClausePreviewBlock[]>(
+    () => buildClausePreviewBlocks(review, taggedIssueCards),
+    [review, taggedIssueCards],
+  );
+  const documentName = getDocumentDisplayName(review);
 
-    return Object.entries(review.rule_check ?? {})
-      .filter(([, value]) => value.status !== 'PASS')
-      .map(([key, value]) => ({
-        title: key,
-        status: value.status,
-        severity: value.severity,
-        law_ref: value.law_ref ?? '',
-        description: value.message ?? '',
-      }));
-  }, [review.important_points, review.rule_check]);
+  useEffect(() => {
+    setExpandedClauseKeys(new Set());
+    setIsEvidenceDisclosureOpen(false);
+    setIsReviewNotesOpen(false);
+  }, [review.review_id]);
+
+  function toggleClauseBlock(key: string) {
+    setExpandedClauseKeys((currentKeys) => {
+      const nextKeys = new Set(currentKeys);
+
+      if (nextKeys.has(key)) {
+        nextKeys.delete(key);
+      } else {
+        nextKeys.add(key);
+      }
+
+      return nextKeys;
+    });
+  }
+
+  function renderClauseDetail(block: ClausePreviewBlock, showBadges = false) {
+    const displaySentences = normalizeContractExcerptSentencesForDisplay(block.sentences);
+
+    return (
+      <>
+        {showBadges && block.status && block.severity ? (
+          <div className={styles.clauseDetailBadges}>
+            <StatusBadge kind="status" value={block.status} />
+            <StatusBadge kind="severity" value={block.severity} />
+          </div>
+        ) : null}
+
+        <p className={styles.clauseSourceLabel}>{block.sourceLabel}</p>
+        {block.fallbackNote ? (
+          <p className={styles.clauseFallbackNote}>{block.fallbackNote}</p>
+        ) : null}
+        <div className={styles.contractExcerptText}>
+          {displaySentences.map((sentence, sentenceIndex) =>
+            sentence.highlighted ? (
+              <span
+                key={`${sentence.text}-${sentenceIndex}`}
+                className={styles.highlightedSentenceRow}
+              >
+                <span
+                  className={`${styles.sentenceHighlight} ${getEvidenceHighlightClassName(
+                    block.tone,
+                  )}`}
+                >
+                  {sentence.text}
+                </span>
+                {block.tag ? (
+                  <span className={`${styles.inlineTagPill} ${getTagClassName(block.tone)}`}>
+                    {block.tag}
+                  </span>
+                ) : null}
+              </span>
+            ) : (
+              <span
+                key={`${sentence.text}-${sentenceIndex}`}
+                className={styles.neutralSentence}
+              >
+                {sentence.text}
+              </span>
+            ),
+          )}
+        </div>
+
+        {block.lawRef ? (
+          <span className={styles.lawRefChip}>{block.lawRef}</span>
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <div className={styles.stack}>
-      <section className={styles.heroCard} aria-labelledby="before-result-title">
-        <div className={styles.heroGlow} />
-        <div className={styles.heroInner}>
-          <div className={styles.heroHeader}>
-            <span className={styles.badge}>Review result</span>
-            <div className={styles.heroStatusGroup}>
-              <StatusBadge kind="status" value={review.overall_result} />
-              <StatusBadge kind="severity" value={review.overall_severity} />
-            </div>
-          </div>
+      <header className={styles.resultAppHeader}>
+        <div>
+          <h2 className={styles.resultAppTitle}>근로계약서 검토</h2>
+          <p className={styles.resultAppSummary}>{review.headline}</p>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onReset}
+          disabled={resetDisabled}
+          className={styles.heroResetButton}
+        >
+          새 검토 시작
+        </Button>
+      </header>
 
-          <div className={styles.heroBody}>
-            <h2 id="before-result-title" className={styles.heroTitle}>
-              {review.headline}
-            </h2>
-            <p className={styles.heroDescription}>{review.plain_language_summary}</p>
-          </div>
+      <div className={styles.resultTabs} aria-label="결과 보기">
+        <span className={`${styles.resultTab} ${styles.resultTabActive}`}>검토 결과</span>
+        <span className={`${styles.resultTab} ${styles.resultTabDisabled}`} aria-disabled="true">
+          법령 후보
+        </span>
+        <Link
+          href="/after"
+          className={`${styles.resultTab} ${styles.resultTabLink}`}
+          aria-label="AI 법률 상담으로 이동"
+        >
+          AI 상담
+        </Link>
+      </div>
 
-          <div className={styles.heroActionRow}>
-            {accessibilityPanel && onAccessibilityCtaClick ? (
-              <Button
-                type="button"
-                variant="tertiary"
-                onClick={onAccessibilityCtaClick}
-                className={styles.heroAccessibilityButton}
-              >
-                장애 관련 권리·지원 안내 보기
-              </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onReset}
-              disabled={resetDisabled}
-              className={styles.heroResetButton}
-            >
-              새 분석으로 돌아가기
-            </Button>
+      <section
+        id="before-contract-document-section"
+        className={styles.documentPreview}
+        aria-labelledby="document-preview-title"
+        tabIndex={-1}
+      >
+        <div className={styles.documentPreviewHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>Contract document</p>
+            <h3 id="document-preview-title" className={styles.sectionTitle}>
+              {documentName}
+            </h3>
+          </div>
+          <div className={styles.documentToolbar} aria-label="문서 검토 상태">
+            <span>표시 항목 {clausePreviewBlocks.length}개</span>
+            <StatusBadge kind="status" value={review.overall_result} />
+            <StatusBadge kind="severity" value={review.overall_severity} />
           </div>
         </div>
 
-        <div className={styles.overviewGrid}>
-          {overviewCards.map((card) => (
-            <div key={card.label} className={styles.overviewCard}>
-              <p className={styles.overviewLabel}>{card.label}</p>
-              <p className={styles.overviewValue}>{card.value}</p>
-            </div>
-          ))}
+        <div className={styles.documentPreviewMeta} aria-label="계약 정보">
+          <span>사업주 · {review.contract_info.employer}</span>
+          <span>근로자 · {review.contract_info.employee}</span>
+          <span>시작일 · {review.contract_info.start_date}</span>
         </div>
 
-        <div className={styles.contractInfo}>
-          <InfoRow label="사업주" value={review.contract_info.employer} />
-          <InfoRow label="근로자" value={review.contract_info.employee} />
-          <InfoRow label="시작일" value={review.contract_info.start_date} />
-          <InfoRow label="요약" value={review.summary} />
-        </div>
-
-        {bridgeAction ? <div className={styles.bridgeActionSlot}>{bridgeAction}</div> : null}
-      </section>
-
-      <div className={styles.grid}>
-        <section className={styles.card}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionEyebrow}>Issue cards</p>
-            <h3 className={styles.sectionTitle}>핵심 문제 요약</h3>
-          </div>
-
-          <div className={styles.issueList}>
-            {issueCards.length ? (
-              issueCards.map((issue) => (
-                <article key={`${issue.title}-${issue.law_ref}`} className={styles.issueCard}>
-                  <div className={styles.issueHeader}>
-                    <div>
-                      <h4 className={styles.issueTitle}>{issue.title}</h4>
-                      {issue.law_ref ? <p className={styles.issueLawRef}>{issue.law_ref}</p> : null}
-                    </div>
-                    <div className={styles.issueBadges}>
-                      <StatusBadge kind="status" value={issue.status} />
-                      <StatusBadge kind="severity" value={issue.severity} />
-                    </div>
-                  </div>
-                  <p className={styles.issueDescription}>{issue.description}</p>
-                </article>
-              ))
-            ) : (
-              <div className={styles.emptyPositive}>
-                현재 결과 기준으로 바로 수정이 필요한 핵심 이슈는 없습니다.
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className={styles.card}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionEyebrow}>Summary notes</p>
-            <h3 className={styles.sectionTitle}>전체 평가</h3>
-          </div>
-
-          <div className={styles.summaryList}>
-            {review.overall_assessment.map((line) => (
-              <div key={line} className={styles.summaryItem}>
-                {line}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className={styles.card}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionEyebrow}>Recommended actions</p>
-            <h3 className={styles.sectionTitle}>권장 조치</h3>
-          </div>
-
-          <div className={styles.actionList}>
-            {review.recommended_actions.map((action) => (
-              <div key={action} className={styles.actionItem}>
-                {action}
-              </div>
-            ))}
-          </div>
-
-        </section>
-
-        <section className={styles.card}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionEyebrow}>Evidence toggle</p>
-            <h3 className={styles.sectionTitle}>근거와 확인 포인트</h3>
-          </div>
-
-          <div className={styles.evidenceList}>
-            {review.evidence.map((evidence, index) => {
-              const isOpen = openEvidenceIndex === index;
-              const displayEvidence = getScenarioEvidenceCopy(review, evidence, index);
+        <div className={styles.contractExcerptSurface}>
+          {clausePreviewBlocks.length ? (
+            clausePreviewBlocks.map((block, index) => {
+              const clauseKey = getClauseKey(block, index);
+              const panelId = getClausePanelId(block, index);
+              const isExpanded = expandedClauseKeys.has(clauseKey);
 
               return (
-                <div key={evidence.title} className={styles.evidenceCard}>
+                <section
+                  key={`${block.title}-${index}`}
+                  className={`${styles.contractSection} ${styles.contractSectionAccordion}`}
+                >
                   <button
+                    id={getClauseButtonId(block, index)}
                     type="button"
-                    onClick={() => setOpenEvidenceIndex(isOpen ? null : index)}
-                    className={styles.evidenceButton}
+                    className={`${styles.clauseAccordionButton} ${getClauseAccordionClassName(
+                      block.tone,
+                    )}`}
+                    data-clause-preview-tag={block.tag ?? undefined}
+                    data-clause-preview-kind={block.tag ? 'issue' : 'supporting'}
+                    aria-expanded={isExpanded}
+                    aria-controls={panelId}
+                    aria-label={`${block.tag ?? getClauseHeaderLabel(block)} ${block.title} ${
+                      isExpanded ? '접기' : '펼치기'
+                    }`}
+                    onClick={() => {
+                      toggleClauseBlock(clauseKey);
+                      if (block.tag) {
+                        onIssueSelect?.(block.tag);
+                      }
+                    }}
                   >
-                    <div>
+                    <span className={`${styles.clauseHeaderTag} ${getTagClassName(block.tone)}`}>
+                      {block.tag ?? getClauseHeaderLabel(block)}
+                    </span>
+                    <span className={styles.clauseAccordionContent}>
+                      <span className={styles.clauseAccordionMeta}>
+                        {getIssueToneLabel(block)}
+                      </span>
+                      <span className={styles.clauseAccordionTitle}>{block.title}</span>
+                      <span className={styles.clauseAccordionSummary}>
+                        {getClauseHeaderSummary(block)}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      size={17}
+                      aria-hidden="true"
+                      className={`${styles.clauseAccordionIcon} ${
+                        isExpanded ? styles.clauseAccordionIconOpen : ''
+                      }`}
+                    />
+                  </button>
+                  <div
+                    id={panelId}
+                    className={styles.clauseAccordionPanel}
+                    hidden={!isExpanded}
+                  >
+                    {renderClauseDetail(block, true)}
+                  </div>
+                </section>
+              );
+            })
+          ) : (
+            <div className={styles.emptyPositive}>
+              현재 결과 기준으로 바로 표시할 계약서 발췌 근거는 없습니다.
+            </div>
+          )}
+        </div>
+
+      </section>
+
+      {accessibilityDisclosure}
+
+      <div className={styles.compactDisclosureStack}>
+        <section className={styles.compactDisclosure}>
+          <button
+            id="before-evidence-detail-button"
+            type="button"
+            className={styles.compactDisclosureButton}
+            aria-expanded={isEvidenceDisclosureOpen}
+            aria-controls="before-evidence-disclosure-panel"
+            onClick={() => setIsEvidenceDisclosureOpen((isOpen) => !isOpen)}
+          >
+            <span className={styles.compactDisclosureCopy}>
+              <span className={styles.compactDisclosureEyebrow}>Evidence detail</span>
+              <span className={styles.compactDisclosureTitle}>세부 근거 보기</span>
+              <span className={styles.compactDisclosureSummary}>
+                문서 발췌와 시나리오별 확인 포인트 {review.evidence.length}개
+              </span>
+            </span>
+            <ChevronDown
+              size={17}
+              aria-hidden="true"
+              className={`${styles.compactDisclosureIcon} ${
+                isEvidenceDisclosureOpen ? styles.compactDisclosureIconOpen : ''
+              }`}
+            />
+          </button>
+
+          <div
+            id="before-evidence-disclosure-panel"
+            className={styles.compactDisclosurePanel}
+            hidden={!isEvidenceDisclosureOpen}
+          >
+            <div className={styles.evidenceList}>
+              {review.evidence.map((evidence, index) => {
+                const displayEvidence = getScenarioEvidenceCopy(review, evidence, index);
+
+                return (
+                  <article key={evidence.title} className={styles.evidenceCard}>
+                    <div className={styles.evidenceBody}>
                       <p className={styles.evidenceIndex}>Evidence {index + 1}</p>
                       <h4 className={styles.evidenceTitle}>{displayEvidence.title}</h4>
-                    </div>
-                    <span className={styles.evidenceToggle}>{isOpen ? '접기' : '열기'}</span>
-                  </button>
-
-                  {isOpen ? (
-                    <div className={styles.evidenceBody}>
                       <p className={styles.evidenceExcerpt}>{displayEvidence.excerpt}</p>
                     </div>
-                  ) : null}
-                </div>
-              );
-            })}
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </section>
 
-        {accessibilityPanel ? (
-          <div className={styles.accessibilityPanelSlot}>{accessibilityPanel}</div>
-        ) : null}
+        <section className={styles.compactDisclosure}>
+          <button
+            type="button"
+            className={styles.compactDisclosureButton}
+            aria-expanded={isReviewNotesOpen}
+            aria-controls="before-review-notes-disclosure-panel"
+            onClick={() => setIsReviewNotesOpen((isOpen) => !isOpen)}
+          >
+            <span className={styles.compactDisclosureCopy}>
+              <span className={styles.compactDisclosureEyebrow}>Review notes</span>
+              <span className={styles.compactDisclosureTitle}>요약 메모와 권장 조치</span>
+              <span className={styles.compactDisclosureSummary}>
+                권장 조치 {review.recommended_actions.length}개 · 평가 메모{' '}
+                {review.overall_assessment.length}개
+              </span>
+            </span>
+            <ChevronDown
+              size={17}
+              aria-hidden="true"
+              className={`${styles.compactDisclosureIcon} ${
+                isReviewNotesOpen ? styles.compactDisclosureIconOpen : ''
+              }`}
+            />
+          </button>
 
-        {review.ocr_warnings && review.ocr_warnings.length > 0 ? (
-          <section className={styles.warningCard}>
-            <div className={styles.sectionHeader}>
-              <p className={styles.sectionEyebrow}>OCR warnings</p>
-              <h3 className={styles.sectionTitle}>OCR 확인 필요</h3>
-            </div>
-
-            <div className={styles.warningList}>
-              {review.ocr_warnings.map((warning) => (
-                <div key={warning.field} className={styles.warningItem}>
-                  <p className={styles.warningField}>{warning.field}</p>
-                  <p className={styles.warningNote}>{warning.note}</p>
-                  <p className={styles.warningMeta}>
-                    structured: {String(warning.structured)} / corrected:{' '}
-                    {String(warning.corrected)}
-                  </p>
+          <div
+            id="before-review-notes-disclosure-panel"
+            className={styles.compactDisclosurePanel}
+            hidden={!isReviewNotesOpen}
+          >
+            <div className={styles.reviewNotesGrid}>
+              <div className={styles.reviewNotesGroup}>
+                <p className={styles.reviewNotesTitle}>권장 조치</p>
+                <div className={styles.actionList}>
+                  {review.recommended_actions.map((action) => (
+                    <div key={action} className={styles.actionItem}>
+                      {action}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div className={styles.reviewNotesGroup}>
+                <p className={styles.reviewNotesTitle}>전체 평가</p>
+                <div className={styles.summaryList}>
+                  {review.overall_assessment.map((line) => (
+                    <div key={line} className={styles.summaryItem}>
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </section>
-        ) : null}
+          </div>
+        </section>
       </div>
     </div>
   );
+}
+
+export function buildBeforeReviewDisplayIssues(
+  review: BeforeReviewResult,
+): BeforeReviewDisplayIssue[] {
+  return tagIssueCards(buildBaseIssueCards(review));
+}
+
+function buildBaseIssueCards(review: BeforeReviewResult): IssueCard[] {
+  if (review.important_points.length) {
+    return review.important_points;
+  }
+
+  return Object.entries(review.rule_check ?? {})
+    .filter(([, value]) => value.status !== 'PASS')
+    .map(([key, value]) => ({
+      title: getRuleCheckDisplayTitle(key),
+      status: value.status,
+      severity: value.severity,
+      law_ref: value.law_ref ?? '',
+      description: value.message ?? '',
+    }));
+}
+
+function tagIssueCards(issueCards: IssueCard[]): BeforeReviewDisplayIssue[] {
+  let riskIndex = 0;
+  let missingIndex = 0;
+
+  return issueCards.map<BeforeReviewDisplayIssue>((issue) => {
+    if (issue.status === 'VIOLATION') {
+      riskIndex += 1;
+      return { ...issue, tag: `R${riskIndex}`, tone: 'danger' };
+    }
+
+    if (issue.status === 'WARNING') {
+      missingIndex += 1;
+      return { ...issue, tag: `M${missingIndex}`, tone: 'warning' };
+    }
+
+    return { ...issue, tag: null, tone: 'success' };
+  });
+}
+
+function buildClausePreviewBlocks(
+  review: BeforeReviewResult,
+  taggedIssueCards: BeforeReviewDisplayIssue[],
+): ClausePreviewBlock[] {
+  const passCards = buildPassingRuleCards(review).filter(
+      (passCard) =>
+        !taggedIssueCards.some(
+          (issue) =>
+            getPrimaryTextCategory(issue.title, issue.description) ===
+            getPrimaryTextCategory(passCard.title, passCard.description),
+        ),
+  );
+  const issueBlockByTag = new Map<string, ClausePreviewBlock>();
+  const supportingEvidenceBlocks: ClausePreviewBlock[] = [];
+
+  review.evidence.forEach((evidence, index) => {
+    const sentences = splitEvidenceExcerpt(evidence.excerpt);
+    const issue = findIssueForEvidence(evidence, taggedIssueCards, passCards, index);
+    const highlightedIndex = chooseHighlightedSentenceIndex(sentences, issue, evidence.title);
+    const renderedSentences = sentences.map((sentence, sentenceIndex) => ({
+      text: sentence,
+      highlighted: sentenceIndex === highlightedIndex,
+    }));
+
+    const block: ClausePreviewBlock = {
+      title: evidence.title,
+      neutralSentences: renderedSentences
+        .filter((sentence) => !sentence.highlighted)
+        .map((sentence) => sentence.text),
+      highlightedSentence:
+        highlightedIndex >= 0 ? renderedSentences[highlightedIndex]?.text ?? null : null,
+      sentences: renderedSentences,
+      issue,
+      status: issue?.status ?? null,
+      severity: issue?.severity ?? null,
+      tag: issue?.tag ?? null,
+      tone: issue?.tone ?? 'neutral',
+      lawRef: issue?.law_ref?.trim() || null,
+      sourceLabel: '문서 발췌 기준',
+      fallbackNote: null,
+    };
+
+    if (issue?.tag) {
+      if (!issueBlockByTag.has(issue.tag)) {
+        issueBlockByTag.set(issue.tag, block);
+      }
+      return;
+    }
+
+    supportingEvidenceBlocks.push(block);
+  });
+
+  const issueBlocks = taggedIssueCards
+    .filter((issue) => issue.tag)
+    .map((issue) => issueBlockByTag.get(issue.tag ?? '') ?? buildFallbackClausePreviewBlock(issue));
+
+  return [...issueBlocks, ...supportingEvidenceBlocks];
+}
+
+function findIssueForEvidence(
+  evidence: BeforeReviewEvidence,
+  taggedIssueCards: BeforeReviewDisplayIssue[],
+  passCards: BeforeReviewDisplayIssue[],
+  evidenceIndex: number,
+): BeforeReviewDisplayIssue | null {
+  if (isMissingEvidence(evidence)) {
+    const warningIssues = taggedIssueCards.filter((issue) => issue.status === 'WARNING');
+    return findBestIssueForEvidence(evidence, warningIssues, evidenceIndex);
+  }
+
+  return findBestIssueForEvidence(evidence, [...taggedIssueCards, ...passCards], evidenceIndex);
+}
+
+function buildFallbackClausePreviewBlock(issue: BeforeReviewDisplayIssue): ClausePreviewBlock {
+  const highlightedText = issue.description.trim() || issue.title;
+  return {
+    title: issue.title,
+    neutralSentences: [],
+    highlightedSentence: highlightedText,
+    sentences: [{ text: highlightedText, highlighted: true }],
+    issue,
+    status: issue.status,
+    severity: issue.severity,
+    tag: issue.tag,
+    tone: issue.tone,
+    lawRef: issue.law_ref.trim() || null,
+    sourceLabel: '검토 항목 기준',
+    fallbackNote: '관련 발췌 없음 · 문서에서 추가 확인 필요',
+  };
+}
+
+function buildPassingRuleCards(review: BeforeReviewResult): BeforeReviewDisplayIssue[] {
+  return Object.entries(review.rule_check ?? {})
+    .filter(([, value]) => value.status === 'PASS')
+    .map(([key, value]) => ({
+      title: getRuleCheckDisplayTitle(key),
+      status: value.status,
+      severity: value.severity,
+      law_ref: value.law_ref ?? '',
+      description: value.message ?? getRuleCheckDisplayTitle(key),
+      tag: null,
+      tone: 'success',
+    }));
+}
+
+function isMissingEvidence(evidence: BeforeReviewEvidence): boolean {
+  return /(누락|missing)/i.test(evidence.title);
+}
+
+function splitEvidenceExcerpt(excerpt: string): string[] {
+  return excerpt
+    .replace(/\r\n?/g, '\n')
+    .split(/\n+/)
+    .flatMap((line) => splitLongSentence(line.trim()))
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function normalizeContractExcerptSentencesForDisplay(
+  sentences: ClausePreviewSentence[],
+): ClausePreviewSentence[] {
+  return sentences.reduce<ClausePreviewSentence[]>((displaySentences, sentence) => {
+    const text = normalizeContractExcerptForDisplay(sentence.text);
+    if (!text) {
+      return displaySentences;
+    }
+
+    const previousSentence = displaySentences[displaySentences.length - 1];
+    if (previousSentence && shouldJoinContractExcerptDisplayLine(previousSentence.text, text)) {
+      previousSentence.text = joinContractExcerptDisplayLine(previousSentence.text, text);
+      previousSentence.highlighted = previousSentence.highlighted || sentence.highlighted;
+      return displaySentences;
+    }
+
+    displaySentences.push({ ...sentence, text });
+    return displaySentences;
+  }, []);
+}
+
+function normalizeContractExcerptForDisplay(text: string): string {
+  return text
+    .replace(/\s+/g, ' ')
+    .replace(/(\d[\d,]*)\s+원\b/g, '$1원')
+    .replace(/(\d)\s+%/g, '$1%')
+    .replace(/\[\s+/g, '[')
+    .replace(/\s+\]/g, ']')
+    .trim();
+}
+
+function shouldJoinContractExcerptDisplayLine(previousText: string, nextText: string): boolean {
+  const previous = previousText.trim();
+  const next = nextText.trim();
+
+  if (!previous || !next || isLikelyNewContractField(next)) {
+    return false;
+  }
+
+  if (isDetachedCurrencyUnit(next) && /[\d\])]$/.test(previous)) {
+    return true;
+  }
+
+  if (isDetachedClosingFragment(next)) {
+    return true;
+  }
+
+  if (isShortContractLabel(previous) && isContractValueFragment(next)) {
+    return true;
+  }
+
+  if (hasDanglingOpeningMark(previous) && isShortContractContinuation(next)) {
+    return true;
+  }
+
+  if (hasUnclosedOpeningMark(previous) && isShortContractContinuation(next)) {
+    return true;
+  }
+
+  if (/근로자에게$/.test(previous) && /^(직접|계좌)/.test(next)) {
+    return true;
+  }
+
+  if (/^지급방법(?:\s|$)/.test(previous) && /^(근로자에게|직접|계좌|매월|매주|매일)/.test(next)) {
+    return true;
+  }
+
+  return false;
+}
+
+function joinContractExcerptDisplayLine(previousText: string, nextText: string): string {
+  const previous = previousText.trim();
+  const next = nextText.trim();
+  const separator =
+    isDetachedCurrencyUnit(next) || isDetachedClosingFragment(next) || /^[)\]}]/.test(next)
+      ? ''
+      : ' ';
+
+  return normalizeContractExcerptForDisplay(`${previous}${separator}${next}`);
+}
+
+function isDetachedCurrencyUnit(text: string): boolean {
+  return /^(원|원,|원원)$/.test(text);
+}
+
+function isDetachedClosingFragment(text: string): boolean {
+  return /^[)\]},.，、]+(?:원|원,)?$/.test(text);
+}
+
+function isShortContractLabel(text: string): boolean {
+  return /^(월급|일급|시간급|상여금|임금지급일|지급방법|근로자에게|기본급|수당)$/.test(
+    text,
+  );
+}
+
+function isContractValueFragment(text: string): boolean {
+  return (
+    /^[\d,]+(?:원)?$/.test(text) ||
+    /^(있음|없음)(?:[\[(].*)?$/.test(text) ||
+    /^(매월|매주|매일|직접|계좌|근로자)/.test(text)
+  );
+}
+
+function hasDanglingOpeningMark(text: string): boolean {
+  return /[\[(（]$/.test(text);
+}
+
+function hasUnclosedOpeningMark(text: string): boolean {
+  return (
+    countMatches(text, /\(/g) > countMatches(text, /\)/g) ||
+    countMatches(text, /\[/g) > countMatches(text, /\]/g) ||
+    countMatches(text, /（/g) > countMatches(text, /）/g)
+  );
+}
+
+function countMatches(text: string, pattern: RegExp): number {
+  return text.match(pattern)?.length ?? 0;
+}
+
+function isShortContractContinuation(text: string): boolean {
+  return text.length <= 16 && !isLikelyNewContractField(text);
+}
+
+function isLikelyNewContractField(text: string): boolean {
+  return /^[-•]?\s*(그 밖의|초과근로|임금지급일|지급방법|근로시간|휴게|상여금|월급|일급|시간급|공제항목|수당)|^\d+[.)]/.test(
+    text,
+  );
+}
+
+function splitLongSentence(line: string): string[] {
+  if (line.length < 90) {
+    return [line];
+  }
+
+  const matches = line.match(/.+?(?:다\.|요\.|함\.|[.!?。！？](?:\s|$)|$)/gu);
+  return matches?.map((item) => item.trim()).filter(Boolean) ?? [line];
+}
+
+function findBestIssueForEvidence(
+  evidence: BeforeReviewEvidence,
+  candidates: BeforeReviewDisplayIssue[],
+  evidenceIndex: number,
+): BeforeReviewDisplayIssue | null {
+  if (!candidates.length) {
+    return null;
+  }
+
+  const evidenceText = `${evidence.title} ${evidence.excerpt}`;
+  const evidenceCategory = getPrimaryTextCategory(evidence.title, evidence.excerpt);
+  let bestMatch: { issue: BeforeReviewDisplayIssue; score: number } | null = null;
+
+  for (const candidate of candidates) {
+    const candidateText = `${candidate.title} ${candidate.description} ${candidate.law_ref}`;
+    const candidateCategory = getPrimaryTextCategory(candidate.title, candidate.description);
+    const score =
+      getTokenOverlapScore(evidenceText, candidateText) +
+      (evidenceCategory && evidenceCategory === candidateCategory ? 8 : 0);
+
+    if (!bestMatch || score > bestMatch.score) {
+      bestMatch = { issue: candidate, score };
+    }
+  }
+
+  if (bestMatch && bestMatch.score > 0) {
+    return bestMatch.issue;
+  }
+
+  return candidates[evidenceIndex] ?? null;
+}
+
+function chooseHighlightedSentenceIndex(
+  sentences: string[],
+  issue: BeforeReviewDisplayIssue | null,
+  evidenceTitle: string,
+): number {
+  if (!sentences.length) {
+    return -1;
+  }
+
+  if (!issue) {
+    return getFirstContentSentenceIndex(sentences);
+  }
+
+  const targetText = `${issue.title} ${issue.description} ${issue.law_ref}`;
+  const targetCategory = getPrimaryTextCategory(issue.title, issue.description);
+  let bestMatch = { index: getFirstContentSentenceIndex(sentences), score: -1 };
+
+  sentences.forEach((sentence, index) => {
+    const sentenceCategory = getPrimaryTextCategory(evidenceTitle, sentence);
+    const score =
+      getTokenOverlapScore(sentence, targetText) +
+      (targetCategory && targetCategory === sentenceCategory ? 7 : 0) +
+      (isLikelyHeading(sentence) ? -2 : 0);
+
+    if (score > bestMatch.score) {
+      bestMatch = { index, score };
+    }
+  });
+
+  if (bestMatch.score <= 0) {
+    return getFirstContentSentenceIndex(sentences);
+  }
+
+  return bestMatch.index;
+}
+
+function getFirstContentSentenceIndex(sentences: string[]): number {
+  const contentIndex = sentences.findIndex((sentence) => !isLikelyHeading(sentence));
+  return contentIndex >= 0 ? contentIndex : 0;
+}
+
+function isLikelyHeading(sentence: string): boolean {
+  const compactSentence = sentence.replace(/\s+/g, '');
+  const isShortFieldLabel =
+    sentence.length <= 16 &&
+    /^(월급|일급|시간급|원|상여금|있음|없음|임금지급일|지급방법|근로자에게|직접|당|원원)$/.test(
+      compactSentence,
+    );
+
+  return isShortFieldLabel || (sentence.length <= 18 && /^\d+[.)]?\s*\S+/.test(sentence));
+}
+
+function getTokenOverlapScore(source: string, target: string): number {
+  const sourceTokens = new Set(tokenizeForMatch(source));
+  return tokenizeForMatch(target).reduce((score, token) => {
+    if (sourceTokens.has(token)) {
+      return score + (token.length >= 4 ? 2 : 1);
+    }
+
+    return score;
+  }, 0);
+}
+
+function tokenizeForMatch(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2);
+}
+
+function getPrimaryTextCategory(...parts: string[]): string | null {
+  const text = parts.join(' ');
+
+  if (/(최저|임금|시급|월급|일급|상여|수당|공제|지급일)/.test(text)) {
+    return 'wage';
+  }
+
+  if (/(근로시간|근로일|휴게|휴일|소정|초과근무|업무\s*시작|업무\s*종료)/.test(text)) {
+    return 'hours';
+  }
+
+  if (/(계약기간|근로계약기간|근로개시|시작일|종료일|기간의\s*정함)/.test(text)) {
+    return 'period';
+  }
+
+  if (/(숙소|기숙사|숙박시설)/.test(text)) {
+    return 'dormitory';
+  }
+
+  if (/(여권|이직|사업장|손해배상|권리\s*제한|보관|이동\s*제한)/.test(text)) {
+    return 'rights';
+  }
+
+  if (/(누락|빠진|미기재|불명확)/.test(text)) {
+    return 'missing';
+  }
+
+  return null;
+}
+
+function getRuleCheckDisplayTitle(key: string): string {
+  if (key === 'minimum_wage') {
+    return '임금 조항';
+  }
+
+  if (key === 'working_hours') {
+    return '근로시간 조항';
+  }
+
+  if (key === 'break_time') {
+    return '휴게시간 조항';
+  }
+
+  if (key === 'payment_day') {
+    return '임금 지급일 조항';
+  }
+
+  return key.replace(/_/g, ' ');
+}
+
+function getDocumentDisplayName(review: BeforeReviewResult): string {
+  const uploadedFileName = review.uploaded_files
+    ?.find((file) => file.name.trim())
+    ?.name.trim();
+
+  if (uploadedFileName) {
+    return uploadedFileName;
+  }
+
+  const contractType = review.contract_info.type.trim();
+  if (contractType) {
+    return contractType.endsWith('계약서') ? contractType : `${contractType} 계약서`;
+  }
+
+  return '근로계약서';
+}
+
+function getClausePanelId(block: ClausePreviewBlock, index: number): string {
+  return `before-clause-preview-${getClauseKey(block, index)}`;
+}
+
+function getClauseButtonId(block: ClausePreviewBlock, index: number): string {
+  return `before-clause-preview-button-${getClauseKey(block, index)}`;
+}
+
+function getClauseKey(block: ClausePreviewBlock, index: number): string {
+  const key = block.tag ?? `support-${index}`;
+  return key.replace(/[^a-zA-Z0-9_-]/g, '-');
+}
+
+function getClauseHeaderLabel(block: ClausePreviewBlock): string {
+  if (block.status === 'PASS' || block.tone === 'success') {
+    return '확인';
+  }
+
+  return '참고';
+}
+
+function getIssueToneLabel(block: ClausePreviewBlock): string {
+  if (block.status === 'VIOLATION') {
+    return '위험 의심';
+  }
+
+  if (block.status === 'WARNING') {
+    return '누락 정보';
+  }
+
+  if (block.status === 'PASS') {
+    return '확인 완료';
+  }
+
+  return '검토 항목';
+}
+
+function getClauseHeaderSummary(block: ClausePreviewBlock): string {
+  const displaySentences = normalizeContractExcerptSentencesForDisplay(block.sentences);
+  const summary =
+    displaySentences.find((sentence) => sentence.highlighted)?.text ??
+    block.issue?.description ??
+    displaySentences.find((sentence) => sentence.text.trim())?.text ??
+    block.sourceLabel;
+
+  return truncatePreviewText(summary);
+}
+
+function truncatePreviewText(text: string, maxLength = 92): string {
+  const normalizedText = text.replace(/\s+/g, ' ').trim();
+
+  if (normalizedText.length <= maxLength) {
+    return normalizedText;
+  }
+
+  return `${normalizedText.slice(0, maxLength - 1).trimEnd()}...`;
+}
+
+function getEvidenceHighlightClassName(tone: EvidenceTone): string {
+  if (tone === 'danger') {
+    return styles.sentenceHighlightDanger;
+  }
+
+  if (tone === 'warning') {
+    return styles.sentenceHighlightWarning;
+  }
+
+  if (tone === 'success') {
+    return styles.sentenceHighlightSuccess;
+  }
+
+  return styles.sentenceHighlightNeutral;
+}
+
+function getClauseAccordionClassName(tone: EvidenceTone): string {
+  if (tone === 'danger') {
+    return styles.clauseAccordionDanger;
+  }
+
+  if (tone === 'warning') {
+    return styles.clauseAccordionWarning;
+  }
+
+  if (tone === 'success') {
+    return styles.clauseAccordionSuccess;
+  }
+
+  return styles.clauseAccordionNeutral;
+}
+
+function getTagClassName(tone: EvidenceTone): string {
+  if (tone === 'danger') {
+    return styles.tagPillDanger;
+  }
+
+  if (tone === 'warning') {
+    return styles.tagPillWarning;
+  }
+
+  if (tone === 'success') {
+    return styles.tagPillSuccess;
+  }
+
+  return styles.tagPillNeutral;
 }
 
 function getScenarioEvidenceCopy(
@@ -309,15 +1038,6 @@ function getScenarioEvidenceCopy(
 
 function getEvidenceCopyScenario(review: BeforeReviewResult): EvidenceCopyScenario | null {
   return MOCK_REVIEW_EVIDENCE_SCENARIOS[review.review_id] ?? null;
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className={styles.infoRow}>
-      <p className={styles.infoLabel}>{label}</p>
-      <p className={styles.infoValue}>{value}</p>
-    </div>
-  );
 }
 
 function StatusBadge({

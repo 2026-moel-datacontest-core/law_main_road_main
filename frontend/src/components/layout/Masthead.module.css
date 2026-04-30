@@ -29,7 +29,7 @@
   min-height: var(--kl-masthead-height);
   color: var(--kl-text-primary);
   font-size: var(--kl-text-body);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
@@ -48,8 +48,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.12rem;
+  font-weight: 800;
   letter-spacing: 0;
 }
 
@@ -69,10 +69,10 @@
   height: 32px;
   border-radius: var(--kl-radius-md);
   border: 0;
-  background: var(--kl-primary);
+  background: var(--kl-workspace-sidebar-bg);
   color: var(--kl-text-on-primary);
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.78rem;
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -117,35 +117,17 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 4px;
-  background: var(--kl-primary);
-  transform-origin: left center;
+  width: 100%;
+  height: 2px;
+  background: var(--kl-border);
 }
 
 .progress {
-  width: 100%;
-  animation: progress var(--kl-duration-medium) var(--kl-ease-enter) infinite alternate;
+  transform: none;
 }
 
 .progressHidden {
   display: none;
-}
-
-@keyframes progress {
-  from {
-    transform: translateX(0) scaleX(0.2);
-  }
-
-  to {
-    transform: translateX(80%) scaleX(0.2);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .progress {
-    animation: none;
-    transform: none;
-  }
 }
 
 @media (max-width: 480px) {
@@ -175,5 +157,11 @@
     padding-right: 6px;
     padding-left: 6px;
     font-size: 0.86rem;
+  }
+}
+
+@media print {
+  .masthead {
+    display: none !important;
   }
 }

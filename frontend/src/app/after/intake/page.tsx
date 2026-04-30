@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Masthead } from '@/components/layout/Masthead';
+import { WorkspaceSidebar } from '@/components/layout/WorkspaceSidebar';
 import {
   EvidenceSection,
   ensureEvidenceRowIds,
@@ -45,6 +46,13 @@ const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   labor_commission_unfair_dismissal_brief: '노동위원회 부당해고 구제신청 이유서 초안',
   workplace_change_reason_summary: '사업장 변경 사유 정리서 초안',
 };
+
+const intakeFlowSteps = [
+  'AI 법률 상담',
+  '상담 결과',
+  '초안 정보 입력',
+  '문서 초안',
+] as const;
 
 interface DraftErrorState {
   message: string;
@@ -119,8 +127,11 @@ export default function AfterIntakePage() {
 
   useEffect(() => {
     if (answer && selectedDocumentType && canUseDraftFlow) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
       const frameId = window.requestAnimationFrame(() => {
-        headingRef.current?.focus();
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        headingRef.current?.focus({ preventScroll: true });
       });
 
       return () => window.cancelAnimationFrame(frameId);
@@ -140,12 +151,23 @@ export default function AfterIntakePage() {
   }
 
   const documentTypeLabel = DOCUMENT_TYPE_LABELS[selectedDocumentType];
-  const pageEyebrow = 'Step 3 · 사건 정보 입력';
-  const pageTitle = canUseScn001FrozenDraftFlow
-    ? '사업장 변경 사유 초안에 반영할 정보를 입력하세요'
-    : '초안에 반영할 정보를 선택적으로 입력하세요';
+  const pageTitle = '문서 초안 정보 입력';
   const pageLead =
-    '빈 항목은 제출을 막지 않습니다. 확인이 필요한 부분은 초안 결과에서 따로 표시됩니다.';
+    '상담 결과에서 선택한 문서 초안에 반영할 사실관계를 확인합니다. 빈 항목은 제출을 막지 않고 초안 결과에서 확인 필요 항목으로 표시됩니다.';
+  const formTitle = canUseScn001FrozenDraftFlow
+    ? '사업장 변경 사유 초안에 반영할 정보'
+    : '초안에 반영할 사실관계';
+  const statementSummary = truncateText(state.user_statement || answer.query, 96);
+  const answerSummary = truncateText(
+    answer.answer.trim() || '상담 답변 본문을 생성하지 못했습니다.',
+    140,
+  );
+  const citationPreview = answer.cited_articles.slice(0, 4);
+  const cautionPreview = answer.cautions.slice(0, 3);
+  const preparationItems = getDraftPreparationItems(
+    selectedDocumentType,
+    canUseScn001FrozenDraftFlow,
+  );
 
   async function submitDraft() {
     if (!answer || !selectedDocumentType || draftSubmittingRef.current) {
@@ -169,7 +191,7 @@ export default function AfterIntakePage() {
     if (!supportsDraft) {
       setErrorState({
         message: isBridgeHandoffAnswer
-          ? '이 답변은 Before/Bridge 검토에서 이어진 조문 확인용이라 문서 초안을 만들 수 없습니다.'
+          ? '이 답변은 계약서 검토 결과에서 이어진 조문 확인용이라 문서 초안을 만들 수 없습니다.'
           : '이 경로에서는 문서 초안을 만들 수 없습니다. 고정 초안은 결과 화면에서 고정 입력과 고정 답변이 그대로 일치할 때만 열 수 있습니다.',
         retryable: false,
       });
@@ -181,7 +203,7 @@ export default function AfterIntakePage() {
     if (!selectedEligibility.documentTypes[selectedDocumentType]) {
       setErrorState({
         message:
-          '선택한 문서 타입을 뒷받침하는 SCN-004 근거가 없어 문서 초안을 만들 수 없습니다.',
+          '선택한 문서 타입을 뒷받침하는 근거가 없어 문서 초안을 만들 수 없습니다.',
         retryable: false,
       });
       return;
@@ -285,30 +307,95 @@ export default function AfterIntakePage() {
     router.push('/after');
   }
 
+  function goBackToResult() {
+    router.push('/after/result');
+  }
+
   return (
     <>
       <SkipLink />
       <Masthead isLoading={isSubmitting} />
       <main id="main-content" tabIndex={-1} className={styles.main}>
-        <section className={styles.headerBand} aria-labelledby="intake-title">
-          <div className={styles.shell}>
-            <p className={styles.eyebrow}>{pageEyebrow}</p>
-            <h1 id="intake-title" ref={headingRef} tabIndex={-1} className={styles.title}>
-              {pageTitle}
-            </h1>
-            <div className={styles.badgeRow}>
-              <span className={styles.documentBadge}>{documentTypeLabel}</span>
-            </div>
-            <p className={styles.lead}>{pageLead}</p>
-          </div>
-        </section>
+        <div className={styles.workspaceShell}>
+          <WorkspaceSidebar
+            activeItem="after"
+            actionLabel="새 상담 시작"
+            actionDescription="AI 법률 상담 질문 입력 화면으로 이동"
+            actionDisabled={isSubmitting}
+            onAction={resetFlow}
+            ariaLabel="AI 법률 상담 메뉴"
+            summary={
+              <>
+                <span>Current workspace</span>
+                <strong>AI 법률 상담</strong>
+                <p>상담 결과에서 문서 초안 정보 입력으로 이어갑니다.</p>
+              </>
+            }
+          />
 
-        <form
-          className={styles.form}
-          onSubmit={handleSubmit}
-          aria-busy={isSubmitting || undefined}
-        >
-          <div className={isSubmitting ? styles.formContentDisabled : styles.formContent}>
+          <section className={styles.intakeWorkspace} aria-labelledby="intake-title">
+            <header className={styles.workspaceHeader}>
+              <div className={styles.workspaceHeaderCopy}>
+                <h1
+                  id="intake-title"
+                  ref={headingRef}
+                  tabIndex={-1}
+                  className={styles.title}
+                >
+                  {pageTitle}
+                </h1>
+                <p className={styles.lead}>{pageLead}</p>
+              </div>
+              <ol className={styles.flowSteps} aria-label="문서 초안 진행 흐름">
+                {intakeFlowSteps.map((step) => (
+                  <li key={step}>
+                    {step === 'AI 법률 상담' ? (
+                      <button
+                        type="button"
+                        className={`${styles.flowStep} ${styles.flowStepButton}`}
+                        disabled={isSubmitting}
+                        onClick={resetFlow}
+                      >
+                        {step}
+                      </button>
+                    ) : step === '상담 결과' ? (
+                      <button
+                        type="button"
+                        className={`${styles.flowStep} ${styles.flowStepButton}`}
+                        disabled={isSubmitting}
+                        onClick={goBackToResult}
+                      >
+                        {step}
+                      </button>
+                    ) : step === '초안 정보 입력' ? (
+                      <span className={styles.flowStepActive} aria-current="step">
+                        {step}
+                      </span>
+                    ) : (
+                      <span className={styles.flowStep}>{step}</span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </header>
+
+            <form
+              className={styles.form}
+              onSubmit={handleSubmit}
+              aria-busy={isSubmitting || undefined}
+            >
+              <div className={styles.formIntro}>
+                <p className={styles.eyebrow}>초안 정보</p>
+                <h2 className={styles.sectionTitle}>{formTitle}</h2>
+                <div className={styles.badgeRow}>
+                  <span className={styles.documentBadge}>{documentTypeLabel}</span>
+                </div>
+                <p className={styles.helperText}>
+                  필요한 항목만 입력해도 됩니다. 확인이 필요한 정보는 초안에서 누락 항목으로
+                  따로 정리됩니다.
+                </p>
+              </div>
+              <div className={isSubmitting ? styles.formContentDisabled : styles.formContent}>
             {canUseScn001FrozenDraftFlow ? (
               <>
                 <WorkplaceChangeReasonForm
@@ -354,7 +441,7 @@ export default function AfterIntakePage() {
             <DisclaimerBanner>
               {canUseScn001FrozenDraftFlow ? (
                 <p>
-                  이 고정 데모 초안은 제출 전 검토용입니다. Bridge/계약서 분석 내용은 사건
+                  이 고정 데모 초안은 제출 전 검토용입니다. 연결된 계약서 검토 내용은 사건
                   경위 설명으로만 사용하고 법적 근거로 승격하지 않습니다.
                 </p>
               ) : (
@@ -364,42 +451,156 @@ export default function AfterIntakePage() {
                 </p>
               )}
             </DisclaimerBanner>
-          </div>
+              </div>
 
-          <div className={styles.stickyBar}>
-            <div className={styles.stickyInner}>
-              <div className={styles.stickyMessage}>
-                {errorState ? (
-                  <Notification
-                    variant="error"
-                    title="문서 초안 생성 실패"
-                    actionLabel={errorState.retryable ? '다시 시도하기' : undefined}
-                    onAction={errorState.retryable ? () => void submitDraft() : undefined}
-                    onClose={() => setErrorState(null)}
-                  >
-                    <p>{errorState.message}</p>
-                  </Notification>
-                ) : null}
+              <div className={styles.stickyBar}>
+                <div className={styles.stickyInner}>
+                  <div className={styles.stickyMessage}>
+                    {errorState ? (
+                      <Notification
+                        variant="error"
+                        title="문서 초안 생성 실패"
+                        actionLabel={errorState.retryable ? '다시 시도하기' : undefined}
+                        onAction={errorState.retryable ? () => void submitDraft() : undefined}
+                        onClose={() => setErrorState(null)}
+                      >
+                        <p>{errorState.message}</p>
+                      </Notification>
+                    ) : null}
+                  </div>
+                  <div className={styles.actions}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className={styles.backButton}
+                      disabled={isSubmitting}
+                      onClick={goBackToResult}
+                    >
+                      상담 결과로 돌아가기
+                    </Button>
+                    <Button
+                      type="submit"
+                      className={styles.submitButton}
+                      isLoading={isSubmitting}
+                      disabled={isSubmitting}
+                    >
+                      {canUseScn001FrozenDraftFlow
+                        ? '사업장 변경 사유 정리서 초안 생성하기 →'
+                        : '문서 초안 생성하기 →'}
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className={styles.actions}>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={isSubmitting}
-                  onClick={resetFlow}
-                >
-                  처음으로 돌아가기
-                </Button>
-                <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting}>
-                  {canUseScn001FrozenDraftFlow
-                    ? '사업장 변경 사유 정리서 초안 생성하기 →'
-                    : '문서 초안 생성하기 →'}
-                </Button>
-              </div>
+            </form>
+          </section>
+
+          <aside className={styles.contextPanel} aria-label="문서 초안 준비 맥락">
+            <div className={styles.contextHeader}>
+              <p className={styles.contextEyebrow}>상담 맥락</p>
+              <h2>초안 준비</h2>
             </div>
-          </div>
-        </form>
+
+            <section className={styles.contextCard} aria-labelledby="intake-context-summary">
+              <p className={styles.eyebrow}>상담 결과 요약</p>
+              <h3 id="intake-context-summary" className={styles.contextCardTitle}>
+                초안에 이어지는 상담 내용
+              </h3>
+              <p className={styles.contextText}>{answerSummary}</p>
+              <div className={styles.questionSummary}>
+                <span>질문 요약</span>
+                <p>{statementSummary}</p>
+              </div>
+            </section>
+
+            <section className={styles.contextCard} aria-labelledby="intake-document-type">
+              <p className={styles.eyebrow}>선택 문서 유형</p>
+              <h3 id="intake-document-type" className={styles.contextCardTitle}>
+                {documentTypeLabel}
+              </h3>
+              <p className={styles.contextText}>
+                입력한 사실관계와 상담 결과의 근거 조문을 바탕으로 제출 전 검토용 초안을
+                만듭니다.
+              </p>
+            </section>
+
+            <section className={styles.contextCard} aria-labelledby="intake-legal-basis">
+              <p className={styles.eyebrow}>근거 조문</p>
+              <h3 id="intake-legal-basis" className={styles.contextCardTitle}>
+                상담 결과에서 확인된 법령 근거
+              </h3>
+              {citationPreview.length > 0 ? (
+                <ul className={styles.contextPillList} aria-label="근거 조문 요약">
+                  {citationPreview.map((article) => (
+                    <li key={article}>{article}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.contextText}>표시할 근거 조문이 없습니다.</p>
+              )}
+            </section>
+
+            {cautionPreview.length > 0 ? (
+              <details className={styles.contextDisclosure}>
+                <summary>주의사항 {cautionPreview.length}건</summary>
+                <ul className={styles.contextList}>
+                  {cautionPreview.map((caution) => (
+                    <li key={caution}>{caution}</li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
+
+            <section className={styles.contextNotice} aria-labelledby="intake-preparation">
+              <p className={styles.eyebrow}>입력 안내</p>
+              <h3 id="intake-preparation" className={styles.contextCardTitle}>
+                초안 작성 전에 확인할 정보
+              </h3>
+              <ul className={styles.contextList}>
+                {preparationItems.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+          </aside>
+        </div>
       </main>
     </>
   );
+}
+
+function truncateText(value: string, maxLength: number): string {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength - 3)}...`;
+}
+
+function getDraftPreparationItems(
+  documentType: DocumentType,
+  isScn001FrozenDraftFlow: boolean,
+): string[] {
+  if (isScn001FrozenDraftFlow) {
+    return [
+      '숙소비 공제, 기숙사 환경, 차별·폭언 등 사업장 변경 사유를 구분해 적어주세요.',
+      '날짜와 증거가 불확실하면 비워두고 초안 결과의 확인 필요 항목에서 다시 점검하세요.',
+      '계약서 검토 내용은 사건 경위 설명으로만 참고합니다.',
+    ];
+  }
+
+  if (documentType === 'labor_office_wage_complaint') {
+    return [
+      '근무 기간, 퇴사일, 지급일, 미지급 임금·퇴직금 금액을 확인해 주세요.',
+      '임금명세서, 계좌 입금 내역, 근로계약서 등 증거가 있으면 함께 적어주세요.',
+      '불확실한 금액은 단정하지 말고 초안 결과에서 확인 필요 항목으로 남겨두세요.',
+    ];
+  }
+
+  return [
+    '해고 통보일, 마지막 근무일, 서면통지 여부, 해고예고 여부를 확인해 주세요.',
+    '해고 통보 메시지, 근로계약서, 출근 기록 등 증거가 있으면 함께 적어주세요.',
+    '불확실한 날짜나 사유는 단정하지 말고 초안 결과에서 확인 필요 항목으로 남겨두세요.',
+  ];
 }

@@ -95,6 +95,35 @@
   --kl-page-section-padding: clamp(var(--kl-space-12), 8vw, var(--kl-space-24));
   --kl-page-header-padding: clamp(var(--kl-space-12), 7vw, var(--kl-space-16));
 
+  /* Shared workspace frame */
+  --kl-workspace-canvas: #edf1f6;
+  --kl-workspace-shell-surface: #f8fafc;
+  --kl-workspace-panel-surface: #f7f9fc;
+  --kl-workspace-card-surface: #ffffff;
+  --kl-workspace-border: #dce4ec;
+  --kl-workspace-border-strong: #c8d3df;
+  --kl-workspace-shell-width: 1360px;
+  --kl-workspace-sidebar-width: 188px;
+  --kl-workspace-sidebar-width-compact: 168px;
+  --kl-workspace-right-rail-width: 316px;
+  --kl-workspace-page-padding: 16px 14px 26px;
+  --kl-workspace-page-padding-mobile: 10px;
+  --kl-workspace-shell-radius: 14px;
+  --kl-workspace-shell-min-height: calc(
+    100vh - var(--kl-masthead-height) - 46px
+  );
+  --kl-workspace-main-padding: 28px 30px 32px;
+  --kl-workspace-main-padding-mobile: 18px 14px 20px;
+  --kl-workspace-right-rail-padding: 18px 14px;
+  --kl-workspace-right-rail-padding-tablet: 22px 24px 24px;
+  --kl-workspace-right-rail-padding-mobile: 18px 14px;
+  --kl-workspace-shadow: 0 2px 0 rgba(11, 21, 36, 0.03),
+    0 20px 48px rgba(11, 21, 36, 0.1);
+  --kl-workspace-sidebar-bg: #08122a;
+  --kl-workspace-sidebar-text: #c8d3e5;
+  --kl-workspace-sidebar-muted: #7d8da5;
+  --kl-workspace-sidebar-accent: #8dbcf0;
+
   /* Interactive sizes */
   --kl-interactive-height: 48px;
   --kl-sticky-bar-height: 80px;
@@ -194,4 +223,17 @@ a:hover {
 ::selection {
   background: var(--kl-primary-light);
   color: var(--kl-text-primary);
+}
+
+@media print {
+  html,
+  body {
+    min-height: auto;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body {
+    margin: 0;
+  }
 }

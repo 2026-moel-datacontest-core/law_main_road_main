@@ -3,22 +3,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
-  BookOpen,
+  ChevronDown,
   ClipboardCheck,
-  FileEdit,
-  FileSearch,
-  FolderClock,
-  LayoutDashboard,
   Plus,
-  Settings,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { AccessibilityPanel } from '@/components/before/AccessibilityPanel';
 import { LoadingPanel } from '@/components/before/LoadingPanel';
-import { ResultPanel } from '@/components/before/ResultPanel';
+import {
+  buildBeforeReviewDisplayIssues,
+  ResultPanel,
+  type BeforeReviewDisplayIssue,
+  type BeforeReviewIssueTone,
+} from '@/components/before/ResultPanel';
 import { UploadPanel } from '@/components/before/UploadPanel';
 import { Masthead } from '@/components/layout/Masthead';
+import { WorkspaceSidebar } from '@/components/layout/WorkspaceSidebar';
 import { Button } from '@/components/ui/Button';
 import { Notification } from '@/components/ui/Notification';
 import { SkipLink } from '@/components/ui/SkipLink';
@@ -58,8 +59,17 @@ type BridgeActionStatus = 'idle' | 'loading' | 'success' | 'error';
 interface ResultContextSummary {
   riskCount: number;
   needsReviewCount: number;
-  recommendedActionCount: number;
-  evidenceCount: number;
+  passCount: number;
+}
+
+interface ResultContextIssue {
+  title: string;
+  description: string;
+  lawRef: string;
+  nextAction: string;
+  status: BeforeReviewResult['overall_result'];
+  tag: string | null;
+  tone: BeforeReviewIssueTone;
 }
 
 const BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE =
@@ -71,7 +81,7 @@ const BEFORE_ANALYZE_FIREBASE_CONFIG_MESSAGE =
 const BEFORE_ANALYZE_BACKEND_AUTH_MESSAGE =
   '서버 인증 확인이 완료되지 않았습니다. 인증 확인 또는 다시 로그인 후 분석을 시작해주세요.';
 const BRIDGE_BACKEND_AUTH_MESSAGE =
-  '서버 인증 확인이 완료되지 않아 After 연결을 만들 수 없습니다. 인증 확인 또는 다시 로그인 후 시도해주세요.';
+  '서버 인증 확인이 완료되지 않아 AI 법률 상담 연결을 만들 수 없습니다. 인증 확인 또는 다시 로그인 후 시도해주세요.';
 const BEFORE_JOB_GENERAL_FAILURE_MESSAGE =
   '계약서 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
 const BEFORE_JOB_OCR_QUOTA_FAILURE_MESSAGE =
@@ -86,6 +96,9 @@ const OCR_TIMEOUT_ERROR_PATTERNS = [
   /응답 시간이 초과/i,
   /시간이 초과/i,
 ];
+const ACCESSIBILITY_EXTENSION_SECTION_ID = 'before-accessibility-extension-section';
+const ACCESSIBILITY_EXTENSION_PANEL_ID = 'before-accessibility-extension-panel';
+const DEFAULT_ACCESSIBILITY_EXTENSION_TYPE: BeforeDisabilityType = 'visual';
 
 function createMockJob(): BeforeReviewJob {
   const now = new Date().toISOString();
@@ -136,7 +149,7 @@ function advanceMockJob(job: BeforeReviewJob): BeforeReviewJob {
 
 export default function BeforePage() {
   const router = useRouter();
-  const { dispatch } = useFlow();
+  const { state, dispatch } = useFlow();
   const {
     firebaseConfigured,
     firebaseUser,
@@ -150,16 +163,25 @@ export default function BeforePage() {
   } = useAuth();
   const loadingRef = useRef<HTMLElement | null>(null);
   const resultRef = useRef<HTMLElement | null>(null);
+  const accessibilitySectionRef = useRef<HTMLElement | null>(null);
+  const accessibilityDisclosureButtonRef = useRef<HTMLButtonElement | null>(null);
   const accessibilityRef = useRef<HTMLDivElement | null>(null);
-  const [screenState, setScreenState] = useState<BeforeScreenState>('home');
+  const rememberedBeforeReview = state.before_review.review;
+  const rememberedBeforeReviewJobId = state.before_review.completed_review_job_id;
+  const [screenState, setScreenState] = useState<BeforeScreenState>(() =>
+    rememberedBeforeReview ? 'result' : 'home',
+  );
   const [isUploadVisible, setIsUploadVisible] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loadingJob, setLoadingJob] = useState<BeforeReviewJob | null>(null);
-  const [completedReviewJobId, setCompletedReviewJobId] = useState<string | null>(null);
-  const [review, setReview] = useState<BeforeReviewResult | null>(null);
+  const [completedReviewJobId, setCompletedReviewJobId] = useState<string | null>(
+    rememberedBeforeReviewJobId,
+  );
+  const [review, setReview] = useState<BeforeReviewResult | null>(rememberedBeforeReview);
   const [selectedDisability, setSelectedDisability] = useState<BeforeDisabilityType | null>(null);
   const [accessibility, setAccessibility] = useState<BeforeAccessibilityRecommendation | null>(null);
   const [accessibilityError, setAccessibilityError] = useState<string | null>(null);
+  const [isAccessibilityPanelOpen, setIsAccessibilityPanelOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAccessibilityLoading, setIsAccessibilityLoading] = useState(false);
   const [isBridgeSubmitting, setIsBridgeSubmitting] = useState(false);
@@ -168,6 +190,9 @@ export default function BeforePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [beforeAnalyzeAuthMessage, setBeforeAnalyzeAuthMessage] = useState<string | null>(null);
   const [shouldScrollToLoading, setShouldScrollToLoading] = useState(false);
+  const [selectedResultContextIssueTag, setSelectedResultContextIssueTag] = useState<
+    string | null
+  >(null);
   const authBusy = isInitializing || isSigningIn || isCheckingBackend;
   const hasBridgeJobId = Boolean(completedReviewJobId);
   const isBackendAuthenticated = backendUser.logged_in;
@@ -180,37 +205,70 @@ export default function BeforePage() {
     firebaseConfigured &&
     !authBusy;
 
-  const overviewCards = useMemo(() => {
-    if (!review) {
-      return [];
-    }
-
-    return [
-      { label: '판정', value: review.overall_result },
-      { label: '심각도', value: review.overall_severity },
-      { label: '계약 유형', value: review.contract_info.type },
-      { label: '검토 시각', value: new Date(review.reviewed_at).toLocaleString('ko-KR') },
-    ];
-  }, [review]);
-
   const resultContextSummary = useMemo<ResultContextSummary | null>(() => {
     if (!review) {
       return null;
     }
 
-    const issueItems = review.important_points.length
-      ? review.important_points
-      : Object.values(review.rule_check ?? {});
-    const ocrWarningCount = review.ocr_warnings?.length ?? 0;
+    const displayIssues = buildBeforeReviewDisplayIssues(review);
 
     return {
-      riskCount: issueItems.filter((item) => item.status === 'VIOLATION').length,
-      needsReviewCount:
-        issueItems.filter((item) => item.status === 'WARNING').length + ocrWarningCount,
-      recommendedActionCount: review.recommended_actions.length,
-      evidenceCount: review.evidence.length,
+      riskCount: displayIssues.filter((item) => item.status === 'VIOLATION').length,
+      needsReviewCount: displayIssues.filter((item) => item.status === 'WARNING').length,
+      passCount: Object.values(review.rule_check ?? {}).filter((item) => item.status === 'PASS')
+        .length,
     };
   }, [review]);
+
+  const resultContextIssues = useMemo<ResultContextIssue[]>(() => {
+    if (!review) {
+      return [];
+    }
+
+    return buildResultContextIssues(review);
+  }, [review]);
+
+  const resultContextSelectableIssues = useMemo(
+    () =>
+      resultContextIssues.filter(
+        (issue): issue is ResultContextIssue & { tag: string } => Boolean(issue.tag),
+      ),
+    [resultContextIssues],
+  );
+
+  const selectedResultContextIssue = useMemo(() => {
+    if (!resultContextSelectableIssues.length) {
+      return null;
+    }
+
+    return (
+      resultContextSelectableIssues.find((issue) => issue.tag === selectedResultContextIssueTag) ??
+      resultContextSelectableIssues[0]
+    );
+  }, [resultContextSelectableIssues, selectedResultContextIssueTag]);
+
+  const shouldShowAccessibilityExtension = useMemo(() => {
+    if (!review) {
+      return false;
+    }
+
+    return (
+      isAccessibilityRelevantReview(review) ||
+      Boolean(selectedDisability || accessibility || isAccessibilityLoading || accessibilityError)
+    );
+  }, [accessibility, accessibilityError, isAccessibilityLoading, review, selectedDisability]);
+
+  const resultContextSituationSummary = useMemo(() => {
+    if (!review || !resultContextSummary) {
+      return null;
+    }
+
+    return buildResultContextSituationSummary({
+      hasAccessibilityGuide: shouldShowAccessibilityExtension,
+      review,
+      summary: resultContextSummary,
+    });
+  }, [resultContextSummary, review, shouldShowAccessibilityExtension]);
 
   const currentReviewDocumentName = useMemo(() => {
     if (!review) {
@@ -219,6 +277,21 @@ export default function BeforePage() {
 
     return getReviewDocumentName(review, selectedFiles);
   }, [review, selectedFiles]);
+
+  useEffect(() => {
+    if (!review || !resultContextSelectableIssues.length) {
+      setSelectedResultContextIssueTag(null);
+      return;
+    }
+
+    setSelectedResultContextIssueTag((currentTag) => {
+      if (currentTag && resultContextSelectableIssues.some((issue) => issue.tag === currentTag)) {
+        return currentTag;
+      }
+
+      return resultContextSelectableIssues[0]?.tag ?? null;
+    });
+  }, [resultContextSelectableIssues, review]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -230,7 +303,7 @@ export default function BeforePage() {
     }
 
     const frameId = window.requestAnimationFrame(() => {
-      scrollElementIntoView(resultRef.current);
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     });
 
     return () => window.cancelAnimationFrame(frameId);
@@ -250,6 +323,18 @@ export default function BeforePage() {
   }, [loadingJob, screenState, shouldScrollToLoading]);
 
   useEffect(() => {
+    if (!isAccessibilityPanelOpen) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      accessibilityRef.current?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [isAccessibilityPanelOpen, accessibility, accessibilityError, isAccessibilityLoading]);
+
+  useEffect(() => {
     if (!loadingJob) {
       return;
     }
@@ -262,10 +347,18 @@ export default function BeforePage() {
       if (loadingJob.result) {
         setReview(loadingJob.result);
         setCompletedReviewJobId(loadingJob.job_id);
+        dispatch({
+          type: 'SET_BEFORE_REVIEW_RESULT',
+          payload: {
+            review: loadingJob.result,
+            completed_review_job_id: loadingJob.job_id,
+          },
+        });
         setScreenState('result');
       } else {
         setErrorMessage('분석은 완료되었지만 결과를 불러오지 못했습니다.');
         setCompletedReviewJobId(null);
+        dispatch({ type: 'CLEAR_BEFORE_REVIEW_RESULT' });
         setScreenState('home');
       }
       setLoadingJob(null);
@@ -312,7 +405,7 @@ export default function BeforePage() {
       cancelled = true;
       window.clearTimeout(timerId);
     };
-  }, [loadingJob]);
+  }, [dispatch, loadingJob]);
 
   useEffect(() => {
     if (isBackendAuthenticated) {
@@ -330,12 +423,14 @@ export default function BeforePage() {
     setBeforeAnalyzeAuthMessage(null);
     clearBridgeActionFeedback();
     setCompletedReviewJobId(null);
+    dispatch({ type: 'CLEAR_BEFORE_REVIEW_RESULT' });
     setShouldScrollToLoading(false);
     setIsSubmitting(true);
     setScreenState('loading');
     setAccessibility(null);
     setAccessibilityError(null);
     setSelectedDisability(null);
+    setIsAccessibilityPanelOpen(false);
     const initialJob = createMockJob();
     setLoadingJob(initialJob);
     setShouldScrollToLoading(true);
@@ -355,11 +450,19 @@ export default function BeforePage() {
       window.clearInterval(intervalId);
       setReview(nextReview);
       setCompletedReviewJobId(null);
+      dispatch({
+        type: 'SET_BEFORE_REVIEW_RESULT',
+        payload: {
+          review: nextReview,
+          completed_review_job_id: null,
+        },
+      });
       setScreenState('result');
     } catch {
       window.clearInterval(intervalId);
       setErrorMessage('before mock 결과를 불러오지 못했습니다.');
       setCompletedReviewJobId(null);
+      dispatch({ type: 'CLEAR_BEFORE_REVIEW_RESULT' });
       setScreenState('home');
       setShouldScrollToLoading(false);
     } finally {
@@ -391,8 +494,10 @@ export default function BeforePage() {
     setAccessibility(null);
     setAccessibilityError(null);
     setSelectedDisability(null);
+    setIsAccessibilityPanelOpen(false);
     setReview(null);
     setCompletedReviewJobId(null);
+    dispatch({ type: 'CLEAR_BEFORE_REVIEW_RESULT' });
 
     try {
       const job = await startBeforeReviewJobWithOptionalAuth(selectedFiles);
@@ -515,6 +620,7 @@ export default function BeforePage() {
     setReview(null);
     setAccessibility(null);
     setSelectedDisability(null);
+    setIsAccessibilityPanelOpen(false);
     setErrorMessage(null);
     setAccessibilityError(null);
     setShouldScrollToLoading(false);
@@ -523,6 +629,7 @@ export default function BeforePage() {
     setIsBridgeSubmitting(false);
     setBeforeAnalyzeAuthMessage(null);
     clearBridgeActionFeedback();
+    dispatch({ type: 'CLEAR_BEFORE_REVIEW_RESULT' });
   }
 
   function handleStartNewReview() {
@@ -534,8 +641,29 @@ export default function BeforePage() {
     setIsUploadVisible(true);
   }
 
-  function handleAccessibilityCtaClick() {
-    scrollElementIntoView(accessibilityRef.current);
+  function ensureAccessibilityRecommendation() {
+    if (!selectedDisability && !accessibility && !isAccessibilityLoading && !accessibilityError) {
+      void handleSelectDisability(DEFAULT_ACCESSIBILITY_EXTENSION_TYPE);
+    }
+  }
+
+  function handleAccessibilityDisclosureToggle() {
+    const shouldOpen = !isAccessibilityPanelOpen;
+    setIsAccessibilityPanelOpen(shouldOpen);
+
+    if (shouldOpen) {
+      ensureAccessibilityRecommendation();
+    }
+  }
+
+  function handleAccessibilityJumpClick() {
+    setIsAccessibilityPanelOpen(true);
+    ensureAccessibilityRecommendation();
+
+    window.requestAnimationFrame(() => {
+      scrollElementIntoView(accessibilitySectionRef.current);
+      accessibilityDisclosureButtonRef.current?.focus({ preventScroll: true });
+    });
   }
 
   function clearBridgeActionFeedback() {
@@ -548,8 +676,10 @@ export default function BeforePage() {
     setScreenState('home');
     setLoadingJob(null);
     setCompletedReviewJobId(null);
+    dispatch({ type: 'CLEAR_BEFORE_REVIEW_RESULT' });
     setShouldScrollToLoading(false);
     setIsSubmitting(false);
+    setIsAccessibilityPanelOpen(false);
   }
 
   async function handleBridgeSignIn() {
@@ -595,7 +725,7 @@ export default function BeforePage() {
     const currentUser = getFirebaseAuth()?.currentUser ?? null;
     if (!currentUser) {
       setBridgeActionStatus('error');
-      setBridgeActionMessage('After 연결에는 Google 로그인이 필요합니다.');
+      setBridgeActionMessage('AI 법률 상담 연결에는 Google 로그인이 필요합니다.');
       return;
     }
 
@@ -615,7 +745,7 @@ export default function BeforePage() {
 
       dispatch({ type: 'ADD_BRIDGE_HANDOFF_ITEM', payload: handoffItem });
       setBridgeActionStatus('success');
-      setBridgeActionMessage('Bridge 연결을 저장했습니다. After로 이동합니다.');
+      setBridgeActionMessage('검토 결과를 저장했습니다. AI 법률 상담으로 이동합니다.');
       router.push('/after');
     } catch (error) {
       if (error instanceof BridgeApiError && error.status === 401) {
@@ -658,7 +788,7 @@ export default function BeforePage() {
     if (!currentUser) {
       throw new BridgeApiError(
         401,
-        'Bridge 연결에는 로그인이 필요합니다. 다시 로그인한 뒤 시도해주세요.',
+        'AI 법률 상담 연결에는 로그인이 필요합니다. 다시 로그인한 뒤 시도해주세요.',
         false,
       );
     }
@@ -670,116 +800,104 @@ export default function BeforePage() {
     <>
       <SkipLink />
       <Masthead isLoading={isSubmitting || isBridgeSubmitting} />
-      <main id="main-content" tabIndex={-1} className={styles.main}>
-        <div className={styles.workspaceShell}>
-          <aside className={styles.sidebar} aria-label="Before workspace navigation">
-            <div className={styles.sidebarBrand}>
-              <span className={styles.sidebarBrandMark}>법</span>
-              <div>
-                <strong>법대로 AI</strong>
-                <span>Contract workspace</span>
-              </div>
-            </div>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={styles.main}
+      >
+        <div
+          className={`${styles.workspaceShell} ${
+            screenState === 'result' && review ? styles.workspaceShellResult : ''
+          }`}
+        >
+          <WorkspaceSidebar
+            activeItem="before"
+            actionLabel="새 검토 시작"
+            actionDescription="새 계약서 검토를 시작합니다"
+            actionDisabled={isSubmitting || isBridgeSubmitting}
+            onAction={handleStartNewReview}
+            ariaLabel="계약서 검토 메뉴"
+            summary={
+              <>
+                <span>Current workspace</span>
+                <strong>계약서 검토</strong>
+                <p>업로드한 계약서의 위험 조항과 누락 정보를 한 화면에서 확인합니다.</p>
 
-            <button
-              type="button"
-              className={styles.sidebarNewButton}
-              onClick={handleStartNewReview}
-              disabled={isSubmitting || isBridgeSubmitting}
-            >
-              <Plus size={15} aria-hidden="true" />
-              새 검토 시작
-            </button>
-
-            <nav className={styles.sidebarNav} aria-label="작업 메뉴">
-              <span className={styles.sidebarItem}>
-                <LayoutDashboard size={16} aria-hidden="true" />
-                대시보드
-              </span>
-              <span className={`${styles.sidebarItem} ${styles.sidebarItemActive}`} aria-current="page">
-                <FileSearch size={16} aria-hidden="true" />
-                계약서 검토
-              </span>
-              <span className={styles.sidebarItem}>
-                <BookOpen size={16} aria-hidden="true" />
-                법령 후보
-              </span>
-              <span className={styles.sidebarItem}>
-                <FileEdit size={16} aria-hidden="true" />
-                문서 초안
-              </span>
-              <span className={styles.sidebarItem}>
-                <FolderClock size={16} aria-hidden="true" />
-                사건 기록
-              </span>
-              <span className={styles.sidebarItem}>
-                <Settings size={16} aria-hidden="true" />
-                설정
-              </span>
-            </nav>
-
-            <section className={styles.documentList} aria-labelledby="before-document-list-title">
-              <div className={styles.documentListHeader}>
-                <p className={styles.documentListEyebrow}>Documents</p>
-                <h2 id="before-document-list-title">검토 문서</h2>
-              </div>
-
-              {screenState === 'result' && review && currentReviewDocumentName ? (
-                <article
-                  className={`${styles.documentRow} ${styles.documentRowSelected}`}
-                  aria-current="true"
+                <section
+                  className={styles.documentList}
+                  aria-labelledby="before-document-list-title"
                 >
-                  <div className={styles.documentRowTopline}>
-                    <span className={styles.documentStatusPill}>검토 완료</span>
-                    <span className={styles.documentSelectedMark}>선택됨</span>
+                  <div className={styles.documentListHeader}>
+                    <p className={styles.documentListEyebrow}>Documents</p>
+                    <h2 id="before-document-list-title">검토 문서</h2>
                   </div>
-                  <strong>{currentReviewDocumentName}</strong>
-                  <p>
-                    {review.overall_result} · {review.overall_severity}
-                  </p>
-                  {resultContextSummary ? (
-                    <p>
-                      위험 {resultContextSummary.riskCount} · 확인 필요{' '}
-                      {resultContextSummary.needsReviewCount}
-                    </p>
-                  ) : null}
-                </article>
-              ) : shouldShowUploadPanel ? (
-                <article className={styles.documentRow}>
-                  <div className={styles.documentRowTopline}>
-                    <span className={styles.documentStatusPillMuted}>준비 중</span>
-                  </div>
-                  <strong>새 검토 준비 중</strong>
-                  <p>파일을 추가하면 이 목록에 현재 검토 결과가 표시됩니다.</p>
-                </article>
-              ) : (
-                <div className={styles.documentEmptyState}>
-                  <p>아직 검토한 계약서가 없습니다.</p>
-                  <button
-                    type="button"
-                    className={styles.documentEmptyAction}
-                    onClick={handleStartNewReview}
-                  >
-                    <Plus size={14} aria-hidden="true" />
-                    새 검토 시작
-                  </button>
-                </div>
-              )}
-            </section>
-          </aside>
 
-          <section className={styles.reviewWorkspace} aria-labelledby="before-title">
-            <header className={styles.workspaceHeader}>
-              <div>
-                <p className={styles.eyebrow}>Contract review</p>
-                <h1 id="before-title" className={styles.title}>
-                  계약서 검토
-                </h1>
-              </div>
-              <p className={styles.lead}>
-                근로계약서를 올리면 위험 조항, 누락 정보, 참고 조항 후보를 한 화면에서 확인합니다.
-              </p>
-            </header>
+                  {screenState === 'result' && review && currentReviewDocumentName ? (
+                    <article
+                      className={`${styles.documentRow} ${styles.documentRowSelected}`}
+                      aria-current="true"
+                    >
+                      <div className={styles.documentRowTopline}>
+                        <span className={styles.documentStatusPill}>검토 완료</span>
+                        <span className={styles.documentSelectedMark}>선택됨</span>
+                      </div>
+                      <strong>{currentReviewDocumentName}</strong>
+                      <p>
+                        {review.overall_result} · {review.overall_severity}
+                      </p>
+                      {resultContextSummary ? (
+                        <p>
+                          위험 {resultContextSummary.riskCount} · 확인 필요{' '}
+                          {resultContextSummary.needsReviewCount}
+                        </p>
+                      ) : null}
+                    </article>
+                  ) : shouldShowUploadPanel ? (
+                    <article className={styles.documentRow}>
+                      <div className={styles.documentRowTopline}>
+                        <span className={styles.documentStatusPillMuted}>준비 중</span>
+                      </div>
+                      <strong>새 검토 준비 중</strong>
+                      <p>파일을 추가하면 이 목록에 현재 검토 결과가 표시됩니다.</p>
+                    </article>
+                  ) : (
+                    <div className={styles.documentEmptyState}>
+                      <p>아직 검토한 계약서가 없습니다.</p>
+                      <button
+                        type="button"
+                        className={styles.documentEmptyAction}
+                        onClick={handleStartNewReview}
+                      >
+                        <Plus size={14} aria-hidden="true" />
+                        새 검토 시작
+                      </button>
+                    </div>
+                  )}
+                </section>
+              </>
+            }
+          />
+
+          <section
+            className={`${styles.reviewWorkspace} ${
+              screenState === 'result' && review ? styles.reviewWorkspaceResult : ''
+            }`}
+            aria-labelledby={screenState === 'result' && review ? undefined : 'before-title'}
+            aria-label={screenState === 'result' && review ? '근로계약서 검토 결과' : undefined}
+          >
+            {screenState === 'result' && review ? null : (
+              <header className={styles.workspaceHeader}>
+                <div>
+                  <p className={styles.eyebrow}>Contract review</p>
+                  <h1 id="before-title" className={styles.title}>
+                    계약서 검토
+                  </h1>
+                </div>
+                <p className={styles.lead}>
+                  근로계약서를 올리면 위험 조항, 누락 정보, 참고 조항 후보를 한 화면에서 확인합니다.
+                </p>
+              </header>
+            )}
 
             {shouldShowWorkspaceLanding ? (
               <section className={styles.emptyStateSection} aria-labelledby="before-empty-title">
@@ -815,8 +933,8 @@ export default function BeforePage() {
                     </article>
                     <article className={styles.emptyStatusCard}>
                       <span>다음 단계</span>
-                      <strong>After 연결 준비</strong>
-                      <p>완료된 실제 검토 결과는 기존 Bridge CTA로 이어갈 수 있습니다.</p>
+                      <strong>AI 법률 상담 연결 준비</strong>
+                      <p>완료된 실제 검토 결과를 바탕으로 질문을 이어갈 수 있습니다.</p>
                     </article>
                   </div>
                 </div>
@@ -868,77 +986,70 @@ export default function BeforePage() {
               <section ref={resultRef} className={styles.resultSection} aria-label="before 분석 결과">
                 <div className={styles.sectionInner}>
                   <div className={styles.workspaceResultFrame}>
-                    <header className={styles.resultWorkspaceHeader}>
-                      <div className={styles.resultWorkspaceCopy}>
-                        <p className={styles.eyebrow}>Review result</p>
-                        <h2 className={styles.resultWorkspaceTitle}>계약서 검토 결과</h2>
-                        <p className={styles.resultWorkspaceDescription}>{review.headline}</p>
-                      </div>
-                      <div className={styles.resultStatusGroup} aria-label="검토 결과 상태">
-                        <span className={getResultStatusClassName(review.overall_result)}>
-                          {review.overall_result}
-                        </span>
-                        <span className={getResultSeverityClassName(review.overall_severity)}>
-                          {review.overall_severity}
-                        </span>
-                      </div>
-                    </header>
-
-                    <div className={styles.resultWorkspaceMeta} aria-label="현재 검토 요약">
-                      <div>
-                        <span>선택 문서</span>
-                        <strong>{currentReviewDocumentName}</strong>
-                      </div>
-                      <div>
-                        <span>계약 유형</span>
-                        <strong>{review.contract_info.type}</strong>
-                      </div>
-                      <div>
-                        <span>검토 시각</span>
-                        <strong>{new Date(review.reviewed_at).toLocaleString('ko-KR')}</strong>
-                      </div>
-                      <div>
-                        <span>추천 조치</span>
-                        <strong>
-                          {review.recommended_actions.length
-                            ? `${review.recommended_actions.length}개`
-                            : '없음'}
-                        </strong>
-                      </div>
-                    </div>
-
                     <div className={styles.resultPanelFrame}>
                       <ResultPanel
                         review={review}
-                        overviewCards={overviewCards}
                         onReset={handleReset}
+                        onIssueSelect={setSelectedResultContextIssueTag}
+                        accessibilityDisclosure={
+                          shouldShowAccessibilityExtension ? (
+                            <section
+                              id={ACCESSIBILITY_EXTENSION_SECTION_ID}
+                              ref={accessibilitySectionRef}
+                              className={styles.mainAccessibilityDisclosure}
+                              aria-labelledby="before-accessibility-disclosure-title"
+                              tabIndex={-1}
+                            >
+                              <button
+                                ref={accessibilityDisclosureButtonRef}
+                                type="button"
+                                className={styles.mainAccessibilityButton}
+                                aria-expanded={isAccessibilityPanelOpen}
+                                aria-controls={ACCESSIBILITY_EXTENSION_PANEL_ID}
+                                onClick={handleAccessibilityDisclosureToggle}
+                              >
+                                <span className={styles.mainAccessibilityCopy}>
+                                  <span className={styles.contextEyebrow}>
+                                    Accessibility extension
+                                  </span>
+                                  <span
+                                    id="before-accessibility-disclosure-title"
+                                    className={styles.mainAccessibilityTitle}
+                                  >
+                                    장애 관련 권리·지원 안내
+                                  </span>
+                                  <span className={styles.mainAccessibilitySummary}>
+                                    필요한 편의 제공과 근무조건 확인 항목을 접어서 확인합니다.
+                                  </span>
+                                </span>
+                                <ChevronDown
+                                  size={17}
+                                  aria-hidden="true"
+                                  className={`${styles.mainAccessibilityIcon} ${
+                                    isAccessibilityPanelOpen ? styles.mainAccessibilityIconOpen : ''
+                                  }`}
+                                />
+                              </button>
+
+                              <div
+                                id={ACCESSIBILITY_EXTENSION_PANEL_ID}
+                                ref={accessibilityRef}
+                                tabIndex={-1}
+                                className={styles.mainAccessibilityPanel}
+                                hidden={!isAccessibilityPanelOpen}
+                              >
+                                <AccessibilityPanel
+                                  selectedDisability={selectedDisability}
+                                  recommendation={accessibility}
+                                  isLoading={isAccessibilityLoading}
+                                  errorMessage={accessibilityError}
+                                  onSelectDisability={(option) => void handleSelectDisability(option)}
+                                />
+                              </div>
+                            </section>
+                          ) : null
+                        }
                         resetDisabled={isBridgeSubmitting}
-                        onAccessibilityCtaClick={handleAccessibilityCtaClick}
-                        accessibilityPanel={
-                          <div ref={accessibilityRef} className={styles.accessibilityAnchor}>
-                            <AccessibilityPanel
-                              selectedDisability={selectedDisability}
-                              recommendation={accessibility}
-                              isLoading={isAccessibilityLoading}
-                              errorMessage={accessibilityError}
-                              onSelectDisability={(option) => void handleSelectDisability(option)}
-                            />
-                          </div>
-                        }
-                        bridgeAction={
-                          <BridgeHandoffCta
-                            hasJobId={hasBridgeJobId}
-                            hasFirebaseSession={Boolean(firebaseUser)}
-                            isAuthenticated={isBridgeAuthenticated}
-                            isAuthBusy={authBusy}
-                            isFirebaseConfigured={firebaseConfigured}
-                            isSubmitting={isBridgeSubmitting}
-                            status={bridgeActionStatus}
-                            message={bridgeActionMessage ?? authErrorMessage}
-                            onCreate={() => void handleCreateBridgeRun()}
-                            onSignIn={() => void handleBridgeSignIn()}
-                          />
-                        }
                       />
                     </div>
                   </div>
@@ -948,43 +1059,137 @@ export default function BeforePage() {
           </section>
 
           <aside
-            className={styles.contextPanel}
+            className={`${styles.contextPanel} ${
+              screenState === 'result' && review ? styles.contextPanelResult : ''
+            }`}
             aria-label={screenState === 'result' && review ? '검토 결과 요약' : '검토 기준'}
           >
             {screenState === 'result' && review && resultContextSummary ? (
               <>
-                <div className={styles.contextHeader}>
-                  <p className={styles.contextEyebrow}>Result summary</p>
-                  <h2>결과 요약</h2>
+                <div className={`${styles.contextHeader} ${styles.resultContextHeader}`}>
+                  <p className={styles.contextEyebrow}>Result context</p>
+                  <h2>RESULT CONTEXT</h2>
                 </div>
 
-                <div className={styles.contextStack}>
-                  <article className={`${styles.contextCard} ${styles.contextCardRisk}`}>
-                    <div>
-                      <span className={styles.statusPillRisk}>위험 의심</span>
-                      <strong>{resultContextSummary.riskCount}개</strong>
-                    </div>
-                    <p>기존 결과 카드에서 위험으로 분류된 항목 수입니다.</p>
-                  </article>
-                  <article className={`${styles.contextCard} ${styles.contextCardWarning}`}>
-                    <div>
-                      <span className={styles.statusPillWarning}>누락 정보</span>
-                      <strong>{resultContextSummary.needsReviewCount}개</strong>
-                    </div>
-                    <p>확인 필요 항목과 OCR 확인 필요 항목을 함께 집계했습니다.</p>
-                  </article>
-                  <article className={`${styles.contextCard} ${styles.contextCardSuccess}`}>
-                    <div>
-                      <span className={styles.statusPillSuccess}>다음 단계</span>
-                      <strong>
-                        {resultContextSummary.recommendedActionCount ? '추천 조치 있음' : '추천 조치 없음'}
-                      </strong>
-                    </div>
-                    <p>
-                      근거와 확인 포인트 {resultContextSummary.evidenceCount}개가 결과 화면에 함께 표시됩니다.
+                {resultContextSituationSummary ? (
+                  <section className={styles.resultContextSituationCard} aria-label="상황 요약">
+                    <p className={styles.resultContextSituationLabel}>상황 요약</p>
+                    <p className={styles.resultContextSituationLine}>
+                      {resultContextSituationSummary}
                     </p>
-                  </article>
-                </div>
+                  </section>
+                ) : null}
+
+                <section className={styles.resultContextStats} aria-label="결과 카운트 요약">
+                  <div className={`${styles.resultContextStatCard} ${styles.resultContextStatDanger}`}>
+                    <span>위험</span>
+                    <strong>{resultContextSummary.riskCount}</strong>
+                  </div>
+                  <div className={`${styles.resultContextStatCard} ${styles.resultContextStatWarning}`}>
+                    <span>누락</span>
+                    <strong>{resultContextSummary.needsReviewCount}</strong>
+                  </div>
+                  <div className={`${styles.resultContextStatCard} ${styles.resultContextStatSuccess}`}>
+                    <span>확인</span>
+                    <strong>{resultContextSummary.passCount}</strong>
+                  </div>
+                </section>
+
+                {selectedResultContextIssue ? (
+                  <section
+                    className={`${styles.resultContextSelectedCard} ${getResultContextSelectedCardClassName(
+                      selectedResultContextIssue.tone,
+                    )}`}
+                    aria-labelledby="before-result-selected-issue-title"
+                    aria-live="polite"
+                  >
+                    <div className={styles.resultContextSectionHeader}>
+                      <p className={styles.contextEyebrow}>선택한 검토 항목</p>
+                      <h3 id="before-result-selected-issue-title">
+                        {selectedResultContextIssue.tag} 해석
+                      </h3>
+                    </div>
+
+                    <div className={styles.resultContextSelectedHeader}>
+                      <span
+                        className={`${styles.resultContextTag} ${getResultContextTagClassName(
+                          selectedResultContextIssue.tone,
+                        )}`}
+                      >
+                        {selectedResultContextIssue.tag}
+                      </span>
+                      <strong>{selectedResultContextIssue.title}</strong>
+                    </div>
+
+                    <p className={styles.resultContextSelectedDescription}>
+                      {selectedResultContextIssue.description}
+                    </p>
+
+                    {selectedResultContextIssue.lawRef ? (
+                      <div className={styles.resultContextSelectedMeta}>
+                        <span>관련 기준</span>
+                        <strong>{selectedResultContextIssue.lawRef}</strong>
+                      </div>
+                    ) : null}
+
+                    <div className={styles.resultContextSelectedAction}>
+                      <span>다음 행동</span>
+                      <p>{selectedResultContextIssue.nextAction}</p>
+                    </div>
+                  </section>
+                ) : null}
+
+                {shouldShowAccessibilityExtension ? (
+                  <section className={styles.resultContextAccessibilityCard}>
+                    <button
+                      type="button"
+                      className={styles.resultContextAccessibilityButton}
+                      aria-expanded={isAccessibilityPanelOpen}
+                      aria-controls={ACCESSIBILITY_EXTENSION_PANEL_ID}
+                      onClick={handleAccessibilityJumpClick}
+                    >
+                      <span>
+                        <span className={styles.resultContextAccessibilityEyebrow}>
+                          Accessibility extension
+                        </span>
+                        <strong>장애 관련 권리·지원 안내 보기</strong>
+                      </span>
+                      <ChevronDown
+                        size={17}
+                        aria-hidden="true"
+                        className={`${styles.resultContextAccessibilityIcon} ${
+                          isAccessibilityPanelOpen
+                            ? styles.resultContextAccessibilityIconOpen
+                            : ''
+                        }`}
+                      />
+                    </button>
+                  </section>
+                ) : null}
+
+                <section className={styles.resultContextBridgeCard} aria-label="주요 행동">
+                  <BridgeHandoffCta
+                    hasJobId={hasBridgeJobId}
+                    hasFirebaseSession={Boolean(firebaseUser)}
+                    isAuthenticated={isBridgeAuthenticated}
+                    isAuthBusy={authBusy}
+                    isFirebaseConfigured={firebaseConfigured}
+                    isSubmitting={isBridgeSubmitting}
+                    status={bridgeActionStatus}
+                    message={bridgeActionMessage ?? authErrorMessage}
+                    onCreate={() => void handleCreateBridgeRun()}
+                    onSignIn={() => void handleBridgeSignIn()}
+                  />
+                  <button
+                    type="button"
+                    className={styles.resultContextResetButton}
+                    onClick={handleReset}
+                    disabled={isBridgeSubmitting}
+                  >
+                    새 검토 시작
+                  </button>
+                </section>
+
               </>
             ) : (
               <>
@@ -1021,7 +1226,11 @@ export default function BeforePage() {
 
             <div className={styles.contextNotice}>
               <ClipboardCheck size={16} aria-hidden="true" />
-              <p>결과는 참고용이며 최종 법률 판단이 아닙니다.</p>
+              <p>
+                {screenState === 'result' && review
+                  ? '제출 전 사실관계를 확인해 주세요. 결과는 참고용이며 최종 법률 판단이 아닙니다.'
+                  : '결과는 참고용이며 최종 법률 판단이 아닙니다.'}
+              </p>
             </div>
           </aside>
         </div>
@@ -1041,6 +1250,258 @@ interface BridgeHandoffCtaProps {
   message: string | null;
   onCreate: () => void;
   onSignIn: () => void;
+}
+
+function buildResultContextIssues(review: BeforeReviewResult): ResultContextIssue[] {
+  return buildBeforeReviewDisplayIssues(review).map((issue) => ({
+    title: issue.title,
+    description: getResultContextIssueDescription(issue),
+    lawRef: issue.law_ref.trim(),
+    nextAction: getResultContextNextAction(issue, review.recommended_actions),
+    status: issue.status,
+    tag: issue.tag,
+    tone: issue.tone,
+  }));
+}
+
+function buildResultContextSituationSummary({
+  hasAccessibilityGuide,
+  review,
+  summary,
+}: {
+  hasAccessibilityGuide: boolean;
+  review: BeforeReviewResult;
+  summary: ResultContextSummary;
+}): string {
+  const displayIssues = buildBeforeReviewDisplayIssues(review);
+  const riskIssues = displayIssues.filter((issue) => issue.status === 'VIOLATION');
+  const warningIssues = displayIssues.filter((issue) => issue.status === 'WARNING');
+  const findingParts = [
+    riskIssues.length
+      ? `${formatResultContextIssueTopics(riskIssues)} 관련 위험 ${summary.riskCount}건`
+      : null,
+    warningIssues.length
+      ? `${formatResultContextIssueTopics(warningIssues)} 관련 누락 ${summary.needsReviewCount}건`
+      : null,
+  ].filter((part): part is string => Boolean(part));
+
+  if (findingParts.length) {
+    return `${findingParts.join(', ')}이 표시됐습니다.`;
+  }
+
+  if (hasAccessibilityGuide) {
+    return '위험·누락 항목은 표시되지 않고, 확인 완료 항목 중심의 결과입니다. 장애 관련 권리·지원 안내가 함께 제공됩니다.';
+  }
+
+  if (summary.passCount > 0) {
+    return `위험·누락 항목은 표시되지 않고, 확인 완료 항목 ${summary.passCount}건 중심의 결과입니다.`;
+  }
+
+  return '검토 항목을 기준으로 추가 확인이 필요한 부분을 정리했습니다.';
+}
+
+function formatResultContextIssueTopics(issues: BeforeReviewDisplayIssue[]): string {
+  const topics = issues.reduce<string[]>((accumulator, issue) => {
+    const topic = getResultContextIssueTopic(issue);
+    if (!accumulator.includes(topic)) {
+      accumulator.push(topic);
+    }
+    return accumulator;
+  }, []);
+
+  return topics.slice(0, 4).join('·');
+}
+
+function getResultContextIssueTopic(issue: BeforeReviewDisplayIssue): string {
+  const text = `${issue.title} ${issue.description} ${issue.law_ref}`;
+
+  if (/최저임금/.test(text)) {
+    return '최저임금';
+  }
+
+  if (/(휴게|근로시간|근로일|소정근로|초과근무)/.test(text)) {
+    return /휴게/.test(text) ? '휴게시간' : '근로시간';
+  }
+
+  if (/(기숙사|숙소|숙박시설)/.test(text)) {
+    return '기숙사 정보';
+  }
+
+  if (/(여권|이직|사업장|손해배상|권리\s*제한|보관|이동\s*제한)/.test(text)) {
+    return '권리 제한';
+  }
+
+  if (/(수당|임금|시급|월급|일급|공제|지급일)/.test(text)) {
+    return '임금 조건';
+  }
+
+  if (/(계약기간|근로계약기간|근로개시|시작일|종료일|기간의\s*정함)/.test(text)) {
+    return '근로계약기간';
+  }
+
+  if (/(표준근로계약서|표준\s*계약서)/.test(text)) {
+    return '표준계약서';
+  }
+
+  return issue.title.replace(/\s*조항$/u, '').trim() || '검토 항목';
+}
+
+function getResultContextIssueDescription(issue: BeforeReviewDisplayIssue): string {
+  const description = issue.description.trim();
+
+  if (description) {
+    return description;
+  }
+
+  if (issue.status === 'WARNING') {
+    return '누락된 정보를 확인해 주세요.';
+  }
+
+  if (issue.status === 'VIOLATION') {
+    return '문서와 실제 근무조건을 함께 확인해 주세요.';
+  }
+
+  return '문서에서 추가 확인이 필요합니다.';
+}
+
+function getResultContextNextAction(
+  issue: BeforeReviewDisplayIssue,
+  recommendedActions: string[],
+): string {
+  const matchingAction = findBestRecommendedAction(issue, recommendedActions);
+
+  if (matchingAction) {
+    return matchingAction;
+  }
+
+  if (issue.status === 'WARNING') {
+    return '누락된 정보를 확인해 주세요.';
+  }
+
+  return '문서와 실제 근무조건을 대조해 추가 확인해 주세요.';
+}
+
+function findBestRecommendedAction(
+  issue: BeforeReviewDisplayIssue,
+  recommendedActions: string[],
+): string | null {
+  if (!recommendedActions.length) {
+    return null;
+  }
+
+  const issueText = `${issue.title} ${issue.description} ${issue.law_ref}`;
+  const issueCategory = getResultContextTextCategory(issueText);
+  const scoredActions = recommendedActions.map((action) => {
+    const actionCategory = getResultContextTextCategory(action);
+    const score =
+      getResultContextTokenOverlapScore(action, issueText) +
+      (issueCategory && issueCategory === actionCategory ? 7 : 0);
+
+    return { action, score };
+  });
+  const bestAction = scoredActions.reduce((best, current) =>
+    current.score > best.score ? current : best,
+  );
+
+  return bestAction.score > 0 ? bestAction.action : recommendedActions[0] ?? null;
+}
+
+function getResultContextTokenOverlapScore(source: string, target: string): number {
+  const sourceTokens = new Set(tokenizeResultContextText(source));
+  return tokenizeResultContextText(target).reduce((score, token) => {
+    if (sourceTokens.has(token)) {
+      return score + (token.length >= 4 ? 2 : 1);
+    }
+
+    return score;
+  }, 0);
+}
+
+function tokenizeResultContextText(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2);
+}
+
+function getResultContextTextCategory(text: string): string | null {
+  if (/(최저|임금|시급|월급|일급|상여|수당|공제|지급일)/.test(text)) {
+    return 'wage';
+  }
+
+  if (/(근로시간|근로일|휴게|휴일|소정|초과|야간|연장)/.test(text)) {
+    return 'hours';
+  }
+
+  if (/(계약기간|근로개시|시작일|종료일|기간의\s*정함)/.test(text)) {
+    return 'period';
+  }
+
+  if (/(숙소|기숙사|숙박시설)/.test(text)) {
+    return 'dormitory';
+  }
+
+  if (/(여권|이직|사업장|권리\s*제한|보관|이동\s*제한)/.test(text)) {
+    return 'rights';
+  }
+
+  if (/(장애|편의|의사소통|근무환경)/.test(text)) {
+    return 'accessibility';
+  }
+
+  return null;
+}
+
+function getResultContextTagClassName(tone: BeforeReviewIssueTone): string {
+  if (tone === 'danger') {
+    return styles.resultContextTagDanger;
+  }
+
+  if (tone === 'warning') {
+    return styles.resultContextTagWarning;
+  }
+
+  return styles.resultContextTagSuccess;
+}
+
+function getResultContextSelectedCardClassName(tone: BeforeReviewIssueTone): string {
+  if (tone === 'danger') {
+    return styles.resultContextSelectedCardDanger;
+  }
+
+  if (tone === 'warning') {
+    return styles.resultContextSelectedCardWarning;
+  }
+
+  return styles.resultContextSelectedCardSuccess;
+}
+
+function isAccessibilityRelevantReview(review: BeforeReviewResult): boolean {
+  if (review.review_id === '54a00490-5cfc-4371-87d1-00985108ceb7') {
+    return true;
+  }
+
+  const searchableText = [
+    review.review_id,
+    review.contract_info.type,
+    review.summary,
+    review.headline,
+    review.plain_language_summary,
+    ...review.overall_assessment,
+    ...review.recommended_actions,
+    ...review.important_points.flatMap((point) => [
+      point.title,
+      point.description,
+      point.law_ref,
+    ]),
+    ...review.evidence.flatMap((evidence) => [evidence.title, evidence.excerpt]),
+  ].join(' ');
+
+  return /(장애|편의\s*제공|의사소통\s*지원|근무환경|장애인|장애인차별금지|장애인고용촉진)/.test(
+    searchableText,
+  );
 }
 
 function scrollElementIntoView(element: HTMLElement | null) {
@@ -1083,10 +1544,10 @@ function BridgeHandoffCta({
   return (
     <div className={styles.bridgeCta}>
       <div className={styles.bridgeCtaHeader}>
-        <p className={styles.bridgeCtaEyebrow}>Bridge handoff</p>
-        <h3 className={styles.bridgeCtaTitle}>After에서 이어서 조문 찾기</h3>
+        <p className={styles.bridgeCtaEyebrow}>상담 연결</p>
+        <h3 className={styles.bridgeCtaTitle}>AI 법률 상담 이어가기</h3>
         <p className={styles.bridgeCtaDescription}>
-          이 검토 요약을 바탕으로 질문을 이어갑니다.
+          이 검토 결과를 바탕으로 질문을 이어갈 수 있습니다.
         </p>
       </div>
 
@@ -1103,6 +1564,7 @@ function BridgeHandoffCta({
             variant="secondary"
             onClick={onSignIn}
             disabled={isAuthBusy || isSubmitting}
+            className={styles.bridgeCtaSecondaryButton}
           >
             Google 로그인
           </Button>
@@ -1113,9 +1575,10 @@ function BridgeHandoffCta({
           onClick={onCreate}
           disabled={!canCreate}
           isLoading={isSubmitting || status === 'loading'}
+          className={styles.bridgeCtaPrimaryButton}
         >
           <span className={styles.bridgeCtaButtonLabel}>
-            After에서 조문 찾기
+            AI 법률 상담 이어가기
             <ArrowRight size={18} aria-hidden="true" />
           </span>
         </Button>
@@ -1134,11 +1597,11 @@ function getBridgeCtaStatusText(input: {
   message: string | null;
 }): string | null {
   if (!input.hasJobId) {
-    return '실제 Before 검토 작업 완료 결과에서만 After 연결을 만들 수 있습니다.';
+    return '실제 검토 완료 결과에서만 연결됩니다.';
   }
 
   if (!input.isFirebaseConfigured) {
-    return 'Google 로그인 설정이 필요해 현재 After 연결을 만들 수 없습니다.';
+    return 'Google 로그인 설정이 필요합니다.';
   }
 
   if (!input.isAuthenticated) {
@@ -1146,7 +1609,7 @@ function getBridgeCtaStatusText(input: {
       return BRIDGE_BACKEND_AUTH_MESSAGE;
     }
 
-    return 'After 연결에는 Google 로그인이 필요합니다. 로그인 후 이 결과 화면에서 연결을 시작할 수 있습니다.';
+    return 'AI 법률 상담 연결에는 Google 로그인이 필요합니다.';
   }
 
   if (input.isAuthBusy) {
@@ -1154,7 +1617,7 @@ function getBridgeCtaStatusText(input: {
   }
 
   if (input.status === 'loading') {
-    return 'Bridge 연결을 만드는 중입니다.';
+    return '상담 연결을 준비하는 중입니다.';
   }
 
   return input.message;
@@ -1172,34 +1635,6 @@ function getBridgeCtaMessageClassName(status: BridgeActionStatus): string {
   return styles.bridgeCtaNotice;
 }
 
-function getResultStatusClassName(status: BeforeReviewResult['overall_result']): string {
-  if (status === 'VIOLATION') {
-    return `${styles.resultPill} ${styles.resultPillDanger}`;
-  }
-
-  if (status === 'WARNING') {
-    return `${styles.resultPill} ${styles.resultPillWarning}`;
-  }
-
-  return `${styles.resultPill} ${styles.resultPillSuccess}`;
-}
-
-function getResultSeverityClassName(severity: BeforeReviewResult['overall_severity']): string {
-  if (severity === 'CRITICAL' || severity === 'HIGH') {
-    return `${styles.resultPill} ${styles.resultPillDanger}`;
-  }
-
-  if (severity === 'MEDIUM') {
-    return `${styles.resultPill} ${styles.resultPillWarning}`;
-  }
-
-  if (severity === 'LOW') {
-    return `${styles.resultPill} ${styles.resultPillInfo}`;
-  }
-
-  return `${styles.resultPill} ${styles.resultPillSuccess}`;
-}
-
 function getReviewDocumentName(review: BeforeReviewResult, files: File[]): string {
   const selectedFileName = files.find((file) => file.name.trim())?.name.trim();
   if (selectedFileName) {
@@ -1213,8 +1648,9 @@ function getReviewDocumentName(review: BeforeReviewResult, files: File[]): strin
     return uploadedFileName;
   }
 
-  if (review.contract_info.type.trim()) {
-    return `${review.contract_info.type.trim()} 계약서`;
+  const contractType = review.contract_info.type.trim();
+  if (contractType) {
+    return contractType.endsWith('계약서') ? contractType : `${contractType} 계약서`;
   }
 
   return '근로계약서';
@@ -1227,7 +1663,7 @@ function getBridgeActionErrorMessage(error: unknown): string {
     }
 
     if (error.status === 404) {
-      return '로그인 후 생성한 Before 검토 작업만 After로 연결할 수 있습니다. 비로그인 검토 결과는 로그인 후 다시 검토해주세요.';
+      return '로그인 후 생성한 Before 검토 작업만 AI 법률 상담으로 연결할 수 있습니다. 비로그인 검토 결과는 로그인 후 다시 검토해주세요.';
     }
 
     if (error.status === 409) {
@@ -1235,13 +1671,13 @@ function getBridgeActionErrorMessage(error: unknown): string {
     }
 
     if (error.status === 422 || error.status >= 500) {
-      return 'Bridge 연결 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+      return '상담 연결 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
     }
 
     return error.message;
   }
 
-  return 'Bridge 연결 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+  return '상담 연결 요청을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
 }
 
 function getBeforeJobFailureMessage(job: BeforeReviewJob): string {

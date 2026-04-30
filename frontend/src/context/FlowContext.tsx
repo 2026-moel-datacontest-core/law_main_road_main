@@ -27,6 +27,10 @@ export const initialFlowState: KLaborShieldFlowState = {
   evidence_status_map: {},
   draft_response: null,
   bridge_handoff: { items: [] },
+  before_review: {
+    review: null,
+    completed_review_job_id: null,
+  },
 };
 
 export function flowReducer(
@@ -157,6 +161,22 @@ export function flowReducer(
       return {
         ...state,
         bridge_handoff: { items: [] },
+      };
+    case 'SET_BEFORE_REVIEW_RESULT':
+      return {
+        ...state,
+        before_review: {
+          review: action.payload.review,
+          completed_review_job_id: action.payload.completed_review_job_id,
+        },
+      };
+    case 'CLEAR_BEFORE_REVIEW_RESULT':
+      return {
+        ...state,
+        before_review: {
+          review: null,
+          completed_review_job_id: null,
+        },
       };
     case 'RESET':
       return initialFlowState;

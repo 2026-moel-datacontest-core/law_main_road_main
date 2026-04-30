@@ -18,9 +18,12 @@ export function LegalBasisPanel({
 }: LegalBasisPanelProps) {
   return (
     <section className={styles.panel} aria-labelledby="legal-basis-title">
-      <h2 id="legal-basis-title" className={styles.title}>
-        법적 근거
-      </h2>
+      <div className={styles.header}>
+        <p className={styles.eyebrow}>근거 조문</p>
+        <h2 id="legal-basis-title" className={styles.title}>
+          법적 근거
+        </h2>
+      </div>
 
       {citedArticles.length > 0 ? (
         <div className={styles.citationList}>
@@ -38,6 +41,11 @@ export function LegalBasisPanel({
             <li key={`${basis.citation_label}-${basis.summary}`} className={styles.basisItem}>
               <p className={styles.basisLabel}>{basis.citation_label}</p>
               <p className={styles.basisSummary}>{basis.summary}</p>
+              {basis.source_context_ids.length > 0 ? (
+                <p className={styles.basisSources}>
+                  출처 {basis.source_context_ids.map((contextId) => `#${contextId}`).join(', ')}
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -55,9 +63,11 @@ export function LegalBasisPanel({
       ) : null}
 
       <details className={styles.debug}>
-        <summary>디버그 정보</summary>
+        <summary>출처 컨텍스트</summary>
         <p className={styles.debugText}>
-          source_context_ids: {sourceContextIds.length > 0 ? sourceContextIds.join(', ') : '없음'}
+          {sourceContextIds.length > 0
+            ? sourceContextIds.map((contextId) => `#${contextId}`).join(', ')
+            : '표시할 출처 컨텍스트가 없습니다.'}
         </p>
       </details>
     </section>

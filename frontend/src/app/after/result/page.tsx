@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { Scn001ContinuityPanel } from '@/components/continuity/Scn001ContinuityPanel';
 import { Masthead } from '@/components/layout/Masthead';
+import { WorkspaceSidebar } from '@/components/layout/WorkspaceSidebar';
 import { Button } from '@/components/ui/Button';
 import { CitationPill } from '@/components/ui/CitationPill';
 import { DisclaimerBanner } from '@/components/ui/DisclaimerBanner';
@@ -53,6 +54,8 @@ const SCN001_DOCUMENT_TYPES: typeof DOCUMENT_TYPES = [
     body: '계약서 검토 결과와 실제 근무 중 발생한 숙소비 공제, 기숙사 환경, 차별·폭언 등 사업장 변경 사유를 정리합니다.',
   },
 ];
+
+const resultFlowSteps = ['상담 입력', '상담 결과'] as const;
 
 type ContinuityPanelModel = {
   strength: 'strong' | 'weak';
@@ -110,8 +113,11 @@ export default function AfterResultPage() {
 
   useEffect(() => {
     if (answer) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
       const frameId = window.requestAnimationFrame(() => {
-        headingRef.current?.focus();
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        headingRef.current?.focus({ preventScroll: true });
       });
 
       return () => window.cancelAnimationFrame(frameId);
@@ -158,6 +164,10 @@ export default function AfterResultPage() {
   const groundedChunks = answer.retrieved_chunks.filter((chunk) =>
     answer.grounded_context_ids.includes(chunk.context_id),
   );
+  const displayedGroundingContextCount =
+    groundedChunks.length > 0 ? groundedChunks.length : answer.grounded_context_ids.length;
+  const legalBasisIsCompact =
+    answer.cited_articles.length + displayedGroundingContextCount <= 6;
   const selectorPanelClassName = canShowScn001FrozenDraftCta
     ? `${styles.selectorPanel} ${styles.selectorPanelStatic}`
     : styles.selectorPanel;
@@ -222,18 +232,78 @@ export default function AfterResultPage() {
       <SkipLink />
       <Masthead />
       <main id="main-content" tabIndex={-1} className={styles.main}>
-        <section className={styles.summaryBand} aria-labelledby="result-title">
-          <div className={styles.shell}>
-            <p className={styles.eyebrow}>Step 2 · 검색 결과</p>
-            <h1 id="result-title" ref={headingRef} tabIndex={-1} className={styles.title}>
-              관련 조문과 다음 문서 유형을 확인하세요
-            </h1>
-            <p className={styles.summaryText}>{statementSummary}</p>
-          </div>
-        </section>
+        <div className={styles.workspaceShell}>
+          <WorkspaceSidebar
+            activeItem="after"
+            actionLabel="새 상담 시작"
+            actionDescription="AI 법률 상담 질문 입력 화면으로 이동"
+            onAction={resetFlow}
+            ariaLabel="AI 법률 상담 메뉴"
+            summary={
+              <>
+                <span>Current workspace</span>
+                <strong>AI 법률 상담</strong>
+                <p>상담 결과를 확인하고 가능한 문서 초안 흐름으로 이어갑니다.</p>
+              </>
+            }
+          />
 
-        <div className={styles.contentGrid}>
-          <section className={styles.resultColumn} aria-label="법 조문 검색 결과">
+          <section className={styles.resultWorkspace} aria-labelledby="result-title">
+            <header className={styles.workspaceHeader}>
+              <div className={styles.workspaceHeaderCopy}>
+                <h1 id="result-title" ref={headingRef} tabIndex={-1} className={styles.title}>
+                  AI 법률 상담
+                </h1>
+                <p className={styles.lead}>
+                  상담 결과에서 관련 조문, 핵심 포인트, 주의사항을 확인합니다.
+                </p>
+              </div>
+              <ol className={styles.flowSteps} aria-label="상담 진행 흐름">
+                {resultFlowSteps.map((step) => (
+                  <li key={step}>
+                    {step === '상담 입력' ? (
+                      <button
+                        type="button"
+                        className={`${styles.flowStep} ${styles.flowStepButton}`}
+                        onClick={resetFlow}
+                      >
+                        {step}
+                      </button>
+                    ) : (
+                      <span className={styles.flowStepActive} aria-current="step">
+                        {step}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </header>
+
+            <section className={styles.resultSummary} aria-label="상담 결과">
+              <p className={styles.eyebrow}>Consult result</p>
+              <h2 className={styles.resultSummaryTitle}>
+                상담 답변
+              </h2>
+              {canShowAnswer ? (
+                <div className={styles.answerText}>
+                  {answer.answer.trim().length > 0 ? (
+                    <p>{answer.answer}</p>
+                  ) : (
+                    <p>답변 본문을 생성하지 못했습니다.</p>
+                  )}
+                </div>
+              ) : (
+                <p className={styles.summaryText}>
+                  근거가 확인되지 않아 답변 본문을 표시하지 않습니다.
+                </p>
+              )}
+              <div className={styles.questionSummary}>
+                <span>질문 요약</span>
+                <p>{statementSummary}</p>
+              </div>
+            </section>
+
+            <section className={styles.resultColumn} aria-label="법 조문 검색 결과">
             {!canShowAnswer ? (
               <Notification variant="warning" title="근거 확인 필요">
                 <p>
@@ -243,50 +313,6 @@ export default function AfterResultPage() {
               </Notification>
             ) : (
               <>
-                <section className={styles.evidenceSection} aria-labelledby="evidence-title">
-                  <p className={styles.evidenceEyebrow}>Legal basis</p>
-                  <h2 id="evidence-title" className={styles.sectionTitle}>
-                    근거 조문과 출처 컨텍스트
-                  </h2>
-                  <div className={styles.citationList}>
-                    {answer.cited_articles.map((article) => (
-                      <CitationPill key={article} label={article} />
-                    ))}
-                  </div>
-                  {groundedChunks.length > 0 ? (
-                    <ul className={styles.contextList} aria-label="출처 컨텍스트">
-                      {groundedChunks.map((chunk) => (
-                        <li key={chunk.chunk_id}>
-                          <span className={styles.contextId}>#{chunk.context_id}</span>
-                          <span>{chunk.citation_label}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : answer.grounded_context_ids.length > 0 ? (
-                    <ul className={styles.contextList} aria-label="출처 컨텍스트">
-                      {answer.grounded_context_ids.map((contextId, index) => (
-                        <li key={`${contextId}-${index}`}>
-                          <span className={styles.contextId}>#{contextId}</span>
-                          <span>근거 컨텍스트</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className={styles.emptyText}>근거 컨텍스트 표시 정보가 없습니다.</p>
-                  )}
-                </section>
-
-                <details className={styles.answerBlock} open>
-                  <summary className={styles.answerSummary}>답변 요약</summary>
-                  <div className={styles.answerBody}>
-                    {answer.answer.trim().length > 0 ? (
-                      <p>{answer.answer}</p>
-                    ) : (
-                      <p>답변 본문을 생성하지 못했습니다.</p>
-                    )}
-                  </div>
-                </details>
-
                 <section className={styles.section} aria-labelledby="key-points-title">
                   <h2 id="key-points-title" className={styles.sectionTitle}>
                     핵심 포인트
@@ -301,6 +327,55 @@ export default function AfterResultPage() {
                     <p className={styles.emptyText}>표시할 핵심 포인트가 없습니다.</p>
                   )}
                 </section>
+
+                <details
+                  className={styles.evidenceSection}
+                  open={legalBasisIsCompact}
+                  aria-labelledby="evidence-title"
+                >
+                  <summary className={styles.evidenceSummary}>
+                    <span className={styles.evidenceSummaryText}>
+                      <span className={styles.evidenceEyebrow}>법령 근거</span>
+                      <span id="evidence-title" className={styles.evidenceTitle}>
+                        근거 조문
+                      </span>
+                      <span className={styles.evidenceDescription}>
+                        답변에 사용된 인용 조문과 출처 컨텍스트입니다.
+                      </span>
+                    </span>
+                    <span className={styles.evidenceCount}>
+                      {answer.cited_articles.length}개 조문
+                    </span>
+                  </summary>
+                  <div className={styles.evidenceBody}>
+                    <div className={styles.citationList}>
+                      {answer.cited_articles.map((article) => (
+                        <CitationPill key={article} label={article} />
+                      ))}
+                    </div>
+                    {groundedChunks.length > 0 ? (
+                      <ul className={styles.contextList} aria-label="출처 컨텍스트">
+                        {groundedChunks.map((chunk) => (
+                          <li key={chunk.chunk_id}>
+                            <span className={styles.contextId}>#{chunk.context_id}</span>
+                            <span>{chunk.citation_label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : answer.grounded_context_ids.length > 0 ? (
+                      <ul className={styles.contextList} aria-label="출처 컨텍스트">
+                        {answer.grounded_context_ids.map((contextId, index) => (
+                          <li key={`${contextId}-${index}`}>
+                            <span className={styles.contextId}>#{contextId}</span>
+                            <span>근거 컨텍스트</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className={styles.emptyText}>근거 컨텍스트 표시 정보가 없습니다.</p>
+                    )}
+                  </div>
+                </details>
 
                 <section className={styles.cautionSection} aria-labelledby="cautions-title">
                   <h2 id="cautions-title" className={styles.sectionTitle}>
@@ -323,19 +398,19 @@ export default function AfterResultPage() {
             activePreset &&
             !activePreset.supportsDraft &&
             !canShowScn001FrozenDraftCta ? (
-              <Notification variant="info" title="고정 프리셋 초안만 지원">
+              <Notification variant="info" title="예시 질문 초안만 지원">
                 <p>
-                  이 프리셋의 문서 초안은 고정 입력과 고정 답변이 그대로 일치할 때만
-                  표시합니다. 수정 입력 또는 live 답변 경로에서는 조문 확인만 제공합니다.
+                  이 예시의 문서 초안은 고정 입력과 고정 답변이 그대로 일치할 때만
+                  표시합니다. 수정 입력에서는 조문 확인만 제공합니다.
                 </p>
               </Notification>
             ) : null}
 
             {hasGrounding && isBridgeHandoffAnswer ? (
-              <Notification variant="warning" title="Bridge 검토 답변 확인 전용">
+              <Notification variant="warning" title="계약서 검토 연결 답변 확인 전용">
                 <p>
-                  이 답변은 Before/Bridge 검토에서 이어진 조문 확인용입니다. Bridge handoff
-                  경로에서는 문서 초안을 열지 않습니다.
+                  이 답변은 계약서 검토 결과에서 이어진 조문 확인용입니다. 연결된 검토 결과
+                  기반 상담에서는 문서 초안을 열지 않습니다.
                 </p>
               </Notification>
             ) : null}
@@ -343,7 +418,7 @@ export default function AfterResultPage() {
             {hasGrounding && supportsDraft && !hasAvailableDocumentTypes ? (
               <Notification variant="warning" title="현재 문서 초안 지원 범위 밖">
                 <p>
-                  답변은 확인할 수 있지만, 현재 문서 초안은 SCN-004의 해고·서면통지·해고예고·노동위원회·임금체불·퇴직금·금품청산 범위에서만 지원합니다.
+                  답변은 확인할 수 있지만, 현재 문서 초안은 해고·서면통지·해고예고·노동위원회·임금체불·퇴직금·금품청산 범위에서만 지원합니다.
                 </p>
               </Notification>
             ) : null}
@@ -358,13 +433,18 @@ export default function AfterResultPage() {
             ) : null}
 
             <DisclaimerBanner />
+            </section>
           </section>
 
-          <aside className={styles.selectorColumn} aria-label="문서 유형 선택 및 Bridge 연속성 안내">
+          <aside className={styles.contextPanel} aria-label="문서 유형 선택 및 연속성 안내">
+            <div className={styles.contextHeader}>
+              <p className={styles.contextEyebrow}>상담 맥락</p>
+              <h2>다음 단계</h2>
+            </div>
             <section className={selectorPanelClassName}>
               <p className={styles.eyebrow}>
                 {isBridgeHandoffAnswer
-                  ? 'Answer-only'
+                  ? '조문 확인 전용'
                   : canShowScn001FrozenDraftCta
                   ? '고정 초안'
                   : '문서 유형'}
@@ -411,9 +491,9 @@ export default function AfterResultPage() {
                   variant="warning"
                   title={
                     isBridgeHandoffAnswer
-                      ? 'Bridge 검토 답변 확인 전용'
+                      ? '계약서 검토 연결 답변 확인 전용'
                       : activePreset && !activePreset.supportsDraft
-                      ? '고정 프리셋 초안만 지원'
+                      ? '예시 질문 초안만 지원'
                       : hasGrounding
                       ? '현재 문서 초안 지원 범위 밖'
                       : '문서 초안 진행 불가'
@@ -421,11 +501,11 @@ export default function AfterResultPage() {
                 >
                   <p>
                     {isBridgeHandoffAnswer
-                      ? '이 답변은 Before/Bridge 검토에서 이어진 조문 확인용입니다. Bridge handoff 경로에서는 문서 초안을 열지 않습니다.'
+                      ? '이 답변은 계약서 검토 결과에서 이어진 조문 확인용입니다. 연결된 검토 결과 기반 상담에서는 문서 초안을 열지 않습니다.'
                       : activePreset && !activePreset.supportsDraft
                       ? '고정 입력과 고정 답변이 그대로 일치할 때만 초안 보기를 표시합니다.'
                       : hasGrounding
-                      ? '이 답변은 확인할 수 있지만 SCN-004 문서 초안으로 이어지지 않습니다.'
+                      ? '이 답변은 확인할 수 있지만 현재 지원하는 문서 초안으로 이어지지 않습니다.'
                       : '인용된 법 조문 또는 근거 컨텍스트가 확인되지 않아 문서 유형을 선택할 수 없습니다.'}
                   </p>
                 </Notification>
@@ -435,6 +515,7 @@ export default function AfterResultPage() {
                 <Button
                   type="button"
                   fullWidth
+                  className={styles.primaryCta}
                   disabled={
                     !selectedDocumentTypeIsAvailable || !canProceedToDraftFlow || isNavigating
                   }
@@ -444,7 +525,13 @@ export default function AfterResultPage() {
                   사건 정보 입력하기 →
                 </Button>
               ) : null}
-              <Button type="button" variant="ghost" fullWidth onClick={resetFlow}>
+              <Button
+                type="button"
+                variant="ghost"
+                fullWidth
+                className={styles.resetButton}
+                onClick={resetFlow}
+              >
                 처음으로 돌아가기
               </Button>
             </section>
@@ -468,21 +555,21 @@ function BridgeContinuityPanel({ model }: { model: ContinuityPanelModel }) {
 
   return (
     <section className={styles.continuityPanel} aria-labelledby="bridge-continuity-title">
-      <p className={styles.eyebrow}>Bridge-as-Continuity / Not Grounding</p>
+      <p className={styles.eyebrow}>연결된 검토 결과</p>
       <h2 id="bridge-continuity-title" className={styles.selectorTitle}>
-        이전 검토와 이번 질문이 이어질 수 있는 지점
+        이전 계약서 검토와 이어지는 내용
       </h2>
       <p className={styles.continuityText}>
         {isStrong
-          ? '이전 검토의 표시된 쟁점과 이번 답변의 인용 조문이 일부 이어질 수 있습니다. 아래 내용은 연결 지점 설명이며, 현재 답변의 법적 근거는 인용 조문 영역에서 확인하세요.'
-          : '이전 검토의 법령 후보가 이번 답변의 인용 조문과 일부 겹칩니다. 이 Bridge 정보는 이번 답변의 법적 근거로 사용되지 않았습니다.'}
+          ? '이 상담은 이전 계약서 검토 내용을 맥락으로 참고합니다. 법적 근거는 상담 답변의 근거 조문에서 별도로 확인하세요.'
+          : '이전 계약서 검토의 후보 조항과 이번 답변의 근거 조문이 일부 겹칩니다. 연결된 검토 결과는 법적 근거가 아니라 상담 흐름을 이해하기 위한 맥락입니다.'}
       </p>
 
       {model.issueLabels.length > 0 ? (
-        <ContinuityList title="표시된 쟁점" values={model.issueLabels} />
+        <ContinuityList title="검토에서 확인한 쟁점" values={model.issueLabels} />
       ) : null}
       {model.lawRefs.length > 0 ? (
-        <ContinuityList title="현재 인용과 겹친 Bridge 법령 후보" values={model.lawRefs} />
+        <ContinuityList title="답변 인용과 겹치는 후보 조항" values={model.lawRefs} />
       ) : null}
       {model.recommendedNextActions.length > 0 ? (
         <ContinuityList
@@ -492,7 +579,7 @@ function BridgeContinuityPanel({ model }: { model: ContinuityPanelModel }) {
       ) : null}
 
       <p className={styles.continuityBoundary}>
-        Bridge 내용은 보조 설명이며 새 인용 조문이나 근거 컨텍스트를 만들지 않습니다.
+        연결된 검토 결과는 보조 설명이며, 현재 답변의 인용 조문이나 근거 컨텍스트를 만들지 않습니다.
       </p>
     </section>
   );

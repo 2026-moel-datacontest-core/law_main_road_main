@@ -192,7 +192,6 @@ export function UploadPanel({
         <div className={styles.infoGrid}>
           {infoTiles.map((tile) => (
             <article key={tile.title} className={styles.infoTile}>
-              <div className={styles.infoMark} />
               <h3 className={styles.infoTitle}>{tile.title}</h3>
               <p className={styles.infoDescription}>{tile.description}</p>
             </article>

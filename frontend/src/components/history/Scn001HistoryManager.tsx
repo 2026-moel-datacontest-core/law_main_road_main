@@ -279,14 +279,14 @@ export function Scn001HistoryManager() {
         <div>
           <p className={styles.eyebrow}>사건 기록</p>
           <h2 id="history-page-title" className={styles.title}>
-            내 사건 기록
+            저장된 사건 기록
           </h2>
           <p className={styles.description}>
-            완료된 Before 검토와 After로 이어볼 연결 후보를 안전하게 표시 가능한 범위로 모아둡니다.
+            완료된 계약서 검토와 AI 법률 상담 연결 후보만 표시합니다.
           </p>
         </div>
         <div className={styles.headerMeta} aria-label="기록 표시 범위">
-          <span className={styles.visibilityPill}>표시 가능한 기록</span>
+          <span className={styles.visibilityPill}>안전 표시 범위</span>
           {isBackendAuthenticated && historyStatus === 'success' ? (
             <span className={styles.totalPill}>총 {totalHistoryCount}건</span>
           ) : null}

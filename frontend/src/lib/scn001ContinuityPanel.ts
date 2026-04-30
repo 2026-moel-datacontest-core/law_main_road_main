@@ -14,7 +14,7 @@ export const SCN001_CONTINUITY_GROUPS = [
     items: ['표준근로계약서 미사용 가능성', '기숙사 정보 누락', '숙소비 공제 위험'],
   },
   {
-    title: '이번 After 질문/초안에서 이어진 쟁점',
+    title: '이번 상담 질문/초안에서 이어진 쟁점',
     items: ['기숙사 환경', '숙소비 공제', '폭언·차별', '사업장 변경 사유 정리'],
   },
   {
@@ -28,7 +28,7 @@ export const SCN001_CONTINUITY_GROUPS = [
 ] as const;
 
 export const SCN001_CONTINUITY_BOUNDARY =
-  '이 패널은 이전 검토와 현재 질문의 연결 지점을 설명합니다. 법적 근거는 현재 답변의 인용 조문과 근거 컨텍스트만 사용합니다.';
+  '이 패널은 이전 검토와 현재 질문의 연결 지점을 설명합니다. 법적 근거는 현재 답변의 근거 조문과 출처 컨텍스트만 사용합니다.';
 
 interface Scn001ResultContinuityInput {
   answer: AnswerResponse | null;
