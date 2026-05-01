@@ -5,6 +5,8 @@
 ## Files
 
 - `mvp_in_scope_eval_v1.json`: 현재 `backend/data/law_chunks/all_chunks.json` 범위 안에서만 답할 수 있는 baseline 60문항 eval 셋
+- `mvp_draft_supported_queries_v1.json`: 2026-05-02 기준 After
+  result/intake/draft QA에서 draft CTA를 열 수 있는 MVP query allow-list
 - `scenario_demo_question_sets_v1.json`: `SCN-001`, `SCN-004`, `SCN-005` 데모용 retrieval/answer smoke 질문 세트
 - `run_retrieval_eval.py`: retrieval service 기준 `hit@1`, `hit@3`, `hit@5`를 계산하는 runner
 - `run_answer_eval.py`: grounded answer의 schema / citation grounding / expected point coverage를 계산하는 runner
@@ -55,6 +57,57 @@
 - `questions[*].expected_citations`: 우선 surface되길 기대하는 citation 목록
 - `questions[*].expected_points`: 답변 핵심 포인트
 - `questions[*].demo_note`: 운영 메모
+
+### `mvp_draft_supported_queries_v1.json`
+
+- `version`: draft-supported allow-list version
+- `purpose`: After result/intake/draft QA에서 문서 초안 CTA가 열려야 하는
+  query 범위
+- `generated_from`: `mvp_in_scope_eval_v1.json`, frontend document draft catalog,
+  scenario preset source
+- `policy`: backend contract, document type, SCN-001 live/backend draft 여부에
+  대한 guard flag
+- `draft_supported_query_ids.mvp_in_scope_eval`: draft-supported KLS eval ids
+- `draft_supported_query_ids.frontend_fixed_presets`: frontend fixed preset ids
+- `supported_documents[*]`: 문서 타입, route flow, required signals, intake
+  fields, 해당 query 목록
+
+## Draft-supported Query Scope (2026-05-02)
+
+현재 draft-supported source of truth는
+`eval/mvp_draft_supported_queries_v1.json`이다. 이 파일은 answer quality
+baseline을 대체하지 않고, After result/intake/draft QA에서 어떤 query가 문서
+초안 CTA를 열 수 있는지 고정한다.
+
+지원 범위:
+
+- 부당해고 구제신청 이유서:
+  `KLS-EVAL-003`, `KLS-EVAL-004`, `KLS-EVAL-005`
+- 임금체불 진정서:
+  `KLS-EVAL-006`, `KLS-EVAL-007`, `KLS-EVAL-012`, `KLS-EVAL-014`,
+  `KLS-EVAL-021`
+- SCN-001: `SCN-001-BRIDGE-DEMO` exact fixed preset만
+  `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안으로 이어진다.
+
+Answer-only 범위:
+
+- `mvp_in_scope_eval_v1.json`의 나머지 KLS 52개는 answer-only다.
+- SCN-001 유사 질문, 수정 질문, live path, Bridge-origin modified path는
+  answer-only다.
+- answer-only path는 상담 답변, 핵심 포인트, 주의사항, 인용 근거만 제공하고
+  draft CTA를 열지 않는다.
+
+Guard / boundary:
+
+- public `POST /api/v1/answer` contract unchanged.
+- public `POST /api/v1/documents/draft` contract unchanged.
+- 새 backend document type 없음.
+- SCN-001 live/backend document draft generation 없음.
+- raw payload나 auth/token state를 Web Storage에 저장하지 않음.
+- Bridge continuity는 legal grounding이 아니다. Bridge 때문에 `legal_basis`,
+  `cited_articles`, `source_context_ids`, `grounded_context_ids`,
+  `retrieved_chunks`를 생성하거나 수정하지 않는다.
+- `SCN-004-DEMO-FREEZE` fixed/freeze path는 유지한다.
 
 ## Intended Use
 

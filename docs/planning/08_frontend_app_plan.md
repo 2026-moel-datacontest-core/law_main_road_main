@@ -5,7 +5,7 @@
 - MVP 앱 구현 범위 고정
 - 웹앱 기준 화면/상태/API 전제 정리
 - 데모 우선 구현 순서 명확화
-- 2026-04-29 기준 실제 frontend 구현 상태와 다음 QA 범위 정리
+- 2026-04-29 checkpoint와 2026-05-02 frontend/demo current state 정리
 - 2026-04-17 상태는 evolution note로 남겨 구현 발전 흐름을 보존
 
 ---
@@ -116,7 +116,7 @@
   - `/history` incident-centered record archive 완료
   - exact `SCN-001-BRIDGE-DEMO` fixed preset frozen draft flow 완료
   - SCN-001 continuity panel 완료
-- Latest main `85d10fa` integrated UI polish:
+- 2026-04-29 main `85d10fa` integrated UI polish:
   - `DESIGN.md` is the current visual guide: token-first,
     neutral/dense/evidence-led, with disclaimers and uncertainty prominent.
   - Before first screen is upload-focused, local server/demo copy is removed,
@@ -136,6 +136,95 @@
     API boundary, live/backend SCN-001 draft generation, protected SCN-001 draft
     endpoint, and Step 3 full retention lifecycle remain unchanged/NOT opened.
 - SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행한다.
+
+### Current Frontend/Demo State (2026-05-02)
+
+현재 `main` 기준 hash는
+`56d71e7cd76d27222e31fefb852c59844c002214`이다. 오늘까지의 UI/UX
+workspace 정리는 frontend-only polish이며 backend/API/schema/storage/Auth,
+Bridge data boundary, Web Storage policy는 변경하지 않았다.
+
+Route별 현재 상태:
+
+- `/`: brand home이 실제 작업 진입 중심으로 정리됐다. Home USE CASES mock
+  entry는 `/before?example=sen0|sen1|sen2`로 진입한 뒤 `/before`에서 URL을
+  정리한다.
+- `/before`: upload-first workspace shell, example affordance, login-required
+  actual analysis UX, OCR 1~2분 안내, progress scroll UX를 유지한다.
+- `/before` result: `CONTRACT DOCUMENT`와 `EVIDENCE DETAIL` 영역의 밀도와
+  가독성을 개선했다. raw job id/status/provider/internal error는 노출하지 않는다.
+- `/after`: centered question workspace, guidance cards, restored disclaimer,
+  SCN-001/SCN-004 preset buttons, backend-verified saved history selector를
+  유지한다.
+- `/after/result`: answer/key_points/cautions/cited_articles를 먼저 보여주고,
+  draft-supported answer에만 document CTA를 연다. SCN-001 exact fixed preset은
+  frontend-local frozen draft CTA를 열고, SCN-001 유사/수정/live/Bridge-origin
+  path는 answer-only를 유지한다.
+- `/after/intake`: SCN-004 supported draft는 public
+  `/api/v1/documents/draft`용 intake를 사용한다. SCN-001 exact fixed preset은
+  사업장 변경 사유 정리서용 frontend-local deterministic intake/draft path를
+  사용하며 backend/LLM draft를 호출하지 않는다.
+- `/after/draft`: rendered_text, missing_fields, cautions, evidence_checklist,
+  cited_articles, source context ids, copy, browser print를 제공한다. After draft
+  shell과 print CSS polish가 반영됐다.
+- `/history`: incident-centered archive, folded record cards, empty state,
+  sidebar active style polish를 반영했다. failed/running Before jobs와 raw
+  internal identifiers는 user-facing list에 노출하지 않는다.
+
+Workspace shell 규칙:
+
+- sidebar 항목은 `홈`, `계약서 검토`, `AI 법률 상담`, `사건 기록`이다.
+- top masthead의 `History / Before / After` workflow nav는 제거하고, workspace
+  이동은 sidebar로 정리한다.
+- right rail heading은 영문 eyebrow + 한글 title 패턴으로 통일한다.
+- mobile에서는 sidebar density, active indicator, empty-state actions, workspace
+  width가 overflow 없이 동작하도록 정리했다.
+- `/after/result`, `/after/intake`, `/after/draft`에 직접 진입해 flow state가
+  없으면 `/after?fallback=missing-state`로 돌려보내고 fallback notice를 보여준다.
+
+Draft-supported query scope:
+
+- 상세 source of truth: `eval/mvp_draft_supported_queries_v1.json`
+- 부당해고 구제신청 이유서 draft-supported KLS ids:
+  `KLS-EVAL-003`, `KLS-EVAL-004`, `KLS-EVAL-005`
+- 임금체불 진정서 draft-supported KLS ids:
+  `KLS-EVAL-006`, `KLS-EVAL-007`, `KLS-EVAL-012`, `KLS-EVAL-014`,
+  `KLS-EVAL-021`
+- `SCN-001-BRIDGE-DEMO` exact fixed preset만
+  `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안으로 이어진다.
+- SCN-001 유사 질문, 수정 질문, live path, Bridge-origin modified path는
+  answer-only다.
+- 나머지 KLS 52개는 answer-only이며 상담 답변/근거만 제공하고 draft CTA를 열지 않는다.
+
+Guard / boundary:
+
+- public `POST /api/v1/answer` contract unchanged.
+- public `POST /api/v1/documents/draft` contract unchanged.
+- 새 backend document type 없음.
+- SCN-001 live/backend draft generation과 protected SCN-001 draft endpoint는
+  열지 않음.
+- raw `user_statement`, `answer_response`, `case_intake`, `draft_response`,
+  raw Bridge payload, raw `after_query_seed`, token/auth identifier는 Web Storage에
+  저장하지 않음.
+- Bridge continuity는 legal grounding이 아니다. Bridge 때문에 `legal_basis`,
+  `cited_articles`, `source_context_ids`, `grounded_context_ids`,
+  `retrieved_chunks`를 생성하거나 수정하지 않는다.
+- `SCN-004-DEMO-FREEZE` fixed/freeze path는 유지한다.
+
+Verification summary:
+
+- main push 전 `git diff --check` PASS.
+- `python -m json.tool eval/mvp_draft_supported_queries_v1.json` PASS.
+- `cd frontend && npm run build` PASS. build가 만든 `frontend/next-env.d.ts`
+  generated churn은 원복했다.
+- 기존 `localhost:3000`만 사용한 browser smoke PASS:
+  `/`, `/before`, `/before?example=sen0`, `/after`, `/history`, `/after/draft`
+  desktop/mobile overflow 없음, sidebar active 정상, top workflow nav 없음,
+  raw id/auth/payload 노출 없음.
+- Flow smoke PASS:
+  SCN-001 exact frozen draft path는 `/api/v1/answer`와
+  `/api/v1/documents/draft`를 호출하지 않음; SCN-004 fixed path 유지;
+  SCN-001 modified query answer-only 유지.
 
 SCN-001 연결 초안의 phase 정렬:
 
