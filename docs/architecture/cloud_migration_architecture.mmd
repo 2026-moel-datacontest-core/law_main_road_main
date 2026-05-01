@@ -1,0 +1,63 @@
+flowchart TB
+    subgraph DEV["Developer Platform"]
+        GitHub["GitHub Repository"]
+        Actions["GitHub Actions<br/>test · build · deploy"]
+        WIF["Workload Identity Federation<br/>keyless GCP auth"]
+        AR["Artifact Registry<br/>frontend/backend images"]
+        TF["Terraform<br/>env modules"]
+        TFState["GCS Terraform State<br/>versioned remote state"]
+    end
+
+    subgraph RUNTIME["Runtime Platform - GCP asia-northeast3"]
+        User["User / Browser"]
+        Frontend["Cloud Run Frontend<br/>Next.js"]
+        Backend["Cloud Run Backend API<br/>FastAPI"]
+        Firebase["Firebase Auth<br/>Google Sign-In"]
+        SQL["Cloud SQL PostgreSQL<br/>pgvector · law_chunks · users · bridge_runs · before_review_jobs · after_artifact_runs"]
+        Vertex["Vertex AI<br/>Gemini embedding · answer · OCR/content review"]
+        Storage["Cloud Storage Private Bucket<br/>before-runs artifacts"]
+        Secrets["Secret Manager<br/>DB/provider/runtime secrets"]
+    end
+
+    subgraph OPS["Operations Platform"]
+        Logging["Cloud Logging<br/>structured app logs"]
+        Monitoring["Cloud Monitoring / Alerting<br/>latency · error · provider timeout · DB"]
+        Rollback["Cloud Run Revisions<br/>traffic rollback"]
+        Backup["Cloud SQL Backup / PITR<br/>migration safety"]
+        Lifecycle["Storage Lifecycle / Cost Controls<br/>artifact TTL · image cleanup"]
+    end
+
+    GitHub --> Actions
+    Actions --> WIF
+    Actions -->|build/push images| AR
+    Actions -->|terraform plan/apply| TF
+    TF --> TFState
+    AR -->|deploy image| Frontend
+    AR -->|deploy image| Backend
+
+    User -->|HTTPS| Frontend
+    Frontend -->|API call / CORS allowlist| Backend
+    Frontend -->|Google Sign-In| Firebase
+    Backend -->|verify Firebase ID token| Firebase
+    Backend -->|Cloud SQL connector| SQL
+    Backend -->|managed model calls| Vertex
+    Backend -->|read/write artifacts| Storage
+    Backend -->|runtime secret access| Secrets
+
+    Backend -.-> Logging
+    Frontend -.-> Logging
+    Logging -.-> Monitoring
+    Backend -.-> Monitoring
+    SQL -.-> Backup
+    Storage -.-> Lifecycle
+    AR -.-> Lifecycle
+    Backend -.-> Rollback
+    Frontend -.-> Rollback
+
+    style DEV fill:#EEF6FF,stroke:#2563EB,stroke-width:2px,color:#0F172A
+    style RUNTIME fill:#F8FAFC,stroke:#64748B,stroke-width:2px,color:#0F172A
+    style OPS fill:#ECFDF5,stroke:#059669,stroke-width:2px,color:#0F172A
+    style Backend fill:#D6EAF8,stroke:#2874A6,stroke-width:3px,color:#0F172A
+    style Storage fill:#FFF7ED,stroke:#F97316,stroke-width:2px,color:#0F172A
+    style Secrets fill:#F0FDF4,stroke:#16A34A,stroke-width:2px,color:#0F172A
+    style Monitoring fill:#F0FDFA,stroke:#0F766E,stroke-width:2px,color:#0F172A

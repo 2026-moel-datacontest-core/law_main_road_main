@@ -6,7 +6,7 @@
 
 이 문서는 현재 repo의 전체 구조를 `Before/Begin`, `Bridge`, `After` 관점에서 정리한다. 범위는 main `frontend/` + `backend/` 앱에 통합된 `/before`, `/after`, SCN-001 protected Bridge endpoints를 포함한다.
 
-이 문서는 `docs/architecture/architecture_option4_*`의 target deployment architecture와 다르다. Option 4 문서는 후속 클라우드 배포 및 self-hosted LLM 확장안을 다루며, 이 문서는 현재 구현된 MVP와 현재 repo에 존재하는 병렬 모듈의 실제 상태를 기록한다.
+이 문서는 `docs/architecture/cloud_migration_architecture.*`의 target deployment architecture와 다르다. Cloud migration 문서는 후속 GCP cloud migration 목표 구조를 다루며, 이 문서는 현재 구현된 MVP와 현재 repo에 존재하는 병렬 모듈의 실제 상태를 기록한다.
 
 정확한 현재 상태 요약:
 
@@ -17,7 +17,7 @@
 - After draft path does not call Vertex AI.
 - Before contract upload path currently uses Vertex AI for OCR and LLM-based content review.
 - Phase 6F live subset PASS with retry. Vertex IAM/credential issue is runtime resolved; residual runtime risk is transient `provider_timeout`.
-- Self-hosted LLM is not part of current MVP architecture; it remains a future optional extension.
+- Local LLM / Compute Engine GPU VM is not part of the current MVP architecture. The cloud migration target also excludes it from the 1차 migration scope.
 
 ## 2. 현재 구현 범위 요약
 
@@ -53,7 +53,7 @@
 | Runtime UI flow | `/before` upload -> loading -> result -> optional protected Bridge handoff CTA |
 | Artifact storage | `backend/data/before_artifacts/runs/<run_id>/` |
 | OCR | Vertex AI 기반 OCR pipeline |
-| Content review | 기본 `LLM_PROVIDER=vertex`, Ollama provider는 교체 가능 구조 |
+| Content review | 기본 `LLM_PROVIDER=vertex`, Ollama provider는 local/dev 잔여 교체 구조이며 cloud migration target은 아님 |
 | Accessibility | 결과 화면에서 장애 특화 recommendation 선택 확장 |
 
 ### Bridge
@@ -83,12 +83,12 @@ raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected Bridge answer 
 | Before | Sync Review API | `POST /api/v1/before/review` | 동기 계약서 리뷰 | 동일 pipeline 사용 |
 | Before | OCR Pipeline | `backend/app/before_stack/services/ocr_pipeline.py` | `structured`, `raw_sections`, `_meta` 생성 | Vertex AI OCR 사용 |
 | Before | Contract Review Pipeline | `backend/app/before_stack/main.py` + services | section compare, rule validation, content check, explanation 생성 | deterministic checks + LLM content check |
-| Before | LLM Client | `backend/app/before_stack/services/llm_client.py` | Vertex/Ollama 추상화 | 기본 `LLM_PROVIDER=vertex` |
+| Before | LLM Client | `backend/app/before_stack/services/llm_client.py` | Vertex 중심 추상화, Ollama는 local/dev 잔여 provider | 기본 `LLM_PROVIDER=vertex`; cloud migration target 아님 |
 | Before | Artifact Storage | `backend/data/before_artifacts/runs` | 업로드 원본, OCR, 리뷰, 설명 markdown 저장 | 개인정보/사업장 정보 포함 가능 |
 | Before | Accessibility Recommendation | `POST /api/v1/before/accessibility/recommendations` | 장애 유형/직무 특성 기반 카드 추천 | 기본 분석 이후 선택 확장 |
 | Bridge | Protected Bridge Runs API | `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}` | safe Before handoff summary 저장/조회 | Firebase Bearer auth required, raw seed persistent 저장 금지 |
 | Bridge | Protected Bridge Answer API | `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` | Bridge-origin answer generation and artifact linkage | `AnswerResponse`-compatible, `source_bridge_run_id` single primary |
-| Future docs | Option 4 architecture | `docs/architecture/architecture_option4_*` | 후속 클라우드 목표 구조 | 현재 MVP 구조와 구분 |
+| Future docs | Cloud migration architecture | `docs/architecture/cloud_migration_architecture.*` | 후속 클라우드 목표 구조 | 현재 MVP 구조와 구분 |
 
 ## 4. 기능별 요청 흐름 표
 
@@ -108,12 +108,12 @@ SCN-004 draft flow is additionally gated by document-type eligibility. The front
 
 ## 5. Mermaid 다이어그램
 
-동일한 다이어그램은 `docs/architecture/architecture_project_current.mmd`에도 별도 저장한다.
+동일한 다이어그램은 `docs/architecture/current_project_architecture.mmd`에도 별도 저장한다.
 
 ```mermaid
 %% K-Labor Shield current project architecture
-%% 기준일: 2026-04-24 / 현재 repo 기준
-%% Self-hosted LLM / Compute Engine GPU VM is intentionally omitted from this current MVP diagram.
+%% 기준일: 2026-04-29 / 현재 repo 기준
+%% Local LLM / Compute Engine GPU VM is intentionally omitted from this current MVP diagram.
 flowchart LR
 
     subgraph APP["Main Next.js + FastAPI App (frontend/ + backend/)"]
@@ -216,7 +216,7 @@ flowchart LR
 | Before deterministic checks | 부분 미사용 | section comparator, rule validator, law retriever, explanation builder는 deterministic / local asset 기반 로직을 포함하지만 pipeline 전체는 OCR/LLM 단계에서 Vertex를 사용한다. |
 | Before accessibility recommendation | 기본 미사용 | 장애 특화 recommendation engine은 별도 추천 로직이며 계약서 OCR/LLM 경로와 분리되어 있다. |
 | Protected Bridge answer | 사용 | `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`는 answer generation에서 Vertex를 사용할 수 있고, `after_artifact_runs.user_id/source_bridge_run_id` linkage를 기록한다. |
-| Self-hosted LLM / Compute Engine GPU VM | 현재 미포함 | Self-hosted LLM is not part of current MVP architecture; it remains a future optional extension. |
+| Local LLM / Compute Engine GPU VM | 미사용 / 제외 | 현재 MVP와 cloud migration 1차 target 모두에 포함하지 않는다. |
 
 ## 7. 개인정보 / 민감정보 처리 경계
 
@@ -252,26 +252,24 @@ flowchart LR
 - main After/RAG 앱은 SCN-004 demo freeze와 `/api/v1/retrieve`, `/api/v1/answer`, `/api/v1/documents/draft` contract를 기준으로 안정화되어 있다.
 - `/before`는 계약서 업로드 분석, job polling, artifact 저장, accessibility recommendation, optional protected Bridge handoff CTA를 제공한다.
 - Bridge는 protected route/service와 `/after` handoff UI까지 구현됐다. 독립 `/bridge` 화면은 후속 범위다.
-- Phase 7B protected Bridge answer endpoint는 backend에 구현됐고, frontend protected helper/routing은 별도 후보 작업이다.
+- Protected Bridge answer endpoint와 frontend protected helper/routing은 구현 완료 상태다.
 
 ### 향후 통합 방향
 
 | 후보 | 방향 | 선행 조건 |
 |---|---|---|
-| Protected Bridge answer frontend routing | `/after` Bridge-origin live call이 `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer`를 사용할지 결정 | SCN-004 freeze regression과 sticky Bridge origin 정책 유지 |
 | Handoff DTO refinement | Before review result에서 Bridge safe subset으로 넘길 canonical field 고도화 | 개인정보 최소화, 저장 위치, 사용자 동의 정책 |
 | Multi-bridge provenance | single primary `source_bridge_run_id` 이후 full provenance join table 검토 | MVP 이후 범위와 UI disclosure 정책 |
 | Artifact 정책 | local artifact를 배포용 Cloud Storage / DB / TTL 정책으로 전환 | 개인정보 보호, 접근 제어, 로그 마스킹 기준 |
 | Runtime hardening | transient `provider_timeout` retry/backoff 또는 UX recovery 정리 | Vertex IAM issue는 runtime resolved 상태로 유지 |
 
-## 9. Option 4 / self-hosted LLM과의 관계
+## 9. Cloud migration target과의 관계
 
-- `docs/architecture/architecture_option4_spec.md`, `architecture_option4.mmd`, `architecture_option4.drawio`는 후속 Option 4 확장안으로 유지한다.
-- Option 4 target architecture의 Cloud Run, Cloud SQL, Cloud Storage, Secret Manager, Cloud Logging, Compute Engine GPU VM 구성은 현재 MVP 구현 상태가 아니다.
-- Self-hosted LLM is not part of current MVP architecture; it remains a future optional extension.
+- `docs/architecture/cloud_migration_architecture.md`, `cloud_migration_architecture.mmd`, `cloud_migration_architecture.drawio`는 후속 GCP migration target architecture로 유지한다.
+- Cloud migration target architecture의 Cloud Run, Cloud SQL, Cloud Storage, Secret Manager, Cloud Logging/Monitoring/Alerting, CI/CD, Terraform remote state 구성은 현재 MVP 구현 상태가 아니다.
+- Local LLM / Compute Engine GPU VM은 1차 migration target에서 제외한다.
 - 현재 MVP는 main After/RAG에서 Gemini API 기반 retrieval / answer를 사용하고, After document draft는 deterministic builder로 분리한다.
-- `backend/app/before_stack`은 현재 Vertex AI OCR/LLM 기반으로 동작하며, `llm_client.py`에 Ollama provider 교체 가능 구조가 있지만 현재 기본값은 `vertex`다.
-- GCP GPU self-hosted LLM은 이 current architecture 다이어그램에 넣지 않고, 후속 확장 후보 note로만 남긴다.
+- `backend/app/before_stack`은 현재 Vertex AI OCR/LLM 기반으로 동작하며, `llm_client.py`에 Ollama provider 교체 가능 구조가 남아 있지만 현재 기본값은 `vertex`다. 이 교체 가능성은 현재 코드의 local/dev 잔여 capability 설명일 뿐이며 cloud migration target에 Ollama/Qwen/vLLM 또는 GPU VM을 프로비저닝한다는 뜻이 아니다.
 
 ## 10. 주의 / 리스크
 
@@ -282,5 +280,5 @@ flowchart LR
 | After draft 근거 의존성 | draft 자체는 deterministic이지만 `legal_basis`는 이전 answer 결과에 의존한다. | cited_articles / grounded_context_ids guard와 SCN-004 document-type eligibility guard 유지 필요 |
 | API contract 차이 | Before / Bridge protected endpoints는 public `/api/v1/answer` / `/api/v1/documents/draft`와 다른 contract다. | public answer/draft contract unchanged 문구 유지 |
 | Bridge 오해 | Bridge handoff와 protected backend endpoints는 구현됐지만 독립 `/bridge` UI와 SCN-001 document draft는 열리지 않았다. | answer-only, sticky `bridge_handoff`, draft-disabled 정책으로 표기 |
-| Self-hosted LLM 오해 | Option 4 문서에 Compute Engine GPU VM이 있어도 현재 MVP에 포함되지 않는다. | current diagram에서는 제외하고 future optional extension으로만 표기 |
+| Local LLM 오해 | Cloud migration target에서는 Compute Engine GPU VM / Local LLM을 제외했다. | current target은 `cloud_migration_architecture.md`, `.mmd`, `.drawio` 기준으로 본다. |
 | Generated / artifact directories | `node_modules`, `__pycache__`, `Zone.Identifier`, `dist`, local artifact run directories는 분석 대상에서 제외하거나 artifact로만 취급한다. | 이번 문서 작업에서는 수정하지 않음 |

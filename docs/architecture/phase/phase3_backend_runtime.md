@@ -1,0 +1,661 @@
+# Phase 3 — Backend Runtime
+
+기준일: `2026-04-29`
+
+## 1. Goal
+
+Phase 3는 FastAPI backend를 Cloud Run에 올리고, Cloud SQL, Vertex AI,
+Firebase Auth, Secret Manager, artifact storage, public/protected API smoke를
+검증한다. 이 단계는 frontend Cloud Run 배포 전 backend runtime boundary를 먼저
+안정화하는 단계다.
+
+핵심 목표는 다음과 같다.
+
+- Backend container image build/push 경로를 만든다.
+- Backend Cloud Run service를 배포한다.
+- `backend-sa` runtime identity를 붙인다.
+- Secret Manager, Cloud SQL connector, Vertex AI, artifact bucket IAM을 연결한다.
+- Cloud SQL connection pool과 Cloud Run scale cap을 함께 제한한다.
+- Firebase ID token verification이 Cloud Run에서 동작하는지 확인한다.
+- CORS bootstrap 정책을 적용하고 Phase 4에서 재조정할 output을 남긴다.
+- 민감정보가 log와 artifact 경계 밖으로 새지 않는지 샘플링한다.
+
+## 2. Phase Status
+
+| Item | Status |
+|---|---|
+| Phase type | Backend runtime deployment |
+| Primary Terraform root | `infra/environments/{env}/runtime/backend` |
+| Primary module | `infra/modules/cloud-run-service` |
+| Runtime service | FastAPI backend on Cloud Run |
+| Image source | Artifact Registry backend image |
+| Required previous phase | [`phase2_data_foundation.md`](phase2_data_foundation.md) |
+| Next phase | [`phase4_frontend_runtime.md`](phase4_frontend_runtime.md) |
+
+## 3. Read First
+
+Phase 3 작업자는 아래 순서로 읽는다.
+
+1. repo root `AGENTS.md`
+2. repo root `CLAUDE.md`
+3. [`../CLAUDE.md`](../CLAUDE.md)
+4. [`../cloud_migration_architecture.md`](../cloud_migration_architecture.md)
+5. [`../cloud_migration_phase_plan.md`](../cloud_migration_phase_plan.md)
+6. [`phase2_data_foundation.md`](phase2_data_foundation.md)
+7. this file
+8. `backend/CLAUDE.md`
+9. `backend/main.py`
+10. `backend/app/services/auth_service.py`
+11. `backend/app/db.py`
+
+## 4. Preconditions
+
+Phase 3를 시작하기 전에 확인한다.
+
+| Precondition | Required State |
+|---|---|
+| Phase 1 foundation | service accounts, Artifact Registry, Secret Manager shells, artifact bucket exist |
+| Phase 2 data | Cloud SQL exists and migration/seed smoke passed |
+| Cloud SQL output | connection name, database name, region available |
+| DB pool values | selected in Phase 2 |
+| DB pool support path | current `backend/app/db.py` support implemented/verified, or equivalent connection cap approved |
+| DB credential | Secret Manager value added outside Terraform |
+| Firebase project | selected and `FIREBASE_PROJECT_ID` known |
+| Backend image contract | Dockerfile/build strategy exists before image build |
+| Artifact storage strategy | GCS adapter implemented or non-durable local artifact behavior explicitly accepted for a limited smoke |
+| GCP auth | local admin/developer path available before Phase 5 WIF |
+| Frontend URL | not available yet |
+
+If `backend/Dockerfile` or an equivalent Cloud Run build strategy is missing,
+Phase 3 implementation starts there. Do not mark Phase 3 complete with only a
+source-tree import check.
+
+## 5. Scope
+
+### In Scope
+
+- Backend Cloud Run service.
+- Backend runtime service account attachment.
+- Backend image build/push path.
+- Secret Manager injection.
+- Cloud SQL connector binding.
+- Backend env var wiring.
+- Runtime IAM for Cloud SQL, Secret Manager, Vertex AI, and artifact bucket.
+- CORS bootstrap before frontend exists.
+- Firebase Admin ADC/fallback verification.
+- Public API smoke checks.
+- Protected API auth-negative and valid-token smoke checks.
+- Cloud Logging sensitive-field sample check.
+- Cloud Run revision rollback procedure.
+
+### Out Of Scope
+
+- Frontend Cloud Run service.
+- Firebase Authorized Domain setup for frontend login UI.
+- GitHub Actions WIF and full CI/CD.
+- Cloud SQL creation.
+- DB schema migration or corpus seed changes.
+- API Gateway, Cloud Armor, private IP, Serverless VPC Access.
+- Broad eval or RAG behavior changes.
+- Changing `/api/v1/answer` or `/api/v1/documents/draft` contracts.
+- SCN-001 live/backend draft generation.
+- Step 3 full retention lifecycle.
+
+## 6. Terraform Layout
+
+Create or maintain this layout.
+
+```text
+infra/
+  modules/
+    cloud-run-service/
+      main.tf
+      variables.tf
+      outputs.tf
+      README.md
+  environments/
+    dev/
+      runtime/
+        backend/
+          main.tf
+          variables.tf
+          outputs.tf
+          versions.tf
+          terraform.tfvars.example
+    prod/
+      runtime/
+        backend/
+          main.tf
+          variables.tf
+          outputs.tf
+          versions.tf
+          terraform.tfvars.example
+```
+
+The `runtime/backend` root consumes outputs from:
+
+- `foundation`
+- `data`
+
+Do not merge backend and frontend runtime roots. Backend should be independently
+plan/apply/smoke-testable before Phase 4.
+
+## 7. Terraform Owns
+
+Terraform owns the backend Cloud Run runtime configuration.
+
+| Area | Terraform Responsibility |
+|---|---|
+| Cloud Run service | backend service resource |
+| Image reference | immutable image digest or explicit image tag variable |
+| Runtime identity | attach `backend-sa` |
+| Secret injection | DB credentials, Firebase fallback credential if used |
+| Cloud SQL connector | bind Cloud SQL instance connection name |
+| Env vars | code-compatible backend env contract |
+| Scaling | min/max instances, concurrency, timeout |
+| IAM | backend-sa access to SQL, secrets, Vertex AI, artifact bucket |
+| Ingress | public managed HTTPS endpoint for first migration |
+| Outputs | backend URL, service name, revision name/digest, CORS update target |
+
+Preferred deployment model:
+
+```text
+build image outside Terraform
+  -> push image to Artifact Registry
+  -> pass immutable image digest/tag to Terraform
+  -> terraform apply runtime/backend
+  -> Cloud Run creates a new revision
+```
+
+Avoid making `gcloud run deploy` the normal path while Terraform also owns the
+service, because it creates configuration drift. Temporary manual deploy is only
+acceptable if the resulting config is reconciled back into Terraform before
+Phase 5.
+
+## 8. CI / Script Owns
+
+CI/scripts own build and verification work.
+
+| Area | Responsibility |
+|---|---|
+| Backend Dockerfile | build a Cloud Run-compatible image |
+| Image build | build from repo root with backend code and required static assets |
+| Image push | push to Artifact Registry |
+| Smoke tests | call backend Cloud Run URL |
+| Contract checks | verify public response contracts are unchanged |
+| Auth checks | verify protected endpoints reject missing/invalid token |
+| Log checks | sample Cloud Logging for sensitive fields |
+
+Before Phase 5, these tasks can be run manually by a developer/admin account. Do
+not use service account key JSON for temporary image push.
+
+## 9. Admin / Manual Owns
+
+Some actions remain administrator-owned in Phase 3.
+
+| Area | Admin Responsibility |
+|---|---|
+| Temporary CORS | approve bootstrap origin policy before frontend URL exists |
+| Secret values | add/update Secret Manager versions outside Terraform |
+| Firebase valid-token smoke | provide a real Firebase ID token through a safe manual path |
+| Artifact durability decision | approve GCS artifact adapter requirement or limited ephemeral smoke |
+| Rollback | decide whether to shift traffic back after failed smoke |
+| Log review | inspect Cloud Logging samples after first deploy |
+
+Admin decisions should be recorded in the Phase 3 status note.
+
+## 10. Backend Image Contract
+
+Phase 3 requires a Cloud Run-compatible backend image.
+
+Minimum image requirements:
+
+- installs `backend/requirements.txt`
+- starts `uvicorn backend.main:app`
+- binds to `0.0.0.0`
+- uses Cloud Run `PORT`, defaulting to `8080`
+- includes `backend/app`, Alembic files if migration checks are run from image,
+  and required Before assets such as `backend/data/before_assets`
+- excludes local secrets, `.env`, `.pgdata`, logs, and local artifact runs
+- does not bake service account JSON into the image
+
+Expected runtime command shape:
+
+```text
+uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8080}
+```
+
+Build from the repository root if the Dockerfile imports `backend.main` as a
+package path.
+
+## 11. Pre-WIF Image Push
+
+Workload Identity Federation is not available until Phase 5. During Phase 3, use
+a developer/admin account for image push.
+
+```bash
+PROJECT_ID=...
+REGION=asia-northeast3
+REPOSITORY=kls-prod-ar
+IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/backend:phase3-$(date +%Y%m%d%H%M%S)"
+
+gcloud auth login
+gcloud auth configure-docker "$REGION-docker.pkg.dev"
+
+# If the Dockerfile strategy is selected; otherwise use the approved equivalent.
+docker build -f backend/Dockerfile -t "$IMAGE" .
+docker push "$IMAGE"
+```
+
+Then pass `$IMAGE` or its immutable digest into the Terraform backend runtime
+root.
+
+Do not create, commit, upload, or store a service account key JSON for this step.
+
+## 12. Runtime Environment Contract
+
+Phase 3 env vars must match the current backend code, not only a generic cloud
+template.
+
+| Env | Source | Secret? | Notes |
+|---|---|---:|---|
+| `DATABASE_URL` | Secret Manager or assembled from DB secrets + Cloud SQL connector | yes if credential-bearing | SQLAlchemy connection string |
+| `DB_POOL_SIZE` | Phase 2 target guardrail | no | recommended first value `2`; current `backend/app/db.py` must be updated/verified before this is an active control |
+| `DB_MAX_OVERFLOW` | Phase 2 target guardrail | no | recommended first value `3`; cap together with Cloud Run max instances after support is verified |
+| `DB_POOL_TIMEOUT_SECONDS` | Phase 2 target guardrail | no | recommended first value `30`; verify backend support before production claim |
+| `GCP_PROJECT` | Terraform variable/output | no | used by embedding/answer services |
+| `GCP_PROJECT_ID` | same project value or derived from `GCP_PROJECT` | no | Before stack accepts this name |
+| `GCP_LOCATION` | Vertex AI model location | no | may differ from Cloud Run region if model availability requires it |
+| `LLM_PROVIDER` | Terraform variable | no | set to `vertex`; local LLM is not part of cloud target |
+| `VERTEX_ANSWER_MODEL` | Terraform variable | no | default `gemini-2.5-flash` unless changed deliberately |
+| `VERTEX_EMBEDDING_HARD_TIMEOUT_SECONDS` | Terraform variable | no | optional runtime guard |
+| `VERTEX_ANSWER_HARD_TIMEOUT_SECONDS` | Terraform variable | no | optional runtime guard |
+| `VERTEX_PROVIDER_MAX_RETRIES` | Terraform variable | no | optional retry guard |
+| `VERTEX_PROVIDER_RETRY_BASE_SECONDS` | Terraform variable | no | optional retry guard |
+| `FIREBASE_PROJECT_ID` | Terraform variable/secret metadata | no | required for Firebase token verification |
+| `FIREBASE_ADMIN_CREDENTIALS` | Secret Manager mounted file path | yes | fallback only if ADC path fails |
+| `BACKEND_CORS_ORIGIN_REGEX` | approved temporary value, then frontend URL/domain | no | actual var used by `backend/main.py` |
+| `BEFORE_LAW_SOURCE` | Terraform variable | no | set to `db` for Cloud SQL corpus source |
+| `BEFORE_OCR_TIMEOUT_SECONDS` | Terraform variable | no | optional OCR runtime guard |
+| `BEFORE_REVIEW_JOB_STALE_TIMEOUT_SECONDS` | Terraform variable | no | optional stale job guard |
+
+Before-stack compatibility aliases:
+
+- Current code also accepts `BEFORE_GOOGLE_APPLICATION_CREDENTIALS`,
+  `BEFORE_GCP_PROJECT_ID`, `BEFORE_GCP_LOCATION`, `BEFORE_VERTEX_MODEL`,
+  `VERTEX_MODEL`, and `PHASE_A_VERTEX_MODEL`.
+- Prefer the shared managed Vertex env contract above for the first cloud
+  migration. Use Before-specific aliases only if a separate model/location split
+  is intentionally approved and documented.
+- Do not wire local self-hosted provider envs into Cloud Run for this target.
+
+Do not use `GOOGLE_CLOUD_PROJECT` or `VERTEX_LOCATION` as the only backend env
+names unless the backend code is changed to read them. Current code reads
+`GCP_PROJECT` and `GCP_LOCATION`.
+
+## 13. Database Connection Contract
+
+Phase 3 consumes Phase 2 outputs.
+
+Required:
+
+- Cloud SQL connection name
+- database name
+- DB user/password secret names or credential-bearing `DATABASE_URL` secret
+- selected `DB_POOL_SIZE`
+- selected `DB_MAX_OVERFLOW`
+- selected backend max instances
+
+Current-code note:
+
+- As of `2026-04-29`, `backend/app/db.py` reads `DATABASE_URL` and creates the
+  engine with `pool_pre_ping=True` only. Phase 3 must implement/verify explicit
+  pool sizing or an equivalent Cloud SQL connection cap before marking the
+  backend runtime production-ready.
+
+Connection guardrail:
+
+```text
+(DB_POOL_SIZE + DB_MAX_OVERFLOW) * backend_max_cloud_run_instances
+  < Cloud SQL max_connections - reserved admin connections
+```
+
+For the first prod-like deployment, use conservative values from Phase 2:
+
+```text
+DB_POOL_SIZE=2
+DB_MAX_OVERFLOW=3
+DB_POOL_TIMEOUT_SECONDS=30
+backend max instances = low cap during early testing
+```
+
+If Cloud SQL uses Unix socket style connection through the Cloud SQL connector,
+make sure `DATABASE_URL` is compatible with SQLAlchemy/psycopg2.
+
+## 14. IAM Contract
+
+`backend-sa` should receive only the roles needed for backend runtime.
+
+| Permission Area | Suggested Grant |
+|---|---|
+| Cloud SQL | `roles/cloudsql.client` |
+| Secret Manager | `roles/secretmanager.secretAccessor` scoped to backend secrets |
+| Vertex AI | `roles/aiplatform.user` or narrower equivalent if available |
+| Artifact bucket | bucket-scoped object access needed by the artifact adapter |
+| Artifact Registry pull | runtime image pull path as required by Cloud Run/project policy |
+
+Do not grant `roles/owner` or `roles/editor`.
+
+Firebase Admin note:
+
+- Current token verification path primarily needs `FIREBASE_PROJECT_ID` and ADC or
+  fallback credentials.
+- Do not grant broad Firebase admin roles unless backend starts performing
+  Firebase management operations beyond ID token verification.
+
+## 15. Artifact Storage Boundary
+
+The target cloud architecture uses a private Cloud Storage artifact bucket.
+
+Current code paths to check before production marking:
+
+| Code Path | Current Behavior |
+|---|---|
+| `backend/app/before_stack/main.py` | writes Before upload/OCR/review artifacts under `backend/data/before_artifacts/runs` |
+| `backend/app/services/after_artifact_store.py` | writes answer/draft artifacts under `backend/data/after_artifacts/runs` and stores local `artifact_root` |
+
+Cloud Run filesystem is ephemeral. Therefore Phase 3 has two possible outcomes:
+
+| Outcome | Meaning |
+|---|---|
+| Production-ready | implement/wire a GCS artifact adapter and store private artifact paths in DB |
+| Limited smoke only | accept that local artifacts are non-durable for the smoke and do not claim artifact durability |
+
+For the portfolio cloud target, prefer the production-ready outcome. The backend
+service account should access the private artifact bucket, and users should not
+directly access raw artifacts.
+
+## 16. CORS Bootstrap
+
+The frontend Cloud Run URL is not known until Phase 4.
+
+Phase 3 approach:
+
+1. Deploy backend with an explicitly approved temporary `BACKEND_CORS_ORIGIN_REGEX`.
+2. Run direct backend smoke checks without depending on browser CORS.
+3. After Phase 4 frontend URL or custom domain is known, update
+   `BACKEND_CORS_ORIGIN_REGEX`.
+4. Re-apply backend runtime and re-smoke browser integration.
+
+Do not leave wildcard CORS in prod.
+
+Current local default in `backend/main.py` allows local dev origins only:
+
+```text
+https?://(localhost|127\.0\.0\.1):(30[0-9]{2}|5090)
+```
+
+Cloud Run needs an explicit cloud origin regex.
+
+## 17. Firebase Admin ADC
+
+Current backend initialization in `backend/app/services/auth_service.py` behaves
+as follows:
+
+- requires `FIREBASE_PROJECT_ID`
+- prefers ADC when `GOOGLE_APPLICATION_CREDENTIALS` is set
+- prefers ADC on Cloud Run when `K_SERVICE` is present
+- can fall back to `FIREBASE_ADMIN_CREDENTIALS`
+
+Phase 3 smoke must verify:
+
+| Check | Expected |
+|---|---|
+| `GET /api/v1/auth/me` without token | `logged_in = false` |
+| protected SCN-001 endpoint without token | `401` |
+| protected SCN-001 endpoint with invalid token | `401` |
+| `GET /api/v1/auth/me` with valid Firebase ID token | `logged_in = true` and user row upsert works |
+
+If ADC initialization fails on Cloud Run, use the Secret Manager credential
+fallback until a narrower ADC/IAM path is validated.
+
+## 18. Apply Procedure
+
+Image build/push comes before Terraform apply.
+
+```bash
+# 1. Build and push backend image.
+# If the Dockerfile strategy is selected; otherwise use the approved equivalent.
+docker build -f backend/Dockerfile -t "$IMAGE" .
+docker push "$IMAGE"
+
+# 2. Apply backend runtime.
+cd infra/environments/{env}/runtime/backend
+terraform init
+terraform fmt -check
+terraform validate
+terraform plan -var "backend_image=$IMAGE"
+terraform apply -var "backend_image=$IMAGE"
+```
+
+Expected Terraform outputs:
+
+| Output | Used By |
+|---|---|
+| `backend_service_name` | rollback and describe checks |
+| `backend_url` | Phase 3 smoke and Phase 4 frontend env |
+| `backend_revision` | rollback status note |
+| `backend_service_account_email` | IAM audit |
+| `cors_origin_regex` | Phase 4 update target |
+
+## 19. Verification Procedure
+
+Use the deployed backend URL.
+
+```bash
+BACKEND_URL=...
+
+curl -fsS "$BACKEND_URL/health"
+curl -fsS "$BACKEND_URL/api/v1/before/health"
+curl -fsS "$BACKEND_URL/api/v1/auth/me"
+```
+
+Retrieval smoke:
+
+```bash
+curl -fsS "$BACKEND_URL/api/v1/retrieve" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"퇴직금은 언제 받을 수 있나요?","top_k":5,"ef_search":100}'
+```
+
+Answer smoke:
+
+```bash
+curl -fsS "$BACKEND_URL/api/v1/answer" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"해고 통보를 서면으로 받지 못했습니다. 어떻게 해야 하나요?","top_k":5,"ef_search":100}'
+```
+
+Auth-negative smoke:
+
+```bash
+curl -i "$BACKEND_URL/api/v1/scn001/bridge-runs"
+curl -i "$BACKEND_URL/api/v1/scn001/bridge-runs" \
+  -H "Authorization: Bearer invalid-token"
+```
+
+Document draft smoke should use an existing deterministic fixture or a small
+known-valid request body. Do not invent a new public API contract for smoke.
+
+Optional Before upload smoke:
+
+- Run only after artifact storage behavior is decided.
+- Do not upload real personal documents.
+- Use a synthetic or redacted sample.
+
+## 20. Logging And Sensitive Field Check
+
+After first deploy, sample Cloud Logging entries for these paths:
+
+- `/health`
+- `/api/v1/retrieve`
+- `/api/v1/answer`
+- `/api/v1/documents/draft`
+- `/api/v1/auth/me`
+- `/api/v1/scn001/*`
+- `/api/v1/before/*` if upload smoke was run
+
+Expected:
+
+- request status/latency appears
+- provider timeout or provider error is observable
+- query is represented by hash or bounded metadata where possible
+- raw contract text does not appear
+- Firebase uid/provider subject/email does not appear
+- token/header values do not appear
+- raw Bridge payload does not appear
+- raw full answer/draft payload does not appear
+
+If risky fields appear, add structured-log redaction or Cloud Logging exclusion
+filters before promotion.
+
+## 21. Acceptance Criteria
+
+Phase 3 is complete when:
+
+- Backend image build strategy exists and image is pushed to Artifact Registry.
+- `infra/environments/{env}/runtime/backend` can run `terraform fmt -check`,
+  `terraform validate`, `terraform plan`, and `terraform apply`.
+- Backend Cloud Run service starts without local `.env`.
+- Backend URL output exists.
+- `/health` passes.
+- `/api/v1/before/health` passes or the Before path is explicitly deferred with
+  a documented reason.
+- `/api/v1/retrieve` smoke passes.
+- `/api/v1/answer` smoke passes or provider timeout is recorded as a runtime
+  incident with retry/timeout settings.
+- `/api/v1/documents/draft` deterministic smoke passes.
+- `GET /api/v1/auth/me` works without token and with a valid Firebase token.
+- Protected SCN-001 endpoints reject missing/invalid tokens.
+- DB and Vertex calls use Cloud Run service identity/managed config, not local
+  `.env` or service account JSON in the image.
+- `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, and Cloud Run max instances satisfy the
+  Cloud SQL connection guardrail after backend support or an equivalent
+  connection cap has been implemented and verified.
+- CORS bootstrap value is explicitly approved and recorded for Phase 4 update.
+- Artifact persistence is either GCS-backed or clearly marked limited/non-durable
+  for smoke only.
+- Logs pass sensitive-field sample review.
+- `/api/v1/answer` and `/api/v1/documents/draft` response contracts are unchanged.
+
+## 22. Rollback
+
+Cloud Run rollback:
+
+```text
+new revision deployed
+  -> smoke fails
+  -> shift traffic to previous stable revision
+  -> record failed revision, image digest, and failure reason
+```
+
+If Terraform owns traffic, prefer updating the Terraform traffic/image variables
+and applying the rollback. If an urgent manual Cloud Run traffic shift is used,
+sync the final state back into Terraform before Phase 5.
+
+Do not rollback Phase 2 database state for a Phase 3 runtime failure unless the
+failure was caused by a confirmed incompatible migration. Phase 3 should normally
+rollback application revision only.
+
+## 23. Blocks Phase 4 If
+
+Phase 4 frontend runtime is blocked if any of these are true.
+
+- Backend URL output is missing.
+- `/health` fails.
+- `/api/v1/retrieve` or `/api/v1/answer` cannot reach Cloud SQL/Vertex.
+- DB pool guardrail support remains unimplemented or unverified while the
+  deployment is being claimed as production-ready rather than limited smoke.
+- CORS cannot be updated to the frontend origin after Phase 4 URL is known.
+- Firebase Auth verification fails and fallback is not documented.
+- `/api/v1/auth/me` cannot verify a valid Firebase ID token.
+- Protected SCN-001 auth-negative smoke fails.
+- Sensitive log sample exposes raw tokens, raw contract text, Firebase uid,
+  provider subject, email, or raw Bridge payload.
+- Artifact persistence decision is unresolved for routes that Phase 4 will expose.
+
+## 24. Status Note Template
+
+When Phase 3 is executed, record a short status note.
+
+```markdown
+## Phase 3 Status — Backend Runtime
+
+- Environment:
+- GCP project:
+- Backend image:
+- Backend Cloud Run service:
+- Backend URL:
+- Backend revision:
+- Backend service account:
+- Cloud SQL connection:
+- DB pool values:
+- Cloud Run scaling cap:
+- CORS bootstrap value:
+- Firebase ADC/fallback path:
+- Artifact storage path:
+- Smoke checks:
+- Log sample result:
+- Rollback target:
+- Admin actions performed:
+- Commands run:
+- Skipped checks:
+- Blockers:
+```
+
+## 25. Do Not
+
+- Do not deploy frontend in Phase 3.
+- Do not use service account key JSON for image push or runtime.
+- Do not bake `.env`, Firebase credential JSON, DB password, or GCP credential
+  files into the image.
+- Do not use wildcard CORS as the final prod setting.
+- Do not make `gcloud run deploy` the steady-state path while Terraform owns the
+  Cloud Run service.
+- Do not change public API contracts.
+- Do not open SCN-001 live/backend draft generation.
+- Do not store raw case facts, raw Bridge payload, or full answer/draft payloads
+  in logs.
+- Do not claim Cloud Storage artifact durability while code still writes only to
+  local ephemeral directories.
+
+## 26. Suggested Agent Prompt
+
+Use this prompt when asking an implementation agent to work on Phase 3.
+
+```text
+Read docs/architecture/CLAUDE.md, docs/architecture/cloud_migration_architecture.md,
+docs/architecture/cloud_migration_phase_plan.md,
+docs/architecture/phase/phase2_data_foundation.md, and
+docs/architecture/phase/phase3_backend_runtime.md first. Also read backend/CLAUDE.md,
+backend/main.py, backend/app/db.py, and backend/app/services/auth_service.py.
+
+Implement Phase 3 only.
+
+Deploy the FastAPI backend to Cloud Run through the runtime/backend Terraform root.
+Use Artifact Registry for the backend image and backend-sa as the Cloud Run runtime
+identity. Keep Cloud SQL, Secret Manager, Vertex AI, CORS, DB pool env vars, and
+Firebase Auth wiring aligned with the current backend env names:
+DATABASE_URL, DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_POOL_TIMEOUT_SECONDS, GCP_PROJECT,
+GCP_PROJECT_ID, GCP_LOCATION, FIREBASE_PROJECT_ID, BACKEND_CORS_ORIGIN_REGEX, and
+LLM_PROVIDER=vertex.
+
+Before marking Phase 3 production-ready, verify or implement backend DB pool
+support because current backend/app/db.py only reads DATABASE_URL.
+
+Do not deploy the frontend, do not configure GitHub Actions WIF, do not change
+/api/v1/answer or /api/v1/documents/draft contracts, and do not open SCN-001
+live/backend draft generation. If artifact storage still writes to local paths,
+either implement the GCS artifact adapter or mark the deployment as limited smoke
+only rather than production-ready.
+```
