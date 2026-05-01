@@ -546,6 +546,11 @@
   background: transparent;
 }
 
+.emptyStateSection {
+  display: grid;
+  align-items: stretch;
+}
+
 .loadingSection,
 .resultSection {
   scroll-margin-top: calc(var(--kl-masthead-height) + var(--kl-space-4));
@@ -809,8 +814,9 @@
   display: grid;
   gap: 16px;
   min-width: 0;
-  width: min(720px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  min-height: clamp(360px, 42vh, 460px);
+  margin: 0;
   padding: clamp(18px, 3vw, 24px);
   border: 1px solid var(--before-border-strong);
   border-radius: 10px;
@@ -905,6 +911,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   min-width: 0;
+  margin-top: auto;
 }
 
 .emptyStatusCard {
@@ -1985,11 +1992,13 @@
   }
 
   .emptyPanel {
+    min-height: 0;
     padding: 20px;
   }
 
   .emptyStatusGrid {
     grid-template-columns: minmax(0, 1fr);
+    margin-top: 0;
   }
 
   .emptyPrimaryAction {

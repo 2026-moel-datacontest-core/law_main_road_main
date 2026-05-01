@@ -27,7 +27,10 @@ import {
   fetchDraft,
   hasDraftGrounding,
 } from '@/lib/api';
-import { getScn004DraftEligibility } from '@/lib/scn004DraftEligibility';
+import {
+  classifyDocumentDraftSupport,
+  getDocumentTypeLabel,
+} from '@/lib/documentDraftCatalog';
 import {
   SCN001_FROZEN_DRAFT_DOCUMENT_TYPE,
   SCN001_FROZEN_DRAFT_PRESET_ID,
@@ -40,12 +43,6 @@ import { getScenarioPreset } from '@/lib/scenarioPresets';
 import type { CaseIntakeFormValues, DocumentType } from '@/types/api';
 
 import styles from './page.module.css';
-
-const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
-  labor_office_wage_complaint: '고용노동청 임금체불 진정서 초안',
-  labor_commission_unfair_dismissal_brief: '노동위원회 부당해고 구제신청 이유서 초안',
-  workplace_change_reason_summary: '사업장 변경 사유 정리서 초안',
-};
 
 const intakeFlowSteps = [
   'AI 법률 상담',
@@ -70,10 +67,11 @@ export default function AfterIntakePage() {
   const isBridgeHandoffAnswer = state.answer_origin === 'bridge_handoff';
   const supportsDraft = !isBridgeHandoffAnswer && (activePreset?.supportsDraft ?? true);
   const hasGrounding = answer ? hasDraftGrounding(answer) : false;
-  const eligibility = answer && supportsDraft ? getScn004DraftEligibility(answer) : null;
+  const draftClassification =
+    answer && supportsDraft ? classifyDocumentDraftSupport(answer) : null;
   const selectedDocumentTypeIsEligible =
-    supportsDraft && selectedDocumentType !== null && eligibility !== null
-      ? eligibility.documentTypes[selectedDocumentType]
+    supportsDraft && selectedDocumentType !== null && draftClassification !== null
+      ? draftClassification.documentTypes[selectedDocumentType]
       : false;
   const canUseScn004DraftFlow =
     supportsDraft && hasGrounding && selectedDocumentTypeIsEligible;
@@ -150,7 +148,7 @@ export default function AfterIntakePage() {
     );
   }
 
-  const documentTypeLabel = DOCUMENT_TYPE_LABELS[selectedDocumentType];
+  const documentTypeLabel = getDocumentTypeLabel(selectedDocumentType);
   const pageTitle = '문서 초안 정보 입력';
   const pageLead =
     '상담 결과에서 선택한 문서 초안에 반영할 사실관계를 확인합니다. 빈 항목은 제출을 막지 않고 초안 결과에서 확인 필요 항목으로 표시됩니다.';
@@ -198,7 +196,7 @@ export default function AfterIntakePage() {
       return;
     }
 
-    const selectedEligibility = getScn004DraftEligibility(answer);
+    const selectedEligibility = classifyDocumentDraftSupport(answer);
 
     if (!selectedEligibility.documentTypes[selectedDocumentType]) {
       setErrorState({

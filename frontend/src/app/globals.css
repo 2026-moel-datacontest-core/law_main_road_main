@@ -44,7 +44,7 @@
 
   /* Masthead */
   --kl-masthead-bg: #161616;
-  --kl-masthead-height: 48px;
+  --kl-masthead-height: 68px;
 
   /* Typography */
   --kl-font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
@@ -110,7 +110,7 @@
   --kl-workspace-page-padding-mobile: 10px;
   --kl-workspace-shell-radius: 14px;
   --kl-workspace-shell-min-height: calc(
-    100vh - var(--kl-masthead-height) - 46px
+    100vh - var(--kl-masthead-height) - 30px
   );
   --kl-workspace-main-padding: 28px 30px 32px;
   --kl-workspace-main-padding-mobile: 18px 14px 20px;

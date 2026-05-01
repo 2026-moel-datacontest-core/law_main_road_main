@@ -14,6 +14,7 @@ interface WorkspaceSidebarProps {
   actionDescription?: string;
   actionDisabled?: boolean;
   onAction?: () => void;
+  reserveActionSlot?: boolean;
   summary?: ReactNode;
   ariaLabel?: string;
 }
@@ -36,6 +37,7 @@ export function WorkspaceSidebar({
   actionDescription,
   actionDisabled = false,
   onAction,
+  reserveActionSlot = false,
   summary,
   ariaLabel = '작업 메뉴',
 }: WorkspaceSidebarProps) {
@@ -60,6 +62,8 @@ export function WorkspaceSidebar({
           <Plus size={15} aria-hidden="true" />
           {actionLabel}
         </button>
+      ) : reserveActionSlot ? (
+        <div className={styles.sidebarActionSpacer} aria-hidden="true" />
       ) : null}
 
       <nav className={styles.sidebarNav} aria-label={ariaLabel}>

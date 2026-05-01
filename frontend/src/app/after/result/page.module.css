@@ -573,61 +573,42 @@
   overflow-wrap: anywhere;
 }
 
-.radioGroup {
+.documentCardList {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
-.radioTile,
-.radioTileSelected {
+.documentCard,
+.documentCardSelected {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  gap: 10px;
+  gap: 12px;
   min-height: 0;
   padding: 13px;
   border: 1px solid var(--after-border);
   border-radius: 10px;
   background: var(--after-surface);
-  cursor: pointer;
   transition:
     border-color 160ms ease,
     background-color 160ms ease,
     box-shadow 160ms ease;
 }
 
-.radioTile:hover,
-.radioTileSelected {
+.documentCard:hover,
+.documentCardSelected {
   border-color: #cfe0f4;
   background: #f8fbff;
   box-shadow: inset 3px 0 0 var(--after-accent);
 }
 
-.radioTile:focus-visible,
-.radioTileSelected:focus-visible {
-  outline: 3px solid rgba(42, 106, 171, 0.25);
-  outline-offset: 2px;
-}
-
-.radioMarker {
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-  border: 1px solid var(--after-border-strong);
-  border-radius: 999px;
-  background: var(--after-surface);
-}
-
-.radioTileSelected .radioMarker {
-  border: 5px solid var(--after-accent);
-}
-
-.radioText {
+.documentCardCopy {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 
-.radioTitle {
+.documentCardTitle {
+  margin: 0;
   color: var(--after-ink);
   font-size: 0.9rem;
   font-weight: 850;
@@ -636,7 +617,8 @@
   overflow-wrap: break-word;
 }
 
-.radioSubtitle {
+.documentCardSubtitle {
+  margin: 0;
   color: var(--after-muted);
   font-size: 0.68rem;
   font-weight: 800;
@@ -646,12 +628,19 @@
   overflow-wrap: anywhere;
 }
 
-.radioBody {
+.documentCardReason,
+.documentCardBody {
+  margin: 0;
   color: var(--after-body);
   font-size: 0.82rem;
   line-height: 1.55;
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+
+.documentCardReason {
+  color: var(--after-ink);
+  font-weight: 750;
 }
 
 .redirectMessage {

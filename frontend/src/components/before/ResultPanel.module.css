@@ -260,19 +260,19 @@
   display: grid;
   min-height: 430px;
   gap: 0;
-  padding: 26px 30px 30px;
+  padding: 28px 30px 32px;
   background: var(--kl-surface-elevated);
 }
 
 .contractSection {
   display: grid;
   min-width: 0;
-  gap: 11px;
-  padding: 0 0 20px;
+  gap: 12px;
+  padding: 0 0 18px;
 }
 
 .contractSection + .contractSection {
-  padding-top: 20px;
+  padding-top: 18px;
   border-top: var(--kl-border-subtle-line);
 }
 
@@ -396,8 +396,8 @@
 .clauseAccordionPanel {
   display: grid;
   min-width: 0;
-  gap: 10px;
-  padding: 2px 0 0 50px;
+  gap: 9px;
+  padding: 4px 0 0 42px;
 }
 
 .clauseAccordionPanel[hidden] {
@@ -421,7 +421,7 @@
 }
 
 .clauseSourceLabel {
-  margin: -3px 0 0;
+  margin: 0;
   color: var(--kl-text-muted);
   font-size: 0.74rem;
   font-weight: 800;
@@ -432,7 +432,7 @@
 .clauseFallbackNote {
   width: fit-content;
   max-width: 100%;
-  margin: -4px 0 0;
+  margin: 0;
   padding: 5px 8px;
   border: 1px solid var(--kl-border-subtle);
   border-radius: var(--kl-radius-sm);
@@ -446,12 +446,16 @@
 }
 
 .contractExcerptText {
-  display: block;
+  display: grid;
+  gap: 7px;
   margin: 0;
+  padding: 2px 0 2px 10px;
+  border-left: 2px solid var(--kl-border-subtle);
   color: var(--kl-text-primary);
-  font-size: 0.98rem;
-  font-weight: 550;
-  line-height: 1.82;
+  font-family: var(--kl-font-sans);
+  font-size: 0.96rem;
+  font-weight: 500;
+  line-height: 1.78;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
@@ -467,14 +471,14 @@
 .neutralSentence + .highlightedSentenceRow,
 .highlightedSentenceRow + .neutralSentence,
 .highlightedSentenceRow + .highlightedSentenceRow {
-  margin-top: 3px;
+  margin-top: 0;
 }
 
 .sentenceHighlight {
   display: inline;
   max-width: 100%;
-  padding: 2px 5px 3px;
-  border-radius: 5px;
+  padding: 1px 4px 2px;
+  border-radius: 4px;
   font-weight: 750;
   line-height: inherit;
   box-decoration-break: clone;
@@ -522,7 +526,9 @@
 }
 
 .inlineTagPill {
-  margin: 0 0 0 7px;
+  min-height: 24px;
+  margin: 0 0 0 6px;
+  padding: 0 7px;
   vertical-align: 1px;
 }
 
@@ -938,19 +944,28 @@
 
 .compactDisclosurePanel .evidenceBody {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   border-top: 0;
-  padding: 14px;
+  padding: 16px;
 }
 
 .evidenceExcerpt {
+  display: grid;
+  gap: 6px;
   margin: 0;
+  padding: 2px 0 2px 10px;
+  border-left: 2px solid var(--kl-border-subtle);
   color: var(--kl-text-secondary);
   font-size: 0.93rem;
-  line-height: 1.7;
-  white-space: pre-wrap;
+  line-height: 1.74;
+  white-space: normal;
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+
+.evidenceExcerptLine {
+  display: block;
+  min-width: 0;
 }
 
 .badgeBase {

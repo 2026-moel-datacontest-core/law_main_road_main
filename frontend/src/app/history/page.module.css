@@ -24,7 +24,9 @@
 .workspaceShell {
   display: grid;
   align-items: stretch;
-  grid-template-columns: var(--kl-workspace-sidebar-width) minmax(0, 1fr);
+  grid-template-columns:
+    var(--kl-workspace-sidebar-width) minmax(0, 1fr)
+    var(--kl-workspace-right-rail-width);
   width: min(var(--kl-workspace-shell-width), 100%);
   min-height: var(--kl-workspace-shell-min-height);
   margin: 0 auto;
@@ -38,6 +40,7 @@
 .historyWorkspace {
   display: grid;
   align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 14px;
   min-width: 0;
   padding: var(--kl-workspace-main-padding);
@@ -84,12 +87,101 @@
 .historyContent {
   display: grid;
   width: min(940px, 100%);
+  min-height: clamp(360px, 48vh, 520px);
   min-width: 0;
+}
+
+.contextPanel {
+  display: grid;
+  align-content: start;
+  align-self: stretch;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 13px;
+  min-width: 0;
+  padding: var(--kl-workspace-right-rail-padding);
+  border-left: 1px solid var(--history-border-strong);
+  background: var(--kl-workspace-panel-surface);
+}
+
+.contextHeader {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--history-border);
+}
+
+.contextEyebrow,
+.contextStatusCard span {
+  margin: 0;
+  color: var(--history-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.contextHeader h2 {
+  margin: 0;
+  color: var(--history-ink);
+  font-size: 1.12rem;
+  font-weight: 850;
+  line-height: 1.3;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.contextStatusCard,
+.contextNotice {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--history-border);
+  border-radius: 12px;
+  background: var(--history-surface);
+}
+
+.contextStatusCard {
+  border-style: dashed;
+  background: var(--history-surface-soft);
+}
+
+.contextNotice {
+  align-self: end;
+}
+
+.contextStatusCard strong,
+.contextNotice strong {
+  color: var(--history-ink);
+  font-size: 0.94rem;
+  line-height: 1.35;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.contextStatusCard p,
+.contextNotice p {
+  margin: 0;
+  color: var(--history-body);
+  font-size: 0.82rem;
+  line-height: 1.58;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 1180px) {
   .workspaceShell {
     grid-template-columns: var(--kl-workspace-sidebar-width-compact) minmax(0, 1fr);
+  }
+
+  .contextPanel {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--kl-workspace-right-rail-padding-tablet);
+    border-top: 1px solid var(--history-border);
+    border-left: 0;
   }
 }
 
@@ -106,6 +198,22 @@
 
   .historyWorkspace {
     padding: var(--kl-workspace-main-padding-mobile);
+  }
+
+  .historyContent {
+    min-height: 0;
+  }
+
+  .contextPanel {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    padding: var(--kl-workspace-right-rail-padding-mobile);
+    border-top: 1px solid var(--history-border-strong);
+    border-left: 0;
+  }
+
+  .contextNotice {
+    align-self: stretch;
   }
 
   .workspaceHeader {
@@ -136,5 +244,9 @@
   .historyWorkspace {
     padding: 0;
     background: #ffffff;
+  }
+
+  .contextPanel {
+    display: none !important;
   }
 }

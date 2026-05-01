@@ -14,17 +14,11 @@ import { WorkspaceSidebar } from '@/components/layout/WorkspaceSidebar';
 import { Button } from '@/components/ui/Button';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { useFlow } from '@/context/FlowContext';
+import { getDocumentTypeLabel } from '@/lib/documentDraftCatalog';
 import { shouldShowScn001FixedPresetDraftContinuityPanel } from '@/lib/scn001ContinuityPanel';
-import type { DocumentType } from '@/types/api';
 import type { FlowAction } from '@/types/flow';
 
 import styles from './page.module.css';
-
-const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
-  labor_office_wage_complaint: '고용노동청 임금체불 진정서 초안',
-  labor_commission_unfair_dismissal_brief: '노동위원회 부당해고 구제신청 이유서 초안',
-  workplace_change_reason_summary: '사업장 변경 사유 정리서 초안',
-};
 
 const COPY_DISCLAIMER =
   '\n\n---\n이 문서는 제출 전 검토용 초안입니다. 법률 대리 문서가 아닙니다.';
@@ -134,7 +128,7 @@ export default function AfterDraftPage() {
         ? '직접 선택하여 복사해 주세요.'
         : '';
   const copyButtonLabel = copyFeedback === 'success' ? '복사 완료' : '초안 복사하기';
-  const documentTypeLabel = DOCUMENT_TYPE_LABELS[draft.document_type];
+  const documentTypeLabel = getDocumentTypeLabel(draft.document_type);
   const missingFieldCount = draft.missing_fields.length;
   const cautionCount = draft.cautions.length;
   const evidenceCount = draft.evidence_checklist.length;

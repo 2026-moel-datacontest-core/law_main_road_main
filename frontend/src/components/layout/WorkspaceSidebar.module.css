@@ -99,6 +99,11 @@
   flex: 0 0 auto;
 }
 
+.sidebarActionSpacer {
+  flex: 0 0 auto;
+  min-height: 38px;
+}
+
 .sidebarNav {
   display: grid;
   gap: 5px;
@@ -212,6 +217,10 @@
   }
 
   .sidebarNewButton {
+    min-height: 42px;
+  }
+
+  .sidebarActionSpacer {
     min-height: 42px;
   }
 

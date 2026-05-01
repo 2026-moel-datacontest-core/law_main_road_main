@@ -1,6 +1,6 @@
 'use client';
 
-import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Scn001ContinuityPanel } from '@/components/continuity/Scn001ContinuityPanel';
@@ -14,7 +14,11 @@ import { SkipLink } from '@/components/ui/SkipLink';
 import { useFlow } from '@/context/FlowContext';
 import { buildLegalBasis, hasDraftGrounding } from '@/lib/api';
 import { getBridgeHandoffDisplayFields } from '@/lib/bridge-handoff';
-import { getScn004DraftEligibility } from '@/lib/scn004DraftEligibility';
+import {
+  classifyDocumentDraftSupport,
+  getScn001FrozenDraftCatalogItem,
+  type SupportedDraftDocumentOption,
+} from '@/lib/documentDraftCatalog';
 import { shouldShowScn001FixedPresetResultContinuityPanel } from '@/lib/scn001ContinuityPanel';
 import {
   SCN001_FROZEN_DRAFT_DOCUMENT_TYPE,
@@ -22,38 +26,9 @@ import {
 } from '@/lib/scenarioPresetDrafts';
 import { getScenarioPreset } from '@/lib/scenarioPresets';
 import type { BridgeHandoffItem } from '@/types/bridge-handoff';
-import type { DocumentType } from '@/types/api';
+import type { AnswerResponse, DocumentType } from '@/types/api';
 
 import styles from './page.module.css';
-
-const DOCUMENT_TYPES: Array<{
-  value: DocumentType;
-  title: string;
-  subtitle: string;
-  body: string;
-}> = [
-  {
-    value: 'labor_office_wage_complaint',
-    title: '고용노동청 임금체불 진정서 초안',
-    subtitle: 'Labor office wage complaint',
-    body: '퇴사 후 임금, 퇴직금, 금품청산 지연을 중심으로 정리합니다.',
-  },
-  {
-    value: 'labor_commission_unfair_dismissal_brief',
-    title: '노동위원회 부당해고 구제신청 이유서 초안',
-    subtitle: 'Labor commission unfair dismissal brief',
-    body: '해고 서면통지, 30일 전 예고, 구제신청 쟁점을 중심으로 정리합니다.',
-  },
-];
-
-const SCN001_DOCUMENT_TYPES: typeof DOCUMENT_TYPES = [
-  {
-    value: SCN001_FROZEN_DRAFT_DOCUMENT_TYPE,
-    title: '사업장 변경 사유 정리서 초안',
-    subtitle: 'Workplace change reason summary',
-    body: '계약서 검토 결과와 실제 근무 중 발생한 숙소비 공제, 기숙사 환경, 차별·폭언 등 사업장 변경 사유를 정리합니다.',
-  },
-];
 
 const resultFlowSteps = ['상담 입력', '상담 결과'] as const;
 
@@ -72,7 +47,6 @@ export default function AfterResultPage() {
   const activePreset = getScenarioPreset(state.selected_preset_id);
   const isBridgeHandoffAnswer = state.answer_origin === 'bridge_handoff';
   const supportsDraft = !isBridgeHandoffAnswer && (activePreset?.supportsDraft ?? true);
-  const canRenderScn004DraftCta = supportsDraft;
   const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(
     state.selected_document_type,
   );
@@ -91,7 +65,6 @@ export default function AfterResultPage() {
       userStatement: state.user_statement,
       answerOrigin: state.answer_origin,
     });
-  const canRenderDraftCta = canRenderScn004DraftCta || canShowScn001FrozenDraftCta;
   const continuityPanel = useMemo(
     () =>
       answer
@@ -136,25 +109,18 @@ export default function AfterResultPage() {
     );
   }
 
-  const eligibility = supportsDraft
-    ? getScn004DraftEligibility(answer)
-    : {
-        isEligible: false,
-        documentTypes: {
-          labor_office_wage_complaint: false,
-          labor_commission_unfair_dismissal_brief: false,
-          workplace_change_reason_summary: false,
-        },
-      };
+  const draftClassification = supportsDraft
+    ? classifyDocumentDraftSupport(answer)
+    : null;
+  const scn001FrozenDraftOption = canShowScn001FrozenDraftCta
+    ? getScn001FrozenDraftCatalogItem()
+    : null;
   const availableDocumentTypes = canShowScn001FrozenDraftCta
-    ? SCN001_DOCUMENT_TYPES
-    : DOCUMENT_TYPES.filter((documentType) => eligibility.documentTypes[documentType.value]);
+    ? scn001FrozenDraftOption
+      ? [scn001FrozenDraftOption]
+      : []
+    : draftClassification?.availableDocumentTypes ?? [];
   const hasAvailableDocumentTypes = availableDocumentTypes.length > 0;
-  const selectedDocumentTypeIsAvailable =
-    selectedDocumentType !== null &&
-    (canShowScn001FrozenDraftCta
-      ? selectedDocumentType === SCN001_FROZEN_DRAFT_DOCUMENT_TYPE
-      : supportsDraft && eligibility.documentTypes[selectedDocumentType]);
   const canProceedToDraftFlow =
     hasGrounding &&
     hasAvailableDocumentTypes &&
@@ -171,8 +137,16 @@ export default function AfterResultPage() {
   const selectorPanelClassName = canShowScn001FrozenDraftCta
     ? `${styles.selectorPanel} ${styles.selectorPanelStatic}`
     : styles.selectorPanel;
+  const answerOnlyReason = getAnswerOnlyReason({
+    hasGrounding,
+    isBridgeHandoffAnswer,
+    supportsDraft,
+    hasAvailableDocumentTypes,
+    canShowScn001FrozenDraftCta,
+    draftGuidance: draftClassification?.answerOnlyGuidance ?? null,
+  });
 
-  function selectDocumentType(documentType: DocumentType) {
+  function proceedToDraftIntake(documentType: DocumentType) {
     if (!canProceedToDraftFlow) {
       return;
     }
@@ -184,36 +158,20 @@ export default function AfterResultPage() {
       return;
     }
 
-    if (!canShowScn001FrozenDraftCta && !eligibility.documentTypes[documentType]) {
-      return;
-    }
-
-    setSelectedDocumentType(documentType);
-    dispatch({ type: 'SET_DOCUMENT_TYPE', payload: documentType });
-  }
-
-  function handleTileKeyDown(
-    event: KeyboardEvent<HTMLDivElement>,
-    documentType: DocumentType,
-  ) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      selectDocumentType(documentType);
-    }
-  }
-
-  function handleNextClick() {
     if (
-      selectedDocumentType === null ||
-      !selectedDocumentTypeIsAvailable ||
-      !canProceedToDraftFlow ||
-      isNavigating
+      !canShowScn001FrozenDraftCta &&
+      !isAvailableDocumentType(documentType, availableDocumentTypes)
     ) {
       return;
     }
 
+    if (isNavigating) {
+      return;
+    }
+
     setIsNavigating(true);
-    dispatch({ type: 'SET_DOCUMENT_TYPE', payload: selectedDocumentType });
+    setSelectedDocumentType(documentType);
+    dispatch({ type: 'SET_DOCUMENT_TYPE', payload: documentType });
 
     if (answer && canShowScn001FrozenDraftCta) {
       dispatch({ type: 'SET_LEGAL_BASIS', payload: buildLegalBasis(answer) });
@@ -416,12 +374,18 @@ export default function AfterResultPage() {
             ) : null}
 
             {hasGrounding && supportsDraft && !hasAvailableDocumentTypes ? (
-              <Notification variant="warning" title="현재 문서 초안 지원 범위 밖">
-                <p>
-                  답변은 확인할 수 있지만, 현재 문서 초안은 해고·서면통지·해고예고·노동위원회·임금체불·퇴직금·금품청산 범위에서만 지원합니다.
-                </p>
-              </Notification>
-            ) : null}
+                <Notification
+                  variant="warning"
+                  title="현재 지원 문서 초안은 없습니다"
+                >
+                  <p>
+                    상담 답변과 근거를 먼저 확인하세요.
+                    {' '}
+                    {draftClassification?.answerOnlyGuidance.description ??
+                      '이 주제는 현재 상담 답변으로만 제공합니다.'}
+                  </p>
+                </Notification>
+              ) : null}
 
             {!hasGrounding ? (
               <Notification variant="warning" title="문서 초안 진행 불가">
@@ -447,84 +411,68 @@ export default function AfterResultPage() {
                   ? '조문 확인 전용'
                   : canShowScn001FrozenDraftCta
                   ? '고정 초안'
-                  : '문서 유형'}
+                  : '작성 가능한 문서'}
               </p>
               <h2 id="document-type-title" className={styles.selectorTitle}>
                 {isBridgeHandoffAnswer
                   ? '문서 초안 없이 조문만 확인합니다'
                   : canShowScn001FrozenDraftCta
-                  ? '사업장 변경 사유 정리서 초안을 확인하세요'
-                  : '다음 단계에서 만들 문서를 선택하세요'}
+                  ? '사업장 변경 사유 정리서 초안으로 이어집니다'
+                  : canProceedToDraftFlow
+                  ? '다음 단계에서 작성할 수 있는 문서입니다'
+                  : '문서 초안 없이 상담 답변을 확인합니다'}
               </h2>
               {canProceedToDraftFlow ? (
-                <div
-                  className={styles.radioGroup}
-                  role="radiogroup"
-                  aria-labelledby="document-type-title"
-                >
+                <div className={styles.documentCardList}>
                   {availableDocumentTypes.map((documentType) => {
-                    const isSelected = selectedDocumentType === documentType.value;
+                    const isSelected = selectedDocumentType === documentType.documentType;
+                    const cardCopy = getDocumentCardCopy(documentType, answer);
 
                     return (
-                      <div
-                        key={documentType.value}
-                        className={isSelected ? styles.radioTileSelected : styles.radioTile}
-                        role="radio"
-                        aria-checked={isSelected}
-                        aria-label={`${documentType.title}: ${documentType.subtitle}`}
-                        tabIndex={0}
-                        onClick={() => selectDocumentType(documentType.value)}
-                        onKeyDown={(event) => handleTileKeyDown(event, documentType.value)}
+                      <article
+                        key={documentType.documentType}
+                        className={
+                          isSelected ? styles.documentCardSelected : styles.documentCard
+                        }
                       >
-                        <span className={styles.radioMarker} aria-hidden="true" />
-                        <span className={styles.radioText}>
-                          <span className={styles.radioTitle}>{documentType.title}</span>
-                          <span className={styles.radioSubtitle}>{documentType.subtitle}</span>
-                          <span className={styles.radioBody}>{documentType.body}</span>
-                        </span>
-                      </div>
+                        <div className={styles.documentCardCopy}>
+                          <h3 className={styles.documentCardTitle}>
+                            {documentType.label}
+                          </h3>
+                          <p className={styles.documentCardSubtitle}>
+                            {documentType.subtitle}
+                          </p>
+                          <p className={styles.documentCardReason}>
+                            {cardCopy.reason}
+                          </p>
+                          <p className={styles.documentCardBody}>{cardCopy.body}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          fullWidth
+                          className={styles.primaryCta}
+                          disabled={isNavigating}
+                          isLoading={isNavigating && isSelected}
+                          onClick={() => proceedToDraftIntake(documentType.documentType)}
+                        >
+                          초안 정보 입력으로 이동
+                        </Button>
+                      </article>
                     );
                   })}
                 </div>
               ) : (
                 <Notification
                   variant="warning"
-                  title={
-                    isBridgeHandoffAnswer
-                      ? '계약서 검토 연결 답변 확인 전용'
-                      : activePreset && !activePreset.supportsDraft
-                      ? '예시 질문 초안만 지원'
-                      : hasGrounding
-                      ? '현재 문서 초안 지원 범위 밖'
-                      : '문서 초안 진행 불가'
-                  }
+                  title="현재 지원 문서 초안은 없습니다"
                 >
+                  <p>상담 답변과 근거를 먼저 확인하세요.</p>
                   <p>
-                    {isBridgeHandoffAnswer
-                      ? '이 답변은 계약서 검토 결과에서 이어진 조문 확인용입니다. 연결된 검토 결과 기반 상담에서는 문서 초안을 열지 않습니다.'
-                      : activePreset && !activePreset.supportsDraft
-                      ? '고정 입력과 고정 답변이 그대로 일치할 때만 초안 보기를 표시합니다.'
-                      : hasGrounding
-                      ? '이 답변은 확인할 수 있지만 현재 지원하는 문서 초안으로 이어지지 않습니다.'
-                      : '인용된 법 조문 또는 근거 컨텍스트가 확인되지 않아 문서 유형을 선택할 수 없습니다.'}
+                    {answerOnlyReason}
                   </p>
                 </Notification>
               )}
 
-              {canRenderDraftCta ? (
-                <Button
-                  type="button"
-                  fullWidth
-                  className={styles.primaryCta}
-                  disabled={
-                    !selectedDocumentTypeIsAvailable || !canProceedToDraftFlow || isNavigating
-                  }
-                  isLoading={isNavigating}
-                  onClick={handleNextClick}
-                >
-                  사건 정보 입력하기 →
-                </Button>
-              ) : null}
               <Button
                 type="button"
                 variant="ghost"
@@ -583,6 +531,161 @@ function BridgeContinuityPanel({ model }: { model: ContinuityPanelModel }) {
       </p>
     </section>
   );
+}
+
+function getAnswerOnlyReason({
+  hasGrounding,
+  isBridgeHandoffAnswer,
+  supportsDraft,
+  hasAvailableDocumentTypes,
+  canShowScn001FrozenDraftCta,
+  draftGuidance,
+}: {
+  hasGrounding: boolean;
+  isBridgeHandoffAnswer: boolean;
+  supportsDraft: boolean;
+  hasAvailableDocumentTypes: boolean;
+  canShowScn001FrozenDraftCta: boolean;
+  draftGuidance: { description: string } | null;
+}): string {
+  if (!hasGrounding) {
+    return '인용된 법 조문 또는 근거 컨텍스트가 확인되지 않아 초안 정보 입력으로 이동하지 않습니다.';
+  }
+
+  if (isBridgeHandoffAnswer) {
+    return '계약서 검토에서 이어진 답변은 조문 확인 전용이며, 연결 맥락을 법적 근거로 승격하지 않습니다.';
+  }
+
+  if (!supportsDraft && !canShowScn001FrozenDraftCta) {
+    return '고정 입력과 고정 답변이 그대로 일치하는 데모 경로에서만 사업장 변경 사유 정리서 초안을 제공합니다.';
+  }
+
+  if (!hasAvailableDocumentTypes) {
+    return (
+      draftGuidance?.description ??
+      '이 주제는 현재 상담 답변으로만 제공합니다.'
+    );
+  }
+
+  return '현재 답변은 지원 중인 문서 초안 흐름과 연결되지 않습니다.';
+}
+
+function getDocumentCardCopy(
+  documentType: SupportedDraftDocumentOption,
+  answer: AnswerResponse,
+): { reason: string; body: string } {
+  if (documentType.documentType === 'labor_office_wage_complaint') {
+    return getWageComplaintCardCopy(answer);
+  }
+
+  if (documentType.documentType === 'labor_commission_unfair_dismissal_brief') {
+    return getUnfairDismissalCardCopy(answer);
+  }
+
+  if (documentType.documentType === SCN001_FROZEN_DRAFT_DOCUMENT_TYPE) {
+    return {
+      reason:
+        '고정 예시의 상담 결과와 근거가 그대로 확인되어 사업장 변경 사유를 정리할 수 있습니다.',
+      body:
+        '계약서 검토에서 나온 쟁점과 실제 근무 중 겪은 사정을 구분해, 제출 전 검토용 정리서로 이어갑니다.',
+    };
+  }
+
+  return {
+    reason: documentType.reason,
+    body: documentType.body,
+  };
+}
+
+function getWageComplaintCardCopy(answer: AnswerResponse): { reason: string; body: string } {
+  const signalText = buildAnswerSignalText(answer);
+
+  if (
+    hasCitedArticle(answer, /근로자\s*퇴직\s*급여\s*보장법\s*제\s*9\s*조/) ||
+    (hasCitedArticle(answer, /근로기준법\s*제\s*36\s*조/) &&
+      /퇴사|퇴직|마지막\s*근무|14\s*일|십사\s*일|금품\s*청산/.test(signalText))
+  ) {
+    return {
+      reason:
+        '퇴직 후 임금·퇴직금 지급기한과 관련된 근거가 확인되어 진정서 작성으로 이어갈 수 있습니다.',
+      body:
+        '마지막 근무일, 아직 받지 못한 임금·퇴직금, 지급 요청 내역과 증거를 정리합니다.',
+    };
+  }
+
+  if (hasCitedArticle(answer, /근로기준법\s*제\s*56\s*조/)) {
+    return {
+      reason:
+        '연장·야간·휴일근로 가산수당 근거가 확인되어 미지급 수당 항목을 정리할 수 있습니다.',
+      body:
+        '실제 근무시간, 지급받은 금액, 근무표나 출퇴근 기록 등 확인 가능한 자료를 입력합니다.',
+    };
+  }
+
+  if (hasCitedArticle(answer, /최저\s*임금법\s*제\s*6\s*조/)) {
+    return {
+      reason:
+        '최저임금보다 낮은 임금 약정이나 차액 쟁점이 확인되어 임금 진정서로 이어갈 수 있습니다.',
+      body:
+        '약정 시급, 실제 지급액, 근무기간과 급여 자료를 바탕으로 확인이 필요한 차액을 정리합니다.',
+    };
+  }
+
+  if (hasCitedArticle(answer, /근로기준법\s*제\s*43\s*조/)) {
+    return {
+      reason:
+        '임금 지급 방식과 지급일에 관한 근거가 확인되어 임금 지급 문제를 정리할 수 있습니다.',
+      body:
+        '정해진 지급일, 실제 지급 방식, 공제나 현물 지급 여부 등 확인 가능한 사실을 입력합니다.',
+    };
+  }
+
+  return {
+    reason:
+      '임금 미지급 또는 금품정산과 관련된 근거가 확인되어 진정서 작성으로 이어갈 수 있습니다.',
+    body:
+      '미지급 금액, 기간, 지급 요청 내역과 증거 자료를 중심으로 사실관계를 정리합니다.',
+  };
+}
+
+function getUnfairDismissalCardCopy(
+  answer: AnswerResponse,
+): { reason: string; body: string } {
+  const issueLabels = [
+    hasCitedArticle(answer, /근로기준법\s*제\s*23\s*조/) ? '해고 제한' : null,
+    hasCitedArticle(answer, /근로기준법\s*제\s*26\s*조/) ? '해고예고' : null,
+    hasCitedArticle(answer, /근로기준법\s*제\s*27\s*조/) ? '서면통지' : null,
+    hasCitedArticle(answer, /근로기준법\s*제\s*28\s*조/) ? '구제신청' : null,
+  ].filter(Boolean);
+  const issueText =
+    issueLabels.length > 0 ? issueLabels.join('·') : '해고 절차와 구제신청';
+
+  return {
+    reason: `${issueText} 근거가 확인되어 부당해고 구제신청 이유서로 이어갈 수 있습니다.`,
+    body:
+      '해고 통보일, 통지 방식, 회사가 설명한 사유, 복직 또는 금전보상 의사를 정리합니다.',
+  };
+}
+
+function hasCitedArticle(answer: AnswerResponse, pattern: RegExp): boolean {
+  return answer.cited_articles.some((citation) => pattern.test(citation));
+}
+
+function buildAnswerSignalText(answer: AnswerResponse): string {
+  return [
+    answer.query,
+    answer.answer,
+    ...answer.key_points,
+    ...answer.cautions,
+    ...answer.cited_articles,
+  ].join('\n');
+}
+
+function isAvailableDocumentType(
+  documentType: DocumentType,
+  availableDocumentTypes: SupportedDraftDocumentOption[],
+): boolean {
+  return availableDocumentTypes.some((candidate) => candidate.documentType === documentType);
 }
 
 function ContinuityList({ title, values }: { title: string; values: string[] }) {

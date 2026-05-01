@@ -199,6 +199,9 @@ export default function BeforePage() {
   const isBridgeAuthenticated = isBackendAuthenticated;
   const shouldShowWorkspaceLanding = screenState === 'home' && !isUploadVisible;
   const shouldShowUploadPanel = screenState === 'home' && isUploadVisible;
+  const shouldShowSidebarDocumentList = Boolean(
+    (screenState === 'result' && review) || shouldShowUploadPanel,
+  );
   const shouldShowBeforeAuthSignInAction =
     (beforeAnalyzeAuthMessage === BEFORE_ANALYZE_LOGIN_REQUIRED_MESSAGE ||
       beforeAnalyzeAuthMessage === BEFORE_ANALYZE_BACKEND_AUTH_MESSAGE) &&
@@ -823,57 +826,47 @@ export default function BeforePage() {
                 <strong>계약서 검토</strong>
                 <p>업로드한 계약서의 위험 조항과 누락 정보를 한 화면에서 확인합니다.</p>
 
-                <section
-                  className={styles.documentList}
-                  aria-labelledby="before-document-list-title"
-                >
-                  <div className={styles.documentListHeader}>
-                    <p className={styles.documentListEyebrow}>Documents</p>
-                    <h2 id="before-document-list-title">검토 문서</h2>
-                  </div>
-
-                  {screenState === 'result' && review && currentReviewDocumentName ? (
-                    <article
-                      className={`${styles.documentRow} ${styles.documentRowSelected}`}
-                      aria-current="true"
-                    >
-                      <div className={styles.documentRowTopline}>
-                        <span className={styles.documentStatusPill}>검토 완료</span>
-                        <span className={styles.documentSelectedMark}>선택됨</span>
-                      </div>
-                      <strong>{currentReviewDocumentName}</strong>
-                      <p>
-                        {review.overall_result} · {review.overall_severity}
-                      </p>
-                      {resultContextSummary ? (
-                        <p>
-                          위험 {resultContextSummary.riskCount} · 확인 필요{' '}
-                          {resultContextSummary.needsReviewCount}
-                        </p>
-                      ) : null}
-                    </article>
-                  ) : shouldShowUploadPanel ? (
-                    <article className={styles.documentRow}>
-                      <div className={styles.documentRowTopline}>
-                        <span className={styles.documentStatusPillMuted}>준비 중</span>
-                      </div>
-                      <strong>새 검토 준비 중</strong>
-                      <p>파일을 추가하면 이 목록에 현재 검토 결과가 표시됩니다.</p>
-                    </article>
-                  ) : (
-                    <div className={styles.documentEmptyState}>
-                      <p>아직 검토한 계약서가 없습니다.</p>
-                      <button
-                        type="button"
-                        className={styles.documentEmptyAction}
-                        onClick={handleStartNewReview}
-                      >
-                        <Plus size={14} aria-hidden="true" />
-                        새 검토 시작
-                      </button>
+                {shouldShowSidebarDocumentList ? (
+                  <section
+                    className={styles.documentList}
+                    aria-labelledby="before-document-list-title"
+                  >
+                    <div className={styles.documentListHeader}>
+                      <p className={styles.documentListEyebrow}>Documents</p>
+                      <h2 id="before-document-list-title">검토 문서</h2>
                     </div>
-                  )}
-                </section>
+
+                    {screenState === 'result' && review && currentReviewDocumentName ? (
+                      <article
+                        className={`${styles.documentRow} ${styles.documentRowSelected}`}
+                        aria-current="true"
+                      >
+                        <div className={styles.documentRowTopline}>
+                          <span className={styles.documentStatusPill}>검토 완료</span>
+                          <span className={styles.documentSelectedMark}>선택됨</span>
+                        </div>
+                        <strong>{currentReviewDocumentName}</strong>
+                        <p>
+                          {review.overall_result} · {review.overall_severity}
+                        </p>
+                        {resultContextSummary ? (
+                          <p>
+                            위험 {resultContextSummary.riskCount} · 확인 필요{' '}
+                            {resultContextSummary.needsReviewCount}
+                          </p>
+                        ) : null}
+                      </article>
+                    ) : shouldShowUploadPanel ? (
+                      <article className={styles.documentRow}>
+                        <div className={styles.documentRowTopline}>
+                          <span className={styles.documentStatusPillMuted}>준비 중</span>
+                        </div>
+                        <strong>새 검토 준비 중</strong>
+                        <p>파일을 추가하면 이 목록에 현재 검토 결과가 표시됩니다.</p>
+                      </article>
+                    ) : null}
+                  </section>
+                ) : null}
               </>
             }
           />

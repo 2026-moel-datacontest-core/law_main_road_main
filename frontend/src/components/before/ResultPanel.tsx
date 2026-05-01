@@ -376,13 +376,25 @@ export function ResultPanel({
             <div className={styles.evidenceList}>
               {review.evidence.map((evidence, index) => {
                 const displayEvidence = getScenarioEvidenceCopy(review, evidence, index);
+                const evidenceExcerptLines = normalizeEvidenceExcerptLinesForDisplay(
+                  displayEvidence.excerpt,
+                );
 
                 return (
                   <article key={evidence.title} className={styles.evidenceCard}>
                     <div className={styles.evidenceBody}>
                       <p className={styles.evidenceIndex}>Evidence {index + 1}</p>
                       <h4 className={styles.evidenceTitle}>{displayEvidence.title}</h4>
-                      <p className={styles.evidenceExcerpt}>{displayEvidence.excerpt}</p>
+                      <div className={styles.evidenceExcerpt}>
+                        {evidenceExcerptLines.map((line, lineIndex) => (
+                          <span
+                            key={`${line}-${lineIndex}`}
+                            className={styles.evidenceExcerptLine}
+                          >
+                            {line}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </article>
                 );
@@ -631,10 +643,32 @@ function normalizeContractExcerptSentencesForDisplay(
   }, []);
 }
 
+function normalizeEvidenceExcerptLinesForDisplay(excerpt: string): string[] {
+  return splitEvidenceExcerpt(excerpt).reduce<string[]>((displayLines, line) => {
+    const text = normalizeContractExcerptForDisplay(line);
+    if (!text) {
+      return displayLines;
+    }
+
+    const previousLine = displayLines[displayLines.length - 1];
+    if (previousLine && shouldJoinContractExcerptDisplayLine(previousLine, text)) {
+      displayLines[displayLines.length - 1] = joinContractExcerptDisplayLine(previousLine, text);
+      return displayLines;
+    }
+
+    displayLines.push(text);
+    return displayLines;
+  }, []);
+}
+
 function normalizeContractExcerptForDisplay(text: string): string {
   return text
     .replace(/\s+/g, ' ')
-    .replace(/(\d[\d,]*)\s+원\b/g, '$1원')
+    .replace(/\s*([:：])\s*/g, '$1 ')
+    .replace(/([[(（])\s+/g, '$1')
+    .replace(/\s+([\])）},.，、])/g, '$1')
+    .replace(/([)\]}])\s+원(?=$|[\s,])/g, '$1원')
+    .replace(/(\d[\d,]*)\s+(원|일|시|분|시간)(?=$|[\s),.])/g, '$1$2')
     .replace(/(\d)\s+%/g, '$1%')
     .replace(/\[\s+/g, '[')
     .replace(/\s+\]/g, ']')
@@ -649,7 +683,14 @@ function shouldJoinContractExcerptDisplayLine(previousText: string, nextText: st
     return false;
   }
 
-  if (isDetachedCurrencyUnit(next) && /[\d\])]$/.test(previous)) {
+  if (isCurrencyOnlyFragment(next) && hasUnclosedOpeningMark(previous)) {
+    return true;
+  }
+
+  if (
+    isDetachedCurrencyUnit(next) &&
+    (/[\d\])]$/.test(previous) || isCurrencyOnlyFragment(previous))
+  ) {
     return true;
   }
 
@@ -658,6 +699,10 @@ function shouldJoinContractExcerptDisplayLine(previousText: string, nextText: st
   }
 
   if (isShortContractLabel(previous) && isContractValueFragment(next)) {
+    return true;
+  }
+
+  if (isContractFieldDisplayRow(previous) && isContractFieldContinuationFragment(next)) {
     return true;
   }
 
@@ -684,7 +729,9 @@ function joinContractExcerptDisplayLine(previousText: string, nextText: string):
   const previous = previousText.trim();
   const next = nextText.trim();
   const separator =
-    isDetachedCurrencyUnit(next) || isDetachedClosingFragment(next) || /^[)\]}]/.test(next)
+    (isDetachedCurrencyUnit(next) && /[\d\])]$/.test(previous)) ||
+    isDetachedClosingFragment(next) ||
+    /^[)\]}]/.test(next)
       ? ''
       : ' ';
 
@@ -692,7 +739,11 @@ function joinContractExcerptDisplayLine(previousText: string, nextText: string):
 }
 
 function isDetachedCurrencyUnit(text: string): boolean {
-  return /^(원|원,|원원)$/.test(text);
+  return /^(원|원,)$/.test(text);
+}
+
+function isCurrencyOnlyFragment(text: string): boolean {
+  return /^원+[,]?$/.test(text);
 }
 
 function isDetachedClosingFragment(text: string): boolean {
@@ -700,7 +751,7 @@ function isDetachedClosingFragment(text: string): boolean {
 }
 
 function isShortContractLabel(text: string): boolean {
-  return /^(월급|일급|시간급|상여금|임금지급일|지급방법|근로자에게|기본급|수당)$/.test(
+  return /^(월급|일급|시간급|상여금|임금지급일|지급방법|근로자에게|기본급|수당|공제항목)$/.test(
     text,
   );
 }
@@ -710,6 +761,26 @@ function isContractValueFragment(text: string): boolean {
     /^[\d,]+(?:원)?$/.test(text) ||
     /^(있음|없음)(?:[\[(].*)?$/.test(text) ||
     /^(매월|매주|매일|직접|계좌|근로자)/.test(text)
+  );
+}
+
+function isContractFieldDisplayRow(text: string): boolean {
+  return /^[-•]?\s*(?:그 밖의 수당|초과근로에 대한 가산임금률|시간\(일,\s*월\)급|월급|일급|시간급|상여금|임금지급일|지급방법|기본급|수당|공제항목)(?=$|[\s:：([（\[])/.test(
+    text,
+  );
+}
+
+function isContractFieldContinuationFragment(text: string): boolean {
+  if (isLikelyNewContractField(text)) {
+    return false;
+  }
+
+  return (
+    text.length <= 34 &&
+    (/^(있음|없음)(?:\s*[\[(（].*)?$/.test(text) ||
+      /^(매월|매주|매일|또는|직접|계좌|근로자|당\)|\d)/.test(text) ||
+      isDetachedCurrencyUnit(text) ||
+      isDetachedClosingFragment(text))
   );
 }
 
@@ -730,12 +801,14 @@ function countMatches(text: string, pattern: RegExp): number {
 }
 
 function isShortContractContinuation(text: string): boolean {
-  return text.length <= 16 && !isLikelyNewContractField(text);
+  return text.length <= 16 && !isLikelyNewContractField(text) && !/^원+[,]?$/.test(text);
 }
 
 function isLikelyNewContractField(text: string): boolean {
-  return /^[-•]?\s*(그 밖의|초과근로|임금지급일|지급방법|근로시간|휴게|상여금|월급|일급|시간급|공제항목|수당)|^\d+[.)]/.test(
-    text,
+  return (
+    isContractFieldDisplayRow(text) ||
+    /^[-•]?\s*(?:그 밖의|초과근로|근로시간|휴게)(?=$|[\s:：([（\[])/.test(text) ||
+    /^\d+[.)]/.test(text)
   );
 }
 
