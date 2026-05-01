@@ -1078,6 +1078,11 @@
   background: #f3fbf5;
 }
 
+.resultContextStatNeutral {
+  border-color: var(--before-border);
+  background: var(--before-surface);
+}
+
 .resultContextSummaryLine {
   margin: 0;
   padding: 0 2px;

@@ -846,14 +846,8 @@ export default function BeforePage() {
                           <span className={styles.documentSelectedMark}>선택됨</span>
                         </div>
                         <strong>{currentReviewDocumentName}</strong>
-                        <p>
-                          {review.overall_result} · {review.overall_severity}
-                        </p>
                         {resultContextSummary ? (
-                          <p>
-                            위험 {resultContextSummary.riskCount} · 확인 필요{' '}
-                            {resultContextSummary.needsReviewCount}
-                          </p>
+                          <p>{formatDocumentRowFindingSummary(resultContextSummary)}</p>
                         ) : null}
                       </article>
                     ) : shouldShowUploadPanel ? (
@@ -1072,15 +1066,33 @@ export default function BeforePage() {
                 ) : null}
 
                 <section className={styles.resultContextStats} aria-label="결과 카운트 요약">
-                  <div className={`${styles.resultContextStatCard} ${styles.resultContextStatDanger}`}>
+                  <div
+                    className={`${styles.resultContextStatCard} ${
+                      resultContextSummary.riskCount > 0
+                        ? styles.resultContextStatDanger
+                        : styles.resultContextStatNeutral
+                    }`}
+                  >
                     <span>위험</span>
                     <strong>{resultContextSummary.riskCount}</strong>
                   </div>
-                  <div className={`${styles.resultContextStatCard} ${styles.resultContextStatWarning}`}>
+                  <div
+                    className={`${styles.resultContextStatCard} ${
+                      resultContextSummary.needsReviewCount > 0
+                        ? styles.resultContextStatWarning
+                        : styles.resultContextStatNeutral
+                    }`}
+                  >
                     <span>누락</span>
                     <strong>{resultContextSummary.needsReviewCount}</strong>
                   </div>
-                  <div className={`${styles.resultContextStatCard} ${styles.resultContextStatSuccess}`}>
+                  <div
+                    className={`${styles.resultContextStatCard} ${
+                      resultContextSummary.passCount > 0
+                        ? styles.resultContextStatSuccess
+                        : styles.resultContextStatNeutral
+                    }`}
+                  >
                     <span>확인</span>
                     <strong>{resultContextSummary.passCount}</strong>
                   </div>
@@ -1245,6 +1257,15 @@ function buildResultContextIssues(review: BeforeReviewResult): ResultContextIssu
     tag: issue.tag,
     tone: issue.tone,
   }));
+}
+
+function formatDocumentRowFindingSummary(summary: ResultContextSummary): string {
+  const issueSummary =
+    summary.riskCount > 0 || summary.needsReviewCount > 0
+      ? `위험 ${summary.riskCount} · 누락 ${summary.needsReviewCount}`
+      : '위험·누락 0';
+
+  return `${issueSummary} · 확인 ${summary.passCount}`;
 }
 
 function buildResultContextSituationSummary({

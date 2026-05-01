@@ -52,6 +52,12 @@ interface ClausePreviewBlock {
   fallbackNote: string | null;
 }
 
+interface BeforeReviewFindingSummary {
+  riskCount: number;
+  needsReviewCount: number;
+  passCount: number;
+}
+
 const MOCK_REVIEW_EVIDENCE_SCENARIOS: Record<string, EvidenceCopyScenario> = {
   '5f0d77f5-foreign-worker-demo': 'foreignWorker',
   'e4a0fb62-cbb4-4136-ac6a-8a96fb66050f': 'partTime',
@@ -126,6 +132,10 @@ export function ResultPanel({
   const [expandedClauseKeys, setExpandedClauseKeys] = useState<Set<string>>(() => new Set());
 
   const taggedIssueCards = useMemo(() => buildBeforeReviewDisplayIssues(review), [review]);
+  const reviewFindingSummary = useMemo(
+    () => buildBeforeReviewFindingSummary(review, taggedIssueCards),
+    [review, taggedIssueCards],
+  );
   const clausePreviewBlocks = useMemo<ClausePreviewBlock[]>(
     () => buildClausePreviewBlocks(review, taggedIssueCards),
     [review, taggedIssueCards],
@@ -243,9 +253,21 @@ export function ResultPanel({
             </h3>
           </div>
           <div className={styles.documentToolbar} aria-label="문서 검토 상태">
-            <span>표시 항목 {clausePreviewBlocks.length}개</span>
-            <StatusBadge kind="status" value={review.overall_result} />
-            <StatusBadge kind="severity" value={review.overall_severity} />
+            <span className={styles.documentToolbarLabel}>
+              표시 항목 {clausePreviewBlocks.length}개
+            </span>
+            <FindingBadge
+              label={`위험 ${reviewFindingSummary.riskCount}건`}
+              tone={reviewFindingSummary.riskCount > 0 ? 'danger' : 'neutral'}
+            />
+            <FindingBadge
+              label={`누락 ${reviewFindingSummary.needsReviewCount}건`}
+              tone={reviewFindingSummary.needsReviewCount > 0 ? 'warning' : 'neutral'}
+            />
+            <FindingBadge
+              label={`확인 ${reviewFindingSummary.passCount}건`}
+              tone={reviewFindingSummary.passCount > 0 ? 'success' : 'neutral'}
+            />
           </div>
         </div>
 
@@ -289,6 +311,12 @@ export function ResultPanel({
                   >
                     <span className={`${styles.clauseHeaderTag} ${getTagClassName(block.tone)}`}>
                       {block.tag ?? getClauseHeaderLabel(block)}
+                    </span>
+                    <span
+                      className={`${styles.clauseSignal} ${getClauseSignalClassName(block.tone)}`}
+                      aria-hidden="true"
+                    >
+                      {getClauseSignalSymbol(block.tone)}
                     </span>
                     <span className={styles.clauseAccordionContent}>
                       <span className={styles.clauseAccordionMeta}>
@@ -469,6 +497,18 @@ function buildBaseIssueCards(review: BeforeReviewResult): IssueCard[] {
       law_ref: value.law_ref ?? '',
       description: value.message ?? '',
     }));
+}
+
+function buildBeforeReviewFindingSummary(
+  review: BeforeReviewResult,
+  displayIssues: BeforeReviewDisplayIssue[],
+): BeforeReviewFindingSummary {
+  return {
+    riskCount: displayIssues.filter((item) => item.status === 'VIOLATION').length,
+    needsReviewCount: displayIssues.filter((item) => item.status === 'WARNING').length,
+    passCount: Object.values(review.rule_check ?? {}).filter((item) => item.status === 'PASS')
+      .length,
+  };
 }
 
 function tagIssueCards(issueCards: IssueCard[]): BeforeReviewDisplayIssue[] {
@@ -1076,6 +1116,38 @@ function getClauseAccordionClassName(tone: EvidenceTone): string {
   return styles.clauseAccordionNeutral;
 }
 
+function getClauseSignalClassName(tone: EvidenceTone): string {
+  if (tone === 'danger') {
+    return styles.clauseSignalDanger;
+  }
+
+  if (tone === 'warning') {
+    return styles.clauseSignalWarning;
+  }
+
+  if (tone === 'success') {
+    return styles.clauseSignalSuccess;
+  }
+
+  return styles.clauseSignalNeutral;
+}
+
+function getClauseSignalSymbol(tone: EvidenceTone): string {
+  if (tone === 'danger') {
+    return '!';
+  }
+
+  if (tone === 'warning') {
+    return '!';
+  }
+
+  if (tone === 'success') {
+    return '✓';
+  }
+
+  return '•';
+}
+
 function getTagClassName(tone: EvidenceTone): string {
   if (tone === 'danger') {
     return styles.tagPillDanger;
@@ -1105,6 +1177,25 @@ function getScenarioEvidenceCopy(
 
 function getEvidenceCopyScenario(review: BeforeReviewResult): EvidenceCopyScenario | null {
   return MOCK_REVIEW_EVIDENCE_SCENARIOS[review.review_id] ?? null;
+}
+
+function FindingBadge({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: EvidenceTone;
+}) {
+  const className =
+    tone === 'danger'
+      ? styles.findingBadgeDanger
+      : tone === 'warning'
+        ? styles.findingBadgeWarning
+        : tone === 'success'
+          ? styles.findingBadgeSuccess
+          : styles.findingBadgeNeutral;
+
+  return <span className={[styles.findingBadgeBase, className].join(' ')}>{label}</span>;
 }
 
 function StatusBadge({

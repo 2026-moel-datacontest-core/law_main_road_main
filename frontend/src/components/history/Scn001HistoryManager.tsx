@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, EyeOff, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
 
 import { useAuth } from '@/context/AuthContext';
 import { useFlow } from '@/context/FlowContext';
@@ -155,11 +156,20 @@ export function Scn001HistoryManager() {
 
   const canShowSignInAction =
     firebaseConfigured && !authBusy && !firebaseUser && !isBackendAuthenticated;
+  const canShowBackendRetryAction =
+    firebaseConfigured && !authBusy && Boolean(firebaseUser) && !isBackendAuthenticated;
   const caseRecords = useMemo(
     () => buildScn001CaseHistoryRecords({ beforeJobs: beforeHistory, bridgeRuns: bridgeHistory }),
     [beforeHistory, bridgeHistory],
   );
   const totalHistoryCount = caseRecords.length;
+  const shouldShowLoggedOutEmptyState = !isBackendAuthenticated;
+  const shouldShowNoRecordsEmptyState =
+    isBackendAuthenticated && historyStatus === 'success' && totalHistoryCount === 0;
+  const shouldSuppressNoticeForEmptyState =
+    Boolean(notice) &&
+    ((shouldShowLoggedOutEmptyState && notice?.kind === 'notice') ||
+      shouldShowNoRecordsEmptyState);
 
   async function handleDeleteHistoryRecord(target: HistoryDeleteTarget) {
     if (historyDeleteTarget) {
@@ -293,7 +303,54 @@ export function Scn001HistoryManager() {
         </div>
       </div>
 
-      {notice ? (
+      {shouldShowLoggedOutEmptyState ? (
+        <HistoryEmptyStateCard
+          markerLabel={getLoggedOutHistoryMarkerLabel({
+            firebaseConfigured,
+            isAuthBusy: authBusy,
+            hasFirebaseSession: Boolean(firebaseUser),
+          })}
+          title={getLoggedOutHistoryEmptyTitle({
+            firebaseConfigured,
+            isAuthBusy: authBusy,
+            hasFirebaseSession: Boolean(firebaseUser),
+          })}
+          description={getLoggedOutHistoryEmptyDescription({
+            firebaseConfigured,
+            isAuthBusy: authBusy,
+            hasFirebaseSession: Boolean(firebaseUser),
+          })}
+          primaryAction={
+            canShowSignInAction
+              ? {
+                  label: 'Google 로그인',
+                  onClick: () => void signInWithGoogle(),
+                }
+              : canShowBackendRetryAction
+                ? {
+                    label: '인증 확인',
+                    onClick: retryHistoryLoad,
+                  }
+                : null
+          }
+          secondaryHref="/after"
+          secondaryLabel="AI 법률 상담 시작하기"
+        />
+      ) : null}
+
+      {shouldShowNoRecordsEmptyState ? (
+        <HistoryEmptyStateCard
+          markerLabel="기록 없음"
+          title="아직 저장된 사건 기록이 없습니다."
+          description="계약서 검토를 완료하거나 AI 법률 상담으로 이어가면 이곳에서 사건별 기록을 확인할 수 있습니다."
+          primaryHref="/before"
+          primaryLabel="계약서 검토 시작하기"
+          secondaryHref="/after"
+          secondaryLabel="AI 법률 상담 시작하기"
+        />
+      ) : null}
+
+      {notice && !shouldSuppressNoticeForEmptyState ? (
         <div
           className={notice.kind === 'error' ? styles.error : styles.notice}
           role={notice.kind === 'error' ? 'alert' : 'status'}
@@ -319,7 +376,7 @@ export function Scn001HistoryManager() {
         </div>
       ) : null}
 
-      {isBackendAuthenticated && historyStatus === 'success' ? (
+      {isBackendAuthenticated && historyStatus === 'success' && totalHistoryCount > 0 ? (
         <>
           <div className={styles.summaryGrid} aria-label="기록 요약">
             <HistoryStat
@@ -342,6 +399,128 @@ export function Scn001HistoryManager() {
       ) : null}
     </section>
   );
+}
+
+function HistoryEmptyStateCard({
+  markerLabel,
+  title,
+  description,
+  primaryAction = null,
+  primaryHref,
+  primaryLabel,
+  secondaryHref,
+  secondaryLabel,
+}: {
+  markerLabel: string;
+  title: string;
+  description: string;
+  primaryAction?: { label: string; onClick: () => void } | null;
+  primaryHref?: string;
+  primaryLabel?: string;
+  secondaryHref: string;
+  secondaryLabel: string;
+}) {
+  return (
+    <section className={styles.emptyStateCard} aria-label={title}>
+      <div className={styles.emptyStateMarker} aria-hidden="true">
+        <span>{markerLabel}</span>
+      </div>
+      <div className={styles.emptyStateCopy}>
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+      <div className={styles.emptyStateActions}>
+        {primaryAction ? (
+          <button
+            className={styles.emptyPrimaryAction}
+            type="button"
+            onClick={primaryAction.onClick}
+          >
+            {primaryAction.label}
+          </button>
+        ) : primaryHref && primaryLabel ? (
+          <Link className={styles.emptyPrimaryAction} href={primaryHref}>
+            {primaryLabel}
+          </Link>
+        ) : null}
+        <Link className={styles.emptySecondaryAction} href={secondaryHref}>
+          {secondaryLabel}
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function getLoggedOutHistoryMarkerLabel({
+  firebaseConfigured,
+  isAuthBusy,
+  hasFirebaseSession,
+}: {
+  firebaseConfigured: boolean;
+  isAuthBusy: boolean;
+  hasFirebaseSession: boolean;
+}): string {
+  if (!firebaseConfigured) {
+    return '설정';
+  }
+
+  if (isAuthBusy) {
+    return '확인 중';
+  }
+
+  if (hasFirebaseSession) {
+    return '인증';
+  }
+
+  return '로그인';
+}
+
+function getLoggedOutHistoryEmptyTitle({
+  firebaseConfigured,
+  isAuthBusy,
+  hasFirebaseSession,
+}: {
+  firebaseConfigured: boolean;
+  isAuthBusy: boolean;
+  hasFirebaseSession: boolean;
+}): string {
+  if (!firebaseConfigured) {
+    return '로그인 설정 확인이 필요합니다.';
+  }
+
+  if (isAuthBusy) {
+    return '로그인 상태를 확인하고 있습니다.';
+  }
+
+  if (hasFirebaseSession) {
+    return '서버 인증 확인 후 기록을 볼 수 있습니다.';
+  }
+
+  return '로그인하면 사건 기록을 이어볼 수 있습니다.';
+}
+
+function getLoggedOutHistoryEmptyDescription({
+  firebaseConfigured,
+  isAuthBusy,
+  hasFirebaseSession,
+}: {
+  firebaseConfigured: boolean;
+  isAuthBusy: boolean;
+  hasFirebaseSession: boolean;
+}): string {
+  if (!firebaseConfigured) {
+    return '저장된 기록을 보려면 Firebase public env 설정이 필요합니다. AI 법률 상담은 로그인 없이 시작할 수 있습니다.';
+  }
+
+  if (isAuthBusy) {
+    return 'Google 로그인과 서버 확인 상태를 확인한 뒤 저장된 사건 기록을 표시합니다.';
+  }
+
+  if (hasFirebaseSession) {
+    return 'Google 로그인은 확인됐습니다. 기록 사용 전 서버 인증을 다시 확인해 주세요.';
+  }
+
+  return '계약서 검토와 상담 연결 기록은 로그인 후 안전한 표시 범위로만 보관함에 나타납니다.';
 }
 
 async function getCurrentScn001HistoryIdToken(forceRefresh: boolean): Promise<string> {

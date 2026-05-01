@@ -225,7 +225,7 @@
   justify-content: flex-end;
 }
 
-.documentToolbar > span {
+.documentToolbarLabel {
   color: var(--kl-text-secondary);
   font-size: 0.8rem;
   font-weight: 800;
@@ -290,7 +290,7 @@
 
 .clauseAccordionButton {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   width: 100%;
   min-width: 0;
   gap: 12px;
@@ -350,6 +350,45 @@
   font-weight: 900;
   letter-spacing: 0;
   line-height: 1;
+}
+
+.clauseSignal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--kl-border);
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.clauseSignalDanger {
+  border-color: var(--kl-danger);
+  background: var(--kl-surface-danger);
+  color: var(--kl-text-danger);
+  border-radius: 6px;
+}
+
+.clauseSignalWarning {
+  border-color: #d97706;
+  background: #fff7dd;
+  color: #7a4300;
+  border-radius: 999px;
+}
+
+.clauseSignalSuccess {
+  border-color: var(--kl-success);
+  background: var(--kl-surface-success);
+  color: var(--kl-text-success);
+}
+
+.clauseSignalNeutral {
+  border-color: var(--kl-border);
+  background: var(--kl-surface-01);
+  color: var(--kl-text-secondary);
 }
 
 .clauseAccordionContent {
@@ -968,6 +1007,44 @@
   min-width: 0;
 }
 
+.findingBadgeBase {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--kl-border);
+  border-radius: var(--kl-radius-sm);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.findingBadgeDanger {
+  border-color: var(--kl-danger);
+  background: var(--kl-surface-danger);
+  color: var(--kl-text-danger);
+}
+
+.findingBadgeWarning {
+  border-color: var(--kl-warning);
+  background: var(--kl-surface-warning);
+  color: var(--kl-text-warning);
+}
+
+.findingBadgeSuccess {
+  border-color: var(--kl-success);
+  background: var(--kl-surface-success);
+  color: var(--kl-text-success);
+}
+
+.findingBadgeNeutral {
+  border-color: var(--kl-border-subtle);
+  background: var(--kl-surface-01);
+  color: var(--kl-text-secondary);
+}
+
 .badgeBase {
   display: inline-flex;
   align-items: center;
@@ -1044,8 +1121,13 @@
   }
 
   .clauseAccordionButton {
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 10px;
     padding: 12px;
+  }
+
+  .clauseSignal {
+    display: none;
   }
 
   .clauseAccordionPanel {

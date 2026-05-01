@@ -769,6 +769,41 @@ export default function AfterPage() {
                 <span className={styles.counter}>{characterCount}자</span>
               </div>
 
+              <div className={styles.presetBlock}>
+                <div className={styles.presetBlockHeader}>
+                  <p id="after-preset-shortcuts-title">예시 사례에서 시작</p>
+                  <span>선택하면 질문 입력란에 예시가 채워집니다.</span>
+                </div>
+                <div
+                  className={styles.presetRow}
+                  aria-labelledby="after-preset-shortcuts-title"
+                >
+                  {SCENARIO_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className={`${styles.presetButton} ${
+                        selectedPresetId === preset.id ? styles.presetButtonSelected : ''
+                      }`}
+                      onClick={() => handlePresetClick(preset.id)}
+                      disabled={isLoading}
+                      aria-pressed={selectedPresetId === preset.id}
+                    >
+                      <span className={styles.presetButtonLabel}>
+                        {getPresetDisplayTitle(preset.id)}
+                      </span>
+                      <span className={styles.presetButtonMeta}>
+                        {getPresetDisplayMeta(preset.id)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.directInputDivider} aria-hidden="true">
+                <span>또는 직접 입력</span>
+              </div>
+
               <label className={styles.label} htmlFor="statement">
                 {hasBridgeHandoffItems ? '추가 질문' : '상담 질문'}
               </label>
@@ -793,27 +828,6 @@ export default function AfterPage() {
               >
                 {helperText}
               </p>
-
-              <div className={styles.presetRow}>
-                {SCENARIO_PRESETS.map((preset) => (
-                  <Button
-                    key={preset.id}
-                    type="button"
-                    variant={selectedPresetId === preset.id ? 'secondary' : 'ghost'}
-                    className={styles.presetButton}
-                    onClick={() => handlePresetClick(preset.id)}
-                    disabled={isLoading}
-                    aria-pressed={selectedPresetId === preset.id}
-                  >
-                    <span className={styles.presetButtonLabel}>
-                      {getPresetDisplayTitle(preset.id)}
-                    </span>
-                    <span className={styles.presetButtonMeta}>
-                      {getPresetDisplayMeta(preset.id)}
-                    </span>
-                  </Button>
-                ))}
-              </div>
 
               {errorState ? (
                 <Notification
@@ -949,15 +963,15 @@ function AfterConsultContextPanel({
         </section>
       ) : (
         <section className={styles.contextEmptyCard} aria-label="연결된 계약서 검토 없음">
-          <strong>연결된 계약서 검토 없음</strong>
-          <p>질문만으로 상담을 시작할 수 있습니다.</p>
+          <strong>질문 중심 상담</strong>
+          <p>저장된 검토 결과가 없어도 직접 입력한 질문으로 상담을 시작합니다.</p>
         </section>
       )}
 
       <div className={styles.contextNotice}>
         <p>
-          연결된 검토 결과는 표시된 요약, 주요 항목, 참고 조항 후보만 사용합니다.
-          최종 법률 판단이 아닙니다.
+          연결된 검토 결과가 있을 때는 표시된 요약, 주요 항목, 참고 조항 후보만
+          상담 맥락으로 이어갑니다.
         </p>
       </div>
     </aside>
@@ -1820,7 +1834,7 @@ function optionalInlineText(value: string | null | undefined): string | undefine
 function getPresetDisplayTitle(presetId: ScenarioPresetId): string {
   switch (presetId) {
     case 'SCN-001-BRIDGE-DEMO':
-      return '사업장 변경 사유 상담';
+      return '사업장 변경 사유 정리서 초안';
     case 'SCN-004-DEMO-FREEZE':
       return '임금체불·부당해고 상담';
   }
