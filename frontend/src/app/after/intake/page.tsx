@@ -50,6 +50,7 @@ const intakeFlowSteps = [
   '초안 정보 입력',
   '문서 초안',
 ] as const;
+const AFTER_FALLBACK_HREF = '/after?fallback=missing-state';
 
 interface DraftErrorState {
   message: string;
@@ -107,7 +108,7 @@ export default function AfterIntakePage() {
 
   useEffect(() => {
     if (!answer) {
-      router.replace('/after');
+      router.replace(AFTER_FALLBACK_HREF);
       return;
     }
 
@@ -142,7 +143,11 @@ export default function AfterIntakePage() {
         <SkipLink />
         <Masthead />
         <main id="main-content" tabIndex={-1} className={styles.main}>
-          <p className={styles.redirectMessage}>이전 단계로 이동합니다.</p>
+          <p className={styles.redirectMessage}>
+            {answer
+              ? '이전 단계로 이동합니다.'
+              : '이전 단계 데이터가 없어 상담 시작 화면으로 이동합니다.'}
+          </p>
         </main>
       </>
     );
@@ -492,10 +497,10 @@ export default function AfterIntakePage() {
             </form>
           </section>
 
-          <aside className={styles.contextPanel} aria-label="문서 초안 준비 맥락">
+          <aside className={styles.contextPanel} aria-label="초안 정보 확인">
             <div className={styles.contextHeader}>
-              <p className={styles.contextEyebrow}>상담 맥락</p>
-              <h2>초안 준비</h2>
+              <p className={styles.contextEyebrow}>DRAFT CONTEXT</p>
+              <h2>초안 정보 확인</h2>
             </div>
 
             <section className={styles.contextCard} aria-labelledby="intake-context-summary">

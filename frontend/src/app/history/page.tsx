@@ -67,7 +67,7 @@ export default function HistoryPage() {
 
           <aside className={styles.contextPanel} aria-label="기록 요약">
             <div className={styles.contextHeader}>
-              <p className={styles.contextEyebrow}>History context</p>
+              <p className={styles.contextEyebrow}>HISTORY CONTEXT</p>
               <h2>기록 요약</h2>
             </div>
 

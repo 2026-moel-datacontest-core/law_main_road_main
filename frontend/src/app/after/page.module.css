@@ -166,6 +166,52 @@
   min-width: 0;
 }
 
+.fallbackNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--after-border);
+  border-radius: 8px;
+  background: var(--after-surface-soft);
+  color: var(--after-body);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.fallbackNotice p {
+  margin: 0;
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.fallbackNoticeClose {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--after-border);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--after-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fallbackNoticeClose:hover {
+  border-color: var(--after-border-strong);
+  color: var(--after-ink);
+}
+
+.fallbackNoticeClose:focus-visible {
+  outline: 3px solid rgba(42, 106, 171, 0.25);
+  outline-offset: 2px;
+}
+
 .form {
   display: grid;
   gap: 18px;

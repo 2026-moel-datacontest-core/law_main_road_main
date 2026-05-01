@@ -74,6 +74,8 @@ type HistoryMutationMessage = { kind: 'notice' | 'error'; message: string };
 const SCN001_AFTER_HISTORY_LIMIT = 10;
 const SCN001_AFTER_HISTORY_BACKEND_AUTH_MESSAGE =
   '서버 인증 확인이 완료되지 않아 기록을 불러올 수 없습니다. 인증 확인 또는 다시 로그인 후 시도해주세요.';
+const AFTER_FALLBACK_NOTICE_PARAM = 'fallback';
+const AFTER_FALLBACK_NOTICE_VALUE = 'missing-state';
 const consultationFlowSteps = [
   '검토 결과',
   '법령 후보',
@@ -110,6 +112,7 @@ export default function AfterPage() {
     useState<HistoryDeleteTarget | null>(null);
   const [historyMutationMessage, setHistoryMutationMessage] =
     useState<HistoryMutationMessage | null>(null);
+  const [showFallbackNotice, setShowFallbackNotice] = useState(false);
 
   const bridgeItems = state.bridge_handoff.items;
   const hasBridgeHandoffItems = bridgeItems.length > 0;
@@ -154,6 +157,13 @@ export default function AfterPage() {
     });
 
     return () => window.cancelAnimationFrame(frameId);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setShowFallbackNotice(
+      params.get(AFTER_FALLBACK_NOTICE_PARAM) === AFTER_FALLBACK_NOTICE_VALUE,
+    );
   }, []);
 
   useEffect(() => {
@@ -654,7 +664,13 @@ export default function AfterPage() {
     setSelectedPresetId(null);
     setErrorState(null);
     setHistoryMutationMessage(null);
+    setShowFallbackNotice(false);
     router.push('/after');
+  }
+
+  function dismissFallbackNotice() {
+    setShowFallbackNotice(false);
+    router.replace('/after', { scroll: false });
   }
 
   return (
@@ -723,11 +739,26 @@ export default function AfterPage() {
             </header>
 
             <section className={styles.formSection} aria-labelledby="statement-title">
-            <form
-              className={styles.form}
-              onSubmit={handleSubmit}
-              aria-busy={isLoading || undefined}
-            >
+              {showFallbackNotice ? (
+                <div className={styles.fallbackNotice} role="status">
+                  <p>
+                    이전 단계 데이터가 없어 AI 법률 상담 시작 화면으로 돌아왔습니다. 질문을
+                    다시 입력하면 상담을 이어갈 수 있습니다.
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.fallbackNoticeClose}
+                    onClick={dismissFallbackNotice}
+                  >
+                    닫기
+                  </button>
+                </div>
+              ) : null}
+              <form
+                className={styles.form}
+                onSubmit={handleSubmit}
+                aria-busy={isLoading || undefined}
+              >
               <div className={styles.formHeader}>
                 <div>
                   <p className={styles.eyebrow}>Question</p>
@@ -879,10 +910,10 @@ function AfterConsultContextPanel({
   const hasBridgeHandoffItems = bridgeItems.length > 0;
 
   return (
-    <aside className={styles.contextPanel} aria-label="상담 context">
+    <aside className={styles.contextPanel} aria-label="상담 맥락">
       <div className={styles.contextHeader}>
-        <p className={styles.contextEyebrow}>Consult context</p>
-        <h2>RESULT CONTEXT</h2>
+        <p className={styles.contextEyebrow}>CONSULT CONTEXT</p>
+        <h2>상담 맥락</h2>
       </div>
 
       {hasBridgeHandoffItems ? (

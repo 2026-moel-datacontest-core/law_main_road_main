@@ -982,7 +982,6 @@ export default function BeforePage() {
                     <div className={styles.resultPanelFrame}>
                       <ResultPanel
                         review={review}
-                        onReset={handleReset}
                         onIssueSelect={setSelectedResultContextIssueTag}
                         accessibilityDisclosure={
                           shouldShowAccessibilityExtension ? (
@@ -1042,7 +1041,6 @@ export default function BeforePage() {
                             </section>
                           ) : null
                         }
-                        resetDisabled={isBridgeSubmitting}
                       />
                     </div>
                   </div>
@@ -1060,8 +1058,8 @@ export default function BeforePage() {
             {screenState === 'result' && review && resultContextSummary ? (
               <>
                 <div className={`${styles.contextHeader} ${styles.resultContextHeader}`}>
-                  <p className={styles.contextEyebrow}>Result context</p>
-                  <h2>RESULT CONTEXT</h2>
+                  <p className={styles.contextEyebrow}>RESULT CONTEXT</p>
+                  <h2>검토 결과 요약</h2>
                 </div>
 
                 {resultContextSituationSummary ? (
@@ -1173,21 +1171,13 @@ export default function BeforePage() {
                     onCreate={() => void handleCreateBridgeRun()}
                     onSignIn={() => void handleBridgeSignIn()}
                   />
-                  <button
-                    type="button"
-                    className={styles.resultContextResetButton}
-                    onClick={handleReset}
-                    disabled={isBridgeSubmitting}
-                  >
-                    새 검토 시작
-                  </button>
                 </section>
 
               </>
             ) : (
               <>
                 <div className={styles.contextHeader}>
-                  <p className={styles.contextEyebrow}>Review basis</p>
+                  <p className={styles.contextEyebrow}>REVIEW BASIS</p>
                   <h2>검토 기준</h2>
                 </div>
 
@@ -1641,12 +1631,20 @@ function getReviewDocumentName(review: BeforeReviewResult, files: File[]): strin
     return uploadedFileName;
   }
 
-  const contractType = review.contract_info.type.trim();
+  const contractType = getContractTypeDisplayLabel(review.contract_info.type);
   if (contractType) {
     return contractType.endsWith('계약서') ? contractType : `${contractType} 계약서`;
   }
 
   return '근로계약서';
+}
+
+function getContractTypeDisplayLabel(type: string): string {
+  return type
+    .trim()
+    .replace(/_/g, ' ')
+    .replace(/기간의\s+정함이\s+없는\s+경우/g, '기간의 정함이 없는')
+    .replace(/\s+/g, ' ');
 }
 
 function getBridgeActionErrorMessage(error: unknown): string {

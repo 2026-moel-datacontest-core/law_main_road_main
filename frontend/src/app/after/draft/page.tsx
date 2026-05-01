@@ -29,6 +29,7 @@ const draftFlowSteps = [
   '초안 정보 입력',
   '문서 초안',
 ] as const;
+const AFTER_FALLBACK_HREF = '/after?fallback=missing-state';
 
 type CopyFeedbackState = 'idle' | 'success' | 'error';
 
@@ -67,7 +68,7 @@ export default function AfterDraftPage() {
 
   useEffect(() => {
     if (!draft) {
-      router.replace('/after');
+      router.replace(AFTER_FALLBACK_HREF);
     }
   }, [draft, router]);
 
@@ -113,7 +114,9 @@ export default function AfterDraftPage() {
         <SkipLink />
         <Masthead />
         <main id="main-content" tabIndex={-1} className={styles.main}>
-          <p className={styles.redirectMessage}>처음 단계로 이동합니다.</p>
+          <p className={styles.redirectMessage}>
+            이전 단계 데이터가 없어 상담 시작 화면으로 이동합니다.
+          </p>
         </main>
       </>
     );
@@ -348,10 +351,10 @@ export default function AfterDraftPage() {
             </section>
           </section>
 
-          <aside className={styles.contextPanel} aria-label="문서 초안 확인 항목">
+          <aside className={styles.contextPanel} aria-label="문서 초안 확인">
             <div className={styles.contextHeader}>
-              <p className={styles.contextEyebrow}>문서 맥락</p>
-              <h2>초안 확인</h2>
+              <p className={styles.contextEyebrow}>DRAFT CONTEXT</p>
+              <h2>문서 초안 확인</h2>
             </div>
 
             <section className={styles.contextCard} aria-labelledby="draft-context-document">

@@ -31,6 +31,7 @@ import type { AnswerResponse, DocumentType } from '@/types/api';
 import styles from './page.module.css';
 
 const resultFlowSteps = ['상담 입력', '상담 결과'] as const;
+const AFTER_FALLBACK_HREF = '/after?fallback=missing-state';
 
 type ContinuityPanelModel = {
   strength: 'strong' | 'weak';
@@ -80,7 +81,7 @@ export default function AfterResultPage() {
 
   useEffect(() => {
     if (!answer) {
-      router.replace('/after');
+      router.replace(AFTER_FALLBACK_HREF);
     }
   }, [answer, router]);
 
@@ -103,7 +104,9 @@ export default function AfterResultPage() {
         <SkipLink />
         <Masthead />
         <main id="main-content" tabIndex={-1} className={styles.main}>
-          <p className={styles.redirectMessage}>처음 단계로 이동합니다.</p>
+          <p className={styles.redirectMessage}>
+            이전 단계 데이터가 없어 상담 시작 화면으로 이동합니다.
+          </p>
         </main>
       </>
     );
@@ -400,10 +403,10 @@ export default function AfterResultPage() {
             </section>
           </section>
 
-          <aside className={styles.contextPanel} aria-label="문서 유형 선택 및 연속성 안내">
+          <aside className={styles.contextPanel} aria-label="상담 결과 요약">
             <div className={styles.contextHeader}>
-              <p className={styles.contextEyebrow}>상담 맥락</p>
-              <h2>다음 단계</h2>
+              <p className={styles.contextEyebrow}>CONSULT RESULT</p>
+              <h2>상담 결과 요약</h2>
             </div>
             <section className={selectorPanelClassName}>
               <p className={styles.eyebrow}>

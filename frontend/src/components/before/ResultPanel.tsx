@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/Button';
 import type {
   BeforeReviewEvidence,
   BeforeReviewResult,
@@ -113,18 +112,14 @@ const SCENARIO_EVIDENCE_COPY: Record<
 
 interface ResultPanelProps {
   review: BeforeReviewResult;
-  onReset: () => void;
   onIssueSelect?: (tag: string) => void;
   accessibilityDisclosure?: ReactNode;
-  resetDisabled?: boolean;
 }
 
 export function ResultPanel({
   review,
-  onReset,
   onIssueSelect,
   accessibilityDisclosure = null,
-  resetDisabled = false,
 }: ResultPanelProps) {
   const [isEvidenceDisclosureOpen, setIsEvidenceDisclosureOpen] = useState(false);
   const [isReviewNotesOpen, setIsReviewNotesOpen] = useState(false);
@@ -218,15 +213,6 @@ export function ResultPanel({
           <h2 className={styles.resultAppTitle}>근로계약서 검토</h2>
           <p className={styles.resultAppSummary}>{review.headline}</p>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onReset}
-          disabled={resetDisabled}
-          className={styles.heroResetButton}
-        >
-          새 검토 시작
-        </Button>
       </header>
 
       <div className={styles.resultTabs} aria-label="결과 보기">
@@ -984,12 +970,20 @@ function getDocumentDisplayName(review: BeforeReviewResult): string {
     return uploadedFileName;
   }
 
-  const contractType = review.contract_info.type.trim();
+  const contractType = getContractTypeDisplayLabel(review.contract_info.type);
   if (contractType) {
     return contractType.endsWith('계약서') ? contractType : `${contractType} 계약서`;
   }
 
   return '근로계약서';
+}
+
+function getContractTypeDisplayLabel(type: string): string {
+  return type
+    .trim()
+    .replace(/_/g, ' ')
+    .replace(/기간의\s+정함이\s+없는\s+경우/g, '기간의 정함이 없는')
+    .replace(/\s+/g, ' ');
 }
 
 function getClausePanelId(block: ClausePreviewBlock, index: number): string {
