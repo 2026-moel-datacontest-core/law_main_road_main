@@ -122,7 +122,7 @@
 }
 
 @page {
-  margin: 18mm;
+  margin: 16mm 15mm;
 }
 
 @media print {
@@ -149,17 +149,18 @@
     background: #ffffff;
     color: #000000;
     font-size: 12pt;
-    line-height: 1.7;
+    line-height: 1.72;
     overflow-wrap: break-word;
     break-inside: auto;
+    page-break-inside: auto;
     orphans: 3;
     widows: 3;
   }
 
   .paper::first-line {
-    font-size: 18pt;
+    font-size: 17pt;
     font-weight: 700;
-    line-height: 1.45;
+    line-height: 1.5;
   }
 
   .placeholder,
@@ -169,11 +170,12 @@
     color: #b91c1c !important;
     background: transparent !important;
     padding: 0;
+    font-weight: 700;
   }
 
   .printDisclaimer {
     display: block;
-    margin: 24pt 0 0;
+    margin: 20pt 0 0;
     padding-top: 12pt;
     border-top: 1px solid #cbd5e1;
     color: #475569;
@@ -181,5 +183,6 @@
     line-height: 1.5;
     white-space: normal;
     break-inside: avoid;
+    page-break-inside: avoid;
   }
 }

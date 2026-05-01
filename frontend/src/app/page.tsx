@@ -530,6 +530,8 @@ function AudienceSection() {
       imageSrc: PEOPLE_IMAGE_FOREIGN_WORKER,
       imageAlt: '근로계약서를 처음 받아본 외국인 근로자 대상 안내 이미지',
       label: '계약 확인',
+      ctaLabel: '외국인 근로자 사례 보기',
+      href: '/before?example=sen0',
     },
     {
       title: '임금·해고 문제를 정리해야 하는 아르바이트 근로자',
@@ -537,6 +539,8 @@ function AudienceSection() {
       imageSrc: PEOPLE_IMAGE_PART_TIMER,
       imageAlt: '임금과 해고 문제를 정리해야 하는 아르바이트 근로자 대상 안내 이미지',
       label: '임금·해고',
+      ctaLabel: '아르바이트 사례 보기',
+      href: '/before?example=sen1',
     },
     {
       title: '장애 특성을 반영한 안내가 필요한 근로자',
@@ -544,6 +548,8 @@ function AudienceSection() {
       imageSrc: PEOPLE_IMAGE_DISABLED_WORKER,
       imageAlt: '장애 특성을 반영한 안내가 필요한 근로자 대상 안내 이미지',
       label: '지원 안내',
+      ctaLabel: '장애인 근로자 사례 보기',
+      href: '/before?example=sen2',
     },
   ];
 
@@ -573,6 +579,10 @@ function AudienceSection() {
                 <span className={styles.audienceBadge}>{audience.label}</span>
                 <h3>{audience.title}</h3>
                 <p>{audience.description}</p>
+                <Link href={audience.href} className={styles.audienceAction}>
+                  {audience.ctaLabel}
+                  <ChevronRight size={14} aria-hidden="true" />
+                </Link>
               </div>
             </article>
           ))}

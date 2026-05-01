@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AlertTriangle,
   ArrowRight,
+  CheckCircle2,
   ChevronDown,
   ClipboardCheck,
+  CircleDot,
   Plus,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -99,6 +102,15 @@ const OCR_TIMEOUT_ERROR_PATTERNS = [
 const ACCESSIBILITY_EXTENSION_SECTION_ID = 'before-accessibility-extension-section';
 const ACCESSIBILITY_EXTENSION_PANEL_ID = 'before-accessibility-extension-panel';
 const DEFAULT_ACCESSIBILITY_EXTENSION_TYPE: BeforeDisabilityType = 'visual';
+const BEFORE_MOCK_SCENARIOS: BeforeMockScenario[] = ['sen0', 'sen1', 'sen2'];
+
+function parseBeforeMockScenario(value: string | null): BeforeMockScenario | null {
+  if (value && BEFORE_MOCK_SCENARIOS.includes(value as BeforeMockScenario)) {
+    return value as BeforeMockScenario;
+  }
+
+  return null;
+}
 
 function createMockJob(): BeforeReviewJob {
   const now = new Date().toISOString();
@@ -166,6 +178,7 @@ export default function BeforePage() {
   const accessibilitySectionRef = useRef<HTMLElement | null>(null);
   const accessibilityDisclosureButtonRef = useRef<HTMLButtonElement | null>(null);
   const accessibilityRef = useRef<HTMLDivElement | null>(null);
+  const hasHandledUrlMockScenarioRef = useRef(false);
   const rememberedBeforeReview = state.before_review.review;
   const rememberedBeforeReviewJobId = state.before_review.completed_review_job_id;
   const [screenState, setScreenState] = useState<BeforeScreenState>(() =>
@@ -415,6 +428,24 @@ export default function BeforePage() {
       setBeforeAnalyzeAuthMessage(null);
     }
   }, [isBackendAuthenticated]);
+
+  useEffect(() => {
+    if (hasHandledUrlMockScenarioRef.current) {
+      return;
+    }
+
+    const scenario = parseBeforeMockScenario(
+      new URLSearchParams(window.location.search).get('example'),
+    );
+
+    if (!scenario) {
+      return;
+    }
+
+    hasHandledUrlMockScenarioRef.current = true;
+    window.history.replaceState(window.history.state, '', '/before');
+    void runMockReview(scenario);
+  }, []);
 
   function handleFilesChange(files: File[]) {
     setSelectedFiles(files);
@@ -1115,6 +1146,14 @@ export default function BeforePage() {
 
                     <div className={styles.resultContextSelectedHeader}>
                       <span
+                        className={`${styles.resultContextSignal} ${getResultContextSignalClassName(
+                          selectedResultContextIssue.tone,
+                        )}`}
+                        aria-hidden="true"
+                      >
+                        <ResultContextSignalIcon tone={selectedResultContextIssue.tone} />
+                      </span>
+                      <span
                         className={`${styles.resultContextTag} ${getResultContextTagClassName(
                           selectedResultContextIssue.tone,
                         )}`}
@@ -1468,6 +1507,30 @@ function getResultContextTagClassName(tone: BeforeReviewIssueTone): string {
   }
 
   return styles.resultContextTagSuccess;
+}
+
+function getResultContextSignalClassName(tone: BeforeReviewIssueTone): string {
+  if (tone === 'danger') {
+    return styles.resultContextSignalDanger;
+  }
+
+  if (tone === 'warning') {
+    return styles.resultContextSignalWarning;
+  }
+
+  return styles.resultContextSignalSuccess;
+}
+
+function ResultContextSignalIcon({ tone }: { tone: BeforeReviewIssueTone }) {
+  if (tone === 'danger') {
+    return <AlertTriangle size={14} strokeWidth={2.5} aria-hidden="true" />;
+  }
+
+  if (tone === 'warning') {
+    return <CircleDot size={14} strokeWidth={2.5} aria-hidden="true" />;
+  }
+
+  return <CheckCircle2 size={14} strokeWidth={2.5} aria-hidden="true" />;
 }
 
 function getResultContextSelectedCardClassName(tone: BeforeReviewIssueTone): string {

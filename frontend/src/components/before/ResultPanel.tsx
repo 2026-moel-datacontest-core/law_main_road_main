@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, CircleDot } from 'lucide-react';
 import Link from 'next/link';
 
 import type {
@@ -226,7 +226,9 @@ export function ResultPanel({
       </header>
 
       <div className={styles.resultTabs} aria-label="결과 보기">
-        <span className={`${styles.resultTab} ${styles.resultTabActive}`}>검토 결과</span>
+        <span className={`${styles.resultTab} ${styles.resultTabActive}`} aria-current="page">
+          검토 결과
+        </span>
         <span className={`${styles.resultTab} ${styles.resultTabDisabled}`} aria-disabled="true">
           법령 후보
         </span>
@@ -316,7 +318,7 @@ export function ResultPanel({
                       className={`${styles.clauseSignal} ${getClauseSignalClassName(block.tone)}`}
                       aria-hidden="true"
                     >
-                      {getClauseSignalSymbol(block.tone)}
+                      <ClauseSignalIcon tone={block.tone} />
                     </span>
                     <span className={styles.clauseAccordionContent}>
                       <span className={styles.clauseAccordionMeta}>
@@ -1132,20 +1134,20 @@ function getClauseSignalClassName(tone: EvidenceTone): string {
   return styles.clauseSignalNeutral;
 }
 
-function getClauseSignalSymbol(tone: EvidenceTone): string {
+function ClauseSignalIcon({ tone }: { tone: EvidenceTone }) {
   if (tone === 'danger') {
-    return '!';
+    return <AlertTriangle size={14} strokeWidth={2.5} aria-hidden="true" />;
   }
 
   if (tone === 'warning') {
-    return '!';
+    return <CircleDot size={14} strokeWidth={2.5} aria-hidden="true" />;
   }
 
   if (tone === 'success') {
-    return '✓';
+    return <CheckCircle2 size={14} strokeWidth={2.5} aria-hidden="true" />;
   }
 
-  return '•';
+  return <CircleDot size={14} strokeWidth={2.5} aria-hidden="true" />;
 }
 
 function getTagClassName(tone: EvidenceTone): string {

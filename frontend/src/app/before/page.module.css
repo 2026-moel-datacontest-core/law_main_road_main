@@ -1080,7 +1080,13 @@
 
 .resultContextStatNeutral {
   border-color: var(--before-border);
-  background: var(--before-surface);
+  background: #f8fafc;
+  color: var(--before-muted);
+}
+
+.resultContextStatNeutral span,
+.resultContextStatNeutral strong {
+  color: var(--before-muted);
 }
 
 .resultContextSummaryLine {
@@ -1142,12 +1148,46 @@
 
 .resultContextSelectedHeader {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto auto minmax(0, 1fr);
   gap: 9px;
   align-items: center;
   min-width: 0;
   padding-bottom: 7px;
   border-bottom: 1px solid var(--before-border);
+}
+
+.resultContextSignal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--before-border);
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.resultContextSignal svg {
+  flex: 0 0 auto;
+}
+
+.resultContextSignalDanger {
+  border-color: var(--before-risk-border);
+  background: var(--before-risk-bg);
+  color: var(--before-risk-dark);
+}
+
+.resultContextSignalWarning {
+  border-color: var(--before-warn-border);
+  border-radius: 999px;
+  background: #fff3d8;
+  color: #8a5200;
+}
+
+.resultContextSignalSuccess {
+  border-color: var(--before-ok-border);
+  background: var(--before-ok-bg);
+  color: var(--before-ok);
 }
 
 .resultContextSelectedHeader .resultContextTag {

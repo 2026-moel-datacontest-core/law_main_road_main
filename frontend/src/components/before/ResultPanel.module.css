@@ -51,11 +51,11 @@
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  min-height: 40px;
-  border-bottom: 3px solid transparent;
+  min-height: 42px;
+  border-bottom: 4px solid transparent;
   color: var(--kl-text-secondary);
   font-size: 0.92rem;
-  font-weight: 800;
+  font-weight: 850;
   line-height: 1;
   white-space: nowrap;
 }
@@ -63,6 +63,7 @@
 .resultTabActive {
   border-color: var(--kl-primary);
   color: var(--kl-primary);
+  font-weight: 950;
 }
 
 .resultTabDisabled {
@@ -360,9 +361,11 @@
   height: 24px;
   border: 1px solid var(--kl-border);
   border-radius: 8px;
-  font-size: 0.74rem;
-  font-weight: 900;
   line-height: 1;
+}
+
+.clauseSignal svg {
+  flex: 0 0 auto;
 }
 
 .clauseSignalDanger {
@@ -1121,13 +1124,9 @@
   }
 
   .clauseAccordionButton {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: 10px;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    gap: 8px;
     padding: 12px;
-  }
-
-  .clauseSignal {
-    display: none;
   }
 
   .clauseAccordionPanel {

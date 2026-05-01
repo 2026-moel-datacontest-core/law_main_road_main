@@ -609,7 +609,7 @@
   }
 
   .flowSteps {
-    gap: 24px;
+    gap: 18px;
   }
 
   .actionGroup,
@@ -682,10 +682,14 @@
     border-radius: 0;
     background: #ffffff;
     box-shadow: none;
+    break-inside: auto;
+    page-break-inside: auto;
   }
 
   .documentPreviewShell {
     width: auto;
     max-width: none;
+    break-inside: auto;
+    page-break-inside: auto;
   }
 }
