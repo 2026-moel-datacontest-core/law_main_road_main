@@ -1,6 +1,8 @@
 .panel {
   display: grid;
+  align-content: start;
   gap: 14px;
+  grid-auto-rows: max-content;
   width: 100%;
   min-width: 0;
   color: var(--history-ink, var(--kl-text-primary));
@@ -261,14 +263,16 @@
 }
 
 .emptySecondaryAction {
-  border: 1px solid var(--history-border-strong, var(--kl-border));
-  background: var(--history-surface, var(--kl-surface-card));
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--history-accent, var(--kl-primary));
 }
 
 .emptySecondaryAction:hover {
-  background: var(--history-accent-soft, #eaf2fb);
-  text-decoration: none;
+  background: transparent;
+  color: #174a7a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .emptyPrimaryAction:focus-visible,
@@ -785,8 +789,14 @@
 
   .noticeButton,
   .emptyPrimaryAction,
-  .emptySecondaryAction,
   .deleteButton {
     width: 100%;
+  }
+
+  .emptySecondaryAction {
+    width: auto;
+    min-height: 40px;
+    padding-right: 2px;
+    padding-left: 2px;
   }
 }

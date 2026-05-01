@@ -78,7 +78,7 @@ export default function HistoryPage() {
             </section>
 
             <section className={styles.contextNotice} aria-label="표시 범위 안내">
-              <strong>안전 표시 범위</strong>
+              <strong>보관 정책</strong>
               <p>
                 계약서 검토와 AI 법률 상담 기록을 한곳에서 확인합니다. 내부 식별자와
                 인증 정보는 화면에 표시하지 않습니다.

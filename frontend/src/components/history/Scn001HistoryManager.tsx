@@ -296,7 +296,7 @@ export function Scn001HistoryManager() {
           </p>
         </div>
         <div className={styles.headerMeta} aria-label="기록 표시 범위">
-          <span className={styles.visibilityPill}>안전 표시 범위</span>
+          <span className={styles.visibilityPill}>안전 표시</span>
           {isBackendAuthenticated && historyStatus === 'success' ? (
             <span className={styles.totalPill}>총 {totalHistoryCount}건</span>
           ) : null}
