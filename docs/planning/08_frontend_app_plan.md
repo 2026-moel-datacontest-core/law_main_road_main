@@ -116,7 +116,7 @@
   - `/history` incident-centered record archive 완료
   - exact `SCN-001-BRIDGE-DEMO` fixed preset frozen draft flow 완료
   - SCN-001 continuity panel 완료
-- 2026-04-29 main `85d10fa` integrated UI polish:
+- 2026-04-29 main visual checkpoint `85d10fa` integrated UI polish:
   - `DESIGN.md` is the current visual guide: token-first,
     neutral/dense/evidence-led, with disclaimers and uncertainty prominent.
   - Before first screen is upload-focused, local server/demo copy is removed,
@@ -137,12 +137,15 @@
     endpoint, and Step 3 full retention lifecycle remain unchanged/NOT opened.
 - SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행한다.
 
-### Current Frontend/Demo State (2026-05-02)
+### Current Frontend/Demo State (2026-05-04)
 
 현재 `main` 기준 hash는
-`56d71e7cd76d27222e31fefb852c59844c002214`이다. 오늘까지의 UI/UX
-workspace 정리는 frontend-only polish이며 backend/API/schema/storage/Auth,
-Bridge data boundary, Web Storage policy는 변경하지 않았다.
+`e79fa68c1d24be9a7b98f254372349f4a7fc0dcf`이다. `56d71e7`은 2026-05-02
+frontend workspace polish checkpoint이고, 이후 `34e2cf0`/`e79fa68`은
+workspace/draft-supported query scope와 architecture/status documentation
+alignment다. 오늘까지의 UI/UX workspace 정리는 frontend-only polish이며
+backend/API/schema/storage/Auth, Bridge data boundary, Web Storage policy는
+변경하지 않았다.
 
 Route별 현재 상태:
 
@@ -439,7 +442,8 @@ MVP 최소 필요 API:
 12. `/after` saved history selector: 완료
 13. `/history` archive: 완료
 14. SCN-001 exact fixed-preset frozen draft: 완료
-15. integrated UI polish through `85d10fa`: 완료
+15. integrated UI polish through visual checkpoint `85d10fa` and current
+    docs/code checkpoint `e79fa68`: 완료
 16. 독립 `/bridge` / Recovery: 보류
 
 우선순위 기준:

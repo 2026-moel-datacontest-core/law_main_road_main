@@ -107,26 +107,28 @@ Do not use abstract gradient-only hero art.
 
 ### Known Legacy Drift
 
-The following files predate this direction and visually contradict it. They
-should be reworked, not used as references:
+The following notes track remaining or recently reduced drift. These files
+should be audited against the token-first direction when touched, not used as
+authoritative visual references:
 
-- `frontend/src/components/before/ResultPanel.module.css` uses a dark gradient
-  hero card, decorative blur/glow treatment, large radii, and route-local hex
-  colors. Removing the dark surface requires auditing
+- `frontend/src/components/before/ResultPanel.module.css` has already moved
+  away from the earlier dark gradient hero surface and now mostly uses
+  `--kl-*` tokens. If this area changes again, still audit
   `frontend/src/app/before/page.module.css` `.bridgeCta*` rules in the same
-  patch, because those rules currently assume light text on a dark background.
-- `frontend/src/components/before/UploadPanel.module.css` uses gradient
-  dropzones/buttons, pill-like radii, hover lift effects, and route-local color
-  values.
-- `frontend/src/components/before/AccessibilityPanel.module.css` uses gradient
-  panel surfaces, large radii, and route-local color values.
-- `frontend/src/components/draft/DocumentPreview.module.css` uses a gradient
-  document surface, large radius, hardcoded colors, and shadow treatment that
-  weakens the legal document workspace tone. Its `@media print` rules and
-  `.printDisclaimer` behavior are part of the SCN-004 print/disclaimer freeze
-  and must not be removed.
-- `frontend/src/components/auth/LoginButton.module.css` redefines primary and
-  status colors outside the `--kl-*` token surface.
+  patch because they were historically coupled to the result surface.
+- `frontend/src/components/before/UploadPanel.module.css` no longer uses the
+  earlier broad gradient dropzone/button treatment, but it still carries local
+  shadow treatments and upload-specific interaction styling that should be
+  checked against the dense workspace tone when modified.
+- `frontend/src/components/before/AccessibilityPanel.module.css` is mostly on
+  the `--kl-*` surface now; keep it neutral and operational if touched.
+- `frontend/src/components/draft/DocumentPreview.module.css` still contains
+  hardcoded print/document colors and shadow treatment. Its `@media print`
+  rules and `.printDisclaimer` behavior are part of the SCN-004
+  print/disclaimer freeze and must not be removed.
+- `frontend/src/components/auth/LoginButton.module.css` is token-aligned in the
+  current implementation. Keep future auth-state styling inside the `--kl-*`
+  token surface.
 
 Polish patches should bring these files into the `--kl-*` token surface. Do not
 treat their current visual output as the approved baseline.
@@ -467,10 +469,9 @@ Verification for design-only changes:
 - When touching `frontend/src/components/draft/DocumentPreview.*`, preserve the
   `@media print` block and `.printDisclaimer` print behavior. Losing these can
   silently break the SCN-004 print/disclaimer flow without failing build.
-- When touching `frontend/src/components/before/ResultPanel.*` or removing its
-  dark hero surface, audit `frontend/src/app/before/page.module.css`
-  `.bridgeCta*` rules in the same patch; their current light text colors assume
-  a dark background.
+- When touching `frontend/src/components/before/ResultPanel.*`, audit
+  `frontend/src/app/before/page.module.css` `.bridgeCta*` rules in the same
+  patch because this area was historically coupled to the result surface.
 - Do not rewrite route-level layout JSX as part of a CSS polish patch. CSS-only
   patches preserve route gating, history selector logic, freeze policies, and
   saved-history privacy more reliably than JSX rewrites.

@@ -111,7 +111,7 @@
   saved history selector, `/history` record archive, and MVP soft-delete.
 - exact `SCN-001-BRIDGE-DEMO` fixed preset now provides frontend-local
   deterministic `workplace_change_reason_summary` frozen draft flow.
-- latest main `85d10fa` completes integrated frontend UI polish and blocker
+- visual checkpoint `85d10fa` completes integrated frontend UI polish and blocker
   fixes:
   - Before first screen is upload-focused, local server/demo copy is removed,
     examples remain available, analysis loading scroll and OCR 1~2분 guidance are
@@ -128,6 +128,9 @@
 - live/backend SCN-001 document draft generation, protected SCN-001 draft
   endpoint, independent `/bridge`, Recovery, SCN-005 frontend expansion, and
   Step 3 full retention lifecycle remain not opened.
+- 2026-05-04 current main is `e79fa68`; later workspace/draft-scope
+  documentation alignment did not change backend/API/schema/Auth/Bridge/Web
+  Storage boundaries.
 
 ## Historical Status Snapshot
 
@@ -225,7 +228,9 @@
   - `after_artifact_runs.user_id` / `after_artifact_runs.source_bridge_run_id` linkage
 - Firebase Auth MVP persistence는 `inMemoryPersistence`다. token/auth state를 `localStorage`나 `sessionStorage`에 저장하지 않으며, `browserSessionPersistence`는 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - presentation-local preset 완료:
-  - `SCN-001-BRIDGE-DEMO`: Before/Bridge handoff 설명용 answer-only
+  - `SCN-001-BRIDGE-DEMO`: exact fixed path만 frontend-local
+    `workplace_change_reason_summary` frozen draft flow를 제공하며,
+    modified/live and Bridge-origin paths는 answer-only
   - `SCN-004-DEMO-FREEZE`: main demo / document draft freeze용
 - SCN-004 free input document eligibility guard 완료
 - SCN-004 fixed/free input/draft flow unchanged

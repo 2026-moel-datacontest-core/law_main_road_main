@@ -1,6 +1,6 @@
 # System Architecture
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 ## Stack
 
@@ -14,7 +14,7 @@
 | Frontend | Next.js App Router, React, TypeScript |
 | Local environment | WSL Ubuntu + conda |
 
-Latest main checkpoint: `85d10fa`
+Latest main checkpoint: `e79fa68`
 
 ## High-level Flow
 
@@ -95,8 +95,10 @@ Current visual baseline:
 
 - `DESIGN.md` is the visual guide.
 - Components use the local `--kl-*` token surface.
-- Current polish through `85d10fa` is frontend-only and does not alter backend
-  schema, auth persistence, Web Storage policy, or public API contracts.
+- Current polish through visual checkpoint `85d10fa`, plus later workspace and
+  draft-scope documentation alignment through `e79fa68`, is frontend/docs-only
+  and does not alter backend schema, auth persistence, Web Storage policy, or
+  public API contracts.
 - `DESIGN.md`
 
 Visual/UI state:

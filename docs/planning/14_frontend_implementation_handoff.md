@@ -1,6 +1,6 @@
 # Frontend Implementation Handoff — K-Labor Shield SCN-004 Demo
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 대상: Codex / QA handoff
 범위: SCN-004 After flow (4 routes)
 
@@ -8,7 +8,7 @@
 
 ## 0. Current Implementation Status
 
-이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 2026-04-24에는 SCN-001 Phase 6/7 상태와 freeze 보호 정책을 추가 반영했다. 2026-04-28에는 최신 main `fdde441` 기준 visual redesign, Before progress UX, SCN-001 case record fold, main login priority를 반영했다. 2026-04-29에는 최신 main `85d10fa` 기준 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer fixes, and accessibility legal-basis blocker fix를 반영했다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
+이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 2026-04-24에는 SCN-001 Phase 6/7 상태와 freeze 보호 정책을 추가 반영했다. 2026-04-28에는 최신 main `fdde441` 기준 visual redesign, Before progress UX, SCN-001 case record fold, main login priority를 반영했다. 2026-04-29에는 visual checkpoint `85d10fa` 기준 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer fixes, and accessibility legal-basis blocker fix를 반영했다. 2026-05-04 기준 current main은 `e79fa68`이며, 이후 workspace/draft-supported scope documentation alignment는 backend/API/schema/Auth/Bridge/Web Storage policy를 변경하지 않았다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
 
 현재 코드 위치:
 
@@ -37,10 +37,11 @@
   - preset exact path는 fixed `AnswerResponse` fixture를 사용하고 `/api/v1/answer`를 호출하지 않음
   - preset modified path는 live `/api/v1/answer`를 `recommendedTopK`, `ef_search=100`으로 호출
   - free input path는 live `/api/v1/answer`를 `top_k=5`, `ef_search=100`으로 호출
-  - `SCN-001-BRIDGE-DEMO`는 eval `SCN-001-Q3`이 아닌 Before/Bridge 발표 연결용 query를 쓰며 fixed/live 여부와 관계없이 answer-only
+  - `SCN-001-BRIDGE-DEMO`는 eval `SCN-001-Q3`이 아닌 Before/Bridge 발표 연결용 query를 쓰며 exact fixed path에서만 frontend-local `workplace_change_reason_summary` frozen draft flow를 제공한다. Modified/live 및 Bridge-origin paths는 answer-only / draft disabled다.
   - `SCN-004-DEMO-FREEZE`는 eval `SCN-004-Q1`이 아닌 document draft freeze query를 쓰며 fixed/live 여부와 관계없이 기존 SCN-004 draft eligibility 적용
   - SCN-005는 현재 UI preset에서 제외하고 후속 확장 후보로만 유지
-- Latest integrated frontend visual/UI polish through `85d10fa`
+- Latest integrated frontend visual/UI polish through visual checkpoint `85d10fa`
+  and current docs/code checkpoint `e79fa68`
   - DESIGN.md is the current visual guide: token-first,
     neutral/dense/evidence-led, with disclaimers/uncertainty prominent
   - visual foundation token alignment
@@ -181,7 +182,7 @@ live `/api/v1/answer` 호출 시 `ef_search`는 항상 100. preset exact path는
 - `/after/intake` — 사건 정보 입력
 - `/after/draft` — 문서 초안 결과
 
-**Scope note**: 이 문서는 이전 단계에서 작성된 SCN-004 중심 handoff / demo freeze 기준서다. 현재 frontend에는 `/before`와 SCN-001 Before -> Bridge -> After answer-only handoff가 구현되어 있지만, 이 문서의 직접 QA 범위는 SCN-004 4-route flow다. SCN-001 document draft는 활성화하지 않는다.
+**Scope note**: 이 문서는 이전 단계에서 작성된 SCN-004 중심 handoff / demo freeze 기준서다. 현재 frontend에는 `/before`와 SCN-001 Before -> Bridge -> After answer handoff가 구현되어 있지만, 이 문서의 직접 QA 범위는 SCN-004 4-route flow다. SCN-001 live/backend document draft generation과 protected SCN-001 draft endpoint는 활성화하지 않는다. 완료된 예외는 exact `SCN-001-BRIDGE-DEMO` fixed preset의 frontend-local frozen draft flow뿐이다.
 
 ### 지원 문서 타입 (SCN-004)
 
@@ -232,17 +233,21 @@ Step 1: /after
 Step 2: /after/result
   answer, key_points, cautions, cited_articles 표시
   SCN-004 draft 지원 상태면 2개 문서 타입 중 1개 선택 (radio tile)
-  SCN-001-BRIDGE-DEMO preset은 answer-only 안내 표시
+  exact SCN-001-BRIDGE-DEMO fixed preset은 frontend-local 사업장 변경 사유 정리서 초안 선택 표시
+  modified/live SCN-001 및 Bridge-origin result는 answer-only 안내 표시
   "사건 정보 입력하기" 클릭
 
 Step 3: /after/intake
-  selected_document_type에 따라 입력 폼 분기
+  SCN-004 selected_document_type에 따라 입력 폼 분기
   빈 필드 허용 (missing_fields는 API 응답이 처리)
-  "문서 초안 생성하기" 클릭 → POST /api/v1/documents/draft
+  SCN-004 "문서 초안 생성하기" 클릭 → POST /api/v1/documents/draft
+  exact SCN-001-BRIDGE-DEMO fixed path → frontend-local deterministic draft 생성
+  exact SCN-001-BRIDGE-DEMO fixed path는 /api/v1/documents/draft를 호출하지 않음
 
 Step 4: /after/draft
   rendered_text 전체 초안 표시
   missing_fields / cautions / evidence_checklist / cited_articles 표시
+  exact SCN-001-BRIDGE-DEMO fixed draft도 동일한 copy/print/display surface에서 frontend-local 초안을 표시
   복사 / 인쇄 / 수정 / 다른 문서 타입 / 처음으로 돌아가기 제공
 ```
 
@@ -1241,7 +1246,7 @@ uvicorn backend.main:app --reload
 - Tailwind CSS 설치 금지
 - `--kl-*`와 `--cds-*` token prefix 혼용 금지 (`--kl-*` canonical)
 - SCN-005 문서 타입은 SCN-004 freeze 기준을 유지한 별도 작업으로 진행 가능
-- SCN-001 문서 타입 구현 금지 (팀원 Before / Bridge contract 확인 전 범위 아님)
+- SCN-001 live/backend 문서 타입 또는 protected draft endpoint 구현 금지. Exact fixed `SCN-001-BRIDGE-DEMO` frontend-local `workplace_change_reason_summary` frozen draft path는 완료된 예외로 보존한다.
 - `/bridge` 화면 구현 금지 (현재 freeze 범위 아님). `/before`는 repo에 포함되지만 이 handoff 문서의 직접 구현 범위는 아니다.
 - 법률 판단 확정 문구 하드코딩 금지 ("위법 확정", "반드시 승소" 등)
 - cited_articles 없는 법률 답변을 결과 화면에 표시 금지
@@ -1275,4 +1280,4 @@ uvicorn backend.main:app --reload
 
 ---
 
-*이 문서는 2026-04-29 기준 K-Labor Shield SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록, 2026-04-20 presentation-local preset 기준, 2026-04-24 SCN-001 protected answer/linkage 기준, 2026-04-28 `fdde441` visual/progress/history polish 기준은 evolution history로 보존한다. 최신 main `85d10fa`까지의 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer/accessibility blocker fixes는 frontend-only 상태이며 backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*
+*이 문서는 2026-05-04 기준 K-Labor Shield SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록, 2026-04-20 presentation-local preset 기준, 2026-04-24 SCN-001 protected answer/linkage 기준, 2026-04-28 `fdde441` visual/progress/history polish 기준, 2026-04-29 visual checkpoint `85d10fa` 기준은 evolution history로 보존한다. Current main `e79fa68`까지의 workspace/draft-scope documentation alignment는 frontend/backend public contract를 변경하지 않았으며, Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer/accessibility blocker fixes는 frontend-only 상태다. Backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*

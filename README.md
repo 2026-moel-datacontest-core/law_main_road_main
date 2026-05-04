@@ -8,7 +8,7 @@ SCN-001 Firebase Auth 기반 Before/Bridge/After 연결, 기록 조회/삭제 UI
 
 ## Current Status
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 - law corpus: `backend/data/law_chunks/all_chunks.json`
 - selected snapshot: `selected_as_of = 2026-04-11`
@@ -18,7 +18,7 @@ SCN-001 Firebase Auth 기반 Before/Bridge/After 연결, 기록 조회/삭제 UI
 - auth: Firebase Auth Google Sign-In + backend Firebase Admin verification
 - answer model default: `gemini-2.5-flash`
 - embedding model default: `gemini-embedding-001`, `768` dimensions
-- latest main checkpoint: `85d10fa`
+- latest main checkpoint: `e79fa68`
 
 Implemented user routes:
 
@@ -38,7 +38,8 @@ Main implemented flows:
 - SCN-001 protected history archive and MVP soft-delete
 - SCN-001 exact fixed-preset frontend-local frozen draft flow
 - SCN-004 exact fixed-preset answer fixture for stable demo rehearsal
-- integrated frontend UI polish through `85d10fa`:
+- integrated frontend UI polish through visual checkpoint `85d10fa`, with
+  later workspace/draft-scope documentation alignment through `e79fa68`:
   - Before first screen is upload-focused, removes local server/demo copy,
     preserves examples, improves loading scroll and OCR 1~2분 guidance, cleans
     result/accessibility layout, and removes hardcoded default accessibility

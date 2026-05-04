@@ -8,7 +8,7 @@
 
 ## 현재 진행 상태
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 현재 `ops` 문서 기준으로 정리된 상태는 아래와 같다.
 
@@ -34,11 +34,13 @@
   user는 collapsible saved history section에서 saved Bridge를 선택할 수 있고,
   displayed safe subset만 Bridge handoff memory state에 추가된다. `/after` history
   list의 Before/Bridge soft-delete는 기존 protected DELETE helper를 사용한다.
-- 최신 frontend history polish 반영: `85d10fa` 기준 `/after` saved history와
+- 최신 frontend history polish 반영: visual checkpoint `85d10fa` 기준 `/after` saved history와
   `/history`는 Before/Bridge 분리형 list/card가 아니라 사건 중심 compact summary
   + details/fold 구조다. 사건 요약, 확인된 쟁점, 참고할 법 조항 후보, 권장 다음
   단계, After 질문과 연결점을 한 카드에서 사용자 설명형 문장으로 보여준다.
-- 최신 main `85d10fa`까지 visual/UI polish 반영: DESIGN.md visual guide,
+- visual checkpoint는 `85d10fa`, current main 기준은 `e79fa68`이다.
+  visual/UI polish와 workspace/draft-scope docs/code alignment 반영:
+  DESIGN.md visual guide,
   visual foundation token alignment, home visual simplification, Main
   H1/lead/nav typography cleanup, compact flow strip, `/before`/`/after`/
   `/history` internal route chrome simplification, Before upload-first first
@@ -390,11 +392,12 @@ Continuity panel scope:
 5. `before` / `after` artifact의 향후 GCS 전환 기준 정리
 6. Cloud Run 마이그레이션 시 필요한 환경 변수/시크릿 목록 별도 문서화
 
-Step 2B-3, Step 3 full retention lifecycle implementation, live/backend SCN-001
-document draft implementation은 아직 열지 않는다. Frozen draft + continuity panel
-browser rehearsal/evidence finalization 이후 순서는 SCN-001 demo rehearsal docs,
-SCN-001 live document draft design/type/quality gate 재검토, live draft
-implementation, output quality stable 이후 별도 SCN-001 live draft freeze 순서로 둔다.
+Step 2B-3에 해당하는 `/after` saved history selector는 completed 상태다. Step 3
+full retention lifecycle implementation과 live/backend SCN-001 document draft
+implementation은 아직 열지 않는다. Frozen draft + continuity panel browser
+rehearsal/evidence finalization 이후 순서는 SCN-001 demo rehearsal docs, SCN-001
+live document draft design/type/quality gate 재검토, live draft implementation,
+output quality stable 이후 별도 SCN-001 live draft freeze 순서로 둔다.
 Protected SCN-001 draft endpoint path/method/schema, live SCN-001 draft generation,
 SCN-001 live draft freeze, hard delete, artifact physical deletion/file purge,
 retention lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence
