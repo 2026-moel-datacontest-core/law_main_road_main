@@ -1,6 +1,6 @@
 # Phase 2 — Data Foundation
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 ## 1. Goal
 
@@ -24,8 +24,8 @@ foundation을 만든다. 이 단계는 database infrastructure와 migration/seed
 | Item | Status |
 |---|---|
 | Phase type | Data infrastructure + DB bootstrap |
-| Primary Terraform root | `infra/environments/{env}/data` |
-| Primary module | `infra/modules/cloud-sql-postgres` |
+| Primary Terraform root | `infra/terraform/envs/{env}/data` |
+| Primary module | `infra/terraform/modules/cloud-sql-pgvector` |
 | Runtime traffic | none |
 | Backend Cloud Run | not deployed |
 | Frontend Cloud Run | not deployed |
@@ -70,10 +70,10 @@ blocked before Cloud SQL work.
 ### In Scope
 
 - `data` Terraform root.
-- `cloud-sql-postgres` module.
+- `cloud-sql-pgvector` module.
 - Cloud SQL PostgreSQL instance.
 - Application database shell.
-- Backup and PITR configuration for prod.
+- Dev backup retention 1-3 days and prod backup/PITR baseline configuration.
 - Cloud SQL connection metadata outputs.
 - Deletion protection policy for prod.
 - DB credential handling decision that avoids raw secret values in git.
@@ -102,14 +102,14 @@ blocked before Cloud SQL work.
 Create or maintain this layout.
 
 ```text
-infra/
+infra/terraform/
   modules/
-    cloud-sql-postgres/
+    cloud-sql-pgvector/
       main.tf
       variables.tf
       outputs.tf
       README.md
-  environments/
+  envs/
     dev/
       data/
         main.tf
@@ -126,8 +126,8 @@ infra/
         terraform.tfvars.example
 ```
 
-The module name is intentionally `cloud-sql-postgres`, not
-`cloud-sql-postgres-pgvector`.
+The module name `cloud-sql-pgvector` is a product-facing shorthand for the Cloud
+SQL PostgreSQL instance that hosts pgvector-backed tables.
 
 Reason:
 
@@ -140,11 +140,36 @@ Reason:
 
 | Root | Responsibility |
 |---|---|
-| `infra/environments/{env}/data` | Compose Cloud SQL module, consume foundation outputs, expose DB outputs for runtime/backend |
-| `infra/modules/cloud-sql-postgres` | Cloud SQL instance, database shell, backup settings, deletion protection, connection outputs |
+| `infra/terraform/envs/{env}/data` | Compose Cloud SQL module, consume foundation outputs, expose DB outputs for runtime/backend |
+| `infra/terraform/modules/cloud-sql-pgvector` | Cloud SQL instance, database shell, backup settings, deletion protection, connection outputs |
 
 Do not use `terraform apply -target` as the normal workflow. The `data` root is
 the phase boundary.
+
+## 7A. Terraform Authoring Map
+
+| Item | Phase 2 Contract |
+|---|---|
+| Terraform-managed resources | Cloud SQL PostgreSQL instance, application database shell, backup/PITR/deletion-protection settings, non-secret connection metadata outputs |
+| Manual prerequisites | Phase 1 outputs, DB sizing/cost approval, DB password Secret Manager version added outside Terraform, migration/seed execution authority |
+| Inputs/variables | `project_id`, `env`, `region`, `prefix`, labels, database name, Postgres version, tier, disk, backup/PITR, deletion protection |
+| Outputs | SQL instance name, connection name, region, database name, backup/PITR flags, DB secret names, Phase 3 pool guardrail values |
+| Secrets handling | no raw DB password or credential-bearing `DATABASE_URL` in Terraform state or outputs; `google_sql_user.password` requires explicit exception approval |
+| Apply order | consume Phase 1 remote state -> apply `envs/{env}/data` -> run migration/seed scripts separately |
+| Validation command candidates | Terraform fmt/validate/plan/apply; `gcloud sql ... describe`; Alembic head; `law_chunks` count/dimension/index SQL checks |
+| Rollback/delete policy | prefer backward-compatible migrations; never delete prod Cloud SQL as normal rollback; dev delete only after dependency review |
+| Do not manage yet | pgvector extension creation, schema migrations, vector indexes, `law_chunks` seed/import, embeddings, Cloud Run, WIF, custom domain/LB |
+
+## 7B. GitHub Issue Readiness
+
+| Field | Content |
+|---|---|
+| Issue title | Phase 2: Cloud SQL data foundation and migration/seed runbook |
+| Scope | Add data Terraform root/module and document/run DB migration, pgvector/index verification, corpus seed/import, and Cloud SQL connection guardrails |
+| Acceptance criteria | Cloud SQL exists; app DB exists; migrations and seed checks pass; `1722` chunks and `selected_as_of = 2026-04-11` verified; Phase 3 receives non-secret outputs |
+| Forbidden changes | backend/frontend API contracts, RAG behavior changes, SCN-001 live/backend draft, raw secrets in Terraform, Cloud Run deploy, Terraform-owned schema/data mutation |
+| Validation | Terraform checks plus Alembic, seed, embedding, index, and SQL verification candidates |
+| Rollback | backup before destructive changes; re-run idempotent seed for corpus mistakes; do not drop prod DB/tables as normal rollback |
 
 ## 8. Terraform Owns
 
@@ -229,7 +254,7 @@ outside Terraform state.
 
 ## 12. Module Contract
 
-`infra/modules/cloud-sql-postgres` should expose a small, explicit contract.
+`infra/terraform/modules/cloud-sql-pgvector` should expose a small, explicit contract.
 
 ### Inputs
 
@@ -237,7 +262,7 @@ outside Terraform state.
 |---|---|---|
 | `project_id` | `my-gcp-project` | required |
 | `env` | `dev` / `prod` | required |
-| `prefix` | `kls` | required |
+| `prefix` | `lmr` | required |
 | `region` | `asia-northeast3` | required |
 | `labels` | common labels | required |
 | `database_name` | `klabor` | required |
@@ -247,8 +272,8 @@ outside Terraform state.
 | `disk_type` | `PD_SSD` or chosen default | document cost tradeoff |
 | `disk_autoresize` | `true` / `false` | prod usually true with max policy if supported |
 | `availability_type` | `ZONAL` / `REGIONAL` | `ZONAL` acceptable for portfolio MVP |
-| `backup_enabled` | `true` for prod | dev can be cheaper |
-| `pitr_enabled` | cost-dependent | prod preferred if affordable |
+| `backup_enabled` | dev 1-3 days; prod 7-day baseline | exact dev setting decided before Phase 2 apply |
+| `pitr_enabled` | prod-only baseline | cost exception allowed before prod opens |
 | `deletion_protection` | `true` for prod | avoid accidental deletion |
 
 ### Outputs
@@ -274,9 +299,9 @@ Recommended starting point:
 |---|---|---|
 | Region | `asia-northeast3` | `asia-northeast3` |
 | Availability | `ZONAL` | `ZONAL` first; `REGIONAL` later if needed |
-| Min storage | small | small, monitored |
-| Backup | optional/cost-aware | enabled |
-| PITR | optional | enabled if cost allows |
+| Tier/storage | minimum viable, decided before Phase 2 apply | small production tier when prod opens |
+| Backup | 1-3 day retention | 7-day baseline |
+| PITR | disabled initially | enabled unless a cost exception is approved before prod opens |
 | Deletion protection | optional | enabled |
 | Public IP | avoid broad exposure | avoid broad exposure |
 | Connector path | Cloud SQL connector/proxy | Cloud SQL connector |
@@ -289,15 +314,15 @@ it as Phase 7 hardening unless a real deployment constraint requires it earlier.
 Follow the global naming convention.
 
 ```text
-kls-{env}-sql
-kls-{env}-db
+lmr-{env}-sql
+lmr-{env}-db
 ```
 
 Labels:
 
 | Label | Value |
 |---|---|
-| `app` | `k-labor-shield` |
+| `app` | `law-main-road` |
 | `env` | `dev` / `prod` |
 | `managed_by` | `terraform` |
 | `owner` | `portfolio` |
@@ -310,7 +335,7 @@ shape and document the final names in the phase output note.
 Terraform apply should be separate from DB migration.
 
 ```bash
-cd infra/environments/{env}/data
+cd infra/terraform/envs/{env}/data
 terraform init
 terraform fmt -check
 terraform validate
@@ -321,8 +346,8 @@ terraform apply
 Expected follow-up checks:
 
 ```bash
-gcloud sql instances describe kls-{env}-sql --project ...
-gcloud sql databases list --instance kls-{env}-sql --project ...
+gcloud sql instances describe lmr-{env}-sql --project ...
+gcloud sql databases list --instance lmr-{env}-sql --project ...
 ```
 
 The exact instance name can differ if a suffix is required. Use Terraform outputs
@@ -336,7 +361,7 @@ Recommended local path before CI/CD exists:
 
 ```bash
 gcloud auth login
-gcloud sql connect kls-{env}-sql --database=klabor --user=...
+gcloud sql connect lmr-{env}-sql --database=klabor --user=...
 ```
 
 or use Cloud SQL Auth Proxy / connector according to the final implementation.
@@ -466,7 +491,7 @@ Target backend runtime controls:
 - `DB_MAX_OVERFLOW`
 - `DB_POOL_TIMEOUT_SECONDS`
 
-Docs-only code review on `2026-04-29` confirmed current `backend/app/db.py`
+Docs-only code review rechecked on `2026-05-04` confirmed current `backend/app/db.py`
 creates the SQLAlchemy engine from `DATABASE_URL` only. Therefore these values
 are Phase 2 output requirements and Phase 3 implementation/verification inputs,
 not proof that the current backend already enforces the pool cap.
@@ -527,7 +552,7 @@ Before Phase 2 is considered complete, check:
 
 Phase 2 is complete when:
 
-- `infra/environments/{env}/data` can run `terraform fmt -check`,
+- `infra/terraform/envs/{env}/data` can run `terraform fmt -check`,
   `terraform validate`, `terraform plan`, and `terraform apply`.
 - Cloud SQL instance exists in `asia-northeast3`.
 - Application database exists.
@@ -540,8 +565,9 @@ Phase 2 is complete when:
 - `selected_as_of = 2026-04-11` remains the active corpus marker.
 - Embedding dimension verification passes after the approved embedding run.
 - Phase 3 receives Cloud SQL connection outputs and pool guardrail values.
-- prod backup is enabled.
-- prod PITR is enabled if the cost decision allows it.
+- dev backup retention is 1-3 days.
+- prod backup retention baseline is 7 days.
+- prod PITR baseline is enabled unless a cost exception is approved before prod opens.
 
 ## 24. Rollback
 
@@ -568,7 +594,9 @@ Cloud SQL deletion:
 Phase 3 backend runtime is blocked if any of these are true.
 
 - Cloud SQL connection output is missing.
-- Database credential path is not decided.
+- Database credential path does not follow the Phase 0 finalized rule: Secret
+  Manager secret values are injected manually or through a separately approved
+  secure workflow outside Terraform state.
 - Migration cannot run idempotently.
 - `vector` extension verification fails.
 - HNSW/vector index verification fails.
@@ -577,7 +605,7 @@ Phase 3 backend runtime is blocked if any of these are true.
 - `selected_as_of` is not `2026-04-11`.
 - DB pool guardrail values are not selected.
 - Backend DB runtime support for the selected guardrail values, or an equivalent
-  reviewed connection cap, is not decided.
+  reviewed connection cap, is not selected before Phase 3 implementation.
 - Cloud SQL tier/max connections cannot support the planned Cloud Run max
   instances.
 
@@ -612,7 +640,8 @@ When Phase 2 is executed, record a short status note.
 
 ## 27. Do Not
 
-- Do not rename the module to `cloud-sql-postgres-pgvector`.
+- Do not make the `cloud-sql-pgvector` module create `pgvector` extension,
+  schema, indexes, seed data, or embeddings.
 - Do not make Terraform directly responsible for `pgvector` extension creation.
 - Do not run DB migration through Terraform `local-exec` as the default path.
 - Do not put raw DB passwords in Terraform, docs, or git.
@@ -634,7 +663,7 @@ docs/architecture/phase/phase2_data_foundation.md first.
 
 Implement Phase 2 only.
 
-Create the Terraform data root and cloud-sql-postgres module for Cloud SQL
+Create the Terraform data root and cloud-sql-pgvector module for Cloud SQL
 PostgreSQL in asia-northeast3. Keep pgvector extension, schema migration, vector
 index creation, law_chunks seed import, and embedding generation outside
 Terraform. Do not put raw DB passwords or full credential-bearing DATABASE_URL

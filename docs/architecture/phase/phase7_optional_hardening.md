@@ -1,6 +1,6 @@
 # Phase 7 — Optional Hardening
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 ## 1. Goal
 
@@ -103,7 +103,7 @@ phase first.
 
 | Candidate | Default | Primary Value | Main Risk |
 |---|---|---|---|
-| Custom domain / HTTPS Load Balancer | Defer | Stable public URL, centralized routing | Cost and Terraform complexity |
+| Custom domain / HTTPS Load Balancer | Phase 7A candidate | Stable portfolio URL, centralized routing | Cost, DNS, certificate, and Terraform complexity |
 | Cloud Armor | Defer | WAF/rate limit edge protection | Requires LB path; false positives |
 | Backend Cloud Run IAM auth | Defer | Non-public backend ingress | Browser frontend cannot directly call IAM-protected backend without topology change |
 | Private IP / VPC egress | Defer | Network isolation for Cloud SQL/private services | VPC complexity, connector cost, routing/debugging overhead |
@@ -139,8 +139,8 @@ candidate-specific roots when implementation begins.
 Recommended shape:
 
 ```text
-infra/
-├── environments/
+infra/terraform/
+├── envs/
 │   ├── dev/
 │   │   ├── edge/
 │   │   ├── networking/
@@ -152,7 +152,7 @@ infra/
 │       ├── api-gateway/
 │       └── jobs/
 └── modules/
-    ├── edge-load-balancer/
+    ├── load-balancer-domain/
     ├── cloud-armor-policy/
     ├── vpc-serverless-egress/
     ├── api-gateway/
@@ -163,6 +163,31 @@ infra/
 Use only the roots needed by the accepted candidate. For example, if Cloud Armor
 is opened, `edge/` can own the HTTPS Load Balancer and Armor policy. If only
 Cloud Run Jobs are opened, do not create `edge/` or `networking/`.
+
+## 8A. Terraform Authoring Map
+
+| Item | Phase 7 Contract |
+|---|---|
+| Terraform-managed resources | candidate-specific only, for example `load-balancer-domain`, Cloud Armor policy, VPC/serverless egress, API Gateway, Cloud Run Jobs/Workflows, audit sinks |
+| Manual prerequisites | Phase 1-6 stable evidence or explicit exception, candidate design approval, cost approval, rollback plan, DNS/registrar/admin ownership where relevant |
+| Inputs/variables | candidate-specific service names, domains, DNS targets, certificate settings, policies, service accounts, env/region labels |
+| Outputs | candidate URLs/records/policy ids/job names plus rollback references; redact internal cloud inventory in public evidence |
+| Secrets handling | no secret values, key JSON, raw logs, raw artifacts, DB credentials, Firebase private keys, or unsafe exported logs in Terraform/state/public notes |
+| Apply order | approve candidate design note -> apply isolated candidate root -> run candidate smoke/security/load checks -> record rollback path |
+| Validation command candidates | candidate-specific Terraform checks, domain/DNS/certificate checks, route/API/auth smoke, security/load checks where applicable |
+| Rollback/delete policy | return to Phase 1-6 baseline; preserve Cloud Run revisions and DB; undo DNS/edge/network routing before deleting shared resources |
+| Do not manage yet | unrelated hardening candidates, SCN/API/auth behavior changes, Local LLM/GPU/self-hosted inference, Step 3 full retention lifecycle unless separate governance design opens it |
+
+## 8B. GitHub Issue Readiness
+
+| Field | Content |
+|---|---|
+| Issue title | Phase 7A: Optional custom domain / HTTPS Load Balancer launch |
+| Scope | Create a candidate-specific design and, only after approval, implement domain/LB resources, DNS instructions, Firebase Authorized Domains, CORS update, smoke, and rollback |
+| Acceptance criteria | candidate preserves SCN/API/auth/storage boundaries; cost and DNS ownership are approved; custom domain smoke passes; rollback to Cloud Run direct URL is documented |
+| Forbidden changes | making Phase 7 mandatory, mixing with Phase 1-6 fixes, API contract changes, auth persistence changes, raw inventory exposure, Local LLM/GPU/self-hosted model serving |
+| Validation | candidate Terraform checks, DNS/cert checks, route/API/auth smoke, public evidence redaction review |
+| Rollback | revert DNS/edge routing or frontend API base/CORS through the owning roots; keep direct Cloud Run URLs available until rollback is separately redesigned |
 
 ## 9. Terraform vs CI vs Admin Responsibility
 
@@ -180,92 +205,132 @@ Cloud Run Jobs are opened, do not create `edge/` or `networking/`.
 Secret values, DNS registrar changes, production traffic cutover, and emergency
 rollback decisions remain administrator actions.
 
-## 10. Candidate A — Custom Domain / HTTPS Load Balancer
+## 10. Candidate A — Custom Domain / HTTPS Load Balancer / Portfolio Launch
 
 ### When To Open
 
 Open this candidate when a stable public domain is needed for portfolio review,
 public sharing, centralized routing, Cloud Armor, or future multi-service edge
-control.
+control. This is the preferred place to use a domain purchased through Gabia.
+
+Do not open this candidate before the Phase 4 Cloud Run `run.app` frontend smoke
+passes. Prefer opening it after Phase 5/6 when CI/CD, rollback notes, and basic
+observability already exist. If portfolio timing requires opening it earlier,
+record the missing Phase 5/6 evidence and do not claim full production readiness.
 
 ### Baseline Alternative
 
 Phase 1-6 can use Cloud Run managed HTTPS URLs:
 
 ```text
-https://kls-prod-frontend-<hash>-<region>.run.app
-https://kls-prod-backend-<hash>-<region>.run.app
+https://lmr-dev-frontend-<hash>-<region>.run.app
+https://lmr-dev-backend-<hash>-<region>.run.app
 ```
 
 This is acceptable for first migration. A custom domain is not required for
 basic production-oriented proof.
 
+Cloud Run domain mapping is not the preferred path for this project because the
+target region is `asia-northeast3` and the portfolio launch benefits from load
+balancer routing, managed certificate, and future Cloud Armor attachment.
+
 ### Possible Target
 
 ```text
 User
--> HTTPS Load Balancer / managed certificate / custom domain
+-> Gabia DNS
+-> Google external HTTPS Load Balancer / managed certificate
 -> serverless NEG
 -> Cloud Run frontend
 
 Frontend browser/API calls
--> Cloud Run backend URL or edge-routed backend path
+-> Cloud Run backend URL, or
+-> api.<domain> through the same edge path
 ```
 
-If the backend is also routed through the edge, define whether the public API
-base becomes:
+Recommended portfolio host split:
+
+| Host | Target | Default |
+|---|---|---|
+| `app.<domain>` or `www.<domain>` | frontend Cloud Run service through HTTPS Load Balancer | yes |
+| `api.<domain>` | backend Cloud Run service through HTTPS Load Balancer | preferred if budget/complexity is acceptable |
+| root apex | redirect or static landing later | defer unless needed |
+
+If the backend is routed through the edge, choose before frontend image build
+whether `NEXT_PUBLIC_API_BASE_URL` becomes:
 
 ```text
-https://app.example.com/api
+https://api.example.com
 ```
 
-or remains:
+or whether it remains the backend Cloud Run URL:
 
 ```text
-https://kls-prod-backend-<hash>-<region>.run.app
+https://lmr-dev-backend-<hash>-<region>.run.app
 ```
 
-Do not change `NEXT_PUBLIC_API_BASE_URL` routing casually; it affects frontend
-build-time configuration and CORS.
+Do not change `NEXT_PUBLIC_API_BASE_URL` routing casually. It is bundled into the
+frontend image and directly affects CORS, Firebase browser smoke, and rollback.
 
 ### Terraform Scope
 
 Likely resources:
 
 - global external HTTPS Load Balancer
-- serverless NEG for Cloud Run
+- serverless NEG for frontend Cloud Run
+- optional serverless NEG for backend Cloud Run
 - managed certificate
+- global static IP
 - forwarding rule
 - target HTTPS proxy
 - URL map
-- backend service
+- backend service or services
 - optional HTTP to HTTPS redirect
-- DNS record if Cloud DNS is used
+- DNS record only if Cloud DNS is selected; if Gabia DNS remains authoritative,
+  Terraform should output the required records but not mutate registrar DNS
 
 ### Admin Scope
 
-- Own or purchase domain.
-- Confirm DNS provider.
-- Add DNS records.
+- Own or purchase domain, for example through Gabia.
+- Confirm whether DNS remains in Gabia or is delegated to Cloud DNS.
+- Add required `A`/`AAAA`/`CNAME`/CAA records in the chosen DNS provider.
 - Approve cutover window.
 - Add final frontend custom domain to Firebase Authorized Domains.
+- If the backend uses `api.<domain>`, approve backend CORS update and frontend
+  image rebuild using that API base URL.
 
 ### Verification
 
-- Custom domain returns frontend.
-- `/after` route loads from custom domain.
-- `NEXT_PUBLIC_API_BASE_URL` points to the intended backend path.
+- Custom frontend domain returns the deployed frontend over HTTPS.
+- `/`, `/before`, `/after`, and `/history` load or guard safely from the custom
+  frontend domain.
+- If `api.<domain>` is used, `GET https://api.<domain>/health` passes.
+- `NEXT_PUBLIC_API_BASE_URL` points to the intended backend path and matches the
+  latest frontend image build.
+- Backend `BACKEND_CORS_ORIGIN_REGEX` allows only the approved frontend custom
+  domain, plus any explicitly documented rollback origin.
 - Google Sign-In does not fail with `auth/unauthorized-domain`.
 - SCN-004 exact preset remains frozen.
 - SCN-001 exact fixed preset remains frontend-local frozen draft path.
+- SCN-001 protected auth-negative smoke still rejects missing/invalid Firebase
+  Bearer tokens.
+- DNS record values, certificate provisioning status, and Firebase Authorized
+  Domain status are recorded in the Phase 7A status note.
+- Public portfolio screenshots/docs use only the custom domain and redacted
+  placeholders for project id, service account emails, bucket names, Cloud SQL
+  connection names, WIF provider names, and direct backend `run.app` URLs.
 - Cloud Run direct URLs are still usable for emergency rollback or explicitly
   disabled only after rollback is planned.
 
 ### Rollback
 
-- Repoint DNS to previous target or use Cloud Run direct URL.
-- Remove or detach LB routing after traffic is stable elsewhere.
+- Repoint DNS to previous target, lower TTL before planned cutover, or use Cloud
+  Run direct URL.
+- Shift load balancer routing back to the previous backend service or detach LB
+  routing after traffic is stable elsewhere.
 - Keep Cloud Run revisions unchanged during edge rollback.
+- Revert `NEXT_PUBLIC_API_BASE_URL` and backend CORS only through the relevant
+  Phase 4/3 roots if the backend public host changes.
 - Record any Terraform state changes if emergency console edits are used.
 
 ### Risks
@@ -273,7 +338,13 @@ Likely resources:
 - Extra monthly cost.
 - More Terraform resources and slower applies.
 - DNS propagation delay.
+- Managed certificate provisioning delay.
+- Gabia DNS/manual record drift if DNS is not managed by Terraform.
 - Firebase Authorized Domains must be updated after final domain is known.
+- API base URL is build-time config, so backend host changes require a frontend
+  rebuild/redeploy.
+- Public launch evidence can accidentally expose cloud inventory through browser
+  devtools, screenshots, Terraform outputs, or GitHub Actions summaries.
 
 ## 11. Candidate B — Cloud Armor
 
@@ -866,6 +937,9 @@ Phase 7 documentation is acceptable when:
 - Terraform ownership is candidate-specific.
 - Admin/manual actions are separated from Terraform.
 - Candidate risks are visible before implementation.
+- Phase 7A custom domain launch does not become a hidden Phase 4 requirement.
+- Phase 7A documents DNS ownership, certificate status, Firebase Authorized
+  Domains, CORS, frontend API base URL, and rollback before traffic cutover.
 - Backend IAM auth caveat is explicitly documented.
 - Private IP/VPC candidate does not become a hidden Phase 2/3 requirement.
 - Cloud Armor/API Gateway are not presented as mandatory first migration items.
@@ -886,6 +960,9 @@ Do not approve a Phase 7 candidate if any of these are true.
 - It creates a new cost center without approval.
 - It stores secrets in Terraform state.
 - It exports unsafe logs.
+- It exposes project id/number, service account emails, private bucket names,
+  Cloud SQL connection names, Secret Manager names, WIF provider names, direct
+  backend `run.app` URLs, or credential material in public portfolio evidence.
 - It weakens Firebase/Auth or raw data storage boundaries.
 - It reintroduces Local LLM or self-hosted model serving.
 - It mixes SCN-004 freeze changes with infrastructure hardening.
@@ -904,6 +981,12 @@ When a Phase 7 candidate is evaluated or implemented, record a short status note
 - Terraform root:
 - Modules/resources:
 - Runtime services affected:
+- Custom domain / DNS provider:
+- Certificate status:
+- Firebase Authorized Domain:
+- Frontend API base URL:
+- Backend CORS value:
+- Public evidence redaction:
 - API contract impact:
 - Auth impact:
 - Data/storage impact:

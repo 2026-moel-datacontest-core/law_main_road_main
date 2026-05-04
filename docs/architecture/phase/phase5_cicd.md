@@ -1,6 +1,6 @@
 # Phase 5 — CI/CD
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 ## 1. Goal
 
@@ -23,8 +23,8 @@ Federation으로 GCP에 인증하고, PR 검증과 main/prod 배포를 분리하
 | Item | Status |
 |---|---|
 | Phase type | CI/CD and keyless deploy automation |
-| Primary Terraform root | `infra/environments/{env}/cicd` |
-| Primary modules | `workload-identity-federation`, deploy IAM bindings |
+| Primary Terraform root | `infra/terraform/envs/{env}/cicd` |
+| Primary modules | `iam-wif`, deploy IAM bindings |
 | CI platform | GitHub Actions |
 | GCP auth | Workload Identity Federation |
 | Required previous phase | [`phase4_frontend_runtime.md`](phase4_frontend_runtime.md) |
@@ -103,9 +103,9 @@ WIF conditions should bind to the real repository.
 Create or maintain this layout.
 
 ```text
-infra/
+infra/terraform/
   modules/
-    workload-identity-federation/
+    iam-wif/
       main.tf
       variables.tf
       outputs.tf
@@ -115,7 +115,7 @@ infra/
       variables.tf
       outputs.tf
       README.md
-  environments/
+  envs/
     dev/
       cicd/
         main.tf
@@ -144,15 +144,40 @@ Suggested workflow files for the later implementation:
 
 This phase document does not create those files. It defines what they should do.
 
+## 6A. Terraform Authoring Map
+
+| Item | Phase 5 Contract |
+|---|---|
+| Terraform-managed resources | GitHub Workload Identity Federation pool/provider/bindings, `github-actions-sa` impersonation policy, optional `github-actions-sa -> terraform-sa` path, Artifact Registry writer IAM, state access IAM, deploy/serviceAccountUser IAM |
+| Manual prerequisites | Phase 3/4 stable runtime, real GitHub owner/repo, protected environment policy, rollback target revisions, initial local apply auth |
+| Inputs/variables | project id/number, env, region, repo owner/name, allowed refs/environments, service account emails, Artifact Registry repo, state bucket name |
+| Outputs | WIF provider resource name, GitHub Actions service account email, Terraform service account email, workflow variable names, deploy permission summary |
+| Secrets handling | no service account key JSON in repo or GitHub Secrets; DB/Firebase Admin values stay in Secret Manager; mask or omit cloud inventory in public summaries |
+| Apply order | initial local/impersonated apply of `envs/{env}/cicd` -> configure GitHub variables/environments -> PR workflow -> deploy workflow dry run -> rollback workflow/runbook |
+| Validation command candidates | Terraform fmt/validate/plan/apply, OIDC auth dry run, PR checks, deploy smoke, rollback dispatch/runbook smoke |
+| Rollback/delete policy | remove WIF/deploy grants through Terraform if needed; application rollback remains Cloud Run revision rollback; do not delete rollback images |
+| Do not manage yet | runtime feature changes, destructive DB migrations, secret values, service account key JSON, public API changes, SCN-001 live/backend draft |
+
+## 6B. GitHub Issue Readiness
+
+| Field | Content |
+|---|---|
+| Issue title | Phase 5: GitHub Actions WIF keyless CI/CD |
+| Scope | Add keyless GitHub Actions authentication, CI validation, deploy workflow, post-deploy smoke, and rollback workflow/runbook |
+| Acceptance criteria | WIF works for real repo; no SA key JSON; PRs cannot apply; prod apply needs approval; deploy uses immutable image digests; failed smoke blocks promotion |
+| Forbidden changes | service account key JSON, GCP creds in GitHub Secrets, unprotected prod apply, runtime API changes, destructive DB auto-migrations |
+| Validation | Terraform checks, WIF auth dry run, PR check run, deploy dry run/apply, post-deploy smoke, rollback rehearsal |
+| Rollback | disable/remove WIF bindings or workflows through Terraform; shift Cloud Run traffic to previous stable revision for app failures |
+
 ## 7. First Apply Bootstrap Note
 
 The `cicd` root creates the WIF path that CI will later use. Therefore the first
-apply of `infra/environments/{env}/cicd` cannot depend on that same WIF path.
+apply of `infra/terraform/envs/{env}/cicd` cannot depend on that same WIF path.
 
 Initial apply:
 
 ```bash
-cd infra/environments/{env}/cicd
+cd infra/terraform/envs/{env}/cicd
 terraform init
 terraform fmt -check
 terraform validate
@@ -328,6 +353,7 @@ Minimum CI security checks:
 | Dockerfile scan | optional image/package risk signal |
 | Terraform validate | catch invalid IaC before deploy |
 | WIF no-key check | ensure no service account key JSON is required |
+| cloud identifier redaction check | prevent project/service-account/bucket/Cloud SQL/WIF/direct backend URL leaks in public artifacts |
 
 Acceptable tool choices can vary. Examples:
 
@@ -389,7 +415,7 @@ Apply order:
 3. `runtime/backend` again only when Phase 4 CORS update is part of the same
    controlled deploy.
 
-Do not run `infra/bootstrap/remote-state` from normal CI deploy workflows.
+Do not run `infra/terraform/bootstrap/remote-state` from normal CI deploy workflows.
 
 Do not auto-run destructive DB migrations in the normal deploy job. If a DB
 migration is required, use an explicit migration job or protected manual step
@@ -419,6 +445,20 @@ Secret values such as DB credentials and Firebase Admin fallback JSON should sta
 in Secret Manager, not GitHub Secrets. GitHub Actions may reference Secret
 Manager by name through Terraform/Cloud Run configuration, but should not print
 or store raw values.
+
+Public artifact redaction:
+
+- Treat GitHub Actions summaries, PR comments, public README snippets, portfolio
+  screenshots, and issue templates as public by default.
+- Do not print exact GCP project id/number, service account emails, artifact
+  bucket names, Cloud SQL connection names, Secret Manager resource names, WIF
+  provider full names, Terraform state bucket names, or direct backend `run.app`
+  URLs in public artifacts.
+- Use placeholders or approved custom domains in public output. Keep exact cloud
+  inventory in Terraform state, private environment settings, or private runbook
+  notes only.
+- Mask or omit Terraform outputs in workflow summaries if they include internal
+  cloud identifiers.
 
 ## 18. Post-Deploy Smoke
 
@@ -533,7 +573,7 @@ that does not exist.
 
 Phase 5 is complete when:
 
-- `infra/environments/{env}/cicd` can run `terraform fmt -check`,
+- `infra/terraform/envs/{env}/cicd` can run `terraform fmt -check`,
   `terraform validate`, `terraform plan`, and initial `terraform apply`.
 - Workload Identity Federation is configured for the real GitHub repo.
 - GitHub Actions can authenticate to GCP without service account key JSON.
@@ -550,6 +590,8 @@ Phase 5 is complete when:
 - Rollback workflow or runbook can shift backend/frontend traffic to a previous
   stable revision.
 - No GCP service account key JSON exists in GitHub Secrets or repo.
+- Workflow summaries, logs, and public release evidence do not expose internal
+  cloud identifiers or direct backend URLs beyond approved custom domains.
 
 ## 24. Rollback
 

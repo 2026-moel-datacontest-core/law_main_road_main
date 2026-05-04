@@ -12,6 +12,24 @@
 
 이 문서와 이후 추가할 `starting.sh`는 현재 구현을 실행하고 검증하기 위한 정리이며, 기존 `RAG`, `map`, `before/after` 처리 로직은 변경하지 않는다.
 
+Cloud migration / Terraform note:
+
+- 이 Quick Start는 로컬 실행 문서다. GCP resource 생성이나 Terraform 실행
+  절차가 아니다.
+- Cloud migration Terraform 작성 기준은
+  [docs/architecture/cloud_migration_phase_plan.md](../architecture/cloud_migration_phase_plan.md)
+  와 [docs/architecture/phase/README.md](../architecture/phase/README.md)를 따른다.
+- Quick Start 중에는 `terraform init/plan/apply/destroy`, `gcloud` resource
+  creation, service account key JSON 생성, secret value 출력/커밋을 하지 않는다.
+- `NEXT_PUBLIC_API_BASE_URL`은 frontend build-time public env이고, backend secret
+  env는 Secret Manager/runtime env 영역이다. Firebase public config는 public이지만
+  Authorized Domains 관리가 필요하다.
+- Cloud migration Phase 0 final decisions 기준으로 first cloud target은 `dev`
+  only이고 Terraform/resource prefix는 `lmr`다. `lmr-{env}-artifacts`는 bucket
+  naming pattern이지 backend env var 이름이 아니다. Future GCS adapter 후보 env
+  var는 `ARTIFACT_BUCKET_NAME`이지만 Phase 3 구현/검증 전에는 active runtime
+  config로 주입하지 않는다.
+
 ## 현재 프로젝트 개요
 
 이 저장소는 크게 두 흐름으로 구성된다.
@@ -190,8 +208,12 @@ VERTEX_ANSWER_MODEL=gemini-2.5-flash
   - 잘못된 GCP credential
 - 확인:
   ```bash
-  cat backend/.env
+  grep -E '^(DATABASE_URL|GCP_PROJECT|GCP_PROJECT_ID|GCP_LOCATION|GOOGLE_APPLICATION_CREDENTIALS|VERTEX_ANSWER_MODEL)=' backend/.env | cut -d= -f1 | sed 's/$/=set/'
   ```
+
+`backend/.env` 값 자체를 터미널, 이슈, 스크린샷, 공개 포트폴리오에 출력하지 않는다.
+특히 GCP project id, credential file path, DB URL, token, service account 관련
+값은 설정 여부만 확인한다.
 
 ## 4. PostgreSQL 준비
 

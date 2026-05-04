@@ -53,7 +53,7 @@
         <mxCell id="26" value="Vertex AI&lt;br&gt;Gemini embedding · answer · OCR/content review" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="1360" y="390" width="330" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="27" value="Cloud Storage Private Bucket&lt;br&gt;before-runs artifacts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#F97316;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="27" value="Cloud Storage Private Artifact Bucket&lt;br&gt;before-runs · after-runs artifacts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#F97316;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="1360" y="530" width="300" height="90" as="geometry" />
         </mxCell>
         <mxCell id="28" value="Secret Manager&lt;br&gt;DB/provider/runtime secrets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#16A34A;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
@@ -63,7 +63,7 @@
         <mxCell id="30" value="&lt;b&gt;Operations Platform&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;strokeWidth=2;align=left;verticalAlign=top;spacingTop=10;spacingLeft=14;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="60" y="800" width="1780" height="260" as="geometry" />
         </mxCell>
-        <mxCell id="31" value="Cloud Logging&lt;br&gt;structured app logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#059669;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="31" value="Cloud Logging&lt;br&gt;app/request logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#059669;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="130" y="880" width="250" height="85" as="geometry" />
         </mxCell>
         <mxCell id="32" value="Cloud Monitoring / Alerting&lt;br&gt;latency · error · provider timeout · DB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#0F766E;strokeWidth=2;fontSize=12;" vertex="1" parent="1">

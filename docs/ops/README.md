@@ -64,6 +64,37 @@
 - Before OCR stale/running review job failure guard 반영: stale OCR review jobs는
   failed 처리된다. Retry/backoff/full provider hardening은 별도 future runtime 후보다.
 - local secret/database ignore rules hardening 반영
+- cloud migration Terraform readiness 문서 정합화 진행 중: 실제 `.tf` 파일,
+  cloud resource, secret value, backend/frontend code 변경 없이
+  `docs/architecture/cloud_migration_*`와 `docs/architecture/phase/*`가 Phase
+  0~7 GitHub issue 작성 가능한 수준의 Terraform authoring contract를 담는다.
+  기준 layout은 future path인 `infra/terraform/envs/{dev,prod}`와 focused modules
+  (`cloud-run-service`, `cloud-sql-pgvector`, `artifact-bucket`, `iam-wif`,
+  `secret-manager`, optional `load-balancer-domain`)이며, docs-only 작업에서는
+  해당 directory/file을 만들지 않는다.
+- Phase 0 final decisions 반영: first cloud target은 `dev` only, initial GCP
+  model은 one project + env-prefixed resources, Terraform/resource prefix는
+  `lmr`, human-readable app label은 `law-main-road`다. 기존 코드/서비스 이름을
+  바꾸는 것이 아니라 cloud target naming 기준만 고정한다.
+- Secret value는 Terraform이 관리하지 않는다. Terraform은 Secret Manager
+  secret resource만 만들며 `google_secret_manager_secret_version`은 별도 보안
+  리뷰 승인 전까지 기본 금지다.
+- Artifact bucket은 env별 private bucket 1개이며 globally unique variant of
+  `lmr-{env}-artifacts` naming pattern을 쓴다. 이 pattern은 env var 이름이
+  아니고, `ARTIFACT_BUCKET_NAME`은 future GCS adapter의 candidate backend env
+  var일 뿐이다.
+- GCP human admin MFA와 shell/Python runbook boundary 반영: GCP Console,
+  `gcloud`, Terraform bootstrap, prod approval, DNS cutover, rollback에 쓰는
+  human account는 MFA/2-Step Verification이 필요하다. Cloud Run 중심 목표에는
+  EC2/GCE host fleet 구성이 없으므로 runbook automation은 future
+  `scripts/cloud/*`와 기존 `backend/verify/*` 재사용을 우선한다. 스크립트는
+  Terraform-owned resource 생성, secret value 저장, approval bypass 용도로
+  쓰지 않는다.
+- AWS `aws-mfa-main-guide1` UX를 참고한 GCP helper 후보는
+  `gcp-mfa-main-guide1/`로 문서화한다. GCP 버전은 OTP로 임시 access key를
+  발급하는 방식이 아니라 `gcloud auth login`, ADC, active project,
+  optional `terraform-sa` impersonation, MFA attestation을 확인하는 preflight
+  guide/script로 둔다.
 
 현재 코드/구조 기준으로 반영된 주요 상태:
 
@@ -195,7 +226,7 @@ Secret 파일과 public frontend env는 성격이 다르므로 섞지 않는다.
 |---|---|---:|---|
 | `backend/.env` | backend DB, Vertex, Firebase Admin 설정 | Yes | local env 파일. commit 금지 |
 | `frontend/.env.local` | Firebase Web SDK, frontend API base URL | No, but local-only | `NEXT_PUBLIC_*` 값은 browser bundle에 포함됨. repo commit 금지 |
-| `config/secrets/firebase-admin.json` 또는 `GOOGLE_APPLICATION_CREDENTIALS` 대상 JSON | Firebase Admin token verification, Vertex runtime credential | Yes | `backend/.env`가 가리키는 실제 파일이 clone에도 있어야 함 |
+| `config/secrets/firebase-admin.json` 또는 `GOOGLE_APPLICATION_CREDENTIALS` 대상 JSON | local smoke의 Firebase Admin token verification과 Vertex ADC | Yes | local 전용. Cloud Run runtime은 Vertex AI service account key JSON 없이 attached service identity / ADC를 사용해야 함 |
 
 `backend/.env`에서 현재 local smoke에 필요한 대표 key:
 
@@ -213,6 +244,13 @@ VERTEX_ANSWER_MODEL
 credential이 Vertex 권한도 가져야 answer / embedding live call이 통과한다.
 반대로 Vertex 전용 credential을 가리키면 Firebase Admin SDK도 그 ADC를 먼저 사용할
 수 있으므로 `/api/v1/auth/me` smoke가 실패할 수 있다.
+
+Cloud Run migration 기준에서는 Vertex AI용 API key, service account key JSON,
+`GOOGLE_APPLICATION_CREDENTIALS_JSON` env, 이미지에 포함된 ADC 파일을 만들거나
+배포하지 않는다. Backend Cloud Run service는 attached service account와 ADC로
+Vertex AI를 호출하고, 공개 이슈/스크린샷/포트폴리오에는 GCP project id, service
+account email, bucket name, Cloud SQL connection name, direct `run.app` URL 같은
+cloud inventory를 노출하지 않는다.
 
 값을 출력하지 않고 설정 여부만 확인:
 
