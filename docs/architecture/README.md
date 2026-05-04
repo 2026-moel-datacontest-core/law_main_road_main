@@ -17,6 +17,7 @@ Feature requirements, screen plans, API contracts, and data models belong in `do
 |---|---|
 | `CLAUDE.md` | Local agent instruction for architecture documentation and phase-specific task routing. |
 | `cloud_migration_architecture.md` / `cloud_migration_architecture.mmd` / `cloud_migration_architecture.drawio` | Follow-up production-oriented GCP migration architecture. These files describe a target cloud deployment path, not the current local MVP. Local LLM / Compute Engine GPU VM is intentionally excluded from the target. |
+| `images_drawio/` | Presentation and implementation-handoff draw.io source files for overview/detail architecture visuals. |
 | `cloud_migration_phase_plan.md` | Phase-by-phase implementation architecture for the GCP migration target, with Terraform layer/module boundaries and verification gates. |
 | `phase/phaseN_*.md` | Phase-specific execution documents. Use these for assigning or implementing one phase at a time. |
 | `current_project_architecture.md` / `current_project_architecture.mmd` | Temporary current project reference that summarizes the current repo surfaces. Keep it for now as source material while `docs/specs/` is being filled out. After specs are complete, move/delete only if it becomes duplicate and there is an explicit follow-up task. |
