@@ -238,8 +238,11 @@ frontend가 주로 쓰는 Before result 필드:
 - raw `after_query_seed`가 memory state에 있더라도 `/api/v1/answer` query에는 넣지 않는다.
 - `/api/v1/answer`는 기존처럼 `{ query, top_k, ef_search }`만 받는다.
 - SCN-001 preset 또는 Bridge seed는 `top_k=10`, `ef_search=100` demo path와 호환해야 한다.
-- `SCN-001-BRIDGE-DEMO`는 fixed/live 여부와 관계없이 answer-only다.
-- `SCN-004-DEMO-FREEZE`와 SCN-004 free input만 document eligibility guard 통과 시 draft flow로 갈 수 있다.
+- `SCN-001-BRIDGE-DEMO` exact fixed path만 frontend-local
+  `workplace_change_reason_summary` frozen draft flow로 갈 수 있다.
+  Modified/live 및 Bridge-origin SCN-001 paths는 answer-only다.
+- SCN-004 draft flow는 `SCN-004-DEMO-FREEZE`와 SCN-004 eligible free input만
+  document eligibility guard 통과 시 사용할 수 있다.
 
 ## 9. Proposed Minimal Data Flow
 
@@ -280,7 +283,9 @@ frontend가 주로 쓰는 Before result 필드:
 - `/api/v1/documents/draft` contract는 변경하지 않는다.
 - SCN-004 demo preset / fixed answer path는 변경하지 않는다.
 - `SCN-004-DEMO-FREEZE` exact preset path는 fixed answer fixture 기준을 유지한다.
-- `SCN-001-BRIDGE-DEMO`는 answer-only preset으로 유지한다.
+- `SCN-001-BRIDGE-DEMO` exact fixed preset은 frontend-local frozen draft
+  path를 제공한다. Modified/live 및 Bridge-origin paths는 answer-only로
+  유지한다.
 - SCN-001 연결 작업과 SCN-004 freeze QA를 한 patch에 섞지 않는다.
 - SCN-001 document draft, `/bridge` route, Recovery 본 구현은 이 스펙의 직접 구현 범위가 아니다.
 

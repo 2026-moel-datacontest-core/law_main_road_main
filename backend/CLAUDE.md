@@ -110,7 +110,7 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 
 - MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이다.
 - Direct Google OAuth + backend-managed session cookie는 Alternative/Fallback로만 둔다.
-- Firebase uid / Google sub / provider_subject / email은 business table이나 backend response에 직접 노출하지 않고 internal `users.id`만 참조한다.
+- Firebase uid / Google sub / provider_subject / Firebase token은 business table response에 직접 노출하지 않고 internal `users.id`만 참조한다. `/api/v1/auth/me`는 구현된 auth-status 예외로 internal `user_id`, nullable `display_name`, nullable `email`을 반환하므로 saved history, Bridge query, draft output, docs evidence, logs에는 이 auth identifier 값을 노출하지 않는다.
 - Firebase token은 SCN-001 protected endpoint에만 요구한다. SCN-004 `/api/v1/answer`와 `/api/v1/documents/draft`는 public contract를 유지한다.
 - raw OCR, raw contract, raw user_statement, raw `after_query_seed` persistent 저장을 DTO/DB에 추가하지 않는다.
 - raw `after_query_seed`는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않는다. Bridge-origin query는 displayed safe subset plus user question만 사용한다.

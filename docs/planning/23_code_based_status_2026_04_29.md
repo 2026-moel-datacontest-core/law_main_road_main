@@ -1,6 +1,6 @@
 # Code-based Status Checkpoint
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 이 문서는 planning 문서 전반에 흩어진 상태 기록을 현재 코드 기준으로 다시
 정리한 checkpoint다. 오래된 planning 문서의 phase/next-step 표현이 이 문서와
@@ -35,8 +35,12 @@
   - `scenarioPresetDrafts.ts` implements SCN-001 fixed-preset frozen draft
     locally.
 - latest main checkpoint:
-  - `85d10fa`
-  - integrated frontend UI polish is completed without backend/API/schema changes.
+  - `e79fa68`
+  - visual checkpoint `85d10fa` completed integrated frontend UI polish without
+    backend/API/schema changes.
+  - later `56d71e7` through `e79fa68` workspace/draft-scope documentation and
+    architecture/status alignment did not change backend/API/schema/Auth/Bridge
+    data boundary or Web Storage policy.
   - `DESIGN.md` is the current frontend visual guide.
 
 ## 현재 구현 API
@@ -118,7 +122,8 @@ SCN-001 protected:
 
 ### Integrated UI polish
 
-Latest main `85d10fa` includes the completed frontend-only UI polish pass:
+Visual checkpoint `85d10fa` includes the completed frontend-only UI polish pass,
+and current main `e79fa68` preserves these frontend/backend boundaries:
 
 - `DESIGN.md` is the current visual guide: token-first,
   neutral/dense/evidence-led, with disclaimers and uncertainty prominent.

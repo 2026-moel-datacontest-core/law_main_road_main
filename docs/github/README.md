@@ -16,7 +16,7 @@
 
 ## Current Baseline
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 - Main public demo: SCN-004 After document draft flow
 - Protected connected flow: SCN-001 Before -> Bridge -> After
@@ -27,7 +27,7 @@
 - Backend: FastAPI + PostgreSQL + pgvector
 - Latest UI checkpoint: `85d10fa` integrated Before/After/History/Main polish,
   DESIGN.md visual guide, contrast/disclaimer/accessibility blocker fixes
-- Latest main checkpoint: `85d10fa`
+- Latest main checkpoint: `e79fa68`
 
 ## Scope Boundary
 
@@ -40,7 +40,8 @@ Implemented:
 - Frontend-local SCN-001 fixed-preset frozen draft demo
 - Token-first frontend visual polish with neutral/dense/evidence-led work routes
   and prominent disclaimers/uncertainty
-- Integrated frontend UI polish through `85d10fa`
+- Integrated frontend UI polish through visual checkpoint `85d10fa`, with later
+  workspace/draft-scope documentation alignment through `e79fa68`
 
 Not implemented:
 

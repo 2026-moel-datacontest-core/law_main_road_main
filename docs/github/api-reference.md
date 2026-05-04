@@ -1,6 +1,6 @@
 # API Reference
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 This is a current implementation summary, not a formal OpenAPI replacement.
 

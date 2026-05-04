@@ -25,12 +25,12 @@
 | 8. SCN-001 protected endpoints | `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`, `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` | Decided | Phase 4 / Phase 7B | `GET /api/v1/scn001/runs`는 optional |
 | 9. `/api/v1/auth/me` path and bearer policy | `GET /api/v1/auth/me`, missing token은 `{ logged_in: false }`, invalid token은 401 | Decided | Phase 2 | Firebase uid / provider_subject는 response에 노출하지 않음 |
 | 10. CORS Authorization header allowlist | MVP Bearer path는 `Authorization` header 허용 필요, `allow_credentials=True` 필수 아님 | Decided | Phase 2 | SCN-004 public preflight regression check 필수 |
-| 11. bridge_runs.user_id required vs nullable | MVP protected `bridge_runs.user_id`는 required | Decided | Phase 1 / Phase 4 | `SCN-001-BRIDGE-DEMO`는 bridge_runs 미생성 answer-only |
+| 11. bridge_runs.user_id required vs nullable | MVP protected `bridge_runs.user_id`는 required | Decided | Phase 1 / Phase 4 | `SCN-001-BRIDGE-DEMO` presentation preset은 bridge_runs를 만들지 않음. Current exact fixed path는 frontend-local frozen draft, modified/live paths는 answer-only |
 | 12. after_query_seed storage strategy | raw seed persistent 저장 금지. `after_query_seed_hash` + safe summary 중심. Phase 6 uses transient response direct handoff to React memory state and excludes raw seed from answer query | Decided | Phase 1 / Phase 4 / Phase 6 | raw seed는 `/api/v1/answer.query` 또는 protected bridge answer query에 넣지 않음 |
 | 13. anonymous artifact handling | 기존 anonymous artifact는 orphan 유지 | Decided | Phase 5+ | Phase 4 bridge POST는 null `before_review_jobs.user_id` orphan job을 reject. retroactive linking은 Post-MVP |
 | 14. artifact retention/deletion | raw artifact는 민감 데이터로 취급. retention duration/deletion workflow는 TBD | TBD | Phase 5+ | 최소 노출 정책은 지금 적용, 운영 삭제 정책은 후속 |
 | 15. Bridge implementation location | protected flow는 backend route + service | Decided | Phase 4 | 독립 `/bridge` UI route는 후속 |
-| 16. SCN-001 document draft scope | Minimum MVP는 SCN-001 answer-only | Decided | Non-blocking | SCN-001 draft는 Strong MVP / optional extension |
+| 16. SCN-001 document draft scope | Minimum MVP는 SCN-001 live/backend draft 미오픈 | Decided | Non-blocking | Current exact `SCN-001-BRIDGE-DEMO` fixed path만 frontend-local frozen draft 예외. Live/backend SCN-001 draft는 Strong MVP / optional extension |
 
 ## 3. Decisions
 
@@ -182,7 +182,8 @@ Public 유지:
 - `POST /api/v1/documents/draft`
 - `GET /api/v1/before/health`
 - SCN-004 `/after`, `/after/result`, `/after/intake`, `/after/draft`
-- presentation preset `SCN-001-BRIDGE-DEMO` answer-only fixed/live path
+- presentation preset `SCN-001-BRIDGE-DEMO`: exact fixed path는
+  frontend-local frozen draft, modified/live paths는 answer-only
 
 ### D-009. `/api/v1/auth/me`
 
@@ -229,7 +230,7 @@ Public 유지:
   - business table에는 Firebase uid / Google sub / email이 아니라 internal `users.id`만 저장한다.
   - 비로그인 demo-compatible path는 DB `bridge_runs`를 만들지 않는 presentation preset으로 분리한다.
 - Implementation Notes:
-  - `SCN-001-BRIDGE-DEMO`는 bridge_runs를 만들지 않고 기존 answer-only preset으로 유지한다.
+  - `SCN-001-BRIDGE-DEMO`는 bridge_runs를 만들지 않는 presentation preset으로 유지한다. Current exact fixed path는 frontend-local frozen draft flow를 제공하고, modified/live paths는 answer-only다.
   - 기존 SCN-004 `/after` flow도 bridge_runs를 만들지 않는다.
   - 신규 `bridge_runs` table은 protected flow 전용으로 설계한다.
   - Phase 4 bridge POST는 `before_review_jobs.user_id`가 현재 internal `users.id`와 일치하는 completed Before job만 허용한다.
@@ -315,8 +316,11 @@ Public 유지:
 - Implementation Notes:
   - SCN-001 document draft는 Strong MVP / optional extension이다.
   - `/api/v1/documents/draft` public contract는 변경하지 않는다.
-  - `SCN-001-BRIDGE-DEMO`는 fixed/live 여부와 관계없이 answer-only다.
-  - `SCN-004-DEMO-FREEZE`와 SCN-004 eligible free input만 draft flow를 통과한다.
+  - 현재 구현 기준으로 `SCN-001-BRIDGE-DEMO` exact fixed path만
+    frontend-local `workplace_change_reason_summary` frozen draft flow를
+    제공한다. Modified/live 및 Bridge-origin SCN-001 paths는 answer-only다.
+  - SCN-004 draft flow는 `SCN-004-DEMO-FREEZE`와 SCN-004 eligible free input만
+    document eligibility guard 통과 시 사용할 수 있다.
 
 ## 4. Phase Gates
 
@@ -345,7 +349,9 @@ Phase 5 policy note:
 - `/api/v1/answer`는 public endpoint로 유지하고 request/response contract를 변경하지 않는다.
 - `/api/v1/documents/draft`는 public endpoint로 유지하고 request/response contract를 변경하지 않는다.
 - `SCN-004-DEMO-FREEZE` exact preset fixed answer path는 unchanged로 유지한다.
-- `SCN-001-BRIDGE-DEMO`는 answer-only이며 document draft UI를 열지 않는다.
+- `SCN-001-BRIDGE-DEMO` exact fixed path만 frontend-local frozen draft UI를
+  열 수 있다. Modified/live 및 Bridge-origin SCN-001 paths는 answer-only이며
+  backend draft UI/API를 열지 않는다.
 - Firebase ID token은 SCN-001 protected endpoint에만 요구한다.
 - CORS `Authorization` header 변경은 public paths를 깨면 안 된다.
 - Phase 4 이후 회귀 확인 항목:

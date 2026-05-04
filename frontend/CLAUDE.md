@@ -92,7 +92,8 @@
   - Bridge context/history가 있어도 SCN-001/SCN-004 preset buttons는 계속 표시
   - exact preset submit은 fixed answer path가 우선
 - SCN-001 frontend history/After polish 완료:
-  - latest main is pushed through `85d10fa`
+  - visual checkpoint is `85d10fa`; current main after documentation/workspace
+    scope alignment is `e79fa68`
   - `8cd1ccb` polished SCN-001 history cards and `c365ca5` clarified SCN-001 history summaries on latest main
   - `6263a8e` folded SCN-001 case records, `f15430c`/`a2d984f` fixed overbroad wage/deduction summaries, and `fdde441` prioritized login on the home page
   - `/after` saved history and `/history` now use an incident-centered single card flow instead of separate Before/Bridge list or 2-column cards
