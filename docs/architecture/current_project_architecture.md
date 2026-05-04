@@ -1,6 +1,6 @@
 # K-Labor Shield — Current Project Architecture
 
-기준일: `2026-04-29` 또는 현재 repo 기준
+기준일: `2026-05-04` 또는 현재 repo 기준
 
 ## 1. 문서 목적
 
@@ -11,7 +11,12 @@
 정확한 현재 상태 요약:
 
 - Current architecture has one primary Next.js/FastAPI surface: `/before` + `/after` + `/history` in `frontend/`, and `backend/` FastAPI with mounted Before stack plus SCN-001 protected Bridge/history endpoints.
-- Latest main `85d10fa` includes integrated visual/UI polish: `DESIGN.md` token-first guide, Before first screen upload focus and OCR 1~2분 progress copy, After entry centered guidance/disclaimer, History centered fold cards with blue accent, Main H1/lead/nav/compact flow strip cleanup, contrast fixes, and removal of hardcoded default accessibility legal basis.
+- Visual checkpoint `85d10fa` includes integrated visual/UI polish, and current
+  main is `e79fa68` after docs/workspace-scope alignment. The checkpoint includes
+  `DESIGN.md` token-first guide, Before first screen upload focus and OCR 1~2분
+  progress copy, After entry centered guidance/disclaimer, History centered fold
+  cards with blue accent, Main H1/lead/nav/compact flow strip cleanup, contrast
+  fixes, and removal of hardcoded default accessibility legal basis.
 - Bridge는 protected `bridge_runs` route/service, `/before` result CTA, `/after` Bridge handoff cards, Phase 7E protected Bridge answer frontend routing, `/after` saved history selector, `/history` archive, MVP soft-delete까지 구현됐다. 독립 `/bridge` UI와 live/backend SCN-001 document draft는 후속 범위다.
 - exact `SCN-001-BRIDGE-DEMO` fixed preset has a frontend-local deterministic `workplace_change_reason_summary` frozen draft path. It does not call backend/LLM or `/api/v1/documents/draft`.
 - After draft path does not call Vertex AI.
@@ -112,7 +117,7 @@ SCN-004 draft flow is additionally gated by document-type eligibility. The front
 
 ```mermaid
 %% K-Labor Shield current project architecture
-%% 기준일: 2026-04-29 / 현재 repo 기준
+%% 기준일: 2026-05-04 / 현재 repo 기준
 %% Local LLM / Compute Engine GPU VM is intentionally omitted from this current MVP diagram.
 flowchart LR
 
@@ -137,7 +142,7 @@ flowchart LR
         ContractPipeline["OCR + contract review pipeline"]
         BeforeArtifacts["Before artifacts<br/>backend/data/before_artifacts/runs"]
         BridgeService["SCN-001 Bridge Service<br/>safe handoff + hash"]
-        AfterStore["After Artifact Store<br/>after_artifact_runs"]
+        AfterStore["After Artifact Store<br/>backend/data/after_artifacts/runs<br/>after_artifact_runs"]
         RetrievalService["Shared Retrieval Service / Vector Search"]
         DraftBuilder["Deterministic Draft Builder"]
         MainDB["PostgreSQL + pgvector<br/>users, bridge_runs, after_artifact_runs, law_chunks"]
@@ -265,7 +270,7 @@ flowchart LR
 
 ## 9. Cloud migration target과의 관계
 
-- `docs/architecture/cloud_migration_architecture.md`, `cloud_migration_architecture.mmd`, `cloud_migration_architecture.drawio`는 후속 GCP migration target architecture로 유지한다.
+- `docs/architecture/cloud_migration_architecture.md`와 `cloud_migration_architecture.mmd`는 후속 GCP migration target architecture의 현재 source로 유지한다. `cloud_migration_architecture.drawio`는 presentation export이며, 현재 Mermaid와 다르면 Phase 0 status에 `drawio regenerate needed`를 기록하고 승인된 diagram workflow로 재생성한다.
 - Cloud migration target architecture의 Cloud Run, Cloud SQL, Cloud Storage, Secret Manager, Cloud Logging/Monitoring/Alerting, CI/CD, Terraform remote state 구성은 현재 MVP 구현 상태가 아니다.
 - Local LLM / Compute Engine GPU VM은 1차 migration target에서 제외한다.
 - 현재 MVP는 main After/RAG에서 Gemini API 기반 retrieval / answer를 사용하고, After document draft는 deterministic builder로 분리한다.
@@ -276,9 +281,9 @@ flowchart LR
 | 리스크 | 설명 | 현재 문서화 기준 |
 |---|---|---|
 | Before 개인정보 경계 | 계약서 업로드는 개인정보/사업장 정보가 포함될 수 있고 Vertex OCR/LLM 및 local artifact storage를 사용한다. | After draft no-Vertex 경계와 분리해서 설명해야 한다. |
-| Artifact 노출 | Before artifacts는 local run directory에 저장될 수 있다. | 배포 전 접근 제어, 저장 기간, 민감정보 마스킹 정책 필요 |
+| Artifact 노출 | Before artifacts and After answer/draft artifacts are currently written to local run directories. | Cloud Run 배포 전 GCS 전환, 접근 제어, 저장 기간, 민감정보 마스킹 정책 필요 |
 | After draft 근거 의존성 | draft 자체는 deterministic이지만 `legal_basis`는 이전 answer 결과에 의존한다. | cited_articles / grounded_context_ids guard와 SCN-004 document-type eligibility guard 유지 필요 |
 | API contract 차이 | Before / Bridge protected endpoints는 public `/api/v1/answer` / `/api/v1/documents/draft`와 다른 contract다. | public answer/draft contract unchanged 문구 유지 |
 | Bridge 오해 | Bridge handoff와 protected backend endpoints는 구현됐지만 독립 `/bridge` UI와 SCN-001 document draft는 열리지 않았다. | answer-only, sticky `bridge_handoff`, draft-disabled 정책으로 표기 |
-| Local LLM 오해 | Cloud migration target에서는 Compute Engine GPU VM / Local LLM을 제외했다. | current target은 `cloud_migration_architecture.md`, `.mmd`, `.drawio` 기준으로 본다. |
+| Local LLM 오해 | Cloud migration target에서는 Compute Engine GPU VM / Local LLM을 제외했다. | current target source는 `cloud_migration_architecture.md`와 `.mmd` 기준으로 본다. `.drawio`는 presentation export이므로 stale하면 regenerate note를 우선한다. |
 | Generated / artifact directories | `node_modules`, `__pycache__`, `Zone.Identifier`, `dist`, local artifact run directories는 분석 대상에서 제외하거나 artifact로만 취급한다. | 이번 문서 작업에서는 수정하지 않음 |

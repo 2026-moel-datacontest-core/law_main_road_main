@@ -1,6 +1,6 @@
 # Phase 0 — Docs / Design Freeze
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 ## 1. Goal
 
@@ -84,6 +84,40 @@ architecture review explicitly reopens them.
 | Rollback | Cloud Run revision rollback + DB backup/runbook |
 | First region | `asia-northeast3` |
 
+### Phase 0 Final Decisions
+
+These decisions are approved for the first Terraform authoring pass. They
+describe the cloud target only and do not rename existing application code,
+routes, database tables, or local service names.
+
+| Area | Final decision |
+|---|---|
+| App/resource naming | Human-readable app label is `law-main-road`; Terraform/resource prefix is `lmr`; resource names use `lmr-{env}-{component}` where provider constraints allow. |
+| First target | `dev` is the first cloud migration target. Keep both `envs/dev` and `envs/prod` in the Terraform layout, but instantiate only `dev` first. |
+| Project model | Start with one GCP project and env-prefixed resources. Separate dev/prod GCP projects are deferred to future hardening. |
+| Terraform state | Run `bootstrap/remote-state` once with local state to create the GCS tfstate bucket. Later env roots use the GCS remote backend. Bootstrap local `terraform.tfstate*` files must never be committed and must be stored/deleted according to the Phase 1 runbook after backend migration. |
+| Naming inventory | GCS state/artifact bucket names need globally unique variants of the `lmr` naming pattern. Exact project id/number, bucket names, service account emails, SQL connection names, WIF provider names, and direct `run.app` URLs are internal inventory. |
+| Cloud SQL | Dev starts with minimum viable Cloud SQL PostgreSQL + pgvector; exact dev tier/storage is decided before Phase 2 apply. Prod later starts on a small production tier. HA is deferred initially. Dev backup retention is 1-3 days; prod backup retention baseline is 7 days; PITR is prod-only baseline with a cost exception allowed before prod opens. |
+| Secrets | Terraform creates Secret Manager secret resources only. Terraform does not manage secret values by default; `google_secret_manager_secret_version` is forbidden by default unless a later explicit security review approves an exception. |
+| Artifact storage | One private artifact bucket per env. Bucket names use a globally unique variant of `lmr-{env}-artifacts`; this is a bucket naming pattern, not an environment variable name. Before and After artifacts share the bucket and use `before-runs/` and `after-runs/` object prefixes. |
+| Artifact env var | `ARTIFACT_BUCKET_NAME` is only a preferred candidate backend env var for the future GCS adapter. Do not wire it as active runtime config until Phase 3 implements or verifies adapter support. |
+| Artifact retrieval | Signed URL vs auth proxy vs no retrieval UI is deferred and is not an initial Cloud Run migration blocker unless the current UI requires retrieval. |
+| Custom domain | Phase 4 deploys with Cloud Run `run.app` URLs. Gabia DNS, HTTPS Load Balancer, and custom domain are Phase 7A only. Direct `run.app` URLs remain internal inventory and should not appear in public docs/issues/screenshots. |
+| Observability/budget | Phase 6 starts with Cloud Logging app/request logs, uptime/smoke checks, error-rate checks, budget alerts, and owner email/console notification. Budget alert is Terraform-managed where billing permissions allow; otherwise use billing/admin manual checklist fallback. SLO and advanced alerting are deferred until baseline traffic exists. |
+| Automation | Terraform owns persistent cloud resources. GitHub Actions uses WIF keyless auth for CI/CD. Shell/Python runbooks are limited to describe, smoke, migration/seed orchestration, log redaction checks, and rollback drills; they must not create/modify persistent resources, store secrets, or change DB/DNS/traffic without explicit human approval. Baseline migration does not include a host configuration-management layer. |
+
+### Decision Closure Status
+
+Phase 0 does not claim every future implementation choice is complete. It closes
+the decisions that are safe to close now, gates choices that need phase-local
+cost/permission/code evidence, and defers optional hardening by design.
+
+| Status | Decisions |
+|---|---|
+| Finalized now | first target is `dev` only; keep `envs/dev` and `envs/prod` but instantiate `dev` first; use one GCP project with env-prefixed resources; `law-main-road` app label; `lmr` prefix; `lmr-{env}-{component}` resource naming where possible; local-state bootstrap creates the GCS tfstate bucket; env roots use GCS backend after bootstrap; bootstrap local `terraform.tfstate*` is never committed; Terraform creates Secret Manager secret resources only; `google_secret_manager_secret_version` is forbidden by default; one private artifact bucket per env; globally unique `lmr-{env}-artifacts` bucket naming pattern; `before-runs/` and `after-runs/` object prefixes; Phase 4 uses Cloud Run `run.app`; shell/Python runbooks are helper-only. |
+| Phase-gated decision | Phase 2 before apply: dev Cloud SQL exact tier/storage. Phase 2 before prod opening: prod exact tier, PITR cost exception, backup retention confirmation. Phase 3 before backend deploy: GCS adapter implementation boundary and whether `ARTIFACT_BUCKET_NAME` becomes active runtime env. Phase 3 or later: artifact retrieval mode only if UI/runtime needs it. Phase 6: budget alert Terraform management if billing IAM allows, otherwise billing/admin checklist fallback. Phase 6: exact alert thresholds after baseline smoke/traffic. |
+| Deferred by design | separate dev/prod GCP projects; Phase 7A custom domain / HTTPS Load Balancer / Gabia DNS; `api.<domain>` backend public endpoint; advanced SLO/alerting; signed URL/auth proxy/artifact retrieval UI unless required later; host configuration-management tooling for baseline migration. |
+
 ## 6. MVP / SCN Boundaries
 
 Phase 0 must confirm that cloud migration docs do not weaken these boundaries.
@@ -108,6 +142,46 @@ Phase 0 must confirm that cloud migration docs do not weaken these boundaries.
 | CI/scripts | local developer/agent | Run local smoke checks and report result |
 | Admin/manual | project owner | Approve target scope and confirm readiness for Phase 1 |
 | Documentation | agent | Keep architecture spec, phase plan, phase index, and this file aligned |
+
+## 7A. Terraform Authoring Map
+
+| Item | Phase 0 Contract |
+|---|---|
+| Terraform-managed resources | none |
+| Manual prerequisites | target scope approval, GCP project/billing readiness decision, human GCP MFA requirement approval, shell/Python runbook boundary approval, diagram regenerate decision if needed |
+| Inputs/variables | none for Terraform; docs record `asia-northeast3`, `1722` chunks, `selected_as_of = 2026-04-11` |
+| Outputs | reviewed architecture baseline, Phase 1 readiness status, issue slicing notes |
+| Secrets handling | do not create, rotate, print, or commit secret values |
+| Apply order | no `terraform init/plan/apply`; Phase 1 starts after this docs gate |
+| Validation command candidates | local checks, architecture reference search, drawio XML validation if drawio changed, `git diff --check` |
+| Rollback/delete policy | revert docs patch only; no cloud cleanup |
+| Do not manage yet | all GCP resources, Terraform state bucket, Secret Manager versions, Cloud Run, Cloud SQL, WIF, custom domain/LB |
+
+Phase 0 should record that all human accounts used for GCP Console, `gcloud`,
+Terraform bootstrap, production approvals, DNS cutover, or emergency rollback
+must use Google 2-Step Verification/MFA before Phase 1 resource apply. Record
+only PASS/FAIL evidence; do not store recovery codes or MFA setup details in the
+repo.
+
+If shell/Python runbooks are opened later, Phase 0 treats them as operations
+automation only. Do not create scripts during a docs-only readiness pass.
+
+If a GCP MFA helper is opened later, use `gcp-mfa-main-guide1/` as the GCP
+counterpart to the local `aws-mfa-main-guide1` UX. The helper should guide
+`gcloud auth login`, ADC, active project, optional `terraform-sa` impersonation,
+and MFA attestation. It must not collect OTP/recovery material or issue
+long-lived credentials.
+
+## 7B. GitHub Issue Readiness
+
+| Field | Content |
+|---|---|
+| Issue title | Phase 0: Cloud migration design freeze and Terraform readiness review |
+| Scope | Freeze target architecture, phase numbering, Terraform authoring contract, and docs/code-read blockers before Phase 1 |
+| Acceptance criteria | architecture/phase docs agree; no Blocker/High readiness issue remains; SCN/API/auth/storage boundaries are preserved; GCP MFA and shell/Python runbook boundaries are recorded |
+| Forbidden changes | Terraform files, cloud resources, secrets, backend/frontend code, API/schema/Auth/Bridge/Web Storage policy |
+| Validation | local smoke candidates plus `git diff --check`; drawio XML check only if `.drawio` changed |
+| Rollback | revert the docs-only patch |
 
 ## 8. Required Local Checks
 
@@ -154,7 +228,7 @@ These checks reduce later Cloud Run deployment risk. Phase 0 does not need to
 fix missing build files, but it must record whether Phase 3/4 can start from an
 existing container strategy.
 
-Current code-read result on `2026-04-29`:
+Current code-read result rechecked on `2026-05-04`:
 
 | Check | Current State | Required Before Cloud Run Deploy |
 |---|---|---|
@@ -197,9 +271,14 @@ Forbidden diagram contents:
 - vLLM.
 - Backend route to self-hosted inference.
 
-`.mmd` may be edited when a diagram label is clearly wrong. `.drawio` should not
-be manually edited in this repo task; mark it as `regenerate needed` if it is
-stale.
+`.mmd` may be edited when a diagram label is clearly wrong. `.drawio` should
+normally be regenerated through the approved diagram workflow; if a docs-only
+review explicitly requests a minimal label sync, keep it aligned with the
+Mermaid/source architecture and validate XML.
+
+Current docs-only status on `2026-05-04`: the Mermaid source and `.drawio`
+export both show the private artifact bucket as
+`before-runs · after-runs artifacts`.
 
 ## 12. Issue Classification
 
@@ -245,7 +324,7 @@ Findings:
 
 Phase 1 handoff:
 - Use `docs/architecture/phase/phase1_bootstrap_foundation.md`.
-- Start with `infra/bootstrap/remote-state`.
+- Start with `infra/terraform/bootstrap/remote-state`.
 - Do not create secret values in Terraform.
 ```
 

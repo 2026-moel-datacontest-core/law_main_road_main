@@ -1,6 +1,6 @@
 # Phase 4 — Frontend Runtime
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 ## 1. Goal
 
@@ -16,9 +16,10 @@ SCN-001 live/backend document draft 범위는 열지 않는다.
 - Frontend Cloud Run service를 배포한다.
 - `NEXT_PUBLIC_API_BASE_URL`과 Firebase public web config를 build-time 값으로
   고정한다.
-- 배포된 frontend URL을 Firebase Authorized Domains에 등록한다.
-- Backend `BACKEND_CORS_ORIGIN_REGEX`를 frontend URL/custom domain에 맞게
-  재적용한다.
+- 배포된 frontend Cloud Run `run.app` URL을 Firebase Authorized Domains에
+  등록한다.
+- Backend `BACKEND_CORS_ORIGIN_REGEX`를 frontend Cloud Run URL에 맞게
+  재적용한다. Custom domain / HTTPS Load Balancer는 Phase 7A에서 별도로 연다.
 - `/`, `/before`, `/after`, `/after/result`, `/after/intake`, `/after/draft`,
   `/history` route smoke를 수행한다.
 - SCN-004 freeze와 SCN-001 frontend-local frozen draft boundary가 유지되는지
@@ -29,8 +30,8 @@ SCN-001 live/backend document draft 범위는 열지 않는다.
 | Item | Status |
 |---|---|
 | Phase type | Frontend runtime deployment |
-| Primary Terraform root | `infra/environments/{env}/runtime/frontend` |
-| Primary module | `infra/modules/cloud-run-service` |
+| Primary Terraform root | `infra/terraform/envs/{env}/runtime/frontend` |
+| Primary module | `infra/terraform/modules/cloud-run-service` |
 | Runtime service | Next.js frontend on Cloud Run |
 | Image source | Artifact Registry frontend image |
 | Required previous phase | [`phase3_backend_runtime.md`](phase3_backend_runtime.md) |
@@ -106,20 +107,22 @@ deployment should not hide a broken backend.
 - Step 3 full retention lifecycle.
 - Independent `/bridge` or Recovery implementation.
 - API Gateway, Cloud Armor, private VPC.
+- Custom domain / HTTPS Load Balancer. Use Phase 7A after the `run.app` path is
+  stable.
 
 ## 6. Terraform Layout
 
 Create or maintain this layout.
 
 ```text
-infra/
+infra/terraform/
   modules/
     cloud-run-service/
       main.tf
       variables.tf
       outputs.tf
       README.md
-  environments/
+  envs/
     dev/
       runtime/
         frontend/
@@ -146,6 +149,31 @@ The `runtime/frontend` root consumes outputs from:
 Backend and frontend stay in separate runtime roots so frontend rollback does not
 force a backend revision change.
 
+## 6A. Terraform Authoring Map
+
+| Item | Phase 4 Contract |
+|---|---|
+| Terraform-managed resources | Frontend Cloud Run service/revisions, frontend service identity attachment, public ingress, scaling/concurrency, labels, frontend URL outputs |
+| Manual prerequisites | Phase 3 backend URL/smoke, frontend image build strategy, Firebase public web config, Firebase Authorized Domain admin path, final CORS approval |
+| Inputs/variables | frontend image digest/tag, backend URL for build-time config, Firebase `NEXT_PUBLIC_*` values, frontend service account email, scaling settings |
+| Outputs | frontend URL, service name, revision, service account email, Firebase authorized-domain target |
+| Secrets handling | Firebase public config is public but local-only in repo; no Firebase Admin JSON, DB URL, tokens, raw flow payloads, or private keys in frontend env/build args |
+| Apply order | build frontend image with public env -> apply `envs/{env}/runtime/frontend` -> add Firebase Authorized Domain -> re-apply backend CORS -> browser smoke |
+| Validation command candidates | `npm run build`, image build, Terraform fmt/validate/plan/apply, route/browser/CORS/auth/preset smoke |
+| Rollback/delete policy | rollback frontend revision first; revert backend CORS only if the CORS re-apply caused failure; sync emergency traffic shifts back into Terraform |
+| Do not manage yet | backend API changes, Firebase persistence change, Web Storage policy change, SCN-001 live/backend draft, custom domain/LB, WIF/workflows |
+
+## 6B. GitHub Issue Readiness
+
+| Field | Content |
+|---|---|
+| Issue title | Phase 4: Frontend Cloud Run runtime and public build env |
+| Scope | Deploy frontend Cloud Run service with build-time `NEXT_PUBLIC_API_BASE_URL` and Firebase public config, then validate routes, auth, CORS, and demo freezes |
+| Acceptance criteria | deployed routes load/guard safely; Google Sign-In works on authorized domain; CORS is narrowed; SCN-004 and SCN-001 frozen paths remain unchanged |
+| Forbidden changes | backend API contracts, auth persistence, Web Storage raw payload storage, SCN-001 live/backend draft, independent `/bridge`, custom domain/LB |
+| Validation | build/image/Terraform checks plus route, browser, CORS, Google Sign-In, SCN-004, and SCN-001 smoke |
+| Rollback | shift frontend traffic to previous revision; re-apply previous backend CORS only if needed |
+
 ## 7. Terraform Owns
 
 Terraform owns the frontend Cloud Run runtime configuration.
@@ -155,7 +183,7 @@ Terraform owns the frontend Cloud Run runtime configuration.
 | Cloud Run service | frontend service resource |
 | Image reference | immutable image digest or explicit image tag variable |
 | Runtime identity | attach `frontend-sa` |
-| Ingress | public managed HTTPS endpoint for first migration |
+| Ingress | public managed Cloud Run HTTPS endpoint for first migration |
 | Scaling | min/max instances and concurrency |
 | Labels | shared naming/labeling convention |
 | Outputs | frontend URL, service name, revision name/digest |
@@ -187,9 +215,9 @@ Some actions remain administrator-owned in Phase 4.
 
 | Area | Admin Responsibility |
 |---|---|
-| Firebase Authorized Domains | add deployed Cloud Run URL or custom domain |
+| Firebase Authorized Domains | add deployed Cloud Run `run.app` URL |
 | Firebase Google provider | confirm provider is enabled |
-| Custom domain | optional; not required for first migration |
+| Custom domain | deferred to Phase 7A; not required for first migration |
 | Demo approval | confirm deployed UI matches presentation expectations |
 | CORS approval | confirm final frontend origin regex before backend re-apply |
 | Rollback | decide whether to shift frontend traffic back after smoke failure |
@@ -202,7 +230,7 @@ The current frontend uses:
 
 - Next.js App Router
 
-Current code-read result on `2026-04-29`:
+Current code-read result rechecked on `2026-05-04`:
 
 - `frontend/next.config.mjs` does not yet set `output: "standalone"`.
 - `frontend/Dockerfile` is not present.
@@ -262,7 +290,7 @@ a developer/admin account for image push.
 ```bash
 PROJECT_ID=...
 REGION=asia-northeast3
-REPOSITORY=kls-prod-ar
+REPOSITORY=lmr-dev-ar
 IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/frontend:phase4-$(date +%Y%m%d%H%M%S)"
 BACKEND_URL=...
 
@@ -302,7 +330,7 @@ docker build -f frontend/Dockerfile -t "$IMAGE" frontend \
 docker push "$IMAGE"
 
 # 2. Apply frontend runtime.
-cd infra/environments/{env}/runtime/frontend
+cd infra/terraform/envs/{env}/runtime/frontend
 terraform init
 terraform fmt -check
 terraform validate
@@ -322,7 +350,8 @@ Expected Terraform outputs:
 ## 14. Firebase Authorized Domain
 
 After the frontend Cloud Run URL is created, add it to Firebase Console
-Authorized Domains unless a custom domain is already used.
+Authorized Domains. Phase 4 uses the Cloud Run `run.app` host; a purchased custom
+domain is handled later in Phase 7A.
 
 Required manual check:
 
@@ -339,7 +368,8 @@ Google Sign-In fails with `auth/unauthorized-domain` until this is done.
 Notes:
 
 - Cloud Run service URL is stable for the service, even as revisions change.
-- If a custom domain is used, add the custom domain and smoke that URL.
+- If a custom domain is later added in Phase 7A, add that custom domain and
+  smoke that URL in the Phase 7A checklist.
 - Do not add broad or unrelated domains just to make login pass.
 
 ## 15. Backend CORS Two-Pass Update
@@ -351,16 +381,17 @@ Procedure:
 
 1. Deploy frontend and capture `frontend_url`.
 2. Convert `frontend_url` host into an approved `BACKEND_CORS_ORIGIN_REGEX`.
-3. Re-apply `infra/environments/{env}/runtime/backend` with the final CORS value.
+3. Re-apply `infra/terraform/envs/{env}/runtime/backend` with the final CORS value.
 4. Re-smoke browser calls from the deployed frontend.
 
 Example shape:
 
 ```text
-^https://kls-prod-frontend-...\\.asia-northeast3\\.run\\.app$
+^https://lmr-dev-frontend-...\\.asia-northeast3\\.run\\.app$
 ```
 
-If a custom domain is used, prefer the custom domain as the allowed origin.
+If Phase 7A later adds a custom domain, replace or narrow this allowlist to the
+approved custom frontend origin during that phase.
 
 Do not leave wildcard CORS in prod.
 
@@ -494,11 +525,11 @@ Phase 4 is complete when:
   equivalent Cloud Run image build strategy.
 - `NEXT_PUBLIC_API_BASE_URL` points to the Phase 3 backend URL.
 - Required Firebase public web config is provided at build time.
-- `infra/environments/{env}/runtime/frontend` can run `terraform fmt -check`,
+- `infra/terraform/envs/{env}/runtime/frontend` can run `terraform fmt -check`,
   `terraform validate`, `terraform plan`, and `terraform apply`.
 - Frontend Cloud Run service starts.
 - Frontend URL output exists.
-- Firebase Authorized Domains includes the deployed frontend URL or custom domain.
+- Firebase Authorized Domains includes the deployed frontend Cloud Run URL.
 - Google Sign-In succeeds on the deployed frontend.
 - Backend `BACKEND_CORS_ORIGIN_REGEX` is updated to allow the deployed frontend
   origin.
@@ -590,6 +621,7 @@ When Phase 4 is executed, record a short status note.
 - Do not add Firebase Admin credentials to frontend.
 - Do not treat Firebase public web config as a private secret.
 - Do not implement independent `/bridge` or Recovery.
+- Do not implement custom domain / HTTPS Load Balancer in Phase 4; use Phase 7A.
 - Do not mix SCN-004 freeze verification with SCN-005 or new document type
   expansion.
 

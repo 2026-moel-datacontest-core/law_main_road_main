@@ -8,6 +8,151 @@
 자동 기록 금지.
 필요하다고 판단될 때만 추가.
 
+## 2026-05-04 Cloud Migration / Terraform Readiness Troubleshooting
+
+### 1. Terraform docs가 resource creation처럼 보일 때
+
+증상:
+
+- `docs/architecture/phase/*`에 `infra/terraform/...` path와 Terraform module
+  이름이 있으니 지금 디렉터리나 `.tf` 파일을 만들어야 하는지 혼동한다.
+
+정상 해석:
+
+- 현재 cloud migration 문서는 Terraform 작성 직전의 실행 스펙이다.
+- Phase 0은 docs / decision freeze only다.
+- Phase 0 final decisions 기준으로 first cloud target은 `dev` only이고
+  Terraform/resource prefix는 `lmr`다.
+- docs-only readiness 작업에서는 Terraform directory, `.tf` file, cloud
+  resource, secret value를 만들지 않는다.
+- 실제 authoring은 Phase 1 issue에서 `infra/terraform/bootstrap/remote-state`
+  와 `infra/terraform/envs/{env}/foundation`부터 시작한다.
+
+금지:
+
+- docs-only 검토 중 `terraform init`, `terraform plan`, `terraform apply`,
+  `terraform destroy`, cloud resource 생성, service account key JSON 생성.
+
+### 1-1. GCP MFA를 Terraform/WIF와 혼동함
+
+정상 해석:
+
+- Human account MFA는 GCP Console, `gcloud`, Terraform bootstrap, production
+  approval, DNS cutover, emergency rollback에 쓰는 사람 계정의 보안 전제다.
+- GitHub Actions WIF는 non-interactive keyless CI 인증이다. WIF가 있다고 해서
+  human admin 계정의 MFA가 불필요해지는 것은 아니다.
+- Terraform은 MFA secret, recovery code, authenticator seed를 관리하지 않는다.
+
+기록 방식:
+
+- 문서/issue/status note에는 `human_gcp_mfa: PASS/FAIL` 정도만 기록한다.
+- MFA recovery code, phone number, authenticator QR, backup code, screenshot은
+  repo/chat/issue/log에 남기지 않는다.
+
+#### AWS `aws-mfa-main-guide1`와 GCP helper의 차이
+
+AWS guide shape:
+
+```text
+OTP 입력
+-> aws sts get-session-token
+-> AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_SESSION_TOKEN export
+-> Terraform 실행
+```
+
+GCP guide shape:
+
+```text
+Google browser login / 2-Step Verification
+-> gcloud auth login
+-> gcloud auth application-default login
+-> active project check
+-> optional terraform-sa impersonation
+-> bounded PASS/FAIL preflight output
+```
+
+따라서 GCP 버전은 `gcp-mfa-main-guide1/` 같은 local helper로 만들 수 있지만,
+OTP를 직접 받아 임시 access key를 export하는 스크립트가 아니다.
+
+권장 future 파일:
+
+```text
+gcp-mfa-main-guide1/
+  README.md
+  gcp-mfa-login.sh
+  gcp-mfa-clear.sh
+```
+
+`gcp-mfa-login.sh`는 active account/project/ADC/impersonation/service-account-key
+JSON 사용 여부를 확인하고 `human_mfa_attested=PASS/FAIL`만 남긴다.
+`gcp-mfa-clear.sh`는 impersonation과 unsafe local credential env만 정리한다.
+
+### 1-2. Shell/Python script를 Terraform 대체재로 쓰려는 경우
+
+정상 해석:
+
+- Terraform: persistent cloud resources and IAM source of truth.
+- GitHub Actions: image build, deploy, and post-deploy automation through WIF.
+- Shell/Python scripts: approved runbook automation for checks, migration/seed
+  orchestration, smoke, log redaction, rollback drill.
+
+좋은 shell/Python script 후보:
+
+- `scripts/cloud/phase1_foundation_check.sh`
+- `scripts/cloud/phase1_secret_presence_check.sh`
+- `scripts/cloud/phase2_migrate_seed.sh`
+- `scripts/cloud/phase3_backend_smoke.py`
+- `scripts/cloud/phase4_frontend_smoke.py`
+- `scripts/cloud/phase6_log_redaction_check.py`
+- `scripts/cloud/phase6_rollback_drill.sh`
+
+금지:
+
+- Terraform-owned Cloud Run, Cloud SQL, IAM, bucket, WIF resource를 script로
+  별도 생성/수정해 drift를 만드는 것.
+- secret value나 service account key JSON을 script/env/example args에 넣는 것.
+- DB migration, DNS cutover, Cloud Run traffic rollback을 approval 없이 실행하는 것.
+
+### 2. Secret과 internal cloud inventory를 혼동함
+
+정상 분류:
+
+- Secret: DB password, credential-bearing `DATABASE_URL`, Firebase Admin JSON,
+  service account key JSON, access/refresh token, Firebase ID token.
+- Internal cloud inventory: GCP project id/number, service account email, bucket
+  name, Cloud SQL connection name, Secret Manager resource name, WIF provider
+  name, Terraform state bucket name, direct backend `run.app` URL.
+
+원칙:
+
+- Secret value는 repo, Terraform state, GitHub Actions summary, issue, screenshot,
+  chat에 남기지 않는다.
+- Internal cloud inventory도 public portfolio, public issue, browser UI,
+  user-facing log에는 그대로 노출하지 않는다. Placeholder나 승인된 custom
+  domain을 사용한다.
+- GitHub Actions는 Workload Identity Federation keyless auth를 사용하며 service
+  account key JSON을 만들지 않는다.
+
+### 3. Artifact bucket을 만들면 artifact retrieval도 열린다고 오해함
+
+정상 해석:
+
+- Phase 1 Terraform은 private artifact bucket과 IAM boundary를 만들 수 있다.
+- Artifact bucket name은 globally unique variant of `lmr-{env}-artifacts`
+  naming pattern을 쓴다. 이 값은 bucket name pattern이지 env var 이름이 아니다.
+- Current backend writer는 아직 local filesystem path를 쓸 수 있으므로, GCS
+  artifact adapter는 Phase 3 production-readiness blocker 또는 별도 issue다.
+- `ARTIFACT_BUCKET_NAME`은 future GCS adapter의 preferred candidate backend env
+  var일 뿐이며 Phase 3 구현/검증 전에는 active runtime config로 주입하지 않는다.
+- Signed URL, auth proxy, artifact retrieval UI/API는 Phase 3 이후 UI/runtime이
+  실제로 요구할 때만 여는 phase-gated decision이다.
+
+금지:
+
+- Terraform output에 raw object path, raw contract/OCR text, raw answer/draft
+  payload를 노출하지 않는다.
+- Bucket public access를 열어 artifact retrieval을 해결하지 않는다.
+
 ## 2026-04-22 Firebase Auth / ID Token Troubleshooting
 
 ### 1. 목표 구조를 혼동함: Firebase ID token은 “등록”하는 값이 아니다
@@ -449,6 +594,12 @@ ADC / `GOOGLE_APPLICATION_CREDENTIALS` 주의:
 - 현재 backend 구현은 ADC / `GOOGLE_APPLICATION_CREDENTIALS`를 우선 사용할 수 있다.
 - `GOOGLE_APPLICATION_CREDENTIALS`가 Vertex AI용 credential을 가리키고 있으면 Firebase Admin SDK도 그 ADC를 먼저 사용할 수 있다.
 - Firebase Auth smoke shell에서는 Firebase Admin JSON path를 `GOOGLE_APPLICATION_CREDENTIALS=$PWD/config/secrets/firebase-admin.json`로 명확히 지정한다.
+- Cloud Run migration에서는 Vertex AI용 service account key JSON이나 API key를
+  만들지 않는다. Backend service identity + ADC 경로를 사용하고,
+  `GOOGLE_APPLICATION_CREDENTIALS`는 local smoke/debug 전용 예외로만 다룬다.
+- troubleshooting output을 이슈/스크린샷/포트폴리오에 붙일 때는 GCP project id,
+  service account email, bucket name, Cloud SQL connection name, direct
+  `run.app` URL, credential path/value를 지운다.
 
 `FIREBASE_ADMIN_CREDENTIALS` fallback 사용 시:
 

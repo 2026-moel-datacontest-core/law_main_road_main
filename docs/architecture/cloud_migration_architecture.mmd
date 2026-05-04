@@ -15,12 +15,12 @@ flowchart TB
         Firebase["Firebase Auth<br/>Google Sign-In"]
         SQL["Cloud SQL PostgreSQL<br/>pgvector · law_chunks · users · bridge_runs · before_review_jobs · after_artifact_runs"]
         Vertex["Vertex AI<br/>Gemini embedding · answer · OCR/content review"]
-        Storage["Cloud Storage Private Bucket<br/>before-runs artifacts"]
+        Storage["Cloud Storage Private Artifact Bucket<br/>before-runs · after-runs artifacts"]
         Secrets["Secret Manager<br/>DB/provider/runtime secrets"]
     end
 
     subgraph OPS["Operations Platform"]
-        Logging["Cloud Logging<br/>structured app logs"]
+        Logging["Cloud Logging<br/>app/request logs"]
         Monitoring["Cloud Monitoring / Alerting<br/>latency · error · provider timeout · DB"]
         Rollback["Cloud Run Revisions<br/>traffic rollback"]
         Backup["Cloud SQL Backup / PITR<br/>migration safety"]

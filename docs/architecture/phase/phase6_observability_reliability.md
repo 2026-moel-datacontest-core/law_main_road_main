@@ -1,6 +1,6 @@
 # Phase 6 — Observability / Reliability
 
-기준일: `2026-04-29`
+기준일: `2026-05-04`
 
 ## 1. Goal
 
@@ -27,7 +27,7 @@ backup verification, lifecycle cleanup, cost guardrail을 실제 운영 기준�
 | Item | Status |
 |---|---|
 | Phase type | Operations, reliability, cleanup |
-| Primary Terraform root | `infra/environments/{env}/ops` |
+| Primary Terraform root | `infra/terraform/envs/{env}/ops` |
 | Primary modules | `monitoring-alerts`, lifecycle/cleanup policy modules or settings |
 | Required previous phase | [`phase5_cicd.md`](phase5_cicd.md) |
 | Next phase | [`phase7_optional_hardening.md`](phase7_optional_hardening.md) |
@@ -79,6 +79,7 @@ rehearsed against real resources.
 - Cloud Run service health alerts.
 - Cloud SQL saturation alerts.
 - Provider timeout/OCR failure alerts.
+- Budget alerts where billing permissions allow.
 - Alert notification channel wiring if approved.
 - Cloud Storage lifecycle policy for artifact bucket.
 - Artifact Registry cleanup policy for old images.
@@ -106,7 +107,7 @@ rehearsed against real resources.
 Create or maintain this layout.
 
 ```text
-infra/
+infra/terraform/
   modules/
     monitoring-alerts/
       main.tf
@@ -118,7 +119,7 @@ infra/
       variables.tf
       outputs.tf
       README.md
-  environments/
+  envs/
     dev/
       ops/
         main.tf
@@ -145,6 +146,31 @@ Prefer keeping the Terraform owner obvious. If lifecycle settings are implemente
 inside `artifact-bucket`, document that Phase 6 enables those module variables
 rather than creating a second bucket policy module.
 
+## 6A. Terraform Authoring Map
+
+| Item | Phase 6 Contract |
+|---|---|
+| Terraform-managed resources | Log-based metrics, Cloud Monitoring alert policies, notification channel bindings if approved, budget alerts where billing permissions allow, Storage lifecycle rules, Artifact Registry cleanup policy, logging retention/exclusion settings |
+| Manual prerequisites | deployed backend/frontend, Phase 5 rollback path, alert channel/owner, retention/cost decisions, backup/PITR decision |
+| Inputs/variables | service names, Cloud SQL instance name, artifact bucket name, Artifact Registry repo, alert thresholds, notification channel ids, retention windows |
+| Outputs | alert policy ids, metric names, lifecycle policy summary, cleanup policy summary, rollback drill evidence references |
+| Secrets handling | do not export or log raw payloads, credentials, cloud inventory, service account emails, bucket names, SQL connection names, WIF provider names, or direct backend URLs in public evidence |
+| Apply order | apply `envs/{env}/ops` -> verify policies/lifecycle -> sample logs -> run rollback drill -> record backup/cost checks |
+| Validation command candidates | Terraform fmt/validate/plan/apply, Monitoring/Logging checks, lifecycle/cleanup checks, backup timestamp check, rollback drill smoke |
+| Rollback/delete policy | tune/disable faulty alerts through Terraform; do not roll back app revisions for noisy alerts; lifecycle rollback cannot restore deleted objects |
+| Do not manage yet | backend/frontend code changes, Step 3 full retention lifecycle, physical purge/account deletion, API contract changes, SCN-001 live/backend draft |
+
+## 6B. GitHub Issue Readiness
+
+| Field | Content |
+|---|---|
+| Issue title | Phase 6: Observability, lifecycle, cleanup, and rollback drill |
+| Scope | Add operational metrics/alerts, lifecycle/cleanup policies, backup verification, sensitive log sampling, and rollback drill evidence |
+| Acceptance criteria | prod alerts exist; provider timeout and Cloud SQL saturation are observable; lifecycle/cleanup policies are active; rollback drill and backup/PITR verification are recorded |
+| Forbidden changes | backend/frontend code changes unless separately approved, raw sensitive logging, Step 3 full retention lifecycle, API contract changes |
+| Validation | Terraform ops checks, alert/log queries, lifecycle/cleanup visibility, backup check, rollback drill smoke |
+| Rollback | disable or tune ops resources through Terraform; preserve active/stable images and acknowledge lifecycle deletions are irreversible |
+
 ## 7. Terraform Owns
 
 Terraform owns operational resource configuration.
@@ -152,7 +178,7 @@ Terraform owns operational resource configuration.
 | Area | Terraform Responsibility |
 |---|---|
 | Log-based metrics | provider timeout, app errors, optional auth failures |
-| Alert policies | 5xx, provider timeout, Cloud SQL saturation, backup verification signal if available |
+| Alert policies | 5xx, provider timeout, Cloud SQL saturation, backup verification signal if available, budget alert where billing permissions allow |
 | Notification channel binding | only after admin-approved channel exists |
 | Storage lifecycle | artifact object TTL and noncurrent version policy |
 | Artifact Registry cleanup | old untagged/old SHA image cleanup |
@@ -162,6 +188,12 @@ Terraform owns operational resource configuration.
 Terraform should not create fake alert channels. If a notification channel needs
 manual verification, create it manually or mark it as an admin prerequisite, then
 reference it from Terraform.
+
+Budget alerts are a Terraform-managed target where billing IAM and account
+constraints allow. If billing permissions block Terraform management, use a
+billing/admin manual checklist fallback and record the owner email/console
+notification path in the Phase 6 status note. SLO and advanced alerting are
+deferred until baseline traffic exists.
 
 ## 8. CI / Script Owns
 
@@ -294,8 +326,8 @@ Minimum backup verification runbook:
 
 ## 14. Artifact Lifecycle Policy
 
-The private artifact bucket can contain sensitive Before upload, OCR, and review
-outputs. Phase 6 must make retention explicit.
+The private artifact bucket can contain sensitive Before upload/OCR/review outputs
+and After answer/draft artifacts. Phase 6 must make retention explicit.
 
 Recommended initial policy:
 
@@ -304,6 +336,7 @@ Recommended initial policy:
 | raw uploaded contract images | 7 or 30 days after policy decision |
 | OCR output | same or shorter than raw upload |
 | review result JSON | same or policy-approved longer retention |
+| answer/draft request and response artifacts | short policy-approved retention; avoid keeping raw user statements longer than needed |
 | temporary processing files | delete as soon as practical |
 
 Terraform should enforce lifecycle rules where artifacts live in Cloud Storage.
@@ -379,6 +412,14 @@ Logs must not include:
 - raw full answer/draft payload
 - service account JSON
 - DB credentials
+- service account email
+- GCP project id or project number
+- Cloud SQL connection name
+- Secret Manager resource name
+- artifact bucket name or private `gs://` object path
+- WIF provider/resource name
+- direct backend `run.app` URL if a custom API domain is approved
+- Vertex or Google credential material, including ADC file paths
 
 Acceptable:
 
@@ -387,6 +428,12 @@ Acceptable:
 - `query_hash`
 - non-sensitive counts
 - revision/service name
+
+If any sensitive field appears, Phase 6 must record the log source, sample
+timestamp, affected route, immediate mitigation, and source fix or exclusion
+filter follow-up. Cloud Logging exclusion filters are allowed as emergency
+mitigation, but the preferred fix is to stop emitting the sensitive field at the
+application or workflow source.
 
 ## 18. Rollback Drill
 
@@ -453,7 +500,7 @@ manual budget policy in the status note.
 Suggested verification commands/checks for later implementation:
 
 ```bash
-cd infra/environments/{env}/ops
+cd infra/terraform/envs/{env}/ops
 terraform init
 terraform fmt -check
 terraform validate
@@ -486,7 +533,7 @@ Terraform state reconciled if manual traffic shift was used
 
 Phase 6 is complete when:
 
-- `infra/environments/{env}/ops` can run `terraform fmt -check`,
+- `infra/terraform/envs/{env}/ops` can run `terraform fmt -check`,
   `terraform validate`, `terraform plan`, and `terraform apply`.
 - Alert policies exist for prod.
 - Alert channel is configured or manual notification limitation is documented.
@@ -496,7 +543,8 @@ Phase 6 is complete when:
 - Artifact persistence failure alert exists or is explicitly deferred with reason.
 - Sensitive log sampling has been performed after deployed smoke.
 - Logs do not expose raw contract text, raw OCR text, Firebase uid, provider
-  subject, email, tokens, raw Bridge payload, or raw answer/draft payload.
+  subject, email, tokens, raw Bridge payload, raw answer/draft payload, or
+  internal cloud identifiers.
 - Artifact bucket lifecycle policy is enabled for sensitive artifacts.
 - Artifact Registry cleanup policy exists or manual cleanup runbook is approved.
 - Cloud SQL backup/PITR verification is recorded.
@@ -551,6 +599,7 @@ When Phase 6 is executed, record a short status note.
 - Notification channel:
 - Log-based metrics:
 - Sensitive log sample result:
+- Cloud identifier redaction result:
 - Backup/PITR verification:
 - Storage lifecycle policy:
 - Artifact Registry cleanup policy:
