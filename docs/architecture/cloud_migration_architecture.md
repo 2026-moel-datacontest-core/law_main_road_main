@@ -252,7 +252,7 @@ Auth role such as `roles/firebaseauth.admin` or a narrower custom role after val
 | DB credentials / connection settings | Secret Manager + Cloud Run secret injection |
 | Provider/runtime keys if any | Avoid for Google Cloud APIs; if an external provider key is ever introduced, keep it in Secret Manager and version-pin where practical |
 | Firebase public web config | Next.js build-time `NEXT_PUBLIC_*` build args / public env; these are public client config, not private secrets |
-| Firebase Admin credential | Prefer GCP ADC/service identity. Use Secret Manager only if a separate credential is unavoidable |
+| Firebase Admin credential | Use Cloud Run service identity / ADC for the current migration. Do not create a Firebase Admin JSON secret or service account key JSON in Phase 1-6; if ADC cannot be made to work, open a separate security exception instead of silently adding a key fallback. |
 | App signing/session secret if introduced later | Secret Manager |
 
 The current MVP frontend uses Firebase `inMemoryPersistence`; cloud migration does not change
@@ -267,6 +267,7 @@ that policy by default.
 | Backend secrets/env | Secret Manager for credential-bearing values; plain runtime env only for non-secret config. Do not expose secret values as Terraform outputs. |
 | Cloud Run service identity | Backend runtime uses attached `backend-sa` and ADC for Google APIs. Local `GOOGLE_APPLICATION_CREDENTIALS` remains a developer smoke/debug path only. |
 | Vertex AI | Backend-only managed Vertex path through ADC/service identity. No Vertex API key, service account key JSON, or `GOOGLE_APPLICATION_CREDENTIALS_JSON` in Cloud Run. |
+| Firebase Admin | Backend-only Firebase Admin SDK path through ADC/service identity. Do not set `GOOGLE_APPLICATION_CREDENTIALS` or a Firebase Admin JSON secret on Cloud Run for the current migration. |
 | Artifact bucket env | `ARTIFACT_BUCKET_NAME` is only the preferred candidate backend env var for the future GCS adapter. Do not write docs or Terraform as if it is an active runtime contract until Phase 3 implements or verifies adapter support. Keep it separate from the `lmr-{env}-artifacts` bucket naming pattern. |
 
 ### Vertex AI Credential Boundary

@@ -327,7 +327,6 @@ template.
 | `VERTEX_PROVIDER_MAX_RETRIES` | Terraform variable | no | optional retry guard |
 | `VERTEX_PROVIDER_RETRY_BASE_SECONDS` | Terraform variable | no | optional retry guard |
 | `FIREBASE_PROJECT_ID` | Terraform variable/secret metadata | no | required for Firebase token verification |
-| `FIREBASE_ADMIN_CREDENTIALS` | Secret Manager mounted file path | yes | fallback only if ADC path fails |
 | `BACKEND_CORS_ORIGIN_REGEX` | approved temporary value, then frontend URL/domain | no | actual var used by `backend/main.py` |
 | `BEFORE_LAW_SOURCE` | Terraform variable | no | set to `db` for Cloud SQL corpus source |
 | `ARTIFACT_BUCKET_NAME` | Terraform output | no | Preferred candidate env var for the future GCS adapter only. Current code does not read it; do not wire it as active runtime config until Phase 3 implements/verifies adapter support. This env var is separate from the `lmr-{env}-artifacts` bucket naming pattern. |
@@ -344,8 +343,10 @@ Security classification:
 - Do not introduce `VERTEX_API_KEY`, `GOOGLE_APPLICATION_CREDENTIALS_JSON`, or a
   service account key env var for Cloud Run runtime. Vertex AI access must use
   the attached `backend-sa` service identity through ADC.
-- `FIREBASE_ADMIN_CREDENTIALS` remains an exception/fallback only for Firebase
-  Admin if ADC cannot be validated; it must not be used for Vertex AI.
+- Do not introduce a Firebase Admin JSON secret or service account key JSON for
+  Cloud Run runtime in this migration. Firebase Admin access must use the
+  attached service identity through ADC; if that cannot be validated, open a
+  separate security exception instead of adding a key fallback.
 
 Before-stack compatibility aliases:
 
@@ -491,7 +492,8 @@ as follows:
 - requires `FIREBASE_PROJECT_ID`
 - prefers ADC when `GOOGLE_APPLICATION_CREDENTIALS` is set
 - prefers ADC on Cloud Run when `K_SERVICE` is present
-- can fall back to `FIREBASE_ADMIN_CREDENTIALS`
+- can fall back to `FIREBASE_ADMIN_CREDENTIALS` in local/dev code, but the cloud
+  migration must not use that fallback by default
 
 Phase 3 smoke must verify:
 
@@ -502,8 +504,9 @@ Phase 3 smoke must verify:
 | protected SCN-001 endpoint with invalid token | `401` |
 | `GET /api/v1/auth/me` with valid Firebase ID token | `logged_in = true` and user row upsert works |
 
-If ADC initialization fails on Cloud Run, use the Secret Manager credential
-fallback until a narrower ADC/IAM path is validated.
+If ADC initialization fails on Cloud Run, fix the ADC/IAM path or open a
+separate security exception. Do not add a Firebase Admin JSON secret or service
+account key JSON in the Phase 1-6 baseline.
 
 ## 18. Apply Procedure
 

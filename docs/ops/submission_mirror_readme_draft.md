@@ -104,7 +104,10 @@ Do not commit:
 - Terraform state files
 - Secret Manager values
 - credential-bearing database URLs
-- raw user/case facts or tokens
+- raw user/case facts
+- Firebase uid, provider subject, or internal user identifiers
+- Firebase ID tokens, Google access tokens, refresh tokens, or session tokens
+- full answer/draft payloads or raw Bridge payloads
 
 Public screenshots and docs should avoid exposing exact Cloud SQL connection
 names, service account emails, private bucket names, WIF provider names, direct

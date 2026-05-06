@@ -39,7 +39,7 @@ cost-controlled Free Trial / dev-demo validation.
 | Area | Dev setting |
 |---|---|
 | Terraform apply | `envs/dev/*` only |
-| GCP project model | one project with env-prefixed resources |
+| GCP project model | existing `law-main-road` project with env-prefixed resources |
 | Region | `asia-northeast3` |
 | Public posture | `dev/demo-only`, not production-ready |
 | Custom domain | no |
@@ -196,5 +196,6 @@ verification items before any production-ready claim.
 - [`cloud_migration_phase_plan.md`](cloud_migration_phase_plan.md)
 - [`phase/README.md`](phase/README.md)
 - [`phase/phase0_design_freeze.md`](phase/phase0_design_freeze.md)
+- [`phase/phase1_bootstrap_foundation.md`](phase/phase1_bootstrap_foundation.md)
 - [`phase/phase2_data_foundation.md`](phase/phase2_data_foundation.md)
 - [`../ops/cloud_migration_manual_preflight.md`](../ops/cloud_migration_manual_preflight.md)

@@ -181,9 +181,9 @@ value_owner: human/admin
 terraform_creates_shell: yes
 terraform_manages_value: no
 
-lmr-dev-firebase-admin-credential
-purpose: avoid by default; use ADC/service identity first
-status: only if unavoidable
+Firebase Admin credential JSON
+purpose: not opened for current migration; use ADC/service identity
+status: do not create unless a separate security exception is approved
 
 lmr-dev-provider-key
 purpose: not needed for Vertex AI ADC path
@@ -407,7 +407,8 @@ auth_persistence_policy: inMemoryPersistence
 ## Secrets
 - lmr-dev-database-url: value manual, Terraform shell only
 - lmr-dev-db-password: future split credential
-- Firebase Admin credential: avoid unless ADC fails
+- Firebase Admin credential JSON: not opened; use ADC/service identity unless a
+  separate security exception is approved
 - provider key: not needed for Vertex ADC
 
 ## Cloud SQL

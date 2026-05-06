@@ -259,6 +259,10 @@ secrets.
 | 6 | Observability / Reliability | `infra/terraform/envs/{env}/ops` | alerts, rollback/runbook controls | alert and rollback drills pass |
 | 7 | Optional Hardening | candidate root or `load-balancer-domain` module if approved | custom domain/LB/VPC/Armor/jobs if approved | separate design approval |
 
+In the first implementation pass, every `{env}` placeholder in apply commands is
+`dev`. `envs/prod/*` stays skeleton/README/tfvars-example only until a separate
+prod-opening review.
+
 For phase-specific execution detail, use:
 
 - Phase 0: [`phase/phase0_design_freeze.md`](phase/phase0_design_freeze.md)
@@ -280,7 +284,7 @@ is not worth the complexity, and go/no-go decisions.
 | Phase | Terraform owns | CI / scripts own | Admin / manual owns |
 |---:|---|---|---|
 | 0 | none | local build/import/document checks; optional shell/Python runbook design only | final scope approval; confirm Local LLM exclusion; confirm human GCP MFA requirement; decide whether to regenerate draw.io before presentation |
-| 1 | remote state bucket, APIs, service accounts, Artifact Registry, Secret Manager secret shells, private artifact bucket, lifecycle baseline | `terraform fmt/validate/plan`; optional `gcloud describe` shell verification scripts | create/choose GCP project and billing; enable/check MFA for human admins; grant initial bootstrap permission; decide local user vs service-account impersonation for early Terraform; add actual secret versions outside Terraform state |
+| 1 | remote state bucket, APIs, service accounts, Artifact Registry, Secret Manager secret shells, private artifact bucket, lifecycle baseline | `terraform fmt/validate/plan`; optional `gcloud describe` shell verification scripts | use the existing `law-main-road` GCP project with billing enabled; enable/check MFA for human admins; grant initial bootstrap permission; decide local user vs service-account impersonation for early Terraform; add actual secret versions outside Terraform state |
 | 2 | Cloud SQL instance, application database shell, backup/PITR settings, SQL connection outputs, DB user/bootstrap contract | Alembic migration; pgvector/index verification; `law_chunks` seed import; row/dimension/index smoke; shell/Python migration/seed orchestration | approve DB sizing/region/backup retention; provide DB password secret value; approve destructive DB changes if ever needed |
 | 3 | backend Cloud Run service, service identity, env/secret wiring, Cloud SQL connector, Storage/Vertex IAM, image reference, steady-state traffic | build/push backend image; pass immutable digest/tag into Terraform; backend API smoke; auth-negative smoke; Python/shell post-deploy smoke | approve temporary/pre-Firebase frontend CORS policy; inspect logs for sensitive payload leakage; decide rollback on smoke failure |
 | 4 | frontend Cloud Run service, service identity, runtime env wiring, image reference, steady-state traffic | build/push frontend image; pass immutable digest/tag into Terraform; route/browser smoke; SCN-004/SCN-001 preset smoke; Python/shell route smoke | Firebase console checks such as authorized domains/provider settings if not managed by Terraform; confirm deployed frontend `run.app` URL is authorized; visual/demo approval |
@@ -365,6 +369,9 @@ Terraform roots:
 
 - `infra/terraform/bootstrap/remote-state`
 - `infra/terraform/envs/{env}/foundation`
+
+First actual apply substitutes `{env}=dev` only. `envs/prod/*` stays
+skeleton/README/tfvars-example material until a separate prod-opening review.
 
 Bootstrap state note:
 
@@ -603,10 +610,13 @@ Firebase Admin ADC note:
 
 - Current backend initialization in `backend/app/services/auth_service.py`
   prefers ADC when `GOOGLE_APPLICATION_CREDENTIALS`, Cloud Run `K_SERVICE`, or
-  local ADC is present; otherwise it can fall back to `FIREBASE_ADMIN_CREDENTIALS`.
+  local ADC is present; otherwise local/dev code can fall back to
+  `FIREBASE_ADMIN_CREDENTIALS`. Cloud Run migration must not rely on that local
+  credential fallback.
 - Phase 3 smoke must verify `GET /api/v1/auth/me` with a real Firebase ID token
-  on Cloud Run. If ADC initialization fails in Cloud Run, use the Secret Manager
-  credential fallback until a narrower ADC/IAM path is validated.
+  on Cloud Run. If ADC initialization fails in Cloud Run, fix the ADC/IAM path
+  or open a separate security exception; do not add a Firebase Admin JSON secret
+  or service account key JSON in Phase 1-6.
 
 Verification:
 
@@ -626,8 +636,8 @@ Acceptance:
 - Public Vertex-calling paths have request/body limits and rate/cost guardrails,
   or the backend is explicitly marked dev/demo-only/non-production.
 - `/api/v1/answer` and `/api/v1/documents/draft` response contracts are unchanged.
-- `GET /api/v1/auth/me` verifies Firebase ID tokens on Cloud Run using ADC or the
-  documented Secret Manager fallback.
+- `GET /api/v1/auth/me` verifies Firebase ID tokens on Cloud Run using
+  ADC/service identity.
 - Logs do not include raw contract text, Firebase uid, provider subject, email,
   tokens, raw Bridge payload, or raw full answer/draft payload.
 - After the first post-deploy smoke, manually sample Cloud Logging entries for
@@ -903,14 +913,16 @@ explicit security review approves an exception.
 
 | Secret | Used by | Notes |
 |---|---|---|
+| `lmr-{env}-database-url` | backend | Current backend-compatible credential-bearing DB URL; value added manually or by a secured CI step outside Terraform state |
 | `lmr-{env}-db-user` | backend | If not using IAM DB auth in the first migration |
 | `lmr-{env}-db-password` | backend | Secret value added manually or by a secured CI step |
 | `lmr-{env}-db-name` | backend | Can be plain env if not sensitive; keep consistent |
-| `lmr-{env}-firebase-admin-json` | backend | Only if ADC/service identity cannot cover Firebase Admin |
 | `lmr-{env}-app-secret` | backend | Future use if an app signing/session secret is introduced |
 
 Firebase public web config is not a private secret. It belongs in frontend
-public environment variables, while Firebase Admin credentials stay backend-only.
+public environment variables. Firebase Admin uses Cloud Run service identity /
+ADC in the current migration; do not create a Firebase Admin JSON secret shell or
+store service account key JSON.
 
 Cloud identifier note:
 
@@ -941,7 +953,7 @@ Cloud identifier note:
 | backend | `CLOUD_SQL_CONNECTION_NAME` | Terraform output | no |
 | backend | `ARTIFACT_BUCKET_NAME` | Preferred candidate env var for the future GCS adapter only. Current code does not read it; do not wire it as active runtime config until Phase 3 implements/verifies adapter support. This env var is separate from the `lmr-{env}-artifacts` bucket naming pattern. | no |
 | backend | `BACKEND_CORS_ORIGIN_REGEX` | frontend URL output / approved domain; actual env var used by `backend/main.py` | no |
-| backend | Firebase Admin config | ADC/service identity or Secret Manager fallback | yes if credential JSON is used |
+| backend | Firebase Admin config | ADC/service identity only for the current migration; credential JSON fallback is not opened | no |
 | frontend | `NEXT_PUBLIC_API_BASE_URL` | backend Cloud Run URL output; Docker build arg | no |
 | frontend | `NEXT_PUBLIC_BEFORE_API_BASE_URL` | optional override for Before API client; defaults to `NEXT_PUBLIC_API_BASE_URL` when unset | no |
 | frontend | `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase public web config; Docker build arg | no |
@@ -969,18 +981,21 @@ Firebase Admin ADC note:
   `roles/firebase.sdkAdminServiceAgent` to normal runtime service accounts.
 - Current backend code prefers ADC for Firebase Admin initialization when
   `GOOGLE_APPLICATION_CREDENTIALS`, Cloud Run `K_SERVICE`, or local ADC is
-  present; otherwise it can use `FIREBASE_ADMIN_CREDENTIALS`.
+  present; otherwise local/dev code can use `FIREBASE_ADMIN_CREDENTIALS`.
+  Cloud Run migration must not rely on that local credential fallback.
 - If backend ADC needs Firebase Authentication IAM beyond the default token
   verification path, use `roles/firebaseauth.admin` or a narrower custom role
-  after validation. If that is too broad for production, fall back to an explicitly
-  scoped Secret Manager credential policy and document the tradeoff.
+  after validation. If that is too broad for production, open a separate
+  security exception instead of creating a service account key JSON fallback in
+  Phase 1-6.
 
 ## 10. Cost Guardrails
 
 | Area | Guardrail |
 |---|---|
 | Cloud Run dev | `min_instance_count = 0`; cap max instances during early testing |
-| Cloud Run prod | start with `min_instance_count = 0`; raise to `1` only if demo latency requires it |
+| Cloud Run demo/contest | after dev smoke, temporarily set min instances to `1` only during the judging/presentation window if latency needs it; see `env_profiles.md` |
+| Cloud Run prod | not opened; choose min instances only during separate prod-opening review based on latency SLO and cost approval |
 | Cloud SQL | dev starts minimum viable; prod later starts with a small production tier; enable deletion protection in prod; set dev backup retention to 1-3 days and prod baseline to 7 days |
 | Vertex AI | keep exact demo presets fixture-backed where already implemented; public Vertex-calling routes need server-side request/body limits, per-caller rate/cost controls or dev/demo-only marking, request-count/provider-timeout monitoring, and budget/quota alerts |
 | Billing/Budget | budget alert is a Terraform-managed target where billing permissions allow; otherwise use a billing/admin manual checklist fallback |
