@@ -1,6 +1,6 @@
 # K-Labor Shield — Cloud Migration Phase Plan
 
-기준일: `2026-05-04`
+기준일: `2026-05-06`
 
 이 문서는 [`cloud_migration_architecture.md`](cloud_migration_architecture.md)의 GCP
 migration target을 실제 구현 가능한 phase로 나눈 계획이다. 목표는 Terraform을
@@ -12,6 +12,10 @@ migration target을 실제 구현 가능한 phase로 나눈 계획이다. 목표
 This is the contract for the later Terraform-writing pass. This docs patch does
 not create Terraform directories or `.tf` files.
 
+- Environment-specific operating values are defined in
+  [`env_profiles.md`](env_profiles.md). This phase plan owns sequencing and
+  resource ownership; the env profile document owns dev/demo/prod posture and
+  scaling/sizing defaults.
 - Terraform is authored in small phase roots. A phase root must be independently
   plan/apply/validate-able and must not require `terraform apply -target` as the
   normal path.
@@ -188,6 +192,16 @@ infra/terraform/
       ops/
 ```
 
+First implementation pass rule:
+
+- Make `envs/dev/*` the only apply-ready environment roots.
+- Keep `envs/prod/*` as skeleton, README, and `terraform.tfvars.example` material
+  only. Do not add real prod backend state, real prod tfvars, or apply-ready prod
+  resources until a separate prod-opening review approves exact prod sizing,
+  backup, PITR, HA, deletion protection, deployment approvals, and cost posture.
+- Reusable modules should be written with prod in mind, but prod resource
+  creation is not part of the first cloud migration pass.
+
 Notes:
 
 - `cloud-sql-pgvector` is a naming convenience for Cloud SQL PostgreSQL that
@@ -268,8 +282,8 @@ is not worth the complexity, and go/no-go decisions.
 | 0 | none | local build/import/document checks; optional shell/Python runbook design only | final scope approval; confirm Local LLM exclusion; confirm human GCP MFA requirement; decide whether to regenerate draw.io before presentation |
 | 1 | remote state bucket, APIs, service accounts, Artifact Registry, Secret Manager secret shells, private artifact bucket, lifecycle baseline | `terraform fmt/validate/plan`; optional `gcloud describe` shell verification scripts | create/choose GCP project and billing; enable/check MFA for human admins; grant initial bootstrap permission; decide local user vs service-account impersonation for early Terraform; add actual secret versions outside Terraform state |
 | 2 | Cloud SQL instance, application database shell, backup/PITR settings, SQL connection outputs, DB user/bootstrap contract | Alembic migration; pgvector/index verification; `law_chunks` seed import; row/dimension/index smoke; shell/Python migration/seed orchestration | approve DB sizing/region/backup retention; provide DB password secret value; approve destructive DB changes if ever needed |
-| 3 | backend Cloud Run service, service identity, env/secret wiring, Cloud SQL connector, Storage/Vertex IAM | build/push backend image; deploy revision; backend API smoke; auth-negative smoke; Python/shell post-deploy smoke | approve temporary/pre-Firebase frontend CORS policy; inspect logs for sensitive payload leakage; decide rollback on smoke failure |
-| 4 | frontend Cloud Run service, service identity, runtime env wiring | build/push frontend image; route/browser smoke; SCN-004/SCN-001 preset smoke; Python/shell route smoke | Firebase console checks such as authorized domains/provider settings if not managed by Terraform; confirm deployed frontend `run.app` URL is authorized; visual/demo approval |
+| 3 | backend Cloud Run service, service identity, env/secret wiring, Cloud SQL connector, Storage/Vertex IAM, image reference, steady-state traffic | build/push backend image; pass immutable digest/tag into Terraform; backend API smoke; auth-negative smoke; Python/shell post-deploy smoke | approve temporary/pre-Firebase frontend CORS policy; inspect logs for sensitive payload leakage; decide rollback on smoke failure |
+| 4 | frontend Cloud Run service, service identity, runtime env wiring, image reference, steady-state traffic | build/push frontend image; pass immutable digest/tag into Terraform; route/browser smoke; SCN-004/SCN-001 preset smoke; Python/shell route smoke | Firebase console checks such as authorized domains/provider settings if not managed by Terraform; confirm deployed frontend `run.app` URL is authorized; visual/demo approval |
 | 5 | Workload Identity Federation, deploy IAM bindings, optional protected environment plumbing | GitHub Actions workflow; PR plan; main deploy; post-deploy smoke; rollback job command; shell/Python smoke/runbook scripts | configure GitHub protected environments/secrets policy; approve prod deploys; review failed deploys |
 | 6 | log metrics, alert policies, lifecycle and cleanup policies | alert test scripts; rollback drill commands; cleanup dry-run checks; Python log-redaction and shell rollback-drill scripts | choose alert channels/thresholds; acknowledge/test incidents; approve retention/cost settings |
 | 7 | optional hardening resources once approved | candidate-specific smoke/load/security checks; shell/Python validation scripts | approve separate design, cost, and operational complexity before opening each candidate |
@@ -327,13 +341,14 @@ cd frontend && npm run build
 Exit criteria:
 
 - Cloud migration architecture spec and this phase plan agree.
-- `cloud_migration_architecture.drawio` is regenerated from the current target
-  architecture before presentation use, or the Phase 0 status note records
-  `drawio regenerate needed`. Do not hand-edit the `.drawio` file during a
-  docs-only review.
-- Current docs-only status on `2026-05-04`: the Mermaid source and `.drawio`
-  export both label the private artifact bucket as
-  `before-runs · after-runs artifacts`.
+- `images_drawio/cloud_migration_overview.drawio` and
+  `images_drawio/cloud_migration_detail.drawio` are the current visual sources
+  for presentation/handoff; their PNG previews must be regenerated after visual
+  edits.
+- Current docs/visual status on `2026-05-06`: the diagrams must show the private
+  artifact bucket as target-after-adapter or attach the Phase 3 GCS adapter
+  blocker. They must not imply the current local filesystem writers are already
+  durable GCS writers.
 
 ### Phase 1 — Bootstrap + Foundation
 
@@ -526,7 +541,8 @@ Responsibility:
 
 - Terraform: backend Cloud Run service, `backend-sa` identity, env/secret wiring,
   Cloud SQL connector, Storage/Vertex IAM.
-- CI/scripts: backend image build/push, revision deploy, backend smoke tests.
+- CI/scripts: backend image build/push, pass immutable digest/tag into Terraform,
+  backend smoke tests.
 - Admin/manual: approve allowed origins and temporary CORS bootstrap, inspect
   sensitive log policy, decide rollback if smoke fails.
 
@@ -547,6 +563,7 @@ Creates:
 - Storage bucket access
 - Vertex AI access
 - CORS environment config
+- public Vertex-calling route guardrail config, where implemented
 
 Current backend env-name note:
 
@@ -560,6 +577,11 @@ Current backend env-name note:
 - Current artifact persistence writes to local `backend/data/...` directories.
   Cloud Run production readiness requires a GCS artifact adapter or an explicitly
   documented limited/non-durable smoke decision.
+- Public `/api/v1/answer`, `/api/v1/retrieve`, and Before OCR/content review
+  paths can create Vertex cost. CORS is not abuse protection. Phase 3 must either
+  implement/verify server-side request/body and per-caller rate/cost controls, or
+  mark the public backend as dev/demo-only until an approved limiter or Phase 7
+  edge protection is opened.
 
 Pre-WIF image push:
 
@@ -601,6 +623,8 @@ Acceptance:
 
 - Backend starts without local `.env`.
 - DB and Vertex calls use GCP service identity/managed config.
+- Public Vertex-calling paths have request/body limits and rate/cost guardrails,
+  or the backend is explicitly marked dev/demo-only/non-production.
 - `/api/v1/answer` and `/api/v1/documents/draft` response contracts are unchanged.
 - `GET /api/v1/auth/me` verifies Firebase ID tokens on Cloud Run using ADC or the
   documented Secret Manager fallback.
@@ -717,8 +741,9 @@ pull_request:
 main:
   - build images
   - push Artifact Registry
-  - terraform plan/apply for selected env
-  - deploy Cloud Run revisions
+  - resolve immutable image digests/tags
+  - pass image digests/tags into Terraform
+  - terraform plan/apply for selected env so Terraform-owned Cloud Run service updates create revisions
   - post-deploy smoke
 ```
 
@@ -957,7 +982,7 @@ Firebase Admin ADC note:
 | Cloud Run dev | `min_instance_count = 0`; cap max instances during early testing |
 | Cloud Run prod | start with `min_instance_count = 0`; raise to `1` only if demo latency requires it |
 | Cloud SQL | dev starts minimum viable; prod later starts with a small production tier; enable deletion protection in prod; set dev backup retention to 1-3 days and prod baseline to 7 days |
-| Vertex AI | keep exact demo presets fixture-backed where already implemented; monitor request count and provider timeout |
+| Vertex AI | keep exact demo presets fixture-backed where already implemented; public Vertex-calling routes need server-side request/body limits, per-caller rate/cost controls or dev/demo-only marking, request-count/provider-timeout monitoring, and budget/quota alerts |
 | Billing/Budget | budget alert is a Terraform-managed target where billing permissions allow; otherwise use a billing/admin manual checklist fallback |
 | Cloud Storage | lifecycle deletion for Before/After runtime artifacts, for example 7 or 30 days after policy decision |
 | Artifact Registry | cleanup policy for old untagged images |
@@ -1004,14 +1029,21 @@ Critical dependency notes:
 
 ## 12. Environment Strategy
 
+Detailed dev/demo/prod settings live in [`env_profiles.md`](env_profiles.md).
+This section only records the high-level phase strategy.
+
 | Env | Purpose | Cost posture | Data posture |
 |---|---|---|---|
 | `dev` | first cloud migration target; Terraform and deployment validation | smallest viable settings, low/no min instances | test corpus or reduced seed allowed if clearly marked |
-| `prod` | later portfolio/demo deployment | conservative but cost-controlled | full `1722` chunk seed and backup enabled |
+| `demo/contest` | public contest/portfolio/presentation posture after dev smoke | temporarily warmer Cloud Run and stronger monitoring | normally dev-backed; not production-ready |
+| `prod` | later real-user operation | conservative but cost-controlled | full `1722` chunk seed and backup enabled |
 
-Keep both `dev` and `prod` directories, but instantiate only `dev` first. The
-initial GCP model uses one project with env-prefixed resources. Separate dev/prod
-GCP projects are deferred to future hardening.
+Keep both `dev` and `prod` directories, but make only `dev` apply-ready and
+instantiate only `dev` first. Keep `prod` as skeleton/README/tfvars-example
+material until a separate prod-opening review approves exact prod sizing,
+backup, PITR, HA, deletion protection, deployment approvals, and cost posture.
+The initial GCP model uses one project with env-prefixed resources. Separate
+dev/prod GCP projects are deferred to future hardening.
 
 ### Phase 0 Decision Closure
 
@@ -1020,7 +1052,7 @@ in generic "decision needed" lists.
 
 | Status | Items |
 |---|---|
-| Finalized now | first target `dev` only; `envs/dev` and `envs/prod` layout with only `dev` instantiated first; one GCP project with env-prefixed resources; `law-main-road` app label; `lmr` prefix; `lmr-{env}-{component}` naming where allowed; local-state bootstrap for GCS tfstate bucket; env roots use GCS remote backend after bootstrap; bootstrap local `terraform.tfstate*` never committed; Terraform creates Secret Manager secret resources only; no Terraform-managed secret values by default; `google_secret_manager_secret_version` forbidden by default; one private artifact bucket per env; globally unique variant of `lmr-{env}-artifacts`; `before-runs/` and `after-runs/` object prefixes; Phase 4 uses Cloud Run `run.app`; baseline migration does not include host configuration-management tooling. |
+| Finalized now | first target `dev` only; `envs/dev` and `envs/prod` layout with only `envs/dev` apply-ready and only `dev` instantiated first; `envs/prod` skeleton/README/tfvars-example only until a separate prod-opening review; one GCP project with env-prefixed resources; `law-main-road` app label; `lmr` prefix; `lmr-{env}-{component}` naming where allowed; local-state bootstrap for GCS tfstate bucket; env roots use GCS remote backend after bootstrap; bootstrap local `terraform.tfstate*` never committed; Terraform creates Secret Manager secret resources only; no Terraform-managed secret values by default; `google_secret_manager_secret_version` forbidden by default; one private artifact bucket per env; globally unique variant of `lmr-{env}-artifacts`; `before-runs/` and `after-runs/` object prefixes; Phase 4 uses Cloud Run `run.app`; baseline migration does not include host configuration-management tooling. |
 | Phase-gated decision | Phase 2 before apply: dev Cloud SQL exact tier/storage. Phase 2 before prod opening: prod exact tier, PITR cost exception, backup retention confirmation. Phase 3 before backend deploy: GCS adapter implementation boundary and whether `ARTIFACT_BUCKET_NAME` becomes active runtime env. Phase 3 or later: artifact retrieval mode only if UI/runtime needs it. Phase 6: budget alert Terraform management if billing IAM allows, otherwise billing/admin checklist fallback. Phase 6: exact alert thresholds after baseline smoke/traffic. |
 | Deferred by design | separate dev/prod GCP projects; Phase 7A custom domain / HTTPS Load Balancer / Gabia DNS; `api.<domain>` backend public endpoint; advanced SLO/alerting; signed URL/auth proxy/artifact retrieval UI unless required later. |
 

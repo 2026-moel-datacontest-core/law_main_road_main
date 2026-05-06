@@ -8,7 +8,7 @@
 
 ## 현재 진행 상태
 
-기준일: `2026-05-04`
+기준일: `2026-05-06`
 
 현재 `ops` 문서 기준으로 정리된 상태는 아래와 같다.
 
@@ -95,6 +95,13 @@
   발급하는 방식이 아니라 `gcloud auth login`, ADC, active project,
   optional `terraform-sa` impersonation, MFA attestation을 확인하는 preflight
   guide/script로 둔다.
+- Cloud migration manual preflight 1~6단계 반영: project/billing/MFA, Firebase,
+  secret inventory, Cloud SQL dev sizing, public backend dev/demo-only posture,
+  GitHub/WIF repo policy가 정리됐다. 1번 repo는 private 개발/배포/WIF 기준으로
+  유지하고, 2번 repo는 public 제출용 mirror로 유지한다.
+- Budget/mirror policy 반영: `lmr-dev-demo-monthly` budget alert threshold는
+  `KRW 70,000`, `25/50/80/100 actual + 100 forecasted`로 생성 완료했다.
+  Budget alert는 hard cap이 아니며, 실제 비용 중지/삭제는 사람이 판단한다.
 
 현재 코드/구조 기준으로 반영된 주요 상태:
 
@@ -366,6 +373,9 @@ repo 전체 구조와 핵심 파일 역할을 설명하는 저장소 지도 문�
 ### 5. 클라우드 전환
 
 - [클라우드런_데이터_저장_구조.md](./클라우드런_데이터_저장_구조.md)
+- [cloud_migration_manual_preflight.md](./cloud_migration_manual_preflight.md)
+- [cloud_migration_budget_and_mirror_policy.md](./cloud_migration_budget_and_mirror_policy.md)
+- [submission_mirror_readme_draft.md](./submission_mirror_readme_draft.md)
 
 Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서다.
 

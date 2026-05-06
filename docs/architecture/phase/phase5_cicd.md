@@ -1,12 +1,13 @@
 # Phase 5 — CI/CD
 
-기준일: `2026-05-04`
+기준일: `2026-05-06`
 
 ## 1. Goal
 
-Phase 5는 Phase 3/4의 local/manual image push와 deploy 절차를 GitHub Actions
-기반 CI/CD로 전환한다. 핵심은 장기 서비스 계정 키 없이 Workload Identity
-Federation으로 GCP에 인증하고, PR 검증과 main/prod 배포를 분리하는 것이다.
+Phase 5는 Phase 3/4의 local/manual image push와 Terraform apply 절차를
+GitHub Actions 기반 CI/CD로 전환한다. 핵심은 장기 서비스 계정 키 없이
+Workload Identity Federation으로 GCP에 인증하고, PR 검증과 main/prod 배포를
+분리하는 것이다.
 
 핵심 목표는 다음과 같다.
 
@@ -14,7 +15,7 @@ Federation으로 GCP에 인증하고, PR 검증과 main/prod 배포를 분리하
 - GitHub OIDC + Workload Identity Federation 기반 keyless auth를 구성한다.
 - PR에서는 build/test/validate/plan 중심으로 검증하고 apply하지 않는다.
 - main/protected environment에서는 image build/push와 Terraform apply를 수행한다.
-- backend/frontend Cloud Run revision 배포 후 smoke를 실행한다.
+- Terraform apply가 backend/frontend Cloud Run revision을 생성한 뒤 smoke를 실행한다.
 - smoke 실패 시 새 revision을 stable로 취급하지 않고 rollback 경로를 제공한다.
 - runtime service account와 deploy/Terraform identity를 분리한다.
 
@@ -57,7 +58,8 @@ Phase 5를 시작하기 전에 확인한다.
 | Phase 4 frontend | frontend Cloud Run deployed and browser-smoke-tested |
 | Dockerfiles | backend/frontend image build strategy finalized |
 | Terraform roots | `foundation`, `data`, `runtime/backend`, `runtime/frontend` are stable |
-| GitHub repo | final owner/repo name known |
+| GitHub repo | final development/deploy owner/repo name known |
+| Mirror repo policy | any public/submission mirror is explicitly non-deploying |
 | Branch policy | `main` is protected or protection plan is approved |
 | GitHub environments | `dev`/`prod` environment names and approval policy decided |
 | Secret policy | no GCP service account key JSON in GitHub Secrets |
@@ -65,6 +67,18 @@ Phase 5를 시작하기 전에 확인한다.
 
 If GitHub repository owner/name is not final, do not create a broad WIF binding.
 WIF conditions should bind to the real repository.
+
+For this project, bind WIF only to
+`2026-moel-datacontest-core/law_main_road_main`. The
+`Team-msp-architect-2026/msp-team02` repository is a curated submission mirror
+unless a later approved architecture change explicitly moves deploy ownership.
+Do not grant the mirror repo WIF impersonation or store GCP service account key
+JSON there.
+
+Current preflight decision: keep the deploy/source repo private, keep
+`protect-main` policy-defined/enforcement-pending on the current GitHub plan, and
+do not upgrade GitHub Team or convert the deploy repo to public unless this
+phase explicitly requires enforced branch/environment protection.
 
 ## 5. Scope
 

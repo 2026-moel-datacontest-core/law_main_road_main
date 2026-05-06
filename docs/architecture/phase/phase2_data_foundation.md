@@ -1,6 +1,6 @@
 # Phase 2 — Data Foundation
 
-기준일: `2026-05-04`
+기준일: `2026-05-06`
 
 ## 1. Goal
 
@@ -119,15 +119,23 @@ infra/terraform/
         terraform.tfvars.example
     prod/
       data/
-        main.tf
-        variables.tf
-        outputs.tf
-        versions.tf
+        README.md
         terraform.tfvars.example
 ```
 
 The module name `cloud-sql-pgvector` is a product-facing shorthand for the Cloud
 SQL PostgreSQL instance that hosts pgvector-backed tables.
+
+First implementation pass rule:
+
+- `envs/dev/data` is the only apply-ready data root.
+- `envs/prod/data` stays skeleton-only. It may contain a README and
+  `terraform.tfvars.example`, but it must not contain real prod tfvars, backend
+  state configuration, or apply-ready resources until a separate prod-opening
+  review approves exact prod tier/storage, backup retention, PITR, HA/deletion
+  protection, and deployment approval policy.
+- The `cloud-sql-pgvector` module should remain reusable for prod, but the first
+  Phase 2 implementation validates the module through dev only.
 
 Reason:
 
@@ -293,16 +301,17 @@ Terraform.
 
 ## 13. Environment Defaults
 
-Recommended starting point:
+Recommended starting point. See [`../env_profiles.md`](../env_profiles.md) for
+the full dev/demo/prod posture and Cloud Run scaling tradeoffs.
 
 | Setting | dev | prod |
 |---|---|---|
 | Region | `asia-northeast3` | `asia-northeast3` |
 | Availability | `ZONAL` | `ZONAL` first; `REGIONAL` later if needed |
-| Tier/storage | minimum viable, decided before Phase 2 apply | small production tier when prod opens |
-| Backup | 1-3 day retention | 7-day baseline |
+| Tier/storage | `db-f1-micro` first for low-cost smoke; raise to `db-g1-small` only if smoke is too weak; 10 GB candidate, confirmed before apply | small production tier when prod opens |
+| Backup | 3-day retention recommended for dev/demo; 1-3 day range allowed | 7-day baseline |
 | PITR | disabled initially | enabled unless a cost exception is approved before prod opens |
-| Deletion protection | optional | enabled |
+| Deletion protection | disabled for disposable dev unless dependencies make deletion risky | enabled |
 | Public IP | avoid broad exposure | avoid broad exposure |
 | Connector path | Cloud SQL connector/proxy | Cloud SQL connector |
 

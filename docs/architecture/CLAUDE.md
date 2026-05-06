@@ -17,14 +17,17 @@ order:
 4. `docs/architecture/current_project_architecture.md`
 5. `docs/architecture/cloud_migration_architecture.md`
 6. `docs/architecture/cloud_migration_phase_plan.md`
-7. `docs/architecture/phase/README.md`
-8. the specific `docs/architecture/phase/phaseN_*.md` file for the requested phase
+7. `docs/architecture/env_profiles.md`
+8. `docs/architecture/phase/README.md`
+9. the specific `docs/architecture/phase/phaseN_*.md` file for the requested phase
 
 ## Source Of Truth
 
 - `cloud_migration_architecture.md`: target GCP architecture and service boundary.
 - `cloud_migration_phase_plan.md`: phase numbering, layered Terraform roots, and
   cross-phase dependency map.
+- `env_profiles.md`: dev / demo-contest / prod operating profiles, scaling,
+  sizing, public posture, and prod-opening boundary.
 - `phase/phaseN_*.md`: tactical execution checklist for that phase.
 - `current_project_architecture.md`: current local/MVP architecture reference.
 
@@ -48,6 +51,23 @@ documentation patch.
 - Keep Terraform, CI/scripts, and Admin/manual responsibility split explicit.
 - Prefer adding phase-specific detail under `phase/` instead of bloating the
   top-level phase plan.
+- For any cloud migration or Terraform task, identify the target profile before
+  editing: `dev`, `demo/contest`, or `prod`. If the user does not explicitly
+  approve `prod`, assume `dev` or `demo/contest`, not prod.
+- First implementation/apply target is `dev` only. `envs/prod/*` must remain
+  skeleton/README/tfvars-example only until a separate prod-opening review
+  approves exact prod sizing, backup, PITR, HA, deletion protection, deployment
+  approval policy, and operating owner.
+- `demo/contest` is a public presentation posture after dev smoke passes. A
+  custom domain or Gabia DNS does not by itself make the deployment prod.
+- GitHub deploy/WIF must bind to
+  `2026-moel-datacontest-core/law_main_road_main` only. Keep that source repo
+  private during current preflight and keep `protect-main`
+  policy-defined/enforcement-pending unless Phase 5 explicitly reopens GitHub
+  Team upgrade or public conversion. Treat
+  `Team-msp-architect-2026/msp-team02` as a public curated submission mirror with
+  no deploy permission unless a later approved architecture change moves deploy
+  ownership.
 
 ## Phase Task Rule
 
