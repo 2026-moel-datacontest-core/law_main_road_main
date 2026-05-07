@@ -31,8 +31,9 @@ target. Use these files when assigning focused implementation work to an agent.
 
 ## Terraform Authoring Map
 
-Use this table when opening GitHub issues or assigning Terraform work. The paths
-are future authoring paths only; this phase index does not create directories.
+Use this table when opening GitHub issues or assigning Terraform work. Phase 1
+paths now exist under `infra/terraform`; Phase 2+ paths remain future authoring
+paths until their phase opens.
 
 | Phase | Issue Title | Terraform Root | Primary Modules | Create Resources? |
 |---:|---|---|---|---|

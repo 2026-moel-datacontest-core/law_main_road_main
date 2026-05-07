@@ -64,14 +64,13 @@
 - Before OCR stale/running review job failure guard 반영: stale OCR review jobs는
   failed 처리된다. Retry/backoff/full provider hardening은 별도 future runtime 후보다.
 - local secret/database ignore rules hardening 반영
-- cloud migration Terraform readiness 문서 정합화 진행 중: 실제 `.tf` 파일,
-  cloud resource, secret value, backend/frontend code 변경 없이
-  `docs/architecture/cloud_migration_*`와 `docs/architecture/phase/*`가 Phase
-  0~7 GitHub issue 작성 가능한 수준의 Terraform authoring contract를 담는다.
-  기준 layout은 future path인 `infra/terraform/envs/{dev,prod}`와 focused modules
-  (`cloud-run-service`, `cloud-sql-pgvector`, `artifact-bucket`, `iam-wif`,
-  `secret-manager`, optional `load-balancer-domain`)이며, docs-only 작업에서는
-  해당 directory/file을 만들지 않는다.
+- cloud migration Phase 1 Terraform bootstrap/foundation 완료:
+  `infra/terraform/bootstrap/remote-state`, `infra/terraform/envs/dev/foundation`,
+  Phase 1 modules, and `infra/terraform/envs/prod/foundation` skeleton이 추가됐다.
+  `bootstrap/remote-state`와 `envs/dev/foundation`은 `2026-05-06`에 apply 완료했고
+  post-apply plan checks는 no changes다. Secret value, Cloud SQL, Cloud Run,
+  WIF provider/trust, GitHub workflow, backend/frontend code/API/runtime behavior는
+  이 작업에서 변경하지 않았다. Phase 2+ runtime/data roots remain unopened.
 - Phase 0 final decisions 반영: first cloud target은 `dev` only, initial GCP
   model은 one project + env-prefixed resources, Terraform/resource prefix는
   `lmr`, human-readable app label은 `law-main-road`다. 기존 코드/서비스 이름을

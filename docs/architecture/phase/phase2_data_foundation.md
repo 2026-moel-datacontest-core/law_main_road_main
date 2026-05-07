@@ -307,9 +307,12 @@ the full dev/demo/prod posture and Cloud Run scaling tradeoffs.
 | Setting | dev | prod |
 |---|---|---|
 | Region | `asia-northeast3` | `asia-northeast3` |
+| PostgreSQL | `POSTGRES_17` if current Cloud SQL support and pgvector checks remain valid before apply | decide during prod-opening review |
+| Cloud SQL edition | `ENTERPRISE` explicitly | decide during prod-opening review |
 | Availability | `ZONAL` | `ZONAL` first; `REGIONAL` later if needed |
-| Tier/storage | `db-f1-micro` first for low-cost smoke; raise to `db-g1-small` only if smoke is too weak; 10 GB candidate, confirmed before apply | small production tier when prod opens |
-| Backup | 3-day retention recommended for dev/demo; 1-3 day range allowed | 7-day baseline |
+| Tier/storage | `db-f1-micro` first for low-cost smoke; raise to `db-g1-small` only if smoke is too weak; 10 GB SSD candidate, confirmed before apply | small production tier when prod opens |
+| Storage auto-increase | allowed only with an explicit small cap/cost check | decide during prod-opening review |
+| Backup | 3-day retention recommended for dev/demo; 1-3 day range allowed if cost posture requires it | 7-day baseline |
 | PITR | disabled initially | enabled unless a cost exception is approved before prod opens |
 | Deletion protection | disabled for disposable dev unless dependencies make deletion risky | enabled |
 | Public IP | avoid broad exposure | avoid broad exposure |
@@ -317,6 +320,15 @@ the full dev/demo/prod posture and Cloud Run scaling tradeoffs.
 
 Private IP + Serverless VPC Access is not part of Phase 2 first migration. Keep
 it as Phase 7 hardening unless a real deployment constraint requires it earlier.
+
+Planning review note on `2026-05-07`: Phase 2 implementation/apply has not been
+opened. The current dev recommendation is `POSTGRES_17`, Cloud SQL
+`ENTERPRISE`, `db-f1-micro`, 10 GB SSD, automated backups with 3-day retention,
+PITR off, `ZONAL`, HA off, deletion protection false, Cloud SQL connector/Auth
+Proxy access, no authorized networks, and no private IP/VPC until a later
+hardening phase. Confirm current Google Cloud support/pricing immediately before
+the implementation plan, because Cloud SQL version, edition, backup, and pricing
+facts are time-sensitive.
 
 ## 14. Naming And Labels
 
@@ -597,6 +609,9 @@ Cloud SQL deletion:
 - Never delete prod Cloud SQL as a normal rollback.
 - For dev, delete only after confirming no later phase depends on the instance
   and no needed test data remains.
+- After migration/seed/full embedding, treat dev destroy as a cost/rollback
+  decision: confirm whether backup/export is needed and whether the embedding
+  generation cost/time is acceptable to repeat.
 
 ## 25. Blocks Phase 3 If
 

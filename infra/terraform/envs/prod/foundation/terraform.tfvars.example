@@ -1,0 +1,15 @@
+project_id = "<prod-project-id-or-approved-shared-project>"
+env        = "prod"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "<approved-owner>"
+
+labels = {
+  app        = "law-main-road"
+  env        = "prod"
+  managed_by = "terraform"
+  owner      = "<approved-owner>"
+}
+
+# Prod is skeleton-only until a separate prod-opening review.
+# Do not use this file for apply in Phase 1.

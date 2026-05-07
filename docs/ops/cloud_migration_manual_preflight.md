@@ -7,6 +7,13 @@
 GCP resource, secret value, backend/frontend code는 이 문서 단계에서 만들거나
 수정하지 않는다.
 
+Phase 1 implementation note on `2026-05-06`: preflight/readiness is no longer
+the only cloud migration artifact. Phase 1 Terraform bootstrap/foundation roots
+now exist under `infra/terraform`, bootstrap and dev foundation were applied, and
+post-apply plan checks returned no changes. No secret values, Cloud SQL, Cloud
+Run, WIF provider, GitHub workflow, or backend/frontend runtime changes were
+added in Phase 1.
+
 Environment/profile별 운영값은
 [`../architecture/env_profiles.md`](../architecture/env_profiles.md)를 기준으로
 한다. 이 문서는 사람이 먼저 확인할 preflight checklist이고,

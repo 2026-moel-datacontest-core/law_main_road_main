@@ -51,18 +51,19 @@ application behavior migration tool.
 | Phase sizing | Author Terraform in small phase roots. Phase 0 is docs/decision freeze only; Phase 1 is the first resource phase. |
 | Application contract | Terraform must not change `/api/v1/answer`, `/api/v1/documents/draft`, protected SCN-001 Bridge/history behavior, SCN-004 freeze, SCN-001 frozen draft, auth persistence, or Web Storage policy. |
 | Optional edge | Custom domain / HTTPS Load Balancer / Gabia DNS is Phase 7A optional hardening, not a Phase 1-6 prerequisite. |
-| State | Shared applies use a GCS remote state bucket after bootstrap. The approved baseline is local-state `bootstrap/remote-state` for the first state bucket creation, followed by remote GCS backend migration for later env roots. A separate pre-created bootstrap bucket is not the approved baseline. |
+| State | Shared applies use a GCS remote state bucket after bootstrap. The approved baseline is local-state `bootstrap/remote-state` for the first state bucket creation, followed by GCS backend initialization for later env roots. A separate pre-created bootstrap bucket is not the approved baseline. |
 | Cloud Run revision ownership | Build/push images outside Terraform, pass an immutable image digest or explicit tag into Terraform, and let Terraform update Cloud Run service config/traffic so the apply creates the revision. `gcloud run deploy` is not the steady-state path while Terraform owns Cloud Run; emergency manual changes must be reconciled back into Terraform. |
 | Secrets | Terraform may create Secret Manager resources and IAM bindings, but raw secret values and credential-bearing outputs stay out of `.tf` files, tfvars, Terraform state, GitHub Actions logs, and public evidence. |
 | Internal inventory | Project id/number, service account email, bucket name, Cloud SQL connection name, WIF provider name, Secret Manager resource name, state bucket name, and direct backend `run.app` URL are internal cloud inventory. |
 | Destructive actions | Destroy/replacement of prod state bucket, Cloud SQL, artifact bucket, service accounts, or runtime services requires explicit human approval and rollback notes. |
 
-The suggested future IaC path is documented in
+The IaC path is documented in
 [`cloud_migration_phase_plan.md`](cloud_migration_phase_plan.md#3-recommended-terraform-layout)
 as `infra/terraform/envs/{dev,prod}` plus focused modules such as
 `cloud-run-service`, `cloud-sql-pgvector`, `artifact-bucket`, `iam-wif`,
-`secret-manager`, and optional `load-balancer-domain`. This docs-only review
-does not create those directories.
+`secret-manager`, and optional `load-balancer-domain`. Phase 1 now contains the
+bootstrap/foundation Terraform roots and Phase 1 modules under `infra/terraform`;
+later phase roots/modules remain unopened until their phase is approved.
 
 ### Human MFA And Runbook Script Boundary
 
@@ -591,10 +592,10 @@ Detailed Terraform root layout and module ownership are defined in
 That phase plan is the single source of truth for Terraform entry points and
 phase numbering.
 
-The first cloud migration target is `dev` only. Keep both `dev` and `prod`
-Terraform directories, but instantiate only `dev` first. The initial GCP model
-uses one project with env-prefixed resources; separate dev/prod projects are
-deferred to future hardening.
+The first cloud migration target is `dev` only. The Phase 1 Terraform layout now
+contains apply-ready dev bootstrap/foundation roots and a prod foundation
+skeleton only. The initial GCP model uses one project with env-prefixed
+resources; separate dev/prod projects are deferred to future hardening.
 
 ## 11. Migration Roadmap
 

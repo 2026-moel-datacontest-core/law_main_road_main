@@ -17,6 +17,8 @@
 Baseline rule:
 
 - Phase 1-6 first implementation creates and validates `dev` only.
+- Phase 1 Terraform bootstrap/foundation has been applied for `dev`, and
+  post-apply plan checks returned no changes. `prod` remains skeleton-only.
 - Terraform modules should be reusable for prod, but `envs/prod/*` stays
   skeleton/README/tfvars-example only until prod-opening review.
 - `demo/contest` is not a separate first Terraform environment by default. It is
@@ -47,8 +49,10 @@ cost-controlled Free Trial / dev-demo validation.
 | Cloud Run backend min instances | `0` |
 | Cloud Run max instances | conservative cap, start `2-3` |
 | Cloud Run billing | request-based unless Phase 3 explicitly changes it |
+| Cloud SQL PostgreSQL | `POSTGRES_17` candidate pinned for Phase 2 implementation if current Cloud SQL support and pgvector checks remain valid |
+| Cloud SQL edition | `ENTERPRISE` explicitly, to keep shared-core dev tier/cost posture |
 | Cloud SQL tier | `db-f1-micro` first; `db-g1-small` fallback if smoke is too weak |
-| Cloud SQL storage | 10 GB candidate; confirm minimum/current price before apply |
+| Cloud SQL storage | 10 GB SSD candidate; use auto-increase only with an explicit small cap/cost check |
 | Cloud SQL availability | `ZONAL` |
 | Cloud SQL HA | off |
 | Cloud SQL backup retention | 3 days recommended; 1-3 day range allowed |

@@ -185,6 +185,20 @@ Mirror sync discipline:
 5. Keep 2번 mirror CI validation-only if CI is added later.
 6. Do not add deploy workflow, WIF binding, or GCP secrets to 2번 mirror repo.
 
+Before creating any mirror archive or copying files outside git, run a
+filename-only check for ignored local credential/state material and exclude or
+quarantine it. Do not use a raw working-tree zip as a public mirror artifact.
+
+```bash
+git status --short --ignored -- . \
+  | rg '(^!!|\\.tfstate|\\.tfvars|\\.tfplan|service-account|service_account|credential|credentials|config/secrets|\\.env)'
+find . -path './.git' -prune -o \
+  -type f \( -name '*.tfstate' -o -name '*.tfstate.*' -o -name '*.tfvars' \
+  -o -name '*.tfplan' -o -name '*service-account*.json' \
+  -o -name '*service_account*.json' -o -name '*credential*.json' \
+  -o -name '*credentials*.json' \) -print
+```
+
 ## 3. Remaining Manual Items
 
 ```text

@@ -28,6 +28,13 @@ Phase 1은 이후 모든 GCP 리소스가 안전하게 올라갈 수 있는 foun
 | Required previous phase | Phase 0 Ready for Phase 1 |
 | Next phase | [`phase2_data_foundation.md`](phase2_data_foundation.md) |
 
+Implementation status on `2026-05-06`: Phase 1 is complete for the first `dev`
+cloud target. The bootstrap remote-state root was applied first, then
+`envs/dev/foundation` was initialized against the approved GCS state bucket and
+applied. Post-apply `terraform plan -detailed-exitcode` checks for both roots
+returned no changes. `envs/prod/foundation` remains skeleton-only, and Phase 2+
+runtime/data resources remain unopened.
+
 ## 3. Read First
 
 Phase 1 작업자는 아래 순서로 읽는다.
@@ -53,6 +60,7 @@ Phase 1을 시작하기 전에 확인한다.
 | Human GCP MFA | every human admin/bootstrap account has 2-Step Verification/MFA enabled; record PASS/FAIL only |
 | GCP MFA helper | optional future `gcp-mfa-main-guide1` preflight can be used, but it must not create keys or collect OTP/recovery material |
 | Region | `asia-northeast3` |
+| Bootstrap API access | active bootstrap identity can already call Service Usage / Resource Manager enough for Terraform to enable `serviceusage.googleapis.com`, `cloudresourcemanager.googleapis.com`, and `storage.googleapis.com`; if blocked by project policy, resolve it as an admin prerequisite before Terraform apply |
 | Firebase/Auth | existing `law-main-road` Firebase-enabled project; Google provider only; no Firebase SMS MFA / Phone Auth; Phase 1 does not create Firebase resources |
 | Terraform auth | local admin user or approved `terraform-sa` impersonation path decided |
 | GitHub Actions WIF | not required yet |
@@ -212,7 +220,6 @@ terraform fmt -check
 terraform validate
 terraform plan
 terraform apply
-terraform init -migrate-state
 ```
 
 Rules:
@@ -224,18 +231,21 @@ Rules:
 - Keep deletion protection / prevent-destroy policy where practical.
 - Record the final state bucket name for foundation backend config.
 - Bootstrap local `terraform.tfstate*` files must never be committed. Store or
-  delete them according to this runbook after backend migration succeeds.
+  delete them according to this runbook after the state bucket and later remote
+  backend roots are confirmed.
 - State bucket naming follows the `lmr-{env/state}-{component}` style as
   appropriate, with a globally unique suffix when required. The exact bucket name
   is internal inventory.
 
 ## 9. Foundation Apply Procedure
 
-After bootstrap migration is complete:
+After bootstrap apply creates the state bucket and the bucket name is approved:
 
 ```bash
 cd infra/terraform/envs/dev/foundation
-terraform init
+terraform init \
+  -backend-config="bucket=<state_bucket_name>" \
+  -backend-config="prefix=envs/dev/foundation"
 terraform fmt -check
 terraform validate
 terraform plan
@@ -293,26 +303,37 @@ Do not use one service account for every concern.
 
 ## 12. IAM Baseline
 
-Minimum `terraform-sa` candidate roles, scoped to project/resource where possible:
+Phase 1 default `terraform-sa` candidate roles, scoped to project/resource where
+possible:
 
 | Area | Candidate role |
 |---|---|
 | Required API enablement | `roles/serviceusage.serviceUsageAdmin` |
-| Cloud Run | `roles/run.admin` |
-| Cloud SQL | `roles/cloudsql.admin` |
 | State/artifact buckets | `roles/storage.admin`, narrowed to bucket scope where possible |
 | Secret Manager | `roles/secretmanager.admin` |
 | Artifact Registry | `roles/artifactregistry.admin` |
 | Service accounts | `roles/iam.serviceAccountAdmin`, `roles/iam.serviceAccountUser` |
-| Monitoring/logging | `roles/monitoring.admin`, `roles/logging.admin` |
 
 Rules:
 
 - Do not grant `roles/owner` or `roles/editor` for normal Terraform execution.
+- Do not grant service-account-key admin or Firebase service-agent roles.
 - Any broader bootstrap-only grant must be temporary, documented, and removed
   after foundation is applied.
 - Prefer resource-scoped IAM over project-wide IAM.
 - Runtime service accounts should not receive deployment or Terraform admin roles.
+- Cloud Run, Cloud SQL, monitoring, logging, and deploy permissions are reviewed
+  and added by the phases that first need them. Phase 1 does not grant those
+  roles by default.
+
+Current dev foundation Terraform may grant these candidate `terraform-sa` roles
+as project-level additive IAM to keep the first foundation apply simple before
+later phase resources exist. Treat that service account as a bootstrap/foundation
+admin identity only: no key JSON, no WIF trust, no GitHub workflow impersonation,
+and no general deploy use in Phase 1. Before Phase 5 CI/CD or any later long-lived
+Terraform execution path uses `terraform-sa`, re-review and narrow/remove broad
+project-level Storage, Secret Manager, Artifact Registry, and Service Account
+User permissions where phase-specific resource-scoped bindings are available.
 
 ## 13. Runtime IAM Grants From Phase 1
 
@@ -321,7 +342,7 @@ runtime-specific grants narrow.
 
 | Principal | Grant | Target |
 |---|---|---|
-| `backend-sa` | Secret accessor only for backend-needed secrets | specific Secret Manager resources |
+| `backend-sa` | Secret accessor only for DB-related backend-needed secrets | specific Secret Manager resources |
 | `backend-sa` | Storage object access | private artifact bucket for the future GCS artifact adapter |
 | `github-actions-sa` | none or minimal placeholder | defer deploy permissions to Phase 5 |
 | `frontend-sa` | none by default | add later only if backend IAM auth is introduced |
@@ -489,8 +510,9 @@ Expected:
 Phase 1 is complete only when all required statements are true.
 
 - Bootstrap remote state bucket exists.
-- Bootstrap local state has been migrated to remote state.
-- Foundation root uses remote state.
+- Bootstrap local state has been handled according to the runbook and not
+  committed.
+- Foundation root is initialized against the approved GCS remote state bucket.
 - Required APIs are enabled.
 - `frontend-sa`, `backend-sa`, `github-actions-sa`, and `terraform-sa` exist.
 - No service account has project-wide Owner/Editor.
@@ -504,7 +526,50 @@ Phase 1 is complete only when all required statements are true.
 
 ## 22. Phase 1 Output
 
-At the end of Phase 1, produce a short status note with this shape.
+Current status note for the first `dev` apply:
+
+```markdown
+## Phase 1 Status
+
+Decision: Ready for Phase 2 planning/review
+
+Applied roots:
+- bootstrap/remote-state: PASS
+- envs/dev/foundation: PASS
+
+Outputs:
+- state bucket: created and recorded in private runbook
+- artifact registry repository: created
+- artifact bucket: created
+- frontend-sa: created
+- backend-sa: created
+- github-actions-sa: created
+- terraform-sa: created
+- secret resources: created as shells only
+
+Checks:
+- terraform fmt/validate/plan/apply: PASS
+- foundation remote backend init: PASS
+- post-apply plan checks: PASS, no changes
+- API enablement: PASS via Terraform
+- service accounts: PASS via Terraform
+- artifact registry: PASS via Terraform
+- artifact bucket privacy: PASS via Terraform
+- secret shells: PASS via Terraform, no secret values managed
+
+Findings:
+- Blocker: none for Phase 2 planning/review
+- Medium: `terraform-sa` keeps Phase 1 project-level candidate roles until a
+  later narrowing review before CI/CD or long-lived impersonation use
+
+Phase 2 handoff:
+- Use `docs/architecture/phase/phase2_data_foundation.md`.
+- Consume foundation outputs through remote state.
+- Do not create pgvector/schema/seed with Terraform.
+```
+
+For future reruns or another environment, produce a short status note with this
+shape.
 
 ```markdown
 ## Phase 1 Status
@@ -527,7 +592,7 @@ Outputs:
 
 Checks:
 - terraform fmt/validate/plan/apply: PASS/FAIL
-- remote state migration: PASS/FAIL
+- foundation remote backend init: PASS/FAIL
 - API enablement: PASS/FAIL
 - service account describe: PASS/FAIL
 - artifact registry describe: PASS/FAIL

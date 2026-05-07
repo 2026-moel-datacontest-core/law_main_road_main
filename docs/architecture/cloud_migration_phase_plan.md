@@ -9,8 +9,9 @@ migration target을 실제 구현 가능한 phase로 나눈 계획이다. 목표
 
 ## Terraform Authoring Contract
 
-This is the contract for the later Terraform-writing pass. This docs patch does
-not create Terraform directories or `.tf` files.
+This is the contract for Terraform-writing passes. Phase 1 bootstrap/foundation
+Terraform now exists under `infra/terraform`; later phase roots remain future
+work until their phase is opened.
 
 - Environment-specific operating values are defined in
   [`env_profiles.md`](env_profiles.md). This phase plan owns sequencing and
@@ -150,9 +151,9 @@ targets before adding new automation.
 
 ## 3. Recommended Terraform Layout
 
-The preferred authoring layout is below. It is an example-level contract for the
-future IaC patch; do not create these directories in a docs-only readiness
-review.
+The preferred authoring layout is below. Phase 1 has created the
+bootstrap/foundation subset of this tree. Phase 2+ roots/modules remain planned
+layout until their implementation phase opens.
 
 ```text
 infra/terraform/
@@ -202,6 +203,14 @@ First implementation pass rule:
 - Reusable modules should be written with prod in mind, but prod resource
   creation is not part of the first cloud migration pass.
 
+Implementation status on `2026-05-06`: Phase 1 created
+`infra/terraform/bootstrap/remote-state`, `infra/terraform/envs/dev/foundation`,
+Phase 1 modules, and `infra/terraform/envs/prod/foundation` skeleton material.
+The bootstrap remote-state root and `envs/dev/foundation` have been applied for
+the first `dev` target, and post-apply `terraform plan -detailed-exitcode`
+checks returned no changes. Phase 2+ roots remain unopened, and `prod` remains
+skeleton-only.
+
 Notes:
 
 - `cloud-sql-pgvector` is a naming convenience for Cloud SQL PostgreSQL that
@@ -237,7 +246,7 @@ secrets.
 | Decision Area | Contract |
 |---|---|
 | Remote state need | Required for any shared/dev/prod cloud apply. Local state is allowed only for the first `bootstrap/remote-state` run before the bucket exists. |
-| State bucket bootstrap | Phase 1 starts with a manual/local-state bootstrap root, then migrates later env roots to the versioned GCS backend. Bootstrap local `terraform.tfstate*` files must never be committed and must be stored/deleted according to the Phase 1 runbook after backend migration. A separate pre-existing bootstrap bucket is not the approved baseline. |
+| State bucket bootstrap | Phase 1 starts with a manual/local-state bootstrap root, then initializes later env roots against the versioned GCS backend bucket. Bootstrap local `terraform.tfstate*` files must never be committed and must be stored/exported/deleted according to the Phase 1 runbook after later remote backend roots are confirmed. A separate pre-existing bootstrap bucket is not the approved baseline. |
 | State bucket policy | Versioning on, public access prevention on, uniform bucket-level access preferred, deletion/prevent-destroy guard for prod where practical. |
 | State bucket naming | Follow the `lmr-{env/state}-{component}` style as appropriate and add a globally unique suffix when required. The exact state bucket name is internal inventory. |
 | Secret values in tfstate | Disallowed by default. Terraform may create Secret Manager secret resources and IAM bindings, but raw secret versions are added manually or by secured CI outside Terraform state. `google_secret_manager_secret_version` is forbidden by default unless a later explicit security review approves an exception. |
@@ -377,12 +386,15 @@ Bootstrap state note:
 
 - `infra/terraform/bootstrap/remote-state` starts with local Terraform state on the first
   run because the GCS backend bucket does not exist yet.
-- After `terraform apply` creates the state bucket, run
-  `terraform init -migrate-state` before applying later roots.
+- After `terraform apply` creates the state bucket, initialize later env roots
+  with the GCS backend bucket and the phase-specific state prefix. The
+  bootstrap root itself intentionally keeps no committed remote backend block in
+  this baseline.
 - Do not configure a remote backend inside `bootstrap/remote-state` itself for
   the approved baseline.
-- Bootstrap local `terraform.tfstate*` files must never be committed. Store or
-  delete them according to the Phase 1 runbook after backend migration.
+- Bootstrap local `terraform.tfstate*` files must never be committed. Store,
+  export, or delete them according to the Phase 1 runbook after later remote
+  backend roots are confirmed.
 
 Modules:
 
@@ -414,22 +426,23 @@ Bucket naming:
   expose the final bucket name as a foundation output. `lmr-{env}-artifacts` is
   a bucket naming pattern, not an environment variable name.
 
-Minimum `terraform-sa` roles:
+Phase 1 default `terraform-sa` roles:
 
 | Area | Candidate role |
 |---|---|
 | Required API enablement | `roles/serviceusage.serviceUsageAdmin` |
-| Cloud Run | `roles/run.admin` |
-| Cloud SQL | `roles/cloudsql.admin` |
 | State/artifact buckets | `roles/storage.admin`, narrowed to bucket scope where possible |
 | Secret Manager | `roles/secretmanager.admin` |
 | Artifact Registry | `roles/artifactregistry.admin` |
 | Service accounts | `roles/iam.serviceAccountAdmin`, `roles/iam.serviceAccountUser` |
-| Monitoring/logging | `roles/monitoring.admin`, `roles/logging.admin` |
 
 Do not grant `roles/owner` or `roles/editor` for normal Terraform execution.
+Do not grant service-account-key admin or Firebase service-agent roles.
 Any broader bootstrap-only IAM grant must be documented as temporary and removed
 after foundation is applied.
+Cloud Run, Cloud SQL, monitoring, logging, and deploy permissions are reviewed
+and added by the phases that first need them; Phase 1 does not grant those roles
+by default.
 
 Verification:
 

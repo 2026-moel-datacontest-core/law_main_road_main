@@ -72,6 +72,23 @@ config/secrets/
 law-service-main-page-design/
 z_before_begin/
 
+# Terraform local state/plans/secrets. Keep .terraform.lock.hcl committed.
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+backend.hcl
+*.backend.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+!*.tfvars.example
+
 # Local agent/tool state
 .omx/
 .codex
