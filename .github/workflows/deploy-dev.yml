@@ -1,9 +1,6 @@
 name: Deploy Dev
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       run_live_ai_smoke:

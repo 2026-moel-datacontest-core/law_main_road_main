@@ -28,9 +28,13 @@ jobs:
         run: python -m pip install -r backend/requirements.txt
 
       - name: Backend import smoke
+        env:
+          DATABASE_URL: "sqlite:///./ci-smoke.db"
         run: python -c "from backend.main import app; print('backend_import_ok')"
 
       - name: Document draft deterministic smoke
+        env:
+          DATABASE_URL: "sqlite:///./ci-smoke.db"
         run: python backend/verify/check_document_draft.py
 
       - name: Set up Node
