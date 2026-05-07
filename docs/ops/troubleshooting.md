@@ -153,6 +153,205 @@ JSON 사용 여부를 확인하고 `human_mfa_attested=PASS/FAIL`만 남긴다.
   payload를 노출하지 않는다.
 - Bucket public access를 열어 artifact retrieval을 해결하지 않는다.
 
+## 2026-05-07 Phase 5 CI/CD / PR Checks Troubleshooting
+
+상황:
+
+- repo: `2026-moel-datacontest-core/law_main_road_main`
+- working branch: `cloud_migration`
+- 목표: Phase 5 CI/CD WIF 기반 dev 배포 검증 전에 PR Checks 실패를
+  수정하고, `main` merge 직후 Deploy Dev가 자동 실행되지 않도록 한다.
+- PR: GitHub PR #3 `Cloud migration`
+- 실패 workflow: `PR Checks / Build and Validate`
+- 실패 step: `Backend import smoke`
+
+증상:
+
+```text
+RuntimeError: DATABASE_URL is not set. Create backend/.env from backend/.env.example.
+```
+
+원인:
+
+- `.github/workflows/pr-checks.yml`의 `Backend import smoke` step은 아래
+  import smoke를 실행한다.
+
+```bash
+python -c "from backend.main import app; print('backend_import_ok')"
+```
+
+- backend import 경로가 DB 설정을 읽으므로 CI 환경에 `DATABASE_URL`이 없으면
+  실제 DB 접속 전 단계에서 import가 실패한다.
+- 이 smoke는 Cloud SQL 연결 검증이 아니라 backend app import 가능 여부만
+  확인하는 PR validation이다.
+
+권장 조치:
+
+- `Backend import smoke` step에 CI 전용 dummy `DATABASE_URL`만 주입한다.
+- 실제 Cloud SQL URL, credential-bearing `DATABASE_URL`, Secret Manager 값,
+  DB password는 workflow, repo, GitHub Actions summary에 넣지 않는다.
+- 현재 backend DB engine 생성 경로는 SQLAlchemy pool 옵션을 함께 사용하므로
+  `sqlite+pysqlite:///:memory:`는 pool option 충돌로 실패할 수 있다.
+- import smoke용 fallback은 로컬 파일 SQLite URL을 사용한다.
+
+권장 workflow shape:
+
+```yaml
+- name: Backend import smoke
+  env:
+    DATABASE_URL: "sqlite:///./ci-smoke.db"
+  run: python -c "from backend.main import app; print('backend_import_ok')"
+```
+
+참고:
+
+- `Document draft deterministic smoke`도 backend import와 동일한 설정 경로를
+  지나면 CI 전용 dummy `DATABASE_URL`이 필요할 수 있다.
+- 이 값은 PR validation용 dummy DB URL이며 Cloud SQL smoke를 대체하지 않는다.
+
+Deploy Dev trigger gate:
+
+- Phase 5에서는 `cloud_migration -> main` merge 직후 dev 배포가 자동 실행되지
+  않아야 한다.
+- `.github/workflows/deploy-dev.yml`은 `push: branches: [main]` trigger를
+  제거하고 `workflow_dispatch`만 남긴다.
+- PR Checks 통과 및 merge 후 GitHub Actions UI에서 Deploy Dev를 수동 실행한다.
+- 최초 수동 실행은 `run_live_ai_smoke=false`로 시작한다.
+
+Rollback Dev trigger gate:
+
+- `.github/workflows/rollback-dev.yml`은 자동 실행되면 안 된다.
+- trigger는 `workflow_dispatch`만 허용한다.
+- `push` trigger가 있으면 제거한다.
+
+GitHub Repository Variables gate:
+
+- Phase 5 전에 필요한 repository variables는 GitHub UI에서 설정한다.
+- 문서에는 변수 이름과 설정 상태만 기록한다. Firebase Web API key / App ID의
+  실제 값, credential-bearing DB URL, token, service account key JSON은 남기지
+  않는다.
+
+필수 변수 이름:
+
+```text
+GCP_PROJECT_ID
+GCP_REGION
+GCP_WIF_PROVIDER
+GCP_GITHUB_ACTIONS_SA
+GCP_TERRAFORM_SA
+TERRAFORM_STATE_BUCKET
+ARTIFACT_REGISTRY_REPOSITORY
+BACKEND_SERVICE_NAME
+FRONTEND_SERVICE_NAME
+NEXT_PUBLIC_API_BASE_URL
+NEXT_PUBLIC_BEFORE_API_BASE_URL
+NEXT_PUBLIC_FIREBASE_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+NEXT_PUBLIC_FIREBASE_PROJECT_ID
+NEXT_PUBLIC_FIREBASE_APP_ID
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+```
+
+검증 체크:
+
+```bash
+git diff -- .github/workflows/pr-checks.yml .github/workflows/deploy-dev.yml .github/workflows/rollback-dev.yml docs/ops/troubleshooting.md
+DATABASE_URL='sqlite:///./ci-smoke.db' python -c "from backend.main import app; print('backend_import_ok')"
+```
+
+정상 기대:
+
+- backend import smoke가 `backend_import_ok`를 출력한다.
+- `deploy-dev.yml`은 `workflow_dispatch`만 가진다.
+- `rollback-dev.yml`은 `workflow_dispatch`만 가진다.
+- workflow diff에 GCP key JSON, 실제 Cloud SQL `DATABASE_URL`, DB password,
+  token이 없다.
+
+### 1. Deploy Dev image digest extraction이 push 이후 실패함
+
+상황:
+
+- workflow: `Deploy Dev`
+- 실패 step: `Build and push backend image` 또는 `Build and push frontend image`
+- `docker build`는 성공한다.
+- `docker push`도 Artifact Registry에 성공한다.
+- 실패는 push 이후 digest 추출에서 발생한다.
+
+증상:
+
+```text
+digest: sha256:<64-hex> size: <bytes>
+ERROR: template: :1:2: executing "" at <.Digest>: can't evaluate field Digest in type imagetools.tplInput
+```
+
+원인:
+
+- 기존 workflow가 push 후 아래 명령으로 digest를 추출했다.
+
+```bash
+docker buildx imagetools inspect "${tag}" --format '{{.Digest}}'
+```
+
+- GitHub Actions runner / Docker buildx 버전에 따라
+  `imagetools inspect --format`의 template input에 `.Digest` field가 없을 수
+  있다.
+- 이 경우 image build/push 자체는 성공했지만, Terraform에 넘길 immutable
+  image reference를 만들지 못해 workflow가 실패한다.
+
+권장 조치:
+
+- tag deploy로 후퇴하지 않는다. Terraform에는 계속 `base@sha256:<digest>` 형태의
+  immutable digest reference를 넘긴다.
+- `docker push` 출력에는 pushed manifest digest가 포함되므로, push output에서
+  `sha256:<64-hex>`를 파싱한다.
+- backend와 frontend image step 모두 같은 방식을 사용한다.
+
+권장 workflow shape:
+
+```bash
+if ! push_output="$(docker push "${tag}" 2>&1)"; then
+  printf '%s\n' "${push_output}"
+  exit 1
+fi
+printf '%s\n' "${push_output}"
+digest="$(printf '%s\n' "${push_output}" | sed -n 's/.*digest: \(sha256:[0-9a-f]\{64\}\).*/\1/p' | tail -n 1)"
+if [ -z "${digest}" ]; then
+  echo "Failed to extract image digest from docker push output" >&2
+  exit 1
+fi
+image="${base}@${digest}"
+echo "::add-mask::${image}"
+echo "image=${image}" >> "${GITHUB_OUTPUT}"
+```
+
+검증 체크:
+
+```bash
+python - <<'PY'
+from pathlib import Path
+import yaml
+for file in [
+    Path(".github/workflows/deploy-dev.yml"),
+    Path(".github/workflows/rollback-dev.yml"),
+]:
+    yaml.safe_load(file.read_text())
+    print(f"yaml_ok {file}")
+PY
+
+push_output='tag: digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa size: 2208'
+digest="$(printf '%s\n' "${push_output}" | sed -n 's/.*digest: \(sha256:[0-9a-f]\{64\}\).*/\1/p' | tail -n 1)"
+test "${digest}" = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+```
+
+정상 기대:
+
+- backend image step은 push 이후 `base@sha256:<digest>` output을 만든다.
+- frontend image step도 동일하게 `base@sha256:<digest>` output을 만든다.
+- `deploy-dev.yml` trigger는 `workflow_dispatch` only를 유지한다.
+- workflow에는 GCP key JSON, 실제 `DATABASE_URL`, DB password, token을 넣지
+  않는다.
+
 ## 2026-04-22 Firebase Auth / ID Token Troubleshooting
 
 ### 1. 목표 구조를 혼동함: Firebase ID token은 “등록”하는 값이 아니다
