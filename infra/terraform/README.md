@@ -19,7 +19,8 @@ Current status:
 - `envs/prod/runtime/backend`: skeleton/unopened only.
 - `envs/dev/runtime/frontend`: applied for the first `dev` frontend Cloud Run
   runtime on `2026-05-07`; route/CORS/SCN-004/SCN-001 boundary smoke passed.
-  Firebase Authorized Domain / Google Sign-In smoke remains an admin gate.
+  Firebase Authorized Domain, Google Sign-In, and protected SCN-001 history
+  smoke passed through the deployed frontend.
 
 Phase 1 resources are limited to remote state bootstrap, required APIs, service
 accounts, Artifact Registry, Secret Manager secret shells, a private artifact
@@ -48,8 +49,9 @@ Phase 4 frontend runtime readiness is applied for the first `dev` target by
 approved runtime work: Next.js standalone image build/push, frontend Cloud Run
 service deploy, frontend service identity attachment, public dev smoke invoker,
 backend CORS re-apply to the frontend origin, route smoke, and SCN-004/SCN-001
-frontend boundary smoke. Firebase Authorized Domain and Google Sign-In smoke
-remain an admin gate before Phase 5 promotion.
+frontend boundary smoke. Firebase Authorized Domain, Google Sign-In, and
+protected SCN-001 history smoke passed through the deployed frontend without
+recording raw tokens or user identifiers.
 
 WIF/GitHub workflow, service account key JSON, Firebase Admin JSON, prod
 resources, custom domain/LB, and backend/frontend/API behavior expansion remain

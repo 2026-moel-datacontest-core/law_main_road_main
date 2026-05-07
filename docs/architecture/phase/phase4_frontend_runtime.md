@@ -61,6 +61,7 @@ Runtime wiring evidence:
 - Firebase public web config was provided through Docker build args only.
 - Frontend Cloud Run `allUsers` `roles/run.invoker` exists for controlled dev
   smoke.
+- Firebase Authorized Domains includes the deployed frontend Cloud Run host.
 - Backend CORS was re-applied to the Phase 4 frontend Cloud Run origin.
 - Cloud Run logs sampled across frontend/backend for the smoke window:
   `severity >= ERROR` count `0`; suspicious secret value matches `0`.
@@ -74,15 +75,15 @@ Smoke checks:
 | SCN-004 freeze | Browser smoke confirmed exact `SCN-004-DEMO-FREEZE` path made `0` `/api/v1/answer` calls. The SCN-004 draft flow proceeded to `/after/draft` and made exactly `1` expected `/api/v1/documents/draft` call. |
 | SCN-001 boundary | Browser smoke confirmed exact `SCN-001-BRIDGE-DEMO` path made `0` `/api/v1/answer` calls and `0` `/api/v1/documents/draft` calls through `/after -> /after/result -> /after/intake -> /after/draft`. The frozen draft remained frontend-local. |
 | Login-free After | `/after` route loaded with logged-out state and remains available without Google login. |
+| Firebase Authorized Domain | Automated popup smoke opened the Firebase auth domain and did not surface `auth/unauthorized-domain`. |
+| Google Sign-In / protected history | Human browser smoke completed Google Sign-In on the deployed frontend without sharing raw tokens. Cloud Run request logs in the smoke window showed `200` for `/api/v1/auth/me`, `/api/v1/scn001/before-review-jobs`, and `/api/v1/scn001/bridge-runs`. |
 
-Human gate:
+Current promotion boundary:
 
-- Firebase Authorized Domains still needs the deployed frontend Cloud Run host
-  added in Firebase Console before Google Sign-In can be smoke-tested.
-- Until that admin action is complete, Google popup login smoke and protected
-  SCN-001 logged-in browser smoke remain blocked.
-- Phase 5 CI/CD should stay blocked until Firebase Authorized Domain is added and
-  Google Sign-In succeeds on the deployed frontend.
+- Phase 4 dev frontend runtime smoke is complete.
+- This is still `dev/demo-only`, not a production-ready public API claim.
+- WIF/GitHub workflow, prod resources, custom domain / HTTPS Load Balancer, and
+  SCN-001 live/backend document draft generation remain unopened.
 
 ## 3. Read First
 

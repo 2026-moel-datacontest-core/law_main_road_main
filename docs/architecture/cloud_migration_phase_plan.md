@@ -214,8 +214,9 @@ the first `dev` target, and post-Terraform DB/data readiness has passed. Phase
 runtime target, and health/auth-negative/retrieve/answer/document-draft smoke
 evidence has passed. Phase 4 `envs/dev/runtime/frontend` has been applied for
 the first `dev` frontend runtime target, and route/CORS/SCN-004/SCN-001 boundary
-smoke passed. Firebase Authorized Domain / Google Sign-In smoke remains an admin
-gate before Phase 5. WIF/GitHub workflow and prod resources remain unopened.
+smoke passed. Firebase Authorized Domain, Google Sign-In, and protected SCN-001
+history smoke passed through the deployed frontend. WIF/GitHub workflow and prod
+resources remain unopened.
 
 Notes:
 
