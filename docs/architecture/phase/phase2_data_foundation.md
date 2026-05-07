@@ -1,6 +1,6 @@
 # Phase 2 — Data Foundation
 
-기준일: `2026-05-06`
+기준일: `2026-05-07`
 
 ## 1. Goal
 
@@ -35,6 +35,13 @@ evidence from a plan-only Phase 2 review.
 | DB schema/data | outside Terraform; not part of plan-only review |
 | Required previous phase | [`phase1_bootstrap_foundation.md`](phase1_bootstrap_foundation.md) |
 | Next phase | [`phase3_backend_runtime.md`](phase3_backend_runtime.md) |
+
+Implementation status on `2026-05-07`: Phase 2 is complete for the first `dev`
+cloud target. The dev data root was applied after saved-plan review, creating
+only the Cloud SQL PostgreSQL instance and application database shell. The
+post-apply plan returned no changes. DB users/passwords, Secret Manager versions,
+pgvector extension, schema migration, indexes, seed data, embeddings, backend
+runtime IAM, Cloud Run, WIF, and prod resources remain unopened.
 
 ## 3. Read First
 
@@ -170,10 +177,11 @@ the phase boundary.
 | Rollback/delete policy | prefer backward-compatible migrations; never delete prod Cloud SQL as normal rollback; dev delete only after dependency review |
 | Do not manage yet | pgvector extension creation, schema migrations, vector indexes, `law_chunks` seed/import, embeddings, backend runtime IAM, Cloud Run, WIF, custom domain/LB |
 
-Current plan-only review stops at Terraform fmt/validate/plan and boundary grep.
-Do not run `terraform apply`, `gcloud sql ... describe`, Alembic migration,
-seed import, or embedding generation until resource creation is explicitly
-approved.
+Initial plan-only review stopped at Terraform fmt/validate/plan and boundary
+grep. The approved dev apply has since completed. Do not run Alembic migration,
+pgvector extension setup, seed import, embedding generation, backend runtime IAM,
+Cloud Run deploy, or prod data resources until those later steps are explicitly
+opened.
 
 ## 7B. GitHub Issue Readiness
 
@@ -642,7 +650,37 @@ Phase 3 backend runtime is blocked if any of these are true.
 
 ## 26. Status Note Template
 
-When Phase 2 is executed, record a short status note.
+Current status note for the first `dev` apply:
+
+```markdown
+## Phase 2 Status — Data Foundation
+
+- Environment: dev
+- GCP project: existing law-main-road project
+- Region: asia-northeast3
+- Terraform root: infra/terraform/envs/dev/data
+- Cloud SQL instance: created
+- Database: created
+- DB user strategy: outside Terraform; not created yet
+- Backup/PITR: backups enabled with 3 retained backups; PITR off
+- Deletion protection: false for disposable dev
+- Migration head: not run yet
+- law_chunks row count: not run yet
+- selected_as_of: not verified in Cloud SQL yet
+- embedding status: not run yet
+- HNSW index: not created yet
+- DB pool values: recommended for Phase 3 as small dev guardrails
+- Cloud Run max instance cap recommended for Phase 3: low cap, initially 2
+- Admin actions performed: Terraform saved-plan apply for Cloud SQL instance and
+  app database shell only
+- Commands run: Terraform validate, saved plan apply, post-apply no-change plan,
+  Cloud SQL instance/database describe
+- Skipped checks: DB user/password, pgvector extension, Alembic migration,
+  law_chunks seed, embeddings, backend runtime IAM, Cloud Run deploy
+- Blockers: none for DB bootstrap planning; later steps still need approval
+```
+
+For future reruns or another environment, record a short status note.
 
 ```markdown
 ## Phase 2 Status — Data Foundation

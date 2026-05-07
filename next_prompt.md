@@ -1,6 +1,6 @@
-# Next Prompt - Cloud Migration Phase 2 Preparation
+# Next Prompt - Cloud Migration Phase 2 DB Bootstrap Planning
 
-기준일: `2026-05-06`
+기준일: `2026-05-07`
 
 작업 위치:
 
@@ -11,47 +11,45 @@
 현재 목적:
 
 ```text
-Cloud Migration Phase 1은 apply까지 완료했다. 다음 세션에서는 Phase 1 결과를
-검증한 뒤 Phase 2 data foundation을 계획/리뷰한다. Phase 2 apply는 별도 승인 전
-실행하지 않는다.
+Cloud Migration Phase 2 Terraform apply는 완료됐다. 다음 세션에서는 Cloud SQL
+인스턴스/DB shell 이후의 DB bootstrap, pgvector, Alembic migration, seed,
+embedding 계획을 검토한다. 아직 DB user/password/secret value 생성, migration,
+seed, embedding 실행은 별도 승인 전까지 하지 않는다.
 ```
 
 ## Current Status
 
 완료:
 
-- Manual preflight 1~6 완료
-- GCP budget alert 생성 완료
-  - name: `lmr-dev-demo-monthly`
-  - amount: `KRW 70,000`
-  - thresholds: `25/50/80/100 actual + 100 forecasted`
-- Phase 0 readiness review: `PASS`
-- Phase 1 implementation/review: `PASS WITH NOTES`
-- Phase 1 bootstrap apply: `PASS`
-- Phase 1 dev foundation apply: `PASS`
-- Post-apply plan checks: `PASS`, no changes
+- Phase 0 readiness: `PASS`
+- Phase 1 bootstrap/foundation apply: `PASS`
+- Phase 1 post-apply plan checks: `PASS`, no changes
+- Phase 2 data foundation apply: `PASS`
+- Phase 2 post-apply plan check: `PASS`, no changes
+- Cloud SQL instance/database describe checks: `PASS`
 
-Phase 1에서 생성된 범위:
+Phase 2에서 생성된 범위:
 
-- Terraform state bucket
-- required APIs
-- frontend/backend/github-actions/terraform service accounts
-- Artifact Registry Docker repository
-- Secret Manager secret shells only
-- private artifact bucket
-- foundation IAM
+- Cloud SQL PostgreSQL dev instance
+- application database shell
+- non-secret Terraform outputs for later phases
 
 생성하지 않은 것:
 
-- Cloud SQL
+- DB user/password
+- Secret Manager secret versions
+- credential-bearing `DATABASE_URL`
+- pgvector extension
+- Alembic schema migration
+- HNSW/vector indexes
+- `law_chunks` seed rows
+- embeddings
+- backend runtime IAM / `roles/cloudsql.client`
 - Cloud Run
 - WIF provider/trust binding
 - GitHub Actions workflow
-- secret values / secret versions
-- service account key JSON
-- Firebase Admin JSON shell
+- prod resources
 - backend/frontend/API/schema/runtime changes
-- prod apply-ready resources
 
 ## Read First
 
@@ -60,52 +58,67 @@ AGENTS.md
 CLAUDE.md
 docs/architecture/CLAUDE.md
 docs/architecture/env_profiles.md
+docs/architecture/cloud_migration_phase_plan.md
 docs/architecture/phase/phase1_bootstrap_foundation.md
 docs/architecture/phase/phase2_data_foundation.md
-docs/ops/cloud_migration_manual_preflight.md
-docs/ops/cloud_migration_budget_and_mirror_policy.md
+docs/architecture/phase/phase3_backend_runtime.md
 infra/terraform/README.md
-infra/terraform/bootstrap/remote-state/README.md
-infra/terraform/envs/dev/foundation/README.md
+infra/terraform/envs/dev/data/README.md
+infra/terraform/modules/cloud-sql-pgvector/README.md
 config/secrets/cloud_migration_private_runbook.md
 ```
 
 `config/secrets/cloud_migration_private_runbook.md`는 gitignored private
-inventory다. 내용을 public mirror, issue, README, screenshot에 옮기지 않는다.
+inventory다. 내용을 public mirror, issue, README, screenshot, final output에
+옮기지 않는다.
 
 ## First Verification
 
 ```bash
 cd /home/jongwon/personal_project/temp_extract/law_main_road/law_main_road_frontend_final_followup
-git status --short
+git status --short --untracked-files=all
 git check-ignore -v config/secrets/cloud_migration_private_runbook.md
 terraform fmt -check -recursive infra/terraform
 
-cd infra/terraform/bootstrap/remote-state
+cd infra/terraform/envs/dev/data
 terraform validate
-terraform plan -var='project_id=law-main-road' -detailed-exitcode
-
-cd ../../envs/dev/foundation
-terraform validate
-terraform plan -var-file=terraform.tfvars.example -detailed-exitcode
+terraform plan -detailed-exitcode -var-file=terraform.tfvars.example
+terraform output -json
 ```
 
 Expected:
 
 ```text
-bootstrap plan detailed exit code: 0, no changes
-dev foundation plan detailed exit code: 0, no changes
+dev data plan detailed exit code: 0, no changes
 ```
+
+## Planning Focus
+
+- DB app user/password bootstrap path.
+- Whether to keep Phase 3 runtime as single `DATABASE_URL` secret first.
+- How to add Secret Manager versions manually without exposing values in shell
+  history, git, docs, Terraform state, or chat.
+- Cloud SQL connection method from local admin machine for migration.
+- `pgvector` extension creation boundary.
+- Alembic migration command and expected head.
+- HNSW/vector index verification.
+- `law_chunks` seed/import source of truth.
+- Expected row count: `1722`.
+- Expected `selected_as_of`: `2026-04-11`.
+- Embedding generation timing and retry policy.
+- Stop/destroy policy for 30-day dev/demo cost control.
 
 ## Hard Boundaries
 
-- Do not run any Phase 2 `terraform apply` without explicit approval.
-- Do not create Cloud SQL until Phase 2 plan is reviewed.
-- Do not create Cloud Run, WIF provider/trust, GitHub workflow, secret values,
-  service account key JSON, Firebase Admin JSON shell, or prod resources.
+- Do not run DB user/password creation unless explicitly approved.
+- Do not add Secret Manager versions unless explicitly approved.
+- Do not run Alembic migration unless explicitly approved.
+- Do not create pgvector extension, indexes, seed rows, or embeddings unless
+  explicitly approved.
+- Do not create Cloud Run, WIF provider, GitHub workflow, service account key
+  JSON, backend runtime IAM, or prod resources.
 - Do not modify backend/frontend/API/schema/runtime behavior unless the opened
-  phase explicitly allows it.
-- Do not change SCN-004 freeze or SCN-001 frozen draft/history/bridge boundaries.
+  step explicitly allows it.
 - Do not commit/push unless explicitly requested.
 
 ## Prompt To Use In A New Codex Session
@@ -116,61 +129,59 @@ dev foundation plan detailed exit code: 0, no changes
 Model/reasoning:
 - Use the strongest available model.
 - Set reasoning effort to extra-high / xhigh.
-- If the environment supports fast mode with extra-high reasoning, use it.
+- If fast mode is available with extra-high reasoning, use it.
 - All spawned agents/sub-agents must also use extra-high / xhigh reasoning and
   fast mode if available.
 
 Task:
-Start Cloud Migration Phase 2 preparation from a completed Phase 1 baseline.
+Cloud Migration Phase 2 post-apply DB bootstrap/migration planning을 진행해줘.
+아직 DB user/password 생성, Secret Manager version 추가, pgvector extension,
+Alembic migration, seed, embedding 실행은 금지다. 오늘 목표는 안전한 실행 순서와
+검증 기준을 정리하는 것이다.
 
 Current state:
-- Phase 0 readiness: PASS.
-- Phase 1 bootstrap/foundation: applied and post-apply no-change plan verified.
-- Dev is the only opened cloud target.
-- Prod remains skeleton-only.
-- No Cloud SQL, Cloud Run, WIF provider, GitHub workflow, secret values, service
-  account key JSON, Firebase Admin JSON shell, or app runtime changes exist from
-  Phase 1.
+- Phase 1 bootstrap/foundation applied and no-change verified.
+- Phase 2 dev Cloud SQL instance + app database shell applied.
+- Phase 2 post-apply plan is no changes.
+- No DB user/password, secret versions, pgvector extension, schema migration,
+  indexes, seed rows, embeddings, backend runtime IAM, Cloud Run, WIF, workflow,
+  or prod resources have been opened.
 
 First:
 1. Read `next_prompt.md`.
 2. Read the files listed in `next_prompt.md`.
 3. Run the First Verification command block.
-4. Report whether Phase 1 is still clean.
-5. Review `docs/architecture/phase/phase2_data_foundation.md` and produce a
-   Phase 2 execution plan.
+4. Report whether Phase 2 post-apply state is still clean.
 
-Phase 2 planning focus:
-- Cloud SQL PostgreSQL dev-only data foundation.
-- Exact dev tier/storage/version/backup/PITR/deletion protection decision.
-- Terraform root/module shape for `envs/dev/data`.
-- Migration/pgvector/schema/seed runbook boundaries outside Terraform.
-- Cost and rollback implications.
+Planning output required:
+1. DB bootstrap execution plan, step by step.
+2. Secret value handling plan that avoids shell history and Terraform state.
+3. Local connection method for Cloud SQL migration.
+4. pgvector/Alembic/schema/index/seed/embedding order.
+5. Verification SQL/check commands and expected results.
+6. Rollback/stop/destroy guidance for dev.
+7. Exact next prompt for the first approved DB bootstrap execution step.
 
 Hard boundaries:
-- Do not run Phase 2 apply without explicit approval.
-- Do not create Cloud Run or deploy app runtime.
-- Do not put secret values in Terraform, tfvars, state, docs, issues, or chat.
-- Do not add `google_secret_manager_secret_version`.
+- Do not execute DB bootstrap/migration/seed/embedding.
+- Do not create secret versions.
 - Do not create service account keys.
-- Do not open prod resources.
+- Do not grant backend runtime IAM.
+- Do not deploy Cloud Run.
 - Do not change backend/frontend/API/schema/runtime behavior.
+- Do not commit/push unless explicitly requested.
 
 Use agents:
-- Use an agent loop for plan -> review -> fix -> verify until the Phase 2 plan is
-  internally consistent.
+- Use an agent loop for plan -> critical review -> fix -> verify.
+- Reviewer must specifically check secrets, cost, rollback, idempotency, and
+  Phase 3 handoff.
 - Every agent/sub-agent must use extra-high / xhigh reasoning and fast mode if
   available.
 
 Final response:
-1. Phase 1 verification status
-2. Phase 2 readiness status
-3. Recommended exact dev Cloud SQL settings and why
-4. Files/docs that need updates before implementation
-5. Blockers or decisions needed from the human
-6. Exact next prompt for Phase 2 implementation
+1. Phase 2 post-apply verification status
+2. Recommended DB bootstrap/migration plan
+3. Commands that will be run later, clearly marked as not yet executed
+4. Remaining human decisions
+5. Exact next prompt for approved execution
 ```
-
-
-
-cpu 사용량, job 

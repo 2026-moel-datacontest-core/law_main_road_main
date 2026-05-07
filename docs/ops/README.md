@@ -70,7 +70,14 @@
   `bootstrap/remote-state`와 `envs/dev/foundation`은 `2026-05-06`에 apply 완료했고
   post-apply plan checks는 no changes다. Secret value, Cloud SQL, Cloud Run,
   WIF provider/trust, GitHub workflow, backend/frontend code/API/runtime behavior는
-  이 작업에서 변경하지 않았다. Phase 2+ runtime/data roots remain unopened.
+  이 작업에서 변경하지 않았다.
+- cloud migration Phase 2 Terraform data foundation 완료:
+  `infra/terraform/envs/dev/data`는 `2026-05-07`에 apply 완료했고 post-apply
+  plan check는 no changes다. 생성 범위는 Cloud SQL PostgreSQL instance와
+  application database shell뿐이다. DB user/password, Secret Manager version,
+  pgvector extension, Alembic schema, HNSW index, seed data, embeddings,
+  backend runtime IAM, Cloud Run, WIF, GitHub workflow, prod resources는 아직
+  열지 않았다. Phase 3+ runtime roots remain unopened.
 - Phase 0 final decisions 반영: first cloud target은 `dev` only, initial GCP
   model은 one project + env-prefixed resources, Terraform/resource prefix는
   `lmr`, human-readable app label은 `law-main-road`다. 기존 코드/서비스 이름을

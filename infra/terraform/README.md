@@ -9,20 +9,20 @@ Current status:
 - `envs/dev/foundation`: initialized against the approved GCS state bucket and
   applied on `2026-05-06`.
 - `envs/prod/foundation`: skeleton only.
-- `envs/dev/data`: Phase 2 data foundation root, plan-only until separate human
-  approval opens Cloud SQL creation.
+- `envs/dev/data`: applied for the first `dev` Cloud SQL data foundation on
+  `2026-05-07`.
 - `envs/prod/data`: skeleton only.
 
 Phase 1 resources are limited to remote state bootstrap, required APIs, service
 accounts, Artifact Registry, Secret Manager secret shells, a private artifact
 bucket, and baseline IAM for those resources.
 
-Phase 2 plan-only scope is limited to Cloud SQL PostgreSQL infrastructure and
-non-secret metadata for Phase 3. It must not create DB users/passwords, Secret
-Manager secret versions, pgvector extension, schema, indexes, seed data,
-embeddings, backend runtime IAM, Cloud Run, WIF, GitHub workflows, service
-account keys, or prod resources. The backend Cloud SQL client IAM grant belongs
-to Phase 3 backend runtime wiring.
+Phase 2 scope is limited to Cloud SQL PostgreSQL infrastructure and non-secret
+metadata for Phase 3. It must not create DB users/passwords, Secret Manager
+secret versions, pgvector extension, schema, indexes, seed data, embeddings,
+backend runtime IAM, Cloud Run, WIF, GitHub workflows, service account keys, or
+prod resources. The backend Cloud SQL client IAM grant belongs to Phase 3 backend
+runtime wiring.
 
 Forbidden without explicit phase approval:
 
@@ -58,5 +58,10 @@ Post-apply validation on `2026-05-06`:
 - bootstrap `terraform plan -detailed-exitcode`: no changes.
 - dev foundation `terraform plan -detailed-exitcode`: no changes.
 
-Do not run additional `terraform apply` or proceed to Phase 2 resources without
-explicit human approval for that phase.
+Post-apply validation on `2026-05-07`:
+
+- dev data `terraform plan -detailed-exitcode`: no changes.
+- Cloud SQL instance/database describe checks: PASS.
+
+Do not run additional `terraform apply` or proceed to Phase 3 runtime resources
+without explicit human approval for that phase.

@@ -2,10 +2,10 @@
 
 Phase 2 dev-only data root.
 
-Current status: authored for plan-only review. Do not run `terraform apply` until
-a separate human approval explicitly opens Phase 2 resource creation.
+Current status on `2026-05-07`: applied for the first `dev` target. A post-apply
+plan returned no changes, and Cloud SQL instance/database describe checks passed.
 
-Creates when applied later:
+Created by this root:
 
 - one Cloud SQL PostgreSQL instance,
 - one application database shell.
@@ -75,3 +75,7 @@ guardrails. Do not output a full `DATABASE_URL`.
 
 Phase 3 backend runtime owns the Cloud SQL client IAM grant for `backend-sa`.
 Do not grant backend runtime Cloud SQL access from this Phase 2 data root.
+
+Do not run DB user/password bootstrap, Secret Manager versions, pgvector
+extension setup, Alembic migration, seed import, embedding generation, or Cloud
+Run deployment from this root.
