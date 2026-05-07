@@ -1,0 +1,41 @@
+project_id = "law-main-road"
+env        = "dev"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "portfolio"
+
+labels = {
+  app        = "law-main-road"
+  env        = "dev"
+  managed_by = "terraform"
+  owner      = "portfolio"
+}
+
+foundation_state_bucket = "lmr-dev-law-main-road-tfstate"
+foundation_state_prefix = "envs/dev/foundation"
+
+github_repository_owner = "2026-moel-datacontest-core"
+github_repository       = "2026-moel-datacontest-core/law_main_road_main"
+
+# Dev WIF credentials are available only to jobs that declare environment: dev.
+allowed_github_environments = ["dev"]
+
+# Include cloud_migration for the Phase 5 dev smoke branch. Remove it after the
+# workflow is merged and dev deploys move to main-only.
+allowed_github_refs = [
+  "refs/heads/cloud_migration",
+  "refs/heads/main",
+]
+
+allowed_github_workflow_refs = [
+  "2026-moel-datacontest-core/law_main_road_main/.github/workflows/deploy-dev.yml@refs/heads/cloud_migration",
+  "2026-moel-datacontest-core/law_main_road_main/.github/workflows/deploy-dev.yml@refs/heads/main",
+  "2026-moel-datacontest-core/law_main_road_main/.github/workflows/rollback-dev.yml@refs/heads/cloud_migration",
+  "2026-moel-datacontest-core/law_main_road_main/.github/workflows/rollback-dev.yml@refs/heads/main",
+]
+
+terraform_service_account_project_roles = [
+  "roles/iam.workloadIdentityPoolAdmin",
+  "roles/resourcemanager.projectIamAdmin",
+  "roles/run.admin",
+]
