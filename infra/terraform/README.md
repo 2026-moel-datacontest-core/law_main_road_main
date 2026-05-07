@@ -21,6 +21,11 @@ Current status:
   runtime on `2026-05-07`; route/CORS/SCN-004/SCN-001 boundary smoke passed.
   Firebase Authorized Domain, Google Sign-In, and protected SCN-001 history
   smoke passed through the deployed frontend.
+- `envs/dev/cicd`: authored for Phase 5 dev CI/CD on `2026-05-07`; local
+  validate passed and the remote-state plan produced a create-only WIF/IAM plan.
+  Initial apply, GitHub Actions variable/environment configuration, WIF auth dry
+  run, deploy workflow run, and rollback workflow rehearsal are pending
+  human-approved gates.
 
 Phase 1 resources are limited to remote state bootstrap, required APIs, service
 accounts, Artifact Registry, Secret Manager secret shells, a private artifact
@@ -53,16 +58,18 @@ frontend boundary smoke. Firebase Authorized Domain, Google Sign-In, and
 protected SCN-001 history smoke passed through the deployed frontend without
 recording raw tokens or user identifiers.
 
-WIF/GitHub workflow, service account key JSON, Firebase Admin JSON, prod
-resources, custom domain/LB, and backend/frontend/API behavior expansion remain
-unopened from this Terraform README's perspective.
+WIF/GitHub workflow code is now authored for Phase 5 dev only, but not applied
+or smoked. Service account key JSON, Firebase Admin JSON, prod resources, custom
+domain/LB, and backend/frontend/API behavior expansion remain unopened from this
+Terraform README's perspective.
 
 Forbidden without explicit phase approval:
 
 - additional Cloud Run resources or changes outside the approved first `dev`
   backend/frontend runtime smoke,
-- Workload Identity Federation provider/trust binding,
-- GitHub Actions workflow,
+- applying Workload Identity Federation provider/trust binding before reviewed
+  Phase 5 approval,
+- extending GitHub Actions workflow beyond the reviewed dev-only Phase 5 scope,
 - secret values in Terraform files/state or `google_secret_manager_secret_version`,
 - service account key JSON,
 - Firebase Admin JSON,
@@ -98,7 +105,12 @@ Post-apply validation on `2026-05-07`:
 - Cloud SQL instance/database describe checks: PASS.
 - dev backend runtime health/auth-negative/retrieve/answer/document draft smoke:
   PASS.
+- dev backend runtime `terraform plan -detailed-exitcode`: no changes.
+- dev frontend runtime `terraform plan -detailed-exitcode`: no changes.
+- dev cicd `terraform validate`: PASS.
+- dev cicd `terraform plan -detailed-exitcode`: create-only WIF/IAM plan; no
+  destroy, no runtime replacement.
 
-Do not run additional `terraform apply`, proceed to Phase 4 frontend runtime,
-configure WIF/GitHub workflow, or open prod resources without explicit human
-approval for that phase.
+Do not run additional `terraform apply`, configure GitHub Actions variables or
+environment gates, execute WIF/deploy workflows, or open prod resources without
+explicit human approval for that phase.
