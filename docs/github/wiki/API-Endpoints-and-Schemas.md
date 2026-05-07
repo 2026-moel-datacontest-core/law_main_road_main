@@ -1,20 +1,17 @@
-# API Reference / API 참조
+# API 엔드포인트와 스키마
 
 기준일: `2026-05-07`
 
-이 문서는 법대로(LawMainRoad)의 public-safe short API reference입니다. 상세 API
-notes의 publish source는 GitHub Wiki입니다.
-
 현재 구현 요약이며 formal OpenAPI replacement가 아닙니다.
 
-## Public Health
+## 공개 상태 확인
 
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/` | service status 확인 |
 | `GET` | `/health` | health check |
 
-## Public RAG / Draft
+## 공개 RAG / 문서 초안
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -40,7 +37,7 @@ notes의 publish source는 GitHub Wiki입니다.
 draft service는 retrieval이나 answer generation을 직접 실행하지 않습니다. request로
 전달된 legal basis만 사용합니다.
 
-## Auth
+## 인증
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -52,7 +49,7 @@ Protected SCN-001 calls는 다음 header를 요구합니다.
 Authorization: Bearer <Firebase ID token>
 ```
 
-## Before Sub-app
+## Before 하위 앱
 
 `/api/v1/before`에 mounted되어 있습니다.
 
@@ -65,14 +62,14 @@ Authorization: Bearer <Firebase ID token>
 | `GET` | `/api/v1/before/health` | none | Before sub-app health 확인 |
 
 Before job 생성 시 valid Firebase bearer token이 있으면 해당 job은 signed-in
-project account relationship에 연결됩니다. auth가 없으면 anonymous로 유지되고,
-invalid auth는 401을 반환합니다.
+project account에 연결됩니다. auth가 없으면 anonymous로 유지되고, invalid auth는
+401을 반환합니다.
 
 `GET /api/v1/before/review/jobs/{job_id}`의 `none` auth label은 의도된 public
-polling contract입니다. signed-in user-owned Before history 조회는 protected
+polling contract입니다. signed-in user-owned Before history 조회는 보호된
 `/api/v1/scn001/before-review-jobs...` 경로를 사용합니다.
 
-## SCN-001 Protected APIs
+## SCN-001 보호 API
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -91,7 +88,7 @@ project-local account relationship과 one primary Bridge source reference를
 
 존재하지 않거나 소유하지 않은 Bridge records는 not found로 masked됩니다.
 
-## Contract Boundaries
+## 계약 경계
 
 변경하지 않은 public contracts:
 
@@ -103,3 +100,20 @@ project-local account relationship과 one primary Bridge source reference를
 - `/api/v1/history` unified API
 - protected SCN-001 draft endpoint
 - hard-delete or artifact purge API
+
+## 스키마 메모
+
+- Public `RetrievalRequest`와 `AnswerRequest`는 `query`, `top_k`, `ef_search`를
+  사용합니다. default public answer path는 `top_k=5`, `ef_search=100`입니다.
+- SCN demo paths는 `top_k=10`, `ef_search=100`을 명시합니다.
+- `/api/v1/answer` response에는 answer text, key points, cautions, citations,
+  grounded context ids, retrieved chunks, retrieval total, model name이 포함됩니다.
+- `/api/v1/documents/draft` response에는 rendered text, missing fields, cautions,
+  evidence checklist, citations, source context ids가 포함됩니다.
+- 공개 docs는 schemas를 요약합니다. application code나 OpenAPI output을
+  대체하지 않습니다.
+
+## 함께 보기
+
+- [[RAG와 법령 코퍼스|RAG-and-Law-Corpus]]
+- [[데이터 모델과 개인정보 경계|Data-Model-and-Privacy]]

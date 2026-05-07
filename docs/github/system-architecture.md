@@ -1,10 +1,13 @@
-# System Architecture
+# 시스템 아키텍처
 
-기준일: `2026-05-04`
+기준일: `2026-05-07`
 
-## Stack
+이 문서는 법대로(LawMainRoad)의 public-safe short architecture reference입니다.
+더 자세한 architecture notes의 publish source는 GitHub Wiki입니다.
 
-| Layer | Choice |
+## 기술 스택
+
+| 계층 | 선택 |
 |---|---|
 | Backend | FastAPI |
 | Database | PostgreSQL + pgvector |
@@ -13,8 +16,6 @@
 | Embedding | `gemini-embedding-001`, 768 dimensions |
 | Frontend | Next.js App Router, React, TypeScript |
 | Local environment | WSL Ubuntu + conda |
-
-Latest main checkpoint: `e79fa68`
 
 ## High-level Flow
 
@@ -31,34 +32,27 @@ Legal source submodule
 
 ## Backend
 
-Entry point:
+FastAPI backend는 public RAG/draft APIs, protected SCN-001 APIs, 그리고
+`/api/v1/before`에 mounted된 Before sub-application을 제공합니다.
 
-- `backend/main.py`
+핵심 책임:
 
-The parent FastAPI app includes the main API router and mounts the Before
-sub-application at `/api/v1/before`.
+- PostgreSQL + pgvector 기반 law corpus retrieval
+- citation constraints를 지키는 grounded answer generation
+- request-provided legal basis 기반 SCN-004 document draft generation
+- protected SCN-001 actions를 위한 Firebase-backed backend auth verification
+- MVP soft-delete visibility를 포함한 SCN-001 Bridge/history/deletion paths
 
-Core routers:
+Router-level surfaces / 라우터 표면:
 
-- `backend/app/routers/retrieval.py`
-- `backend/app/routers/auth.py`
-- `backend/app/routers/answer.py`
-- `backend/app/routers/document_draft.py`
-- `backend/app/routers/scn001.py`
+- public retrieval, answer, document draft APIs
+- auth status API
+- mounted Before review와 accessibility APIs
+- protected SCN-001 Before history, Bridge run, Bridge answer, soft-delete APIs
 
-Important services:
+## 데이터베이스 모델
 
-- `backend/app/services/retrieval.py`
-- `backend/app/services/answer_generation.py`
-- `backend/app/services/document_draft.py`
-- `backend/app/services/auth_service.py`
-- `backend/app/services/scn001_bridge_service.py`
-- `backend/app/services/scn001_history_service.py`
-- `backend/app/services/scn001_deletion_service.py`
-
-## Database Model
-
-Current tables include:
+현재 tables:
 
 - `law_chunks`
 - `before_review_jobs`
@@ -66,66 +60,61 @@ Current tables include:
 - `users`
 - `bridge_runs`
 
-SCN-001 history uses user visibility fields for MVP soft-delete. This hides
-records from the user-facing list without opening hard delete or file purge.
+SCN-001 history는 MVP soft-delete를 위해 user visibility fields를 사용합니다.
+이는 hard delete나 file purge를 열지 않고 user-facing list에서 기록을 숨깁니다.
 
 ## Frontend
 
-Implemented routes:
+구현 routes:
 
-- `frontend/src/app/page.tsx`
-- `frontend/src/app/before/page.tsx`
-- `frontend/src/app/after/page.tsx`
-- `frontend/src/app/after/result/page.tsx`
-- `frontend/src/app/after/intake/page.tsx`
-- `frontend/src/app/after/draft/page.tsx`
-- `frontend/src/app/history/page.tsx`
+- `/`
+- `/before`
+- `/after`
+- `/after/result`
+- `/after/intake`
+- `/after/draft`
+- `/history`
 
-Important client modules:
+High-level frontend responsibilities / frontend 주요 책임:
 
-- `frontend/src/context/AuthContext.tsx`
-- `frontend/src/context/FlowContext.tsx`
-- `frontend/src/lib/api.ts`
-- `frontend/src/lib/bridge-api.ts`
-- `frontend/src/lib/scn001-history-api.ts`
-- `frontend/src/lib/scenarioPresets.ts`
-- `frontend/src/lib/scenarioPresetDrafts.ts`
+- Firebase sign-in state와 backend `/api/v1/auth/me` verification
+- in-memory After/Bridge/draft flow state
+- SCN-004 login-free answer와 document draft flow
+- SCN-001 protected Before/Bridge/history UI
+- presentation stability를 위한 fixed preset과 frozen draft behavior
 
-Current visual baseline:
+현재 visual baseline:
 
-- `DESIGN.md` is the visual guide.
-- Components use the local `--kl-*` token surface.
-- Current polish through visual checkpoint `85d10fa`, plus later workspace and
-  draft-scope documentation alignment through `e79fa68`, is frontend/docs-only
-  and does not alter backend schema, auth persistence, Web Storage policy, or
-  public API contracts.
-- `DESIGN.md`
+- `DESIGN.md`가 visual guide입니다.
+- Components는 local `--kl-*` token surface를 사용합니다.
+- 최신 visual polish는 frontend/docs-only 작업이며 backend schema, auth
+  persistence, Web Storage policy, public API contracts를 변경하지 않습니다.
 
-Visual/UI state:
+Visual/UI state / 화면 상태:
 
-- Before is upload-focused on the first screen.
-- After entry keeps guidance/disclaimer visible and has cleaned preset labels.
-- History uses centered folded incident cards.
-- Accessibility recommendation UI no longer uses hardcoded default legal basis.
+- Before first screen은 upload-focused입니다.
+- After entry는 guidance/disclaimer를 보이는 상태로 유지하고 preset labels를 정리했습니다.
+- History는 centered folded incident cards를 사용합니다.
+- Accessibility recommendation UI는 hardcoded default legal basis를 더 이상 사용하지 않습니다.
 
-## Auth Boundary
+## Auth Boundary / 인증 경계
 
-SCN-001 protected paths use:
+SCN-001 protected paths는 다음 흐름을 사용합니다.
 
 ```text
 Firebase Web SDK
   -> Firebase ID token
   -> Authorization: Bearer <id token>
   -> backend Firebase Admin verification
-  -> internal users.id
+  -> backend-owned project account linkage
 ```
 
-Frontend gates use backend-verified `backendUser.logged_in`. Firebase signed-in
-state alone is not treated as enough for protected SCN-001 actions.
+Frontend gates는 backend-verified `backendUser.logged_in`을 기준으로 동작합니다.
+Firebase signed-in state만으로는 protected SCN-001 actions에 충분하지 않습니다.
 
-## Privacy Boundary
+## Privacy Boundary / 개인정보 경계
 
-The app avoids storing sensitive raw payloads in Web Storage:
+앱은 민감한 raw payload를 Web Storage에 저장하지 않습니다.
 
 - raw user statement
 - full answer payload
@@ -135,5 +124,6 @@ The app avoids storing sensitive raw payloads in Web Storage:
 - raw `after_query_seed`
 - auth tokens or provider ids
 
-SCN-001 Bridge context is displayed and used as a safe summary only. It does not
-create or modify legal citations, grounded context ids, or retrieved chunks.
+SCN-001 Bridge context는 safe summary로만 표시되고 사용됩니다. Bridge는 사건
+맥락 연결/참고용이며, legal citations, grounded context ids, retrieved chunks를
+새로 만들거나 수정하지 않습니다.

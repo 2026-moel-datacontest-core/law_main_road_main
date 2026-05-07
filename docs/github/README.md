@@ -1,64 +1,75 @@
-# K-Labor Shield Docs
+# 법대로(LawMainRoad) 공개 문서
 
-이 폴더는 GitHub에 보여주기 위한 읽기용 문서입니다.
+이 폴더는 GitHub에 공개할 README와 Wiki 문서의 staging source입니다.
 
-`docs/planning/`은 개발 과정에서 phase, QA, 의사결정, freeze 정책을 계속
-쌓아 둔 내부 작업 기록입니다. 공개 README에서 바로 읽기에는 길고 중복이
-많기 때문에, 현재 코드 기준의 핵심 설명은 이 폴더에 별도로 정리합니다.
+`docs/planning/`, `docs/architecture/`, `docs/ops/`, `docs/specs/`는 개발 중
+쌓아 둔 내부 설계/운영 기록입니다. 공개 문서는 그 내용을 그대로 노출하지
+않고, 현재 구현 기준과 공개 가능한 범위만 선별해 이 폴더에서 다시 정리합니다.
 
-## Documents
+## 공개 대상
 
-- [Project Overview](project-overview.md)
-- [System Architecture](system-architecture.md)
-- [User Flows](user-flows.md)
-- [API Reference](api-reference.md)
-- [Runbook](runbook.md)
+| 대상 | 이 repo 안의 source | 용도 |
+|---|---|---|
+| Repository README | root [`README.md`](../../README.md) | 첫 화면용 프로젝트 요약 |
+| GitHub Wiki | [`wiki/`](wiki/) | 사용자와 리뷰어를 위한 상세 공개 문서의 publish source |
+| 선택형 요약 reference | `project-overview.md`, `system-architecture.md`, `user-flows.md`, `api-reference.md`, `runbook.md` | public mirror가 유지하기로 한 경우에만 포함 |
 
-## Current Baseline
+Wiki가 canonical publish source입니다. 선택형 요약 reference도 Wiki와 같은
+redaction boundary를 만족하는 경우에만 public mirror에 유지할 수 있습니다.
 
-기준일: `2026-05-04`
+## Wiki 원본
 
-- Main public demo: SCN-004 After document draft flow
-- Protected connected flow: SCN-001 Before -> Bridge -> After
+GitHub Wiki에 올릴 문서는 [`wiki/`](wiki/) 아래에 쌓습니다.
+
+주요 파일:
+
+- [`wiki/Home.md`](wiki/Home.md)
+- [`wiki/_Sidebar.md`](wiki/_Sidebar.md)
+- [`wiki/Project-Execution-and-Completion.md`](wiki/Project-Execution-and-Completion.md)
+- [`wiki/Final-Architecture.md`](wiki/Final-Architecture.md)
+- [`wiki/User-Flows.md`](wiki/User-Flows.md)
+- [`wiki/API-Endpoints-and-Schemas.md`](wiki/API-Endpoints-and-Schemas.md)
+- [`wiki/RAG-and-Law-Corpus.md`](wiki/RAG-and-Law-Corpus.md)
+- [`wiki/UI-Screens.md`](wiki/UI-Screens.md)
+- [`wiki/E2E-Demo-Verification.md`](wiki/E2E-Demo-Verification.md)
+- [`wiki/Cloud-Migration-and-Public-Mirror-Policy.md`](wiki/Cloud-Migration-and-Public-Mirror-Policy.md)
+
+## 현재 기준선
+
+기준일: `2026-05-07`
+
+- 메인 public demo: SCN-004 After document draft flow
+- 보호 연결 흐름: SCN-001 Before -> Bridge -> After
 - Auth: Firebase Auth Google Sign-In + backend Firebase Admin verification
 - Data: `1722` law chunks, `selected_as_of = 2026-04-11`
 - Frontend routes: `/`, `/before`, `/after`, `/after/result`,
   `/after/intake`, `/after/draft`, `/history`
 - Backend: FastAPI + PostgreSQL + pgvector
-- Latest UI checkpoint: `85d10fa` integrated Before/After/History/Main polish,
-  DESIGN.md visual guide, contrast/disclaimer/accessibility blocker fixes
-- Latest main checkpoint: `e79fa68`
+- 최신 UI 기준선: 2026-04-29 integrated visual polish
+- 최신 code/status 문서 기준선: 2026-05-04 audit refresh
 
-## Scope Boundary
+## 공개 경계
 
-Implemented:
+공개 문서에서 설명할 수 있는 내용:
 
-- Law retrieval and grounded answer generation
-- Deterministic SCN-004 document draft generation
-- Firebase-authenticated SCN-001 Bridge answer path
-- SCN-001 read-only history, saved history selector, and MVP soft-delete
-- Frontend-local SCN-001 fixed-preset frozen draft demo
-- Token-first frontend visual polish with neutral/dense/evidence-led work routes
-  and prominent disclaimers/uncertainty
-- Integrated frontend UI polish through visual checkpoint `85d10fa`, with later
-  workspace/draft-scope documentation alignment through `e79fa68`
+- 제품 목적과 지원 시나리오
+- high-level architecture
+- 구현된 public/protected API paths
+- 로컬 실행과 검증 command
+- 개인정보와 보안 원칙
+- 비밀값을 제외한 cloud migration posture
 
-Not implemented:
+공개 문서에 노출하지 않는 내용:
 
-- live/backend SCN-001 draft generation
-- protected SCN-001 draft endpoint
-- independent `/bridge` route
-- Recovery flow
-- SCN-005 frontend/document draft expansion
-- full retention lifecycle and hard delete
+- credential values, local env values, infrastructure state files, cloud IAM key files
+- raw user/case facts, full answer/draft payloads, raw Bridge payloads
+- auth-provider subject identifiers, email values, database account identifiers, internal Bridge record identifiers
+- 승인된 source/mirror policy를 넘어서는 private source repo 내부 정보
+- exact private cloud resource identifiers, cloud secret values, private runbook details
 
-## Internal References
+## 관리자 메모
 
-For maintainers, the current internal checkpoint is:
-
-- [../planning/23_code_based_status_2026_04_29.md](../planning/23_code_based_status_2026_04_29.md)
-
-Long-form internal phase records:
-
-- [../planning/19_scn001_auth_integration_status.md](../planning/19_scn001_auth_integration_status.md)
-- [../planning/22_post_phase8_scn001_extension_roadmap.md](../planning/22_post_phase8_scn001_extension_roadmap.md)
+Wiki source는 검토된 내부 planning, architecture, operations, specs, product,
+demo, report, presentation 문서를 바탕으로 공개 경계에 맞게 다시 정리한
+문서입니다. 별도 public-boundary review 없이 내부 원문을 public mirror에 그대로
+복사하지 않습니다.
