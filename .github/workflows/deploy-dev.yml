@@ -59,8 +59,16 @@ jobs:
           base="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPOSITORY }}/backend"
           tag="${base}:${IMAGE_TAG}"
           docker build -f backend/Dockerfile -t "${tag}" .
-          docker push "${tag}"
-          digest="$(docker buildx imagetools inspect "${tag}" --format '{{.Digest}}')"
+          if ! push_output="$(docker push "${tag}" 2>&1)"; then
+            printf '%s\n' "${push_output}"
+            exit 1
+          fi
+          printf '%s\n' "${push_output}"
+          digest="$(printf '%s\n' "${push_output}" | sed -n 's/.*digest: \(sha256:[0-9a-f]\{64\}\).*/\1/p' | tail -n 1)"
+          if [ -z "${digest}" ]; then
+            echo "Failed to extract backend image digest from docker push output" >&2
+            exit 1
+          fi
           image="${base}@${digest}"
           echo "::add-mask::${image}"
           echo "image=${image}" >> "${GITHUB_OUTPUT}"
@@ -84,8 +92,16 @@ jobs:
             --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}" \
             -t "${tag}" \
             frontend
-          docker push "${tag}"
-          digest="$(docker buildx imagetools inspect "${tag}" --format '{{.Digest}}')"
+          if ! push_output="$(docker push "${tag}" 2>&1)"; then
+            printf '%s\n' "${push_output}"
+            exit 1
+          fi
+          printf '%s\n' "${push_output}"
+          digest="$(printf '%s\n' "${push_output}" | sed -n 's/.*digest: \(sha256:[0-9a-f]\{64\}\).*/\1/p' | tail -n 1)"
+          if [ -z "${digest}" ]; then
+            echo "Failed to extract frontend image digest from docker push output" >&2
+            exit 1
+          fi
           image="${base}@${digest}"
           echo "::add-mask::${image}"
           echo "image=${image}" >> "${GITHUB_OUTPUT}"
