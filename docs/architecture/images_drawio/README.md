@@ -14,10 +14,10 @@ treat the preview as stale.
 
 | File | Purpose |
 |---|---|
-| `cloud_migration_overview.drawio` | 16:9 executive overview diagram. Use this for issue/README/presentation-level explanation. |
-| `cloud_migration_overview.png` | Rendered overview preview; regenerate after every overview draw.io edit. |
-| `cloud_migration_detail.drawio` | Detailed implementation-oriented handoff diagram. Use this for Terraform authoring and phase handoff context. |
-| `cloud_migration_detail.png` | Rendered detail preview; regenerate after every detail draw.io edit. |
+| `final_architecture_overview.drawio` | 16:9 executive overview diagram. Use this for issue/README/presentation-level explanation. |
+| `final_architecture_overview.drawio.png` | Rendered overview preview; regenerate after every overview draw.io edit. |
+| `final_architecture_detail.drawio` | Detailed implementation-oriented handoff diagram. Use this for Terraform authoring and phase handoff context. |
+| `final_architecture_detail.drawio.png` | Rendered detail preview; regenerate after every detail draw.io edit. |
 
 These files visualize the target GCP migration architecture only. They do not
 change runtime contracts, Terraform ownership, cloud resource names, or phase

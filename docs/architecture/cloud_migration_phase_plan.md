@@ -358,8 +358,8 @@ cd frontend && npm run build
 Exit criteria:
 
 - Cloud migration architecture spec and this phase plan agree.
-- `images_drawio/cloud_migration_overview.drawio` and
-  `images_drawio/cloud_migration_detail.drawio` are the current visual sources
+- `images_drawio/final_architecture_overview.drawio` and
+  `images_drawio/final_architecture_detail.drawio` are the current visual sources
   for presentation/handoff; their PNG previews must be regenerated after visual
   edits.
 - Current docs/visual status on `2026-05-06`: the diagrams must show the private

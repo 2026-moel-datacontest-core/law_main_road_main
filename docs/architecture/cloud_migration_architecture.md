@@ -1,4 +1,4 @@
-# K-Labor Shield — Production-Oriented GCP Migration Architecture
+# 법대로(LawMainRoad) — Production-Oriented GCP Migration Architecture
 
 기준일: `2026-05-06`
 
@@ -15,8 +15,8 @@ previews and must be re-exported whenever the draw.io source changes.
 
 | Visual | Source | Use |
 |---|---|---|
-| ![Cloud migration overview](images_drawio/cloud_migration_overview.png) | [`images_drawio/cloud_migration_overview.drawio`](images_drawio/cloud_migration_overview.drawio) | 16:9 executive overview for README/issues/presentation |
-| ![Cloud migration detail](images_drawio/cloud_migration_detail.png) | [`images_drawio/cloud_migration_detail.drawio`](images_drawio/cloud_migration_detail.drawio) | Implementation handoff for Terraform/Cloud Run/operations planning |
+| ![Cloud migration overview](images_drawio/final_architecture_overview.drawio.png) | [`images_drawio/final_architecture_overview.drawio`](images_drawio/final_architecture_overview.drawio) | 16:9 executive overview for README/issues/presentation |
+| ![Cloud migration detail](images_drawio/final_architecture_detail.drawio.png) | [`images_drawio/final_architecture_detail.drawio`](images_drawio/final_architecture_detail.drawio) | Implementation handoff for Terraform/Cloud Run/operations planning |
 
 If a visual conflicts with this markdown spec or the phase plan, the markdown
 spec and phase plan win. Regenerate the draw.io/PNG pair before presentation use.

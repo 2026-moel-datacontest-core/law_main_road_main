@@ -213,12 +213,12 @@ rg -n 'architecture_option4|architecture_project_current|Option 4|option4' docs/
 rg -n 'Local LLM|Compute Engine GPU|Ollama|Qwen|vLLM' docs/architecture/cloud_migration_architecture.md docs/architecture/cloud_migration_phase_plan.md docs/architecture/phase
 rg -n 'environments/(dev|prod)/main\.tf|Phase 2.*CI/CD|artifact-cleanup|BACKEND_CORS_ORIGIN_REGEX or' docs/architecture --glob '!**/phase0_design_freeze.md'
 xmllint --noout \
-  docs/architecture/images_drawio/cloud_migration_overview.drawio \
-  docs/architecture/images_drawio/cloud_migration_detail.drawio \
+  docs/architecture/images_drawio/final_architecture_overview.drawio \
+  docs/architecture/images_drawio/final_architecture_detail.drawio \
   docs/architecture/cloud_migration_architecture.drawio
 file \
-  docs/architecture/images_drawio/cloud_migration_overview.png \
-  docs/architecture/images_drawio/cloud_migration_detail.png
+  docs/architecture/images_drawio/final_architecture_overview.drawio.png \
+  docs/architecture/images_drawio/final_architecture_detail.drawio.png
 git diff --check -- docs/architecture
 ```
 
@@ -352,8 +352,8 @@ Phase 0 is complete only when all required statements are true.
 - `phase/phase1_bootstrap_foundation.md` is detailed enough to start Phase 1.
 - No Blocker or High issue remains open.
 - Local smoke checks either pass or have a clear, non-architecture blocker.
-- `images_drawio/cloud_migration_overview.drawio`,
-  `images_drawio/cloud_migration_detail.drawio`, and the secondary root
+- `images_drawio/final_architecture_overview.drawio`,
+  `images_drawio/final_architecture_detail.drawio`, and the secondary root
   `cloud_migration_architecture.drawio` are valid XML and match the current
   target architecture.
 - No old `architecture_option4` naming remains as active docs reference.
