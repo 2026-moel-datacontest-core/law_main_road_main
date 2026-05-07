@@ -10,26 +10,48 @@ Current status:
   applied on `2026-05-06`.
 - `envs/prod/foundation`: skeleton only.
 - `envs/dev/data`: applied for the first `dev` Cloud SQL data foundation on
-  `2026-05-07`.
+  `2026-05-07`; post-Terraform DB/data readiness also completed outside
+  Terraform on `2026-05-07`.
 - `envs/prod/data`: skeleton only.
+- `envs/dev/runtime/backend`: applied for the first `dev` backend Cloud Run
+  runtime on `2026-05-07`; health/auth-negative/retrieve/answer/document draft
+  smoke evidence passed.
+- `envs/prod/runtime/backend`: skeleton/unopened only.
 
 Phase 1 resources are limited to remote state bootstrap, required APIs, service
 accounts, Artifact Registry, Secret Manager secret shells, a private artifact
 bucket, and baseline IAM for those resources.
 
-Phase 2 scope is limited to Cloud SQL PostgreSQL infrastructure and non-secret
-metadata for Phase 3. It must not create DB users/passwords, Secret Manager
-secret versions, pgvector extension, schema, indexes, seed data, embeddings,
-backend runtime IAM, Cloud Run, WIF, GitHub workflows, service account keys, or
-prod resources. The backend Cloud SQL client IAM grant belongs to Phase 3 backend
-runtime wiring.
+The Phase 2 Terraform root is limited to Cloud SQL PostgreSQL infrastructure and
+non-secret metadata for Phase 3. It must not create DB users/passwords, Secret
+Manager secret versions, pgvector extension, schema, indexes, seed data,
+embeddings, backend runtime IAM, Cloud Run, WIF, GitHub workflows, service
+account keys, or prod resources. The backend Cloud SQL client IAM grant belongs
+to Phase 3 backend runtime wiring.
+
+Phase 2 DB/data readiness was completed by approved post-Terraform admin/runbook
+steps: DB bootstrap, split DB Secret Manager versions, pgvector extension,
+Alembic head, `law_chunks` seed, embeddings, HNSW index verification, retrieval
+smoke, and answer smoke.
+
+Phase 3 backend runtime readiness was completed for the first `dev` target by
+approved runtime work: backend Cloud Run service deploy, backend service identity
+attachment, database-url Secret Manager version presence, Cloud SQL Client and
+Vertex AI User runtime IAM, DB pool env wiring, public dev smoke invoker, and
+health/auth-negative/retrieve/answer/document draft smoke evidence. The raw
+database-url value is not stored in Terraform files or this README.
+
+WIF/GitHub workflow, frontend Cloud Run, service account key JSON, Firebase Admin
+JSON, prod resources, and backend/frontend/API/runtime behavior changes remain
+unopened from this Terraform README's perspective.
 
 Forbidden without explicit phase approval:
 
-- Cloud Run,
+- additional Cloud Run resources or changes outside the approved first `dev`
+  backend runtime smoke,
 - Workload Identity Federation provider/trust binding,
 - GitHub Actions workflow,
-- secret values or `google_secret_manager_secret_version`,
+- secret values in Terraform files/state or `google_secret_manager_secret_version`,
 - service account key JSON,
 - Firebase Admin JSON,
 - backend/frontend/API/runtime changes.
@@ -62,6 +84,9 @@ Post-apply validation on `2026-05-07`:
 
 - dev data `terraform plan -detailed-exitcode`: no changes.
 - Cloud SQL instance/database describe checks: PASS.
+- dev backend runtime health/auth-negative/retrieve/answer/document draft smoke:
+  PASS.
 
-Do not run additional `terraform apply` or proceed to Phase 3 runtime resources
-without explicit human approval for that phase.
+Do not run additional `terraform apply`, proceed to Phase 4 frontend runtime,
+configure WIF/GitHub workflow, or open prod resources without explicit human
+approval for that phase.

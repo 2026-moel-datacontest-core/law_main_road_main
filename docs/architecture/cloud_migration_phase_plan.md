@@ -1,6 +1,6 @@
-# K-Labor Shield — Cloud Migration Phase Plan
+# 법대로(LawMainRoad) — Cloud Migration Phase Plan
 
-기준일: `2026-05-06`
+기준일: `2026-05-07`
 
 이 문서는 [`cloud_migration_architecture.md`](cloud_migration_architecture.md)의 GCP
 migration target을 실제 구현 가능한 phase로 나눈 계획이다. 목표는 Terraform을
@@ -203,13 +203,17 @@ First implementation pass rule:
 - Reusable modules should be written with prod in mind, but prod resource
   creation is not part of the first cloud migration pass.
 
-Implementation status on `2026-05-06`: Phase 1 created
+Implementation status on `2026-05-07`: Phase 1 created
 `infra/terraform/bootstrap/remote-state`, `infra/terraform/envs/dev/foundation`,
 Phase 1 modules, and `infra/terraform/envs/prod/foundation` skeleton material.
 The bootstrap remote-state root and `envs/dev/foundation` have been applied for
 the first `dev` target, and post-apply `terraform plan -detailed-exitcode`
-checks returned no changes. Phase 2+ roots remain unopened, and `prod` remains
-skeleton-only.
+checks returned no changes. Phase 2 `envs/dev/data` has also been applied for
+the first `dev` target, and post-Terraform DB/data readiness has passed. Phase
+3 `envs/dev/runtime/backend` has been applied for the first `dev` backend
+runtime target, and health/auth-negative/retrieve/answer/document-draft smoke
+evidence has passed. Phase 4+ roots, WIF/GitHub workflow, frontend Cloud Run,
+and prod resources remain unopened.
 
 Notes:
 
@@ -541,13 +545,30 @@ Acceptance:
 - DB schema migration is idempotent.
 - `law_chunks` seed import is idempotent or version-gated.
 - `selected_as_of = 2026-04-11` remains the active corpus marker.
-- dev exact tier/storage is not fixed in Phase 0 and must be decided before
-  Phase 2 apply.
+- dev exact tier/storage was closed by the first Phase 2 apply:
+  `POSTGRES_17`, `ENTERPRISE`, `db-f1-micro`, 10 GB SSD, 20 GB auto-increase
+  cap, 3 retained backups, PITR off, `ZONAL`, HA off, deletion protection false.
 - dev starts with minimum viable Cloud SQL PostgreSQL + pgvector, backup
   retention 1-3 days, and no initial HA requirement.
 - prod later starts with a small production tier, backup retention baseline 7
   days, and prod-only PITR baseline unless a cost exception is approved before
   prod opens.
+
+Current `dev` status on `2026-05-07`:
+
+- Cloud SQL PostgreSQL instance and `klabor` application database exist.
+- DB bootstrap completed outside Terraform; split DB Secret Manager versions
+  were added for DB user/name/password, while the credential-bearing
+  database-url version remains uncreated.
+- pgvector exists, Alembic is at head `20260427_000007`, `law_chunks` has `1722`
+  rows with `selected_as_of = 2026-04-11`, embeddings are complete at 768
+  dimensions with zero null rows, and HNSW index verification passed.
+- Retrieval smoke passed for `top_k=5` and `top_k=10`; answer smoke passed for
+  `gemini-2.5-flash` with non-empty citations/grounding and
+  `citation_violations=0`.
+- Cloud Run deploy, backend runtime IAM/Cloud SQL Client, WIF/GitHub workflow,
+  service account key JSON, prod resources, and backend/frontend/API/runtime
+  code changes remain unopened.
 
 Rollback:
 
@@ -656,6 +677,26 @@ Acceptance:
 - After the first post-deploy smoke, manually sample Cloud Logging entries for
   the protected and public paths above. If noisy or risky fields appear, add
   structured-log redaction or Cloud Logging exclusion filters before promotion.
+
+Current `dev` status on `2026-05-07`:
+
+- Backend Cloud Run service `lmr-dev-backend` has a latest ready revision
+  `lmr-dev-backend-00001-vzr`; the direct backend `run.app` URL is kept in the
+  private runbook as internal inventory.
+- `allUsers` run invoker binding exists for controlled dev smoke.
+- Startup logs and per-smoke log samples had `severity >= ERROR` count `0`; the
+  sampled secret-leak checks had `0` matches.
+- DB pool runtime env values are `DB_POOL_SIZE=2`, `DB_MAX_OVERFLOW=3`, and
+  `DB_POOL_TIMEOUT_SECONDS=30`.
+- Runtime IAM applied for backend service identity: Cloud SQL Client and Vertex
+  AI User.
+- Backend database-url Secret Manager version exists; raw secret values and
+  credential-bearing URLs are not documented.
+- `/health`, auth-negative, retrieve, answer, and SCN-004 document draft smoke
+  checks passed with the counts recorded in
+  [`phase/phase3_backend_runtime.md`](phase/phase3_backend_runtime.md#2a-dev-runtime-smoke-evidence).
+- WIF/GitHub workflow, frontend Cloud Run, prod resources, and public
+  production-ready API hardening remain unopened.
 
 Rollback:
 
@@ -1081,7 +1122,7 @@ in generic "decision needed" lists.
 | Status | Items |
 |---|---|
 | Finalized now | first target `dev` only; `envs/dev` and `envs/prod` layout with only `envs/dev` apply-ready and only `dev` instantiated first; `envs/prod` skeleton/README/tfvars-example only until a separate prod-opening review; one GCP project with env-prefixed resources; `law-main-road` app label; `lmr` prefix; `lmr-{env}-{component}` naming where allowed; local-state bootstrap for GCS tfstate bucket; env roots use GCS remote backend after bootstrap; bootstrap local `terraform.tfstate*` never committed; Terraform creates Secret Manager secret resources only; no Terraform-managed secret values by default; `google_secret_manager_secret_version` forbidden by default; one private artifact bucket per env; globally unique variant of `lmr-{env}-artifacts`; `before-runs/` and `after-runs/` object prefixes; Phase 4 uses Cloud Run `run.app`; baseline migration does not include host configuration-management tooling. |
-| Phase-gated decision | Phase 2 before apply: dev Cloud SQL exact tier/storage. Phase 2 before prod opening: prod exact tier, PITR cost exception, backup retention confirmation. Phase 3 before backend deploy: GCS adapter implementation boundary and whether `ARTIFACT_BUCKET_NAME` becomes active runtime env. Phase 3 or later: artifact retrieval mode only if UI/runtime needs it. Phase 6: budget alert Terraform management if billing IAM allows, otherwise billing/admin checklist fallback. Phase 6: exact alert thresholds after baseline smoke/traffic. |
+| Phase-gated decision | Closed by Phase 2 dev apply: dev Cloud SQL exact tier/storage and DB/data readiness. Closed by Phase 3 dev backend smoke: backend Cloud Run runtime deploy, database-url secret version presence, backend Cloud SQL/Vertex runtime IAM, DB pool env wiring, and health/auth-negative/retrieve/answer/document draft smoke evidence. Phase 2 before prod opening: prod exact tier, PITR cost exception, backup retention confirmation. Phase 3 or later before any production-ready public API claim: GCS adapter durability, public endpoint rate/body/cost guardrails, and artifact retrieval mode if UI/runtime needs it. Phase 6: budget alert Terraform management if billing IAM allows, otherwise billing/admin checklist fallback. Phase 6: exact alert thresholds after baseline smoke/traffic. |
 | Deferred by design | separate dev/prod GCP projects; Phase 7A custom domain / HTTPS Load Balancer / Gabia DNS; `api.<domain>` backend public endpoint; advanced SLO/alerting; signed URL/auth proxy/artifact retrieval UI unless required later. |
 
 ## 13. Release Gate Summary

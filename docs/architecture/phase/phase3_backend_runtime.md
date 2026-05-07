@@ -1,6 +1,6 @@
 # Phase 3 — Backend Runtime
 
-기준일: `2026-05-06`
+기준일: `2026-05-07`
 
 ## 1. Goal
 
@@ -34,6 +34,56 @@ Firebase Auth, Secret Manager, artifact storage, public/protected API smoke를
 | Image source | Artifact Registry backend image |
 | Required previous phase | [`phase2_data_foundation.md`](phase2_data_foundation.md) |
 | Next phase | [`phase4_frontend_runtime.md`](phase4_frontend_runtime.md) |
+
+## 2A. Dev Runtime Smoke Evidence
+
+Evidence date: `2026-05-07`
+
+Scope and inventory handling:
+
+- Target profile: `dev`.
+- Backend Cloud Run service: `lmr-dev-backend`.
+- Latest ready revision: `lmr-dev-backend-00001-vzr`.
+- Backend direct `run.app` URL is recorded in the private runbook only and is
+  not repeated here, because direct backend URLs are internal cloud inventory.
+- `allUsers` `roles/run.invoker` binding exists for controlled dev smoke.
+- WIF/GitHub workflow, frontend Cloud Run, and prod resources remain unopened.
+
+Runtime wiring evidence:
+
+- Startup logs with `severity >= ERROR`: `0`.
+- Startup secret leak sample matches: `0`.
+- DB pool env values: `DB_POOL_SIZE=2`, `DB_MAX_OVERFLOW=3`,
+  `DB_POOL_TIMEOUT_SECONDS=30`.
+- Runtime IAM applied for backend service identity:
+  `roles/cloudsql.client` and `roles/aiplatform.user`.
+- Backend database-url Secret Manager version exists. The raw value,
+  credential-bearing URL, token material, Firebase uid/provider subject, and
+  private key material are not documented.
+
+Smoke checks:
+
+| Check | Evidence |
+|---|---|
+| `/health` | `GET /health` returned `200`; body object keys: `status`; logs `severity >= ERROR` count `0`; secret leak sample `0` matches. |
+| Auth negative | `GET /api/v1/auth/me` without token returned `200` with `logged_in=false`; protected SCN-001 endpoints with missing/invalid token returned `401`; logs `severity >= ERROR` count `0`; secret leak sample `0` matches. |
+| Retrieve | `POST /api/v1/retrieve` ran once with `top_k=5`, `ef_search=100`; status `200`; response keys: `query`, `total`, `chunks`, `cited_articles`; `total=5`, `chunks.length=5`, `cited_articles` non-empty; logs `severity >= ERROR` count `0`; secret leak sample `0` matches. |
+| Answer | `POST /api/v1/answer` ran once with `top_k=5`, `ef_search=100`; status `200`; `answer`, `key_points`, and `cautions` generated; `cited_articles` non-empty; `retrieved_chunks=5`; `grounded_context_ids` non-empty; no surfaced timeout/retry/error; logs `severity >= ERROR` count `0`; secret leak sample `0` matches. |
+| Document draft | `POST /api/v1/documents/draft` ran once using `document_draft_scn004_unfair_dismissal_brief.json` plus answer-derived legal basis fixture; status `200`; `rendered_text` non-empty with length `1456`; `missing_fields[3]`, `cautions[6]`, `evidence_checklist[7]`, `cited_articles[5]`, `source_context_ids[5]`, `missing_legal_basis[0]`; logs `severity >= ERROR` count `0`; suspicious secret leak sample `0` matches. The raw rendered text is not recorded. |
+
+Document draft persistence note:
+
+- The document draft endpoint may create normal `after_artifact_runs` / artifact
+  persistence side effects when it runs. This evidence records the already-run
+  smoke result only; this docs update did not re-call endpoints, run Terraform,
+  or perform any DB mutation.
+
+Current promotion boundary:
+
+- This is a `dev/demo-only` backend runtime smoke pass, not a production-ready
+  public API claim.
+- Frontend runtime, WIF/GitHub deploy automation, prod resources, custom domain,
+  and Phase 7 edge hardening remain unopened.
 
 ## 3. Read First
 
