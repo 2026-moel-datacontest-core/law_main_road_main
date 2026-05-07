@@ -80,7 +80,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git grep -n -I -E '("private_key"[[:space:]]*:|"type"[[:space:]]*:[[:space:]]*"service_account"|-----BEGIN PRIVATE KEY-----|postgres(ql)?://[^[:space:]"'\'']+:[^[:space:]@"'\'']+@)' -- . ':!frontend/package-lock.json'; then
+          private_key_json='"private_''key"[[:space:]]*:'
+          service_account_json='"type"[[:space:]]*:[[:space:]]*"service_''account"'
+          private_key_pem='-----BEGIN PRIVATE ''KEY-----'
+          postgres_url='post''gres(ql)?://[^[:space:]]+:[^[:space:]]+@'
+          secret_pattern="(${private_key_json}|${service_account_json}|${private_key_pem}|${postgres_url})"
+          if git grep -n -I -E "${secret_pattern}" -- . ':!frontend/package-lock.json'; then
             echo "Potential committed secret material found." >&2
             exit 1
           fi
