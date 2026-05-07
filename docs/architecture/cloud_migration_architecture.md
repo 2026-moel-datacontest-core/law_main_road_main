@@ -1,10 +1,28 @@
-# K-Labor Shield — Production-Oriented GCP Migration Architecture
+# 법대로(LawMainRoad) — Production-Oriented GCP Migration Architecture
 
-기준일: `2026-05-04`
+기준일: `2026-05-06`
 
 > 주의: 이 문서는 현재 로컬 MVP 구조가 아니라 후속 GCP cloud migration 목표
 > 아키텍처다. 현재 구현 상태는
 > [`current_project_architecture.md`](current_project_architecture.md)를 우선한다.
+
+## 0. Visual Sources And Decision Authority
+
+Cloud migration decisions are authoritative in this markdown file and
+[`cloud_migration_phase_plan.md`](cloud_migration_phase_plan.md). The draw.io
+files are visual sources for presentation and handoff; PNGs are generated
+previews and must be re-exported whenever the draw.io source changes.
+
+| Visual | Source | Use |
+|---|---|---|
+| ![Cloud migration overview](images_drawio/final_architecture_overview.drawio.png) | [`images_drawio/final_architecture_overview.drawio`](images_drawio/final_architecture_overview.drawio) | 16:9 executive overview for README/issues/presentation |
+| ![Cloud migration detail](images_drawio/final_architecture_detail.drawio.png) | [`images_drawio/final_architecture_detail.drawio`](images_drawio/final_architecture_detail.drawio) | Implementation handoff for Terraform/Cloud Run/operations planning |
+
+If a visual conflicts with this markdown spec or the phase plan, the markdown
+spec and phase plan win. Regenerate the draw.io/PNG pair before presentation use.
+The root [`cloud_migration_architecture.drawio`](cloud_migration_architecture.drawio)
+is a secondary overview schematic kept for backward compatibility; current
+presentation/handoff edits should start from the `images_drawio/` sources.
 
 ## 1. Migration Goal
 
@@ -33,17 +51,19 @@ application behavior migration tool.
 | Phase sizing | Author Terraform in small phase roots. Phase 0 is docs/decision freeze only; Phase 1 is the first resource phase. |
 | Application contract | Terraform must not change `/api/v1/answer`, `/api/v1/documents/draft`, protected SCN-001 Bridge/history behavior, SCN-004 freeze, SCN-001 frozen draft, auth persistence, or Web Storage policy. |
 | Optional edge | Custom domain / HTTPS Load Balancer / Gabia DNS is Phase 7A optional hardening, not a Phase 1-6 prerequisite. |
-| State | Shared applies use a GCS remote state bucket after bootstrap. The first state bucket creation can use local state or a deliberately pre-created bootstrap bucket. |
+| State | Shared applies use a GCS remote state bucket after bootstrap. The approved baseline is local-state `bootstrap/remote-state` for the first state bucket creation, followed by GCS backend initialization for later env roots. A separate pre-created bootstrap bucket is not the approved baseline. |
+| Cloud Run revision ownership | Build/push images outside Terraform, pass an immutable image digest or explicit tag into Terraform, and let Terraform update Cloud Run service config/traffic so the apply creates the revision. `gcloud run deploy` is not the steady-state path while Terraform owns Cloud Run; emergency manual changes must be reconciled back into Terraform. |
 | Secrets | Terraform may create Secret Manager resources and IAM bindings, but raw secret values and credential-bearing outputs stay out of `.tf` files, tfvars, Terraform state, GitHub Actions logs, and public evidence. |
 | Internal inventory | Project id/number, service account email, bucket name, Cloud SQL connection name, WIF provider name, Secret Manager resource name, state bucket name, and direct backend `run.app` URL are internal cloud inventory. |
 | Destructive actions | Destroy/replacement of prod state bucket, Cloud SQL, artifact bucket, service accounts, or runtime services requires explicit human approval and rollback notes. |
 
-The suggested future IaC path is documented in
+The IaC path is documented in
 [`cloud_migration_phase_plan.md`](cloud_migration_phase_plan.md#3-recommended-terraform-layout)
 as `infra/terraform/envs/{dev,prod}` plus focused modules such as
 `cloud-run-service`, `cloud-sql-pgvector`, `artifact-bucket`, `iam-wif`,
-`secret-manager`, and optional `load-balancer-domain`. This docs-only review
-does not create those directories.
+`secret-manager`, and optional `load-balancer-domain`. Phase 1 now contains the
+bootstrap/foundation Terraform roots and Phase 1 modules under `infra/terraform`;
+later phase roots/modules remain unopened until their phase is approved.
 
 ### Human MFA And Runbook Script Boundary
 
@@ -93,8 +113,9 @@ flowchart TB
         Firebase["Firebase Auth<br/>Google Sign-In"]
         SQL["Cloud SQL PostgreSQL<br/>pgvector · law_chunks · users · bridge_runs · before_review_jobs · after_artifact_runs"]
         Vertex["Vertex AI<br/>Gemini embedding · answer · OCR/content review"]
-        Storage["Cloud Storage Private Artifact Bucket<br/>before-runs · after-runs artifacts"]
+        Storage["Cloud Storage Private Artifact Bucket<br/>target after GCS adapter"]
         Secrets["Secret Manager<br/>DB/provider/runtime secrets"]
+        AbuseGuard["Public AI API Guardrails<br/>rate/body limits · scale caps · budget/quota alerts"]
     end
 
     subgraph OPS["Operations Platform"]
@@ -108,18 +129,20 @@ flowchart TB
     GitHub --> Actions
     Actions --> WIF
     Actions -->|build/push images| AR
-    Actions -->|terraform plan/apply| TF
+    Actions -->|pass image digest + terraform plan/apply| TF
     TF --> TFState
-    AR -->|deploy image| Frontend
-    AR -->|deploy image| Backend
+    TF -->|Cloud Run service update creates revision| Frontend
+    TF -->|Cloud Run service update creates revision| Backend
+    AR -.->|image digest input| TF
 
     User -->|HTTPS| Frontend
     Frontend -->|API call / CORS allowlist| Backend
     Frontend -->|Google Sign-In| Firebase
     Backend -->|verify Firebase ID token| Firebase
+    Backend -->|server-side guardrails before Vertex-heavy work| AbuseGuard
     Backend -->|Cloud SQL connector| SQL
     Backend -->|managed model calls| Vertex
-    Backend -->|read/write artifacts| Storage
+    Backend -.->|Phase 3 blocker: adapter required before durable claim| Storage
     Backend -->|runtime secret access| Secrets
 
     Backend -.-> Logging
@@ -150,12 +173,20 @@ main branch
   -> Workload Identity Federation
   -> build frontend/backend container images
   -> push Artifact Registry
-  -> terraform plan/apply
+  -> pass immutable image digests/tags to Terraform
+  -> terraform plan/apply for Cloud Run service/env/traffic config
+  -> Cloud Run creates new revisions from Terraform-owned service updates
   -> run DB migration / seed job when required
-  -> deploy Cloud Run revisions
   -> post-deploy smoke test
   -> keep previous stable revision for rollback
 ```
+
+Terraform owns Cloud Run service configuration, runtime env/secret references,
+IAM attachment, image reference, scaling, and steady-state traffic. CI/scripts
+own image build/push, migration/seed orchestration, smoke checks, log-redaction
+checks, and rollback command execution. CI may invoke Terraform, but it should
+not use `gcloud run deploy` as the normal revision owner because that creates
+Terraform drift.
 
 ### Minimum Quality Gates
 
@@ -168,6 +199,25 @@ main branch
 | Infra | `terraform fmt`, `terraform validate`, `terraform plan` |
 | Security | secret scan, dependency scan, no service account key JSON in repo, no cloud inventory in public evidence |
 | Deploy | Cloud Run health check and one post-deploy scenario smoke |
+| Container readiness | backend Cloud Run image build strategy exists before Phase 3; frontend Cloud Run image build strategy exists before Phase 4, including `NEXT_PUBLIC_*` build-time handling |
+| Public AI endpoint guardrail | public Vertex-calling paths have server-side request/cost controls or the deployment is explicitly marked dev/demo-only |
+
+### Build Readiness Status
+
+Phase 3/4 cannot claim Cloud Run readiness with only source-tree import/build
+checks. A docs-only code read rechecked on `2026-05-06` found no
+`backend/Dockerfile`, no `frontend/Dockerfile`, and no `output: "standalone"`
+setting in `frontend/next.config.mjs`.
+
+Before Cloud Run deployment readiness is claimed:
+
+- Phase 3 must add `backend/Dockerfile` or approve an equivalent backend image
+  build strategy.
+- Phase 4 must add `frontend/Dockerfile` plus Next.js standalone output, or
+  approve an equivalent frontend image build strategy.
+- Frontend images must receive `NEXT_PUBLIC_API_BASE_URL` and Firebase
+  `NEXT_PUBLIC_*` values at build time because those values are bundled into the
+  browser build.
 
 ## 4. Security & IAM
 
@@ -177,8 +227,8 @@ main branch
 |---|---|---|
 | `frontend-sa` | Cloud Run Frontend | Call backend if backend ingress later requires IAM auth |
 | `backend-sa` | Cloud Run Backend | Cloud SQL Client, Secret Accessor for needed secrets, bucket-scoped Storage Object access, Vertex AI User, Firebase Auth verification IAM if ADC path requires it |
-| `github-actions-sa` | GitHub Actions deploy workflow | Push Artifact Registry images and deploy Cloud Run revisions through Workload Identity Federation |
-| `terraform-sa` | Terraform workflow | Create/update approved infra resources with explicit roles from the phase plan; avoid broad Owner-style use |
+| `github-actions-sa` | GitHub Actions deploy workflow | Push Artifact Registry images, run smoke checks, and invoke/impersonate the Terraform execution path through Workload Identity Federation |
+| `terraform-sa` | Terraform workflow | Create/update approved infra resources, including Cloud Run service config/image reference/traffic, with explicit roles from the phase plan; avoid broad Owner-style use |
 
 GitHub Actions should authenticate through Workload Identity Federation, not a long-lived
 service account key. The deployer also needs `iam.serviceAccountUser` on the runtime service
@@ -203,7 +253,7 @@ Auth role such as `roles/firebaseauth.admin` or a narrower custom role after val
 | DB credentials / connection settings | Secret Manager + Cloud Run secret injection |
 | Provider/runtime keys if any | Avoid for Google Cloud APIs; if an external provider key is ever introduced, keep it in Secret Manager and version-pin where practical |
 | Firebase public web config | Next.js build-time `NEXT_PUBLIC_*` build args / public env; these are public client config, not private secrets |
-| Firebase Admin credential | Prefer GCP ADC/service identity. Use Secret Manager only if a separate credential is unavoidable |
+| Firebase Admin credential | Use Cloud Run service identity / ADC for the current migration. Do not create a Firebase Admin JSON secret or service account key JSON in Phase 1-6; if ADC cannot be made to work, open a separate security exception instead of silently adding a key fallback. |
 | App signing/session secret if introduced later | Secret Manager |
 
 The current MVP frontend uses Firebase `inMemoryPersistence`; cloud migration does not change
@@ -218,6 +268,7 @@ that policy by default.
 | Backend secrets/env | Secret Manager for credential-bearing values; plain runtime env only for non-secret config. Do not expose secret values as Terraform outputs. |
 | Cloud Run service identity | Backend runtime uses attached `backend-sa` and ADC for Google APIs. Local `GOOGLE_APPLICATION_CREDENTIALS` remains a developer smoke/debug path only. |
 | Vertex AI | Backend-only managed Vertex path through ADC/service identity. No Vertex API key, service account key JSON, or `GOOGLE_APPLICATION_CREDENTIALS_JSON` in Cloud Run. |
+| Firebase Admin | Backend-only Firebase Admin SDK path through ADC/service identity. Do not set `GOOGLE_APPLICATION_CREDENTIALS` or a Firebase Admin JSON secret on Cloud Run for the current migration. |
 | Artifact bucket env | `ARTIFACT_BUCKET_NAME` is only the preferred candidate backend env var for the future GCS adapter. Do not write docs or Terraform as if it is an active runtime contract until Phase 3 implements or verifies adapter support. Keep it separate from the `lmr-{env}-artifacts` bucket naming pattern. |
 
 ### Vertex AI Credential Boundary
@@ -277,10 +328,31 @@ Cloud Run identifiers.
 | Component | Access model |
 |---|---|
 | Cloud Run Frontend | public HTTPS |
-| Cloud Run Backend | public HTTPS with strict CORS allowlist; protected SCN-001 endpoints still require Firebase Bearer token |
+| Cloud Run Backend | public HTTPS with strict CORS allowlist; protected SCN-001 endpoints still require Firebase Bearer token. CORS is browser-origin control only and is not abuse/cost protection. |
 | Cloud SQL | Cloud SQL connector from backend service account |
 | Cloud Storage artifacts | private bucket, public access prevention, uniform bucket-level access |
 | Secret Manager | runtime service accounts only |
+
+### Mandatory Public AI Endpoint Guardrails
+
+The first backend target can use public Cloud Run HTTPS for smoke/demo traffic,
+but public Vertex-calling endpoints must not be described as production-ready
+until server-side abuse and cost controls are explicit. CORS does not protect
+the API from non-browser clients.
+
+Required before any production-oriented public backend claim:
+
+| Control | Required baseline |
+|---|---|
+| Request and body limits | Set server/API limits for `/api/v1/answer`, `/api/v1/retrieve`, and Before upload/OCR paths. Reject oversized payloads before Vertex or DB-heavy work. |
+| Server-side rate/cost limit | Add per-IP and, where authenticated, per-user request limits for Vertex-calling routes, or explicitly mark the deployment dev/demo-only until an approved limiter/edge policy is opened. |
+| Cloud Run scale cap | Set conservative max instances, concurrency, timeout, and DB pool caps together so abuse cannot silently multiply Vertex and Cloud SQL cost. |
+| Budget/quota alerts | Add budget alerts and Vertex/request-count monitoring in Phase 6, with manual billing checklist fallback if Terraform lacks billing permissions. |
+| Abuse logging | Log route, status, latency, coarse caller bucket, provider error type, and request size class without raw case payloads, Firebase uid, provider subject, tokens, or raw Bridge payload. |
+| Edge escalation trigger | If public traffic expands beyond controlled demo use, open Phase 7 design for Cloud Armor/API Gateway/HTTPS LB or equivalent edge protection. |
+
+Until these controls pass, the public backend is a dev/demo smoke target, not a
+production abuse-resistant public AI API.
 
 ### Later Hardening Candidates
 
@@ -288,7 +360,7 @@ Cloud Run identifiers.
 |---|---|
 | Backend Cloud Run IAM auth / service-to-service auth | When frontend/backend split needs non-public backend ingress |
 | HTTPS Load Balancer + custom domain | Phase 7A portfolio launch candidate, after Cloud Run `run.app` smoke is stable |
-| Cloud Armor | When public abuse protection/rate limiting is needed |
+| Cloud Armor | Phase 7 edge hardening for public abuse protection/rate limiting beyond the mandatory app/runtime guardrails |
 | Private IP + Serverless VPC Access or Direct VPC egress | When network isolation becomes worth the added Terraform complexity |
 | API Gateway | When external API productization or API-key style policy is needed |
 
@@ -367,9 +439,11 @@ private bucket, or explicitly label the Cloud Run deployment as limited/non-dura
 The GCS artifact adapter is a Phase 3 production-readiness blocker or a dedicated
 implementation issue before any durable Cloud Run claim. Terraform can provision
 the private bucket and IAM, but it must not pretend the current local filesystem
-writers are already using GCS. Signed URLs, authenticated proxy retrieval, and
-artifact retrieval UI/API remain decision-needed and unsupported until a separate
-authorization design is approved.
+writers are already using GCS. Diagrams must show the backend-to-GCS artifact
+edge as a target-after-adapter path or attach an explicit blocker callout, never
+as an already-implemented durable runtime path. Signed URLs, authenticated proxy
+retrieval, and artifact retrieval UI/API remain decision-needed and unsupported
+until a separate authorization design is approved.
 
 Current local paths that must not be treated as durable Cloud Run storage:
 
@@ -483,7 +557,7 @@ user-friendly errors and add:
 | Cloud Run | low min instances for dev; prod min instance only if latency requires it |
 | Cloud SQL | dev minimum viable first; prod small tier later; dev backup 1-3 days and prod backup 7-day baseline |
 | Billing/Budget | budget alert as a Terraform-managed target where billing permissions allow; otherwise billing/admin manual checklist fallback |
-| Vertex AI | demo preset fixed path avoids unnecessary `/answer` calls; add request limits where needed |
+| Vertex AI | demo preset fixed path avoids unnecessary `/answer` calls; public Vertex-calling routes require server-side rate/cost controls, request/body limits, Cloud Run scale caps, and budget/quota alerts before production claim |
 | Cloud Storage | artifact lifecycle deletion |
 | Artifact Registry | image cleanup policy |
 | Cloud Logging | retention/exclusion policy for noisy non-audit logs |
@@ -506,6 +580,11 @@ verify:
 For early small-tier testing, start with a conservative target such as `pool_size=2`,
 `max_overflow=3`, and a low Cloud Run `max_instance_count`, then tune from observed load.
 
+Vertex cost control must be paired with public API control. If the app-level
+limiter or equivalent approved edge control is not implemented yet, keep public
+Vertex-calling routes in dev/demo smoke mode and avoid calling the deployment
+production-ready.
+
 ## 10. Terraform Module Structure
 
 Detailed Terraform root layout and module ownership are defined in
@@ -513,10 +592,10 @@ Detailed Terraform root layout and module ownership are defined in
 That phase plan is the single source of truth for Terraform entry points and
 phase numbering.
 
-The first cloud migration target is `dev` only. Keep both `dev` and `prod`
-Terraform directories, but instantiate only `dev` first. The initial GCP model
-uses one project with env-prefixed resources; separate dev/prod projects are
-deferred to future hardening.
+The first cloud migration target is `dev` only. The Phase 1 Terraform layout now
+contains apply-ready dev bootstrap/foundation roots and a prod foundation
+skeleton only. The initial GCP model uses one project with env-prefixed
+resources; separate dev/prod projects are deferred to future hardening.
 
 ## 11. Migration Roadmap
 

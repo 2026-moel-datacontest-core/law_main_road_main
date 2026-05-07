@@ -15,8 +15,9 @@ flowchart TB
         Firebase["Firebase Auth<br/>Google Sign-In"]
         SQL["Cloud SQL PostgreSQL<br/>pgvector · law_chunks · users · bridge_runs · before_review_jobs · after_artifact_runs"]
         Vertex["Vertex AI<br/>Gemini embedding · answer · OCR/content review"]
-        Storage["Cloud Storage Private Artifact Bucket<br/>before-runs · after-runs artifacts"]
+        Storage["Cloud Storage Private Artifact Bucket<br/>target after GCS adapter"]
         Secrets["Secret Manager<br/>DB/provider/runtime secrets"]
+        AbuseGuard["Public AI API Guardrails<br/>rate/body limits · scale caps · budget/quota alerts"]
     end
 
     subgraph OPS["Operations Platform"]
@@ -30,18 +31,20 @@ flowchart TB
     GitHub --> Actions
     Actions --> WIF
     Actions -->|build/push images| AR
-    Actions -->|terraform plan/apply| TF
+    Actions -->|pass image digest + terraform plan/apply| TF
     TF --> TFState
-    AR -->|deploy image| Frontend
-    AR -->|deploy image| Backend
+    TF -->|Cloud Run service update creates revision| Frontend
+    TF -->|Cloud Run service update creates revision| Backend
+    AR -.->|image digest input| TF
 
     User -->|HTTPS| Frontend
     Frontend -->|API call / CORS allowlist| Backend
     Frontend -->|Google Sign-In| Firebase
     Backend -->|verify Firebase ID token| Firebase
+    Backend -->|server-side guardrails before Vertex-heavy work| AbuseGuard
     Backend -->|Cloud SQL connector| SQL
     Backend -->|managed model calls| Vertex
-    Backend -->|read/write artifacts| Storage
+    Backend -.->|Phase 3 blocker: adapter required before durable claim| Storage
     Backend -->|runtime secret access| Secrets
 
     Backend -.-> Logging

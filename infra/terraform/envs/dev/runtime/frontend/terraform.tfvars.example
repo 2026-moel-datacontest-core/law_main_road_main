@@ -1,0 +1,31 @@
+project_id = "law-main-road"
+env        = "dev"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "portfolio"
+
+labels = {
+  app        = "law-main-road"
+  env        = "dev"
+  managed_by = "terraform"
+  owner      = "portfolio"
+}
+
+foundation_state_bucket       = "lmr-dev-law-main-road-tfstate"
+foundation_state_prefix       = "envs/dev/foundation"
+backend_runtime_state_bucket  = "lmr-dev-law-main-road-tfstate"
+backend_runtime_state_prefix  = "envs/dev/runtime/backend"
+
+# Build and push this image outside Terraform. Use the immutable digest returned
+# by Artifact Registry.
+frontend_image = "asia-northeast3-docker.pkg.dev/law-main-road/lmr-dev-ar/frontend@sha256:8b8722af7d8a221a38a6868dbdc58843479a2bc96cfffdbae3da8a05c7ca939d"
+
+min_instance_count = 0
+max_instance_count = 2
+concurrency        = 40
+timeout            = "60s"
+cpu                = "1"
+memory             = "512Mi"
+
+deletion_protection   = false
+allow_unauthenticated = true

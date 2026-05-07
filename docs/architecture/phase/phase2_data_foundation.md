@@ -1,37 +1,47 @@
 # Phase 2 — Data Foundation
 
-기준일: `2026-05-04`
+기준일: `2026-05-07`
 
 ## 1. Goal
 
-Phase 2는 Cloud Run backend가 연결할 수 있는 managed PostgreSQL data
-foundation을 만든다. 이 단계는 database infrastructure와 migration/seed
-검증까지 다루지만, backend Cloud Run service를 배포하지는 않는다.
+Phase 2는 Cloud Run backend가 나중에 연결할 수 있는 managed PostgreSQL
+data foundation shell을 만든다. 엄격한 Terraform boundary는 Cloud SQL
+PostgreSQL instance, application database shell, non-secret outputs only다.
+Backend runtime IAM, Cloud Run service, schema/data bootstrap은 이 boundary에
+포함하지 않는다.
 
 핵심 목표는 다음과 같다.
 
 - Cloud SQL for PostgreSQL instance를 만든다.
 - application database를 준비한다.
 - DB credential 생성 경계를 Terraform state와 분리한다.
-- Alembic migration으로 schema와 `pgvector` extension을 초기화한다.
-- `law_chunks` corpus를 seed/import한다.
-- embedding 생성과 HNSW/vector index 상태를 검증한다.
 - Cloud Run scale-out 전에 필요한 DB connection guardrail 값을 선정하고,
   현재 backend가 그 값을 소비하지 못하면 Phase 3 구현 전제조건으로 남긴다.
+
+The migration/seed sections below are runbook references for after explicit
+resource-creation approval. They must not be encoded in Terraform and are not
+evidence from a plan-only Phase 2 review.
 
 ## 2. Phase Status
 
 | Item | Status |
 |---|---|
-| Phase type | Data infrastructure + DB bootstrap |
+| Phase type | Data infrastructure shell |
 | Primary Terraform root | `infra/terraform/envs/{env}/data` |
 | Primary module | `infra/terraform/modules/cloud-sql-pgvector` |
 | Runtime traffic | none |
 | Backend Cloud Run | not deployed |
 | Frontend Cloud Run | not deployed |
-| DB schema/data | owned by migration/seed scripts |
+| DB schema/data | outside Terraform; not part of plan-only review |
 | Required previous phase | [`phase1_bootstrap_foundation.md`](phase1_bootstrap_foundation.md) |
 | Next phase | [`phase3_backend_runtime.md`](phase3_backend_runtime.md) |
+
+Implementation status on `2026-05-07`: Phase 2 is complete for the first `dev`
+cloud target. The dev data root was applied after saved-plan review, creating
+only the Cloud SQL PostgreSQL instance and application database shell. The
+post-apply plan returned no changes. DB users/passwords, Secret Manager versions,
+pgvector extension, schema migration, indexes, seed data, embeddings, backend
+runtime IAM, Cloud Run, WIF, and prod resources remain unopened.
 
 ## 3. Read First
 
@@ -77,16 +87,15 @@ blocked before Cloud SQL work.
 - Cloud SQL connection metadata outputs.
 - Deletion protection policy for prod.
 - DB credential handling decision that avoids raw secret values in git.
-- Alembic migration execution plan.
-- `pgvector` extension and vector index verification.
-- `law_chunks` seed import and version verification.
-- Embedding generation/verification plan.
+- Runbook references that keep pgvector, schema migration, vector indexes,
+  `law_chunks`, and embeddings outside Terraform.
 - DB connection pool guardrail for Phase 3 backend runtime.
 
 ### Out Of Scope
 
 - Backend Cloud Run service.
 - Frontend Cloud Run service.
+- Backend runtime IAM or Cloud SQL client grants for `backend-sa`.
 - Cloud Run traffic splitting.
 - GitHub Actions WIF.
 - CI/CD workflow.
@@ -119,15 +128,23 @@ infra/terraform/
         terraform.tfvars.example
     prod/
       data/
-        main.tf
-        variables.tf
-        outputs.tf
-        versions.tf
+        README.md
         terraform.tfvars.example
 ```
 
 The module name `cloud-sql-pgvector` is a product-facing shorthand for the Cloud
 SQL PostgreSQL instance that hosts pgvector-backed tables.
+
+First implementation pass rule:
+
+- `envs/dev/data` is the only apply-ready data root.
+- `envs/prod/data` stays skeleton-only. It may contain a README and
+  `terraform.tfvars.example`, but it must not contain real prod tfvars, backend
+  state configuration, or apply-ready resources until a separate prod-opening
+  review approves exact prod tier/storage, backup retention, PITR, HA/deletion
+  protection, and deployment approval policy.
+- The `cloud-sql-pgvector` module should remain reusable for prod, but the first
+  Phase 2 implementation validates the module through dev only.
 
 Reason:
 
@@ -158,7 +175,13 @@ the phase boundary.
 | Apply order | consume Phase 1 remote state -> apply `envs/{env}/data` -> run migration/seed scripts separately |
 | Validation command candidates | Terraform fmt/validate/plan/apply; `gcloud sql ... describe`; Alembic head; `law_chunks` count/dimension/index SQL checks |
 | Rollback/delete policy | prefer backward-compatible migrations; never delete prod Cloud SQL as normal rollback; dev delete only after dependency review |
-| Do not manage yet | pgvector extension creation, schema migrations, vector indexes, `law_chunks` seed/import, embeddings, Cloud Run, WIF, custom domain/LB |
+| Do not manage yet | pgvector extension creation, schema migrations, vector indexes, `law_chunks` seed/import, embeddings, backend runtime IAM, Cloud Run, WIF, custom domain/LB |
+
+Initial plan-only review stopped at Terraform fmt/validate/plan and boundary
+grep. The approved dev apply has since completed. Do not run Alembic migration,
+pgvector extension setup, seed import, embedding generation, backend runtime IAM,
+Cloud Run deploy, or prod data resources until those later steps are explicitly
+opened.
 
 ## 7B. GitHub Issue Readiness
 
@@ -293,21 +316,34 @@ Terraform.
 
 ## 13. Environment Defaults
 
-Recommended starting point:
+Recommended starting point. See [`../env_profiles.md`](../env_profiles.md) for
+the full dev/demo/prod posture and Cloud Run scaling tradeoffs.
 
 | Setting | dev | prod |
 |---|---|---|
 | Region | `asia-northeast3` | `asia-northeast3` |
+| PostgreSQL | `POSTGRES_17` if current Cloud SQL support and pgvector checks remain valid before apply | decide during prod-opening review |
+| Cloud SQL edition | `ENTERPRISE` explicitly | decide during prod-opening review |
 | Availability | `ZONAL` | `ZONAL` first; `REGIONAL` later if needed |
-| Tier/storage | minimum viable, decided before Phase 2 apply | small production tier when prod opens |
-| Backup | 1-3 day retention | 7-day baseline |
+| Tier/storage | `db-f1-micro` first for low-cost smoke; raise to `db-g1-small` only if smoke is too weak; 10 GB SSD candidate, confirmed before apply | small production tier when prod opens |
+| Storage auto-increase | allowed only with an explicit small cap/cost check | decide during prod-opening review |
+| Backup | 3-day retention recommended for dev/demo; 1-3 day range allowed if cost posture requires it | 7-day baseline |
 | PITR | disabled initially | enabled unless a cost exception is approved before prod opens |
-| Deletion protection | optional | enabled |
+| Deletion protection | disabled for disposable dev unless dependencies make deletion risky | enabled |
 | Public IP | avoid broad exposure | avoid broad exposure |
 | Connector path | Cloud SQL connector/proxy | Cloud SQL connector |
 
 Private IP + Serverless VPC Access is not part of Phase 2 first migration. Keep
 it as Phase 7 hardening unless a real deployment constraint requires it earlier.
+
+Planning review note on `2026-05-07`: Phase 2 implementation/apply has not been
+opened. The current dev recommendation is `POSTGRES_17`, Cloud SQL
+`ENTERPRISE`, `db-f1-micro`, 10 GB SSD, automated backups with 3-day retention,
+PITR off, `ZONAL`, HA off, deletion protection false, Cloud SQL connector/Auth
+Proxy access, no authorized networks, and no private IP/VPC until a later
+hardening phase. Confirm current Google Cloud support/pricing immediately before
+the implementation plan, because Cloud SQL version, edition, backup, and pricing
+facts are time-sensitive.
 
 ## 14. Naming And Labels
 
@@ -588,6 +624,9 @@ Cloud SQL deletion:
 - Never delete prod Cloud SQL as a normal rollback.
 - For dev, delete only after confirming no later phase depends on the instance
   and no needed test data remains.
+- After migration/seed/full embedding, treat dev destroy as a cost/rollback
+  decision: confirm whether backup/export is needed and whether the embedding
+  generation cost/time is acceptable to repeat.
 
 ## 25. Blocks Phase 3 If
 
@@ -611,7 +650,37 @@ Phase 3 backend runtime is blocked if any of these are true.
 
 ## 26. Status Note Template
 
-When Phase 2 is executed, record a short status note.
+Current status note for the first `dev` apply:
+
+```markdown
+## Phase 2 Status — Data Foundation
+
+- Environment: dev
+- GCP project: existing law-main-road project
+- Region: asia-northeast3
+- Terraform root: infra/terraform/envs/dev/data
+- Cloud SQL instance: created
+- Database: created
+- DB user strategy: outside Terraform; not created yet
+- Backup/PITR: backups enabled with 3 retained backups; PITR off
+- Deletion protection: false for disposable dev
+- Migration head: not run yet
+- law_chunks row count: not run yet
+- selected_as_of: not verified in Cloud SQL yet
+- embedding status: not run yet
+- HNSW index: not created yet
+- DB pool values: recommended for Phase 3 as small dev guardrails
+- Cloud Run max instance cap recommended for Phase 3: low cap, initially 2
+- Admin actions performed: Terraform saved-plan apply for Cloud SQL instance and
+  app database shell only
+- Commands run: Terraform validate, saved plan apply, post-apply no-change plan,
+  Cloud SQL instance/database describe
+- Skipped checks: DB user/password, pgvector extension, Alembic migration,
+  law_chunks seed, embeddings, backend runtime IAM, Cloud Run deploy
+- Blockers: none for DB bootstrap planning; later steps still need approval
+```
+
+For future reruns or another environment, record a short status note.
 
 ```markdown
 ## Phase 2 Status — Data Foundation
@@ -647,6 +716,7 @@ When Phase 2 is executed, record a short status note.
 - Do not put raw DB passwords in Terraform, docs, or git.
 - Do not expose full `DATABASE_URL` as a Terraform output if it contains
   credentials.
+- Do not grant backend runtime Cloud SQL access from the Phase 2 data root.
 - Do not edit `backend/data/law_chunks/` directly.
 - Do not change public API contracts.
 - Do not open SCN-001 live/backend draft generation.

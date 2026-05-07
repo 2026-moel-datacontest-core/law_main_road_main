@@ -1,6 +1,6 @@
 # Phase 6 — Observability / Reliability
 
-기준일: `2026-05-04`
+기준일: `2026-05-06`
 
 ## 1. Goal
 

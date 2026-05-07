@@ -56,6 +56,19 @@
 - 실제 브라우저 logged-in/history deletion smoke는 PASS 상태이며, SCN-001 live/backend document draft generation은 NOT opened 상태다.
 - 현재 source of truth는 `backend/data/law_chunks/all_chunks.json`
 - current live corpus: `1722` chunks, `selected_as_of = 2026-04-11`
+- Cloud migration profile policy: first Terraform apply target is `dev` only.
+  `demo/contest` is a time-bounded public presentation posture after dev smoke
+  passes, not full prod. `prod` is NOT opened without a separate prod-opening
+  review. For any cloud migration/Terraform task, identify the target profile
+  from `docs/architecture/env_profiles.md` before editing.
+- Cloud migration repo policy: `2026-moel-datacontest-core/law_main_road_main`
+  is the private development/deploy/WIF source repo.
+  `Team-msp-architect-2026/msp-team02` is the public curated submission mirror
+  only unless a later approved architecture change moves deploy ownership. Keep
+  `protect-main` policy-defined/enforcement-pending on the private source repo;
+  do not upgrade GitHub Team or convert the source repo to public during current
+  preflight. Do not grant the mirror repo WIF deploy permission or store GCP
+  service account key JSON there.
 
 Evolution note:
 
@@ -337,4 +350,8 @@ Run retrieval / answer full 60 only when `backend/app/services/retrieval.py`, `b
 * `docs/planning/13_document_draft_plan.md`
 * `docs/planning/14_frontend_implementation_handoff.md`
 * `docs/planning/19_scn001_auth_integration_status.md`
+* `docs/architecture/env_profiles.md`
 * `docs/ops/README.md`
+* `docs/ops/cloud_migration_manual_preflight.md`
+* `docs/ops/cloud_migration_budget_and_mirror_policy.md`
+* `docs/ops/submission_mirror_readme_draft.md`

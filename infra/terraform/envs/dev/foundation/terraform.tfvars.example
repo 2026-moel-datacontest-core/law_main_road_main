@@ -1,0 +1,18 @@
+project_id = "law-main-road"
+env        = "dev"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "portfolio"
+
+labels = {
+  app        = "law-main-road"
+  env        = "dev"
+  managed_by = "terraform"
+  owner      = "portfolio"
+}
+
+# Optional override if the deterministic project-id based bucket name collides.
+# artifact_bucket_name = "<globally-unique-dev-artifact-bucket-name>"
+
+# Dev artifact retention baseline. Set to null only after a reviewed policy change.
+artifact_lifecycle_delete_age_days = 30

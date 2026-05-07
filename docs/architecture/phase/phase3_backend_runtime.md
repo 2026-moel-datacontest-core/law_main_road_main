@@ -1,6 +1,6 @@
 # Phase 3 — Backend Runtime
 
-기준일: `2026-05-04`
+기준일: `2026-05-07`
 
 ## 1. Goal
 
@@ -18,6 +18,9 @@ Firebase Auth, Secret Manager, artifact storage, public/protected API smoke를
 - Cloud SQL connection pool과 Cloud Run scale cap을 함께 제한한다.
 - Firebase ID token verification이 Cloud Run에서 동작하는지 확인한다.
 - CORS bootstrap 정책을 적용하고 Phase 4에서 재조정할 output을 남긴다.
+- `/api/v1/answer`, `/api/v1/retrieve`, Before OCR/content review처럼 Vertex
+  비용을 만들 수 있는 public 경로의 server-side abuse/cost guardrail을
+  구현/검증하거나, public backend를 dev/demo-only smoke로 명확히 제한한다.
 - 민감정보가 log와 artifact 경계 밖으로 새지 않는지 샘플링한다.
 
 ## 2. Phase Status
@@ -31,6 +34,56 @@ Firebase Auth, Secret Manager, artifact storage, public/protected API smoke를
 | Image source | Artifact Registry backend image |
 | Required previous phase | [`phase2_data_foundation.md`](phase2_data_foundation.md) |
 | Next phase | [`phase4_frontend_runtime.md`](phase4_frontend_runtime.md) |
+
+## 2A. Dev Runtime Smoke Evidence
+
+Evidence date: `2026-05-07`
+
+Scope and inventory handling:
+
+- Target profile: `dev`.
+- Backend Cloud Run service: `lmr-dev-backend`.
+- Latest ready revision: `lmr-dev-backend-00001-vzr`.
+- Backend direct `run.app` URL is recorded in the private runbook only and is
+  not repeated here, because direct backend URLs are internal cloud inventory.
+- `allUsers` `roles/run.invoker` binding exists for controlled dev smoke.
+- WIF/GitHub workflow, frontend Cloud Run, and prod resources remain unopened.
+
+Runtime wiring evidence:
+
+- Startup logs with `severity >= ERROR`: `0`.
+- Startup secret leak sample matches: `0`.
+- DB pool env values: `DB_POOL_SIZE=2`, `DB_MAX_OVERFLOW=3`,
+  `DB_POOL_TIMEOUT_SECONDS=30`.
+- Runtime IAM applied for backend service identity:
+  `roles/cloudsql.client` and `roles/aiplatform.user`.
+- Backend database-url Secret Manager version exists. The raw value,
+  credential-bearing URL, token material, Firebase uid/provider subject, and
+  private key material are not documented.
+
+Smoke checks:
+
+| Check | Evidence |
+|---|---|
+| `/health` | `GET /health` returned `200`; body object keys: `status`; logs `severity >= ERROR` count `0`; secret leak sample `0` matches. |
+| Auth negative | `GET /api/v1/auth/me` without token returned `200` with `logged_in=false`; protected SCN-001 endpoints with missing/invalid token returned `401`; logs `severity >= ERROR` count `0`; secret leak sample `0` matches. |
+| Retrieve | `POST /api/v1/retrieve` ran once with `top_k=5`, `ef_search=100`; status `200`; response keys: `query`, `total`, `chunks`, `cited_articles`; `total=5`, `chunks.length=5`, `cited_articles` non-empty; logs `severity >= ERROR` count `0`; secret leak sample `0` matches. |
+| Answer | `POST /api/v1/answer` ran once with `top_k=5`, `ef_search=100`; status `200`; `answer`, `key_points`, and `cautions` generated; `cited_articles` non-empty; `retrieved_chunks=5`; `grounded_context_ids` non-empty; no surfaced timeout/retry/error; logs `severity >= ERROR` count `0`; secret leak sample `0` matches. |
+| Document draft | `POST /api/v1/documents/draft` ran once using `document_draft_scn004_unfair_dismissal_brief.json` plus answer-derived legal basis fixture; status `200`; `rendered_text` non-empty with length `1456`; `missing_fields[3]`, `cautions[6]`, `evidence_checklist[7]`, `cited_articles[5]`, `source_context_ids[5]`, `missing_legal_basis[0]`; logs `severity >= ERROR` count `0`; suspicious secret leak sample `0` matches. The raw rendered text is not recorded. |
+
+Document draft persistence note:
+
+- The document draft endpoint may create normal `after_artifact_runs` / artifact
+  persistence side effects when it runs. This evidence records the already-run
+  smoke result only; this docs update did not re-call endpoints, run Terraform,
+  or perform any DB mutation.
+
+Current promotion boundary:
+
+- This is a `dev/demo-only` backend runtime smoke pass, not a production-ready
+  public API claim.
+- Frontend runtime, WIF/GitHub deploy automation, prod resources, custom domain,
+  and Phase 7 edge hardening remain unopened.
 
 ## 3. Read First
 
@@ -63,6 +116,7 @@ Phase 3를 시작하기 전에 확인한다.
 | Firebase project | selected and `FIREBASE_PROJECT_ID` known |
 | Backend image contract | Dockerfile/build strategy exists before image build |
 | Artifact storage strategy | GCS adapter implemented for current Before/After artifact writes, or non-durable local artifact behavior explicitly accepted for a limited smoke |
+| Public AI API guardrail | server-side request/body and rate/cost controls selected, or backend public access is explicitly dev/demo-only until approved limiter/edge protection |
 | GCP auth | local admin/developer path available before Phase 5 WIF |
 | Frontend URL | not available yet |
 
@@ -84,6 +138,8 @@ source-tree import check.
 - CORS bootstrap before frontend exists.
 - Firebase Admin ADC/fallback verification.
 - Public API smoke checks.
+- Public Vertex-calling endpoint request/body and rate/cost guardrail checks, or
+  explicit dev/demo-only/non-production marking.
 - Protected API auth-negative and valid-token smoke checks.
 - Cloud Logging sensitive-field sample check.
 - Cloud Run revision rollback procedure.
@@ -145,8 +201,8 @@ plan/apply/smoke-testable before Phase 4.
 | Item | Phase 3 Contract |
 |---|---|
 | Terraform-managed resources | Backend Cloud Run service/revisions, backend service identity attachment, env/secret references, Cloud SQL connector binding, runtime IAM for Cloud SQL/Secret Manager/Vertex/artifact bucket, scaling/ingress/CORS env |
-| Manual prerequisites | Phase 1/2 outputs, backend image build strategy, DB credential Secret Manager version, Firebase project/token smoke path, artifact durability decision |
-| Inputs/variables | backend image digest/tag, backend service account email, SQL connection name, DB secret names, bucket name output, Vertex project/location/model vars, CORS regex, scaling/pool values |
+| Manual prerequisites | Phase 1/2 outputs, backend image build strategy, DB credential Secret Manager version, Firebase project/token smoke path, artifact durability decision, public AI API guardrail decision |
+| Inputs/variables | backend image digest/tag, backend service account email, SQL connection name, DB secret names, bucket name output, Vertex project/location/model vars, CORS regex, scaling/pool values, rate/body limit config if implemented |
 | Outputs | backend URL, service name, revision, service account email, CORS update target, smoke target |
 | Secrets handling | secret references only; no DB password, Firebase Admin JSON, service account JSON, raw artifact payloads, or credential-bearing URLs in Terraform outputs |
 | Apply order | build/push backend image outside Terraform -> apply `envs/{env}/runtime/backend` -> backend smoke -> log sample |
@@ -160,7 +216,7 @@ plan/apply/smoke-testable before Phase 4.
 |---|---|
 | Issue title | Phase 3: Backend Cloud Run runtime and GCS artifact boundary |
 | Scope | Deploy backend through Terraform-owned Cloud Run runtime and verify DB, Vertex, Firebase Auth, CORS bootstrap, Secret Manager, and artifact storage boundary |
-| Acceptance criteria | backend Cloud Run starts without local `.env`; public/protected smoke passes; DB pool guardrail is implemented/verified or limited-smoke marked; artifacts are GCS-backed or non-durable smoke is explicit |
+| Acceptance criteria | backend Cloud Run starts without local `.env`; public/protected smoke passes; DB pool guardrail is implemented/verified or limited-smoke marked; public Vertex-calling route abuse/cost guardrails pass or backend is dev/demo-only; artifacts are GCS-backed or non-durable smoke is explicit |
 | Forbidden changes | frontend deploy, public API contract changes, SCN-001 live/backend draft, service account key JSON, Vertex API key, raw payload logging/storage expansion |
 | Validation | image build/push, Terraform checks, API/auth smoke, Cloud Logging sensitive-field review |
 | Rollback | shift backend traffic to previous stable revision or re-apply previous image digest through Terraform |
@@ -213,6 +269,29 @@ CI/scripts own build and verification work.
 
 Before Phase 5, these tasks can be run manually by a developer/admin account. Do
 not use service account key JSON for temporary image push.
+
+## 8A. Public AI API Abuse And Cost Guardrail
+
+CORS is only a browser-origin control. It does not protect public Cloud Run
+endpoints from non-browser clients, scripted traffic, or Vertex cost abuse.
+
+Phase 3 must choose and record one of these states before public backend smoke is
+promoted:
+
+| State | Meaning |
+|---|---|
+| Guarded public backend | `/api/v1/answer`, `/api/v1/retrieve`, and Before OCR/content review paths enforce request/body limits plus per-IP and, where authenticated, per-user rate/cost limits before Vertex-heavy work. Cloud Run max instances/concurrency/timeouts and DB pool caps are set conservatively. |
+| Dev/demo-only backend | Public `run.app` backend exists only for controlled smoke/demo. Do not claim production abuse resistance until app-level limits or Phase 7 edge protection such as Cloud Armor/API Gateway/LB is approved. |
+
+Minimum verification:
+
+```text
+oversized payload rejected before provider call
+unauthenticated/protected route behavior unchanged
+rate-limit or dev/demo-only status recorded in deploy evidence
+Cloud Run max instances/concurrency/timeouts recorded
+Vertex/request-count and budget alert path recorded for Phase 6
+```
 
 ## 9. Admin / Manual Owns
 
@@ -298,7 +377,6 @@ template.
 | `VERTEX_PROVIDER_MAX_RETRIES` | Terraform variable | no | optional retry guard |
 | `VERTEX_PROVIDER_RETRY_BASE_SECONDS` | Terraform variable | no | optional retry guard |
 | `FIREBASE_PROJECT_ID` | Terraform variable/secret metadata | no | required for Firebase token verification |
-| `FIREBASE_ADMIN_CREDENTIALS` | Secret Manager mounted file path | yes | fallback only if ADC path fails |
 | `BACKEND_CORS_ORIGIN_REGEX` | approved temporary value, then frontend URL/domain | no | actual var used by `backend/main.py` |
 | `BEFORE_LAW_SOURCE` | Terraform variable | no | set to `db` for Cloud SQL corpus source |
 | `ARTIFACT_BUCKET_NAME` | Terraform output | no | Preferred candidate env var for the future GCS adapter only. Current code does not read it; do not wire it as active runtime config until Phase 3 implements/verifies adapter support. This env var is separate from the `lmr-{env}-artifacts` bucket naming pattern. |
@@ -315,8 +393,10 @@ Security classification:
 - Do not introduce `VERTEX_API_KEY`, `GOOGLE_APPLICATION_CREDENTIALS_JSON`, or a
   service account key env var for Cloud Run runtime. Vertex AI access must use
   the attached `backend-sa` service identity through ADC.
-- `FIREBASE_ADMIN_CREDENTIALS` remains an exception/fallback only for Firebase
-  Admin if ADC cannot be validated; it must not be used for Vertex AI.
+- Do not introduce a Firebase Admin JSON secret or service account key JSON for
+  Cloud Run runtime in this migration. Firebase Admin access must use the
+  attached service identity through ADC; if that cannot be validated, open a
+  separate security exception instead of adding a key fallback.
 
 Before-stack compatibility aliases:
 
@@ -462,7 +542,8 @@ as follows:
 - requires `FIREBASE_PROJECT_ID`
 - prefers ADC when `GOOGLE_APPLICATION_CREDENTIALS` is set
 - prefers ADC on Cloud Run when `K_SERVICE` is present
-- can fall back to `FIREBASE_ADMIN_CREDENTIALS`
+- can fall back to `FIREBASE_ADMIN_CREDENTIALS` in local/dev code, but the cloud
+  migration must not use that fallback by default
 
 Phase 3 smoke must verify:
 
@@ -473,8 +554,9 @@ Phase 3 smoke must verify:
 | protected SCN-001 endpoint with invalid token | `401` |
 | `GET /api/v1/auth/me` with valid Firebase ID token | `logged_in = true` and user row upsert works |
 
-If ADC initialization fails on Cloud Run, use the Secret Manager credential
-fallback until a narrower ADC/IAM path is validated.
+If ADC initialization fails on Cloud Run, fix the ADC/IAM path or open a
+separate security exception. Do not add a Firebase Admin JSON secret or service
+account key JSON in the Phase 1-6 baseline.
 
 ## 18. Apply Procedure
 

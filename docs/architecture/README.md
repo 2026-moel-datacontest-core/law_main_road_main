@@ -16,8 +16,9 @@ Feature requirements, screen plans, API contracts, and data models belong in `do
 | File pattern | Role |
 |---|---|
 | `CLAUDE.md` | Local agent instruction for architecture documentation and phase-specific task routing. |
-| `cloud_migration_architecture.md` / `cloud_migration_architecture.mmd` / `cloud_migration_architecture.drawio` | Follow-up production-oriented GCP migration architecture. These files describe a target cloud deployment path, not the current local MVP. Local LLM / Compute Engine GPU VM is intentionally excluded from the target. |
-| `images_drawio/` | Presentation and implementation-handoff draw.io source files for overview/detail architecture visuals. |
+| `cloud_migration_architecture.md` | Authoritative follow-up production-oriented GCP migration architecture. This file describes a target cloud deployment path, not the current local MVP. Local LLM / Compute Engine GPU VM is intentionally excluded from the target. |
+| `cloud_migration_architecture.mmd` / `cloud_migration_architecture.drawio` | Secondary schematic references for the same target. The root draw.io file is kept as a backward-compatible overview schematic, but it is not the current presentation/handoff source. If it conflicts with `images_drawio/final_architecture_overview.drawio`, `cloud_migration_architecture.md`, or the phase plan, sync it or treat it as stale. |
+| `images_drawio/` | Current presentation and implementation-handoff draw.io source files for overview/detail architecture visuals. Draw.io files are visual sources; PNGs are generated previews. Edit these first for visual updates. |
 | `cloud_migration_phase_plan.md` | Phase-by-phase implementation architecture for the GCP migration target, with Terraform layer/module boundaries and verification gates. |
 | `phase/phaseN_*.md` | Phase-specific execution documents. Use these for assigning or implementing one phase at a time. |
 | `current_project_architecture.md` / `current_project_architecture.mmd` | Temporary current project reference that summarizes the current repo surfaces. Keep it for now as source material while `docs/specs/` is being filled out. After specs are complete, move/delete only if it becomes duplicate and there is an explicit follow-up task. |
@@ -44,6 +45,13 @@ the cloud deployment is live, not prerequisites for starting Phase 1.
 - Use architecture diagrams for cloud/service boundaries, deployment components, storage/logging/security paths, and future expansion options.
 - Keep current MVP references clearly separated from the GCP migration
   target architecture.
+- Keep visual authority explicit: markdown architecture and phase docs own
+  decisions; draw.io owns visual layout; PNG files are regenerated previews and
+  must not drift from their draw.io source.
+- Current presentation/handoff visual sources are
+  `images_drawio/final_architecture_overview.drawio` and
+  `images_drawio/final_architecture_detail.drawio`; their PNGs are generated
+  previews, and the root `cloud_migration_architecture.drawio` is secondary.
 - For phase-specific work, read `phase/README.md` and the matching
   `phase/phaseN_*.md` file before changing Terraform, runtime code, or
   deployment docs.

@@ -1,6 +1,6 @@
 # Cloud Migration Phase Index
 
-기준일: `2026-05-04`
+기준일: `2026-05-06`
 
 This directory contains phase-specific execution plans for the GCP migration
 target. Use these files when assigning focused implementation work to an agent.
@@ -11,6 +11,8 @@ target. Use these files when assigning focused implementation work to an agent.
   [`../cloud_migration_architecture.md`](../cloud_migration_architecture.md).
 - For phase numbering and dependency map, read
   [`../cloud_migration_phase_plan.md`](../cloud_migration_phase_plan.md).
+- For dev/demo/prod setting differences, read
+  [`../env_profiles.md`](../env_profiles.md).
 - For implementation work, read the matching phase file below and follow its
   readiness gates, ownership split, verification commands, and rollback notes.
 
@@ -29,8 +31,9 @@ target. Use these files when assigning focused implementation work to an agent.
 
 ## Terraform Authoring Map
 
-Use this table when opening GitHub issues or assigning Terraform work. The paths
-are future authoring paths only; this phase index does not create directories.
+Use this table when opening GitHub issues or assigning Terraform work. Phase 1
+paths now exist under `infra/terraform`; Phase 2+ paths remain future authoring
+paths until their phase opens.
 
 | Phase | Issue Title | Terraform Root | Primary Modules | Create Resources? |
 |---:|---|---|---|---|
@@ -50,7 +53,10 @@ validation commands, rollback/delete policy, secrets handling, and a
 Phase 0 final decisions for Terraform authoring:
 
 - First cloud migration target is `dev` only. Keep both `envs/dev` and
-  `envs/prod`, but instantiate only `dev` first.
+  `envs/prod` in the authoring layout, but make only `envs/dev` apply-ready in
+  the first implementation pass. Keep `envs/prod` as skeleton/README/tfvars
+  example material until a separate prod-opening review approves exact prod
+  sizing, backup, PITR, HA, deletion protection, and deployment approval policy.
 - Initial GCP model is one project with env-prefixed resources. Separate dev/prod
   GCP projects are future hardening.
 - Human-readable app label is `law-main-road`; Terraform/resource prefix is
@@ -62,8 +68,10 @@ Phase 0 final decisions for Terraform authoring:
 Decision status:
 
 - Finalized now: naming, first `dev` target, one-project/env-prefixed model,
-  state bootstrap contract, secret-value exclusion, artifact bucket/prefix
-  contract, `run.app` first deployment, and shell/Python helper-only automation.
+  dev-only apply target for the first implementation, prod skeleton-only
+  authoring until a separate prod-opening review, state bootstrap contract,
+  secret-value exclusion, artifact bucket/prefix contract, `run.app` first
+  deployment, and shell/Python helper-only automation.
 - Phase-gated: Cloud SQL exact sizing, prod PITR/cost confirmation, GCS adapter
   and `ARTIFACT_BUCKET_NAME` activation, artifact retrieval if runtime/UI needs
   it, budget alert ownership, and exact alert thresholds.
@@ -147,8 +155,10 @@ Bad shell/Python runbook candidates:
 - Managed Vertex AI path stays in scope; Local LLM / Compute Engine GPU VM stays
   out of scope for first migration.
 - Terraform owns cloud resources and IAM, not DB schema/data mutation.
-- CI/scripts own image build, migration, seed, deploy, smoke, and rollback
-  commands.
+- CI/scripts own image build, migration, seed, Terraform invocation, smoke, and
+  rollback command orchestration.
+- Terraform owns Cloud Run service config, image reference, and steady-state
+  traffic; CI must not become a second Cloud Run deploy owner.
 - Admin/manual owns secret values, production approvals, Firebase console checks,
   and incident/rollback decisions.
 - SCN-004 freeze and public API contracts remain unchanged.

@@ -1,12 +1,13 @@
 # Phase 5 — CI/CD
 
-기준일: `2026-05-04`
+기준일: `2026-05-06`
 
 ## 1. Goal
 
-Phase 5는 Phase 3/4의 local/manual image push와 deploy 절차를 GitHub Actions
-기반 CI/CD로 전환한다. 핵심은 장기 서비스 계정 키 없이 Workload Identity
-Federation으로 GCP에 인증하고, PR 검증과 main/prod 배포를 분리하는 것이다.
+Phase 5는 Phase 3/4의 local/manual image push와 Terraform apply 절차를
+GitHub Actions 기반 CI/CD로 전환한다. 핵심은 장기 서비스 계정 키 없이
+Workload Identity Federation으로 GCP에 인증하고, PR 검증과 main/prod 배포를
+분리하는 것이다.
 
 핵심 목표는 다음과 같다.
 
@@ -14,7 +15,7 @@ Federation으로 GCP에 인증하고, PR 검증과 main/prod 배포를 분리하
 - GitHub OIDC + Workload Identity Federation 기반 keyless auth를 구성한다.
 - PR에서는 build/test/validate/plan 중심으로 검증하고 apply하지 않는다.
 - main/protected environment에서는 image build/push와 Terraform apply를 수행한다.
-- backend/frontend Cloud Run revision 배포 후 smoke를 실행한다.
+- Terraform apply가 backend/frontend Cloud Run revision을 생성한 뒤 smoke를 실행한다.
 - smoke 실패 시 새 revision을 stable로 취급하지 않고 rollback 경로를 제공한다.
 - runtime service account와 deploy/Terraform identity를 분리한다.
 
@@ -29,6 +30,78 @@ Federation으로 GCP에 인증하고, PR 검증과 main/prod 배포를 분리하
 | GCP auth | Workload Identity Federation |
 | Required previous phase | [`phase4_frontend_runtime.md`](phase4_frontend_runtime.md) |
 | Next phase | [`phase6_observability_reliability.md`](phase6_observability_reliability.md) |
+
+## 2A. Dev CI/CD Implementation Readiness
+
+Evidence date: `2026-05-07`
+
+Scope:
+
+- Target profile: `dev`.
+- `infra/terraform/envs/dev/cicd` has been authored as the first apply-ready
+  CI/CD root.
+- `infra/terraform/modules/iam-wif` now supports the Phase 5 GitHub OIDC WIF
+  slice without creating service account keys.
+- `infra/terraform/modules/cicd-iam-bindings` owns the additive deploy IAM
+  bindings for `github-actions-sa` and `terraform-sa`.
+- `.github/workflows/pr-checks.yml`, `.github/workflows/deploy-dev.yml`, and
+  `.github/workflows/rollback-dev.yml` have been authored for dev-only
+  validation, deployment, and rollback.
+- Prod, custom domain/LB, backend API contracts, SCN-004 freeze behavior, and
+  SCN-001 live/backend document draft generation remain unopened.
+
+Validation evidence:
+
+| Check | Evidence |
+|---|---|
+| Terraform fmt | `terraform fmt -check -recursive infra/terraform` passed. |
+| Backend import | `python -c "from backend.main import app; print('backend_import_ok')"` passed. |
+| Frontend build | `cd frontend && npm run build` passed. |
+| Runtime backend plan | `terraform plan -detailed-exitcode -var-file=terraform.tfvars.example` for `envs/dev/runtime/backend` returned no changes. |
+| Runtime frontend plan | `terraform plan -detailed-exitcode -var-file=terraform.tfvars.example` for `envs/dev/runtime/frontend` returned no changes. |
+| CI/CD root validate | `terraform init -backend=false -input=false` and `terraform validate` passed for `envs/dev/cicd`. |
+| CI/CD root plan | `terraform plan -detailed-exitcode -var-file=terraform.tfvars.example` for `envs/dev/cicd` produced the expected create-only WIF/IAM plan: WIF pool/provider, workload identity binding, Artifact Registry writer, `github-actions-sa` to `terraform-sa` token creator, `terraform-sa` state bucket access, `terraform-sa` runtime service-account-user grants, and reviewed `terraform-sa` project deploy roles. No destroy or runtime resource replacement was planned. |
+| Prod guard | No `envs/prod/cicd/*.tf` apply-ready root exists. |
+| Forbidden resource scan | Phase 5 Terraform/workflow scan found no `google_service_account_key`, no `google_secret_manager_secret_version`, and no `pull_request_target` deploy auth path. Mentions of forbidden roles/repos exist only in validation checks and guard documentation. |
+
+Current gate:
+
+- Do not run `terraform apply` for `envs/dev/cicd` until the WIF/IAM plan is
+  reviewed and a human approves the Workload Identity Federation trust boundary.
+- Do not run the GitHub deploy workflow until GitHub Actions variables and the
+  `dev` environment are configured by an approved human/admin path.
+- Do not add any GCP service account key JSON to GitHub Secrets. GitHub
+  variables may hold non-secret config only; DB credentials and Firebase Admin
+  values stay in Secret Manager.
+
+WIF boundary:
+
+- The provider is constrained to the private source/deploy repo
+  `2026-moel-datacontest-core/law_main_road_main`.
+- The public mirror `Team-msp-architect-2026/msp-team02` is explicitly excluded
+  from deploy trust and must not receive WIF or service account key material.
+- The provider condition also requires the `dev` GitHub environment, approved
+  `main`/temporary `cloud_migration` refs, and only the dev deploy/rollback
+  workflow files. Remove the temporary `cloud_migration` ref after the Phase 5
+  smoke branch is merged into the approved deploy branch.
+
+Security notes:
+
+- `github-actions-sa` is the keyless CI entrypoint and Artifact Registry writer.
+- `terraform-sa` remains the Terraform/deploy identity and is impersonated by
+  `github-actions-sa` only after WIF succeeds.
+- Backend/frontend runtime service accounts remain runtime identities only and
+  do not receive deploy or Terraform admin permissions.
+- `terraform-sa` project-level `run.admin`, `resourcemanager.projectIamAdmin`,
+  and WIF-admin grants are broad enough to require explicit dev-only approval
+  before apply. They are not prod permissions and must be revisited before any
+  prod-opening review.
+- Phase 5 workflows do not run live broad eval by default. Live retrieve/answer
+  smoke is manual-dispatch opt-in for dev because it can call Vertex-backed
+  routes.
+- The document draft smoke path remains the deterministic SCN-004 fixture. Phase
+  5 does not change the public draft schema or open a protected SCN-001 backend
+  draft endpoint.
 
 ## 3. Read First
 
@@ -57,7 +130,8 @@ Phase 5를 시작하기 전에 확인한다.
 | Phase 4 frontend | frontend Cloud Run deployed and browser-smoke-tested |
 | Dockerfiles | backend/frontend image build strategy finalized |
 | Terraform roots | `foundation`, `data`, `runtime/backend`, `runtime/frontend` are stable |
-| GitHub repo | final owner/repo name known |
+| GitHub repo | final development/deploy owner/repo name known |
+| Mirror repo policy | any public/submission mirror is explicitly non-deploying |
 | Branch policy | `main` is protected or protection plan is approved |
 | GitHub environments | `dev`/`prod` environment names and approval policy decided |
 | Secret policy | no GCP service account key JSON in GitHub Secrets |
@@ -65,6 +139,18 @@ Phase 5를 시작하기 전에 확인한다.
 
 If GitHub repository owner/name is not final, do not create a broad WIF binding.
 WIF conditions should bind to the real repository.
+
+For this project, bind WIF only to
+`2026-moel-datacontest-core/law_main_road_main`. The
+`Team-msp-architect-2026/msp-team02` repository is a curated submission mirror
+unless a later approved architecture change explicitly moves deploy ownership.
+Do not grant the mirror repo WIF impersonation or store GCP service account key
+JSON there.
+
+Current preflight decision: keep the deploy/source repo private, keep
+`protect-main` policy-defined/enforcement-pending on the current GitHub plan, and
+do not upgrade GitHub Team or convert the deploy repo to public unless this
+phase explicitly requires enforced branch/environment protection.
 
 ## 5. Scope
 
