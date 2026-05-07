@@ -56,10 +56,11 @@ Prerequisite before apply:
 - Keep the secret value out of Terraform files, tfvars, plan output, git,
   screenshots, and public evidence.
 
-Current CORS posture is local/dev bootstrap only:
+Current CORS posture is Phase 4 dev frontend Cloud Run only:
 
 ```text
-^https?://(localhost|127\.0\.0\.1):(30[0-9]{2}|5090)$
+^https://lmr-dev-frontend-nhthv64dcq-du\.a\.run\.app$
 ```
 
-Update this after Phase 4 creates a frontend Cloud Run URL.
+Use a local backend process or an explicit reviewed CORS override for local
+frontend development against the Cloud Run backend.

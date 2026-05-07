@@ -103,6 +103,12 @@ resource "google_cloud_run_v2_service" "this" {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
   }
+
+  lifecycle {
+    ignore_changes = [
+      scaling,
+    ]
+  }
 }
 
 resource "google_cloud_run_v2_service_iam_member" "public_invoker" {

@@ -15,6 +15,10 @@ This module owns:
 It does not create images, Secret Manager versions, service account keys,
 Firebase Admin JSON, DB users/passwords, or application data.
 
+The module manages revision/template scaling. Provider-computed service-level
+scaling defaults are ignored to avoid perpetual no-op drift in
+`google_cloud_run_v2_service`.
+
 Use immutable Artifact Registry image digests when possible. Secret env vars must
 reference existing Secret Manager secrets and versions only; do not pass secret
 payloads into Terraform variables.

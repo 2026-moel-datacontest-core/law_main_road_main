@@ -40,5 +40,6 @@ gcp_location        = "us-central1"
 vertex_answer_model = "gemini-2.5-flash"
 firebase_project_id = "law-main-road"
 
-# Temporary dev/bootstrap CORS only. Replace after Phase 4 frontend URL is known.
-backend_cors_origin_regex = "^https?://(localhost|127\\.0\\.0\\.1):(30[0-9]{2}|5090)$"
+# Phase 4 dev frontend Cloud Run origin. Local frontend development should use a
+# local backend process or an explicit reviewed CORS override.
+backend_cors_origin_regex = "^https://lmr-dev-frontend-nhthv64dcq-du\\.a\\.run\\.app$"
