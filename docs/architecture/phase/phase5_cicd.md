@@ -64,15 +64,14 @@ Validation evidence:
 | Prod guard | No `envs/prod/cicd/*.tf` apply-ready root exists. |
 | Forbidden resource scan | Phase 5 Terraform/workflow scan found no `google_service_account_key`, no `google_secret_manager_secret_version`, and no `pull_request_target` deploy auth path. Mentions of forbidden roles/repos exist only in validation checks and guard documentation. |
 
-Current gate:
+Initial execution gates closed:
 
-- Do not run `terraform apply` for `envs/dev/cicd` until the WIF/IAM plan is
-  reviewed and a human approves the Workload Identity Federation trust boundary.
-- Do not run the GitHub deploy workflow until GitHub Actions variables and the
-  `dev` environment are configured by an approved human/admin path.
-- Do not add any GCP service account key JSON to GitHub Secrets. GitHub
-  variables may hold non-secret config only; DB credentials and Firebase Admin
-  values stay in Secret Manager.
+- `envs/dev/cicd` was applied after plan review with a create-only WIF/IAM plan.
+- GitHub repository variables and the `dev` environment were configured by the
+  approved human/admin path.
+- No GCP service account key JSON was added to GitHub Secrets. GitHub variables
+  hold non-secret config only; DB credentials and Firebase Admin values stay in
+  Secret Manager.
 
 WIF boundary:
 
@@ -102,6 +101,69 @@ Security notes:
 - The document draft smoke path remains the deterministic SCN-004 fixture. Phase
   5 does not change the public draft schema or open a protected SCN-001 backend
   draft endpoint.
+
+## 2B. Dev CI/CD Execution Evidence
+
+Evidence date: `2026-05-07`
+
+Execution summary:
+
+- PR #3 `Cloud migration` was merged to `main` after PR checks were fixed.
+- `Deploy Dev` remains manual-only through `workflow_dispatch`; `push` to
+  `main` does not auto-deploy.
+- First successful Deploy Dev run: GitHub Actions run `25485605637` on `main`
+  with `run_live_ai_smoke=false`.
+- Earlier Deploy Dev run `25485162445` failed after a successful backend image
+  push because the runner/buildx template did not expose `.Digest` for
+  `docker buildx imagetools inspect --format '{{.Digest}}'`. The workflow now
+  parses the `sha256:<digest>` from `docker push` output and still passes
+  `base@sha256:...` immutable image references to Terraform.
+- Successful deploy created backend revision `lmr-dev-backend-00003-9d6` and
+  frontend revision `lmr-dev-frontend-00002-747`.
+- Manual browser smoke passed for the deployed frontend and Google Sign-In path.
+- Latest-revision Cloud Run log smoke found no `severity>=ERROR` entries for
+  backend or frontend after the successful deploy/rollback rehearsal window.
+
+Rollback rehearsal:
+
+- Rollback workflow run `25486595966` shifted both services to the previous
+  stable revisions:
+  - backend: `lmr-dev-backend-00002-65q`
+  - frontend: `lmr-dev-frontend-00001-w9n`
+- Rollback-state smoke passed:
+  - backend `/health` returned `{"status":"ok"}`
+  - frontend `/` returned HTTP success
+- Restore workflow run `25486668424` shifted both services back to the latest
+  successful deploy revisions:
+  - backend: `lmr-dev-backend-00003-9d6`
+  - frontend: `lmr-dev-frontend-00002-747`
+- After restore, traffic was reconciled to `LATEST` allocation for both services
+  because the rollback workflow restores named revisions while the Terraform
+  Cloud Run module owns `TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST`.
+- Backend and frontend runtime Terraform state outputs were refreshed with
+  `terraform apply -refresh-only`; no real infrastructure resources were added,
+  changed, or destroyed.
+
+Final verification:
+
+| Check | Evidence |
+|---|---|
+| Backend active traffic | 100% `LATEST`, currently `lmr-dev-backend-00003-9d6`. |
+| Frontend active traffic | 100% `LATEST`, currently `lmr-dev-frontend-00002-747`. |
+| Backend smoke | `/health` returned `{"status":"ok"}`. |
+| Frontend smoke | `/` returned HTTP success. |
+| Backend Terraform final plan | `plan -detailed-exitcode` returned `0` with no changes. |
+| Frontend Terraform final plan | `plan -detailed-exitcode` returned `0` with no changes. |
+| Rollback workflow | Manual dispatch succeeded for rollback and restore. |
+| Service account key JSON | Not created and not stored in GitHub Secrets. |
+
+Residual follow-up:
+
+- Review whether to remove the temporary `cloud_migration` ref from the WIF
+  attribute condition now that the Phase 5 smoke path has merged to `main`.
+- Consider updating the rollback workflow with a dedicated restore-to-latest
+  mode so future rehearsals do not need a separate `--to-latest` reconciliation
+  command after restoring the current stable revision.
 
 ## 3. Read First
 
