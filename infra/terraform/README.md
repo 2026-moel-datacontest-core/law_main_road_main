@@ -17,6 +17,9 @@ Current status:
   runtime on `2026-05-07`; health/auth-negative/retrieve/answer/document draft
   smoke evidence passed.
 - `envs/prod/runtime/backend`: skeleton/unopened only.
+- `envs/dev/runtime/frontend`: applied for the first `dev` frontend Cloud Run
+  runtime on `2026-05-07`; route/CORS/SCN-004/SCN-001 boundary smoke passed.
+  Firebase Authorized Domain / Google Sign-In smoke remains an admin gate.
 
 Phase 1 resources are limited to remote state bootstrap, required APIs, service
 accounts, Artifact Registry, Secret Manager secret shells, a private artifact
@@ -41,14 +44,21 @@ Vertex AI User runtime IAM, DB pool env wiring, public dev smoke invoker, and
 health/auth-negative/retrieve/answer/document draft smoke evidence. The raw
 database-url value is not stored in Terraform files or this README.
 
-WIF/GitHub workflow, frontend Cloud Run, service account key JSON, Firebase Admin
-JSON, prod resources, and backend/frontend/API/runtime behavior changes remain
+Phase 4 frontend runtime readiness is applied for the first `dev` target by
+approved runtime work: Next.js standalone image build/push, frontend Cloud Run
+service deploy, frontend service identity attachment, public dev smoke invoker,
+backend CORS re-apply to the frontend origin, route smoke, and SCN-004/SCN-001
+frontend boundary smoke. Firebase Authorized Domain and Google Sign-In smoke
+remain an admin gate before Phase 5 promotion.
+
+WIF/GitHub workflow, service account key JSON, Firebase Admin JSON, prod
+resources, custom domain/LB, and backend/frontend/API behavior expansion remain
 unopened from this Terraform README's perspective.
 
 Forbidden without explicit phase approval:
 
 - additional Cloud Run resources or changes outside the approved first `dev`
-  backend runtime smoke,
+  backend/frontend runtime smoke,
 - Workload Identity Federation provider/trust binding,
 - GitHub Actions workflow,
 - secret values in Terraform files/state or `google_secret_manager_secret_version`,

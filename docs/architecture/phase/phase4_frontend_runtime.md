@@ -37,6 +37,53 @@ SCN-001 live/backend document draft 범위는 열지 않는다.
 | Required previous phase | [`phase3_backend_runtime.md`](phase3_backend_runtime.md) |
 | Next phase | [`phase5_cicd.md`](phase5_cicd.md) |
 
+## 2A. Dev Runtime Smoke Evidence
+
+Evidence date: `2026-05-07`
+
+Scope and inventory handling:
+
+- Target profile: `dev`.
+- Frontend Cloud Run service: `lmr-dev-frontend`.
+- Latest ready frontend revision observed: `lmr-dev-frontend-00001-w9n`.
+- Frontend direct `run.app` URL and backend direct `run.app` URL remain Terraform
+  outputs / operational inventory. Do not copy them into public screenshots or
+  public submission text unless the demo owner explicitly approves that public
+  URL posture.
+- WIF/GitHub workflow, prod resources, custom domain / HTTPS Load Balancer, and
+  SCN-001 live/backend document draft generation remain unopened.
+
+Runtime wiring evidence:
+
+- Frontend image was built with Next.js standalone output and pushed to Artifact
+  Registry as an immutable digest.
+- `NEXT_PUBLIC_API_BASE_URL` was baked from the Phase 3 backend runtime output.
+- Firebase public web config was provided through Docker build args only.
+- Frontend Cloud Run `allUsers` `roles/run.invoker` exists for controlled dev
+  smoke.
+- Backend CORS was re-applied to the Phase 4 frontend Cloud Run origin.
+- Cloud Run logs sampled across frontend/backend for the smoke window:
+  `severity >= ERROR` count `0`; suspicious secret value matches `0`.
+
+Smoke checks:
+
+| Check | Evidence |
+|---|---|
+| Route smoke | `GET /`, `/before`, `/after`, `/after/result`, `/after/intake`, `/after/draft`, and `/history` all returned `200`. Direct deep links still rely on the existing client guards and memory-state policy. |
+| Backend reachability / CORS | Backend `/health` returned `200`; `GET /api/v1/auth/me` without token returned `200`; CORS preflight from the deployed frontend origin to `/api/v1/auth/me` returned `200` and echoed the deployed frontend origin. |
+| SCN-004 freeze | Browser smoke confirmed exact `SCN-004-DEMO-FREEZE` path made `0` `/api/v1/answer` calls. The SCN-004 draft flow proceeded to `/after/draft` and made exactly `1` expected `/api/v1/documents/draft` call. |
+| SCN-001 boundary | Browser smoke confirmed exact `SCN-001-BRIDGE-DEMO` path made `0` `/api/v1/answer` calls and `0` `/api/v1/documents/draft` calls through `/after -> /after/result -> /after/intake -> /after/draft`. The frozen draft remained frontend-local. |
+| Login-free After | `/after` route loaded with logged-out state and remains available without Google login. |
+
+Human gate:
+
+- Firebase Authorized Domains still needs the deployed frontend Cloud Run host
+  added in Firebase Console before Google Sign-In can be smoke-tested.
+- Until that admin action is complete, Google popup login smoke and protected
+  SCN-001 logged-in browser smoke remain blocked.
+- Phase 5 CI/CD should stay blocked until Firebase Authorized Domain is added and
+  Google Sign-In succeeds on the deployed frontend.
+
 ## 3. Read First
 
 Phase 4 작업자는 아래 순서로 읽는다.
@@ -66,8 +113,8 @@ Phase 4를 시작하기 전에 확인한다.
 | Backend CORS bootstrap | temporary value approved in Phase 3 |
 | Backend auth | `GET /api/v1/auth/me` valid-token smoke passed or fallback documented |
 | Artifact Registry | frontend image repository exists from foundation |
-| Frontend image build strategy | current repo has no `frontend/Dockerfile`; Phase 4 must add it or approve an equivalent build path before image build |
-| Next.js standalone | current `frontend/next.config.mjs` has no `output: "standalone"`; Phase 4 must add it or document an equivalent Cloud Run strategy |
+| Frontend image build strategy | `frontend/Dockerfile` added and Cloud Run image build smoke passed |
+| Next.js standalone | `frontend/next.config.mjs` uses `output: "standalone"` |
 | Firebase web app | public config values available |
 | Firebase Auth provider | Google provider enabled or explicitly scheduled before login smoke |
 | GCP auth | local admin/developer image push path available before Phase 5 WIF |
@@ -230,15 +277,16 @@ The current frontend uses:
 
 - Next.js App Router
 
-Current code-read result rechecked on `2026-05-04`:
+Current code-read result rechecked on `2026-05-07`:
 
-- `frontend/next.config.mjs` does not yet set `output: "standalone"`.
-- `frontend/Dockerfile` is not present.
+- `frontend/next.config.mjs` sets `output: "standalone"`.
+- `frontend/Dockerfile` is present and was used for the first Phase 4 dev image.
 
 Target Phase 4 image strategy:
 
-- add `frontend/next.config.mjs` `output: "standalone"` plus `frontend/Dockerfile`, or
-- document and implement an equivalent Cloud Run-compatible frontend image build path.
+- use `frontend/next.config.mjs` `output: "standalone"` plus `frontend/Dockerfile`,
+  or document and implement an equivalent Cloud Run-compatible frontend image
+  build path in a later reviewed change.
 
 Minimum image requirements:
 

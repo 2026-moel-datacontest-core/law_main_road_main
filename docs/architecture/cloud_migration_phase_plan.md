@@ -212,8 +212,10 @@ checks returned no changes. Phase 2 `envs/dev/data` has also been applied for
 the first `dev` target, and post-Terraform DB/data readiness has passed. Phase
 3 `envs/dev/runtime/backend` has been applied for the first `dev` backend
 runtime target, and health/auth-negative/retrieve/answer/document-draft smoke
-evidence has passed. Phase 4+ roots, WIF/GitHub workflow, frontend Cloud Run,
-and prod resources remain unopened.
+evidence has passed. Phase 4 `envs/dev/runtime/frontend` has been applied for
+the first `dev` frontend runtime target, and route/CORS/SCN-004/SCN-001 boundary
+smoke passed. Firebase Authorized Domain / Google Sign-In smoke remains an admin
+gate before Phase 5. WIF/GitHub workflow and prod resources remain unopened.
 
 Notes:
 
@@ -695,8 +697,8 @@ Current `dev` status on `2026-05-07`:
 - `/health`, auth-negative, retrieve, answer, and SCN-004 document draft smoke
   checks passed with the counts recorded in
   [`phase/phase3_backend_runtime.md`](phase/phase3_backend_runtime.md#2a-dev-runtime-smoke-evidence).
-- WIF/GitHub workflow, frontend Cloud Run, prod resources, and public
-  production-ready API hardening remain unopened.
+- WIF/GitHub workflow, prod resources, and public production-ready API hardening
+  remain unopened. Frontend Cloud Run is now handled by Phase 4.
 
 Rollback:
 
@@ -725,8 +727,12 @@ Creates:
 
 - frontend Cloud Run service
 - frontend service identity = `frontend-sa`
+- frontend URL outputs for Firebase Authorized Domain and smoke
+
+Build-time inputs:
+
 - `NEXT_PUBLIC_API_BASE_URL`
-- Firebase public web config env vars
+- Firebase public web config build args
 
 Verification:
 
