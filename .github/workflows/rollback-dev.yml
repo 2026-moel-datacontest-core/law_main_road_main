@@ -1,0 +1,100 @@
+name: Rollback Dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Cloud Run service to roll back"
+        required: true
+        type: choice
+        options:
+          - backend
+          - frontend
+          - both
+      backend_revision:
+        description: "Target backend revision when service is backend or both"
+        required: false
+        type: string
+      frontend_revision:
+        description: "Target frontend revision when service is frontend or both"
+        required: false
+        type: string
+      reason:
+        description: "Rollback reason"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: rollback-dev
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Shift Cloud Run Traffic
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: dev
+
+    steps:
+      - name: Authenticate to Google Cloud through WIF
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_GITHUB_ACTIONS_SA }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Roll back selected service traffic
+        shell: bash
+        env:
+          SERVICE: ${{ inputs.service }}
+          BACKEND_REVISION: ${{ inputs.backend_revision }}
+          FRONTEND_REVISION: ${{ inputs.frontend_revision }}
+        run: |
+          set -euo pipefail
+          gcloud config set auth/impersonate_service_account "${{ vars.GCP_TERRAFORM_SA }}"
+
+          revision_pattern='^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+          if [[ "${SERVICE}" == "backend" || "${SERVICE}" == "both" ]]; then
+            if [[ -z "${BACKEND_REVISION}" ]]; then
+              echo "backend_revision is required for backend rollback." >&2
+              exit 1
+            fi
+            if [[ ! "${BACKEND_REVISION}" =~ ${revision_pattern} ]]; then
+              echo "backend_revision format is invalid." >&2
+              exit 1
+            fi
+            gcloud run services update-traffic "${{ vars.BACKEND_SERVICE_NAME }}" \
+              --region "${{ vars.GCP_REGION }}" \
+              --to-revisions "${BACKEND_REVISION}=100"
+          fi
+
+          if [[ "${SERVICE}" == "frontend" || "${SERVICE}" == "both" ]]; then
+            if [[ -z "${FRONTEND_REVISION}" ]]; then
+              echo "frontend_revision is required for frontend rollback." >&2
+              exit 1
+            fi
+            if [[ ! "${FRONTEND_REVISION}" =~ ${revision_pattern} ]]; then
+              echo "frontend_revision format is invalid." >&2
+              exit 1
+            fi
+            gcloud run services update-traffic "${{ vars.FRONTEND_SERVICE_NAME }}" \
+              --region "${{ vars.GCP_REGION }}" \
+              --to-revisions "${FRONTEND_REVISION}=100"
+          fi
+
+      - name: Rollback summary
+        shell: bash
+        run: |
+          {
+            echo "## Dev Rollback"
+            echo "- service: ${{ inputs.service }}"
+            echo "- reason recorded"
+            echo "- traffic shift command: completed"
+            echo "- follow-up: reconcile Terraform image/revision variables before the next deploy"
+          } >> "${GITHUB_STEP_SUMMARY}"
