@@ -1,0 +1,42 @@
+project_id = "law-main-road"
+env        = "dev"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "portfolio"
+
+labels = {
+  app        = "law-main-road"
+  env        = "dev"
+  managed_by = "terraform"
+  owner      = "portfolio"
+}
+
+foundation_state_bucket = "lmr-dev-law-main-road-tfstate"
+foundation_state_prefix = "envs/dev/foundation"
+
+database_name = "klabor"
+
+postgres_version  = "POSTGRES_17"
+cloud_sql_edition = "ENTERPRISE"
+cloud_sql_tier    = "db-f1-micro"
+
+disk_type                = "PD_SSD"
+disk_size_gb             = 10
+disk_autoresize          = true
+disk_autoresize_limit_gb = 20
+
+availability_type = "ZONAL"
+
+backup_enabled          = true
+backup_start_time       = "17:00"
+backup_retained_backups = 3
+pitr_enabled            = false
+deletion_protection     = false
+
+# Cloud SQL connector/Auth Proxy posture. Do not add authorized networks.
+ipv4_enabled = true
+
+recommended_db_pool_size            = 2
+recommended_db_max_overflow         = 3
+recommended_db_pool_timeout_seconds = 30
+recommended_backend_max_instances   = 2

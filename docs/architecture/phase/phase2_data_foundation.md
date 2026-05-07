@@ -4,32 +4,35 @@
 
 ## 1. Goal
 
-Phase 2는 Cloud Run backend가 연결할 수 있는 managed PostgreSQL data
-foundation을 만든다. 이 단계는 database infrastructure와 migration/seed
-검증까지 다루지만, backend Cloud Run service를 배포하지는 않는다.
+Phase 2는 Cloud Run backend가 나중에 연결할 수 있는 managed PostgreSQL
+data foundation shell을 만든다. 엄격한 Terraform boundary는 Cloud SQL
+PostgreSQL instance, application database shell, non-secret outputs only다.
+Backend runtime IAM, Cloud Run service, schema/data bootstrap은 이 boundary에
+포함하지 않는다.
 
 핵심 목표는 다음과 같다.
 
 - Cloud SQL for PostgreSQL instance를 만든다.
 - application database를 준비한다.
 - DB credential 생성 경계를 Terraform state와 분리한다.
-- Alembic migration으로 schema와 `pgvector` extension을 초기화한다.
-- `law_chunks` corpus를 seed/import한다.
-- embedding 생성과 HNSW/vector index 상태를 검증한다.
 - Cloud Run scale-out 전에 필요한 DB connection guardrail 값을 선정하고,
   현재 backend가 그 값을 소비하지 못하면 Phase 3 구현 전제조건으로 남긴다.
+
+The migration/seed sections below are runbook references for after explicit
+resource-creation approval. They must not be encoded in Terraform and are not
+evidence from a plan-only Phase 2 review.
 
 ## 2. Phase Status
 
 | Item | Status |
 |---|---|
-| Phase type | Data infrastructure + DB bootstrap |
+| Phase type | Data infrastructure shell |
 | Primary Terraform root | `infra/terraform/envs/{env}/data` |
 | Primary module | `infra/terraform/modules/cloud-sql-pgvector` |
 | Runtime traffic | none |
 | Backend Cloud Run | not deployed |
 | Frontend Cloud Run | not deployed |
-| DB schema/data | owned by migration/seed scripts |
+| DB schema/data | outside Terraform; not part of plan-only review |
 | Required previous phase | [`phase1_bootstrap_foundation.md`](phase1_bootstrap_foundation.md) |
 | Next phase | [`phase3_backend_runtime.md`](phase3_backend_runtime.md) |
 
@@ -77,16 +80,15 @@ blocked before Cloud SQL work.
 - Cloud SQL connection metadata outputs.
 - Deletion protection policy for prod.
 - DB credential handling decision that avoids raw secret values in git.
-- Alembic migration execution plan.
-- `pgvector` extension and vector index verification.
-- `law_chunks` seed import and version verification.
-- Embedding generation/verification plan.
+- Runbook references that keep pgvector, schema migration, vector indexes,
+  `law_chunks`, and embeddings outside Terraform.
 - DB connection pool guardrail for Phase 3 backend runtime.
 
 ### Out Of Scope
 
 - Backend Cloud Run service.
 - Frontend Cloud Run service.
+- Backend runtime IAM or Cloud SQL client grants for `backend-sa`.
 - Cloud Run traffic splitting.
 - GitHub Actions WIF.
 - CI/CD workflow.
@@ -166,7 +168,12 @@ the phase boundary.
 | Apply order | consume Phase 1 remote state -> apply `envs/{env}/data` -> run migration/seed scripts separately |
 | Validation command candidates | Terraform fmt/validate/plan/apply; `gcloud sql ... describe`; Alembic head; `law_chunks` count/dimension/index SQL checks |
 | Rollback/delete policy | prefer backward-compatible migrations; never delete prod Cloud SQL as normal rollback; dev delete only after dependency review |
-| Do not manage yet | pgvector extension creation, schema migrations, vector indexes, `law_chunks` seed/import, embeddings, Cloud Run, WIF, custom domain/LB |
+| Do not manage yet | pgvector extension creation, schema migrations, vector indexes, `law_chunks` seed/import, embeddings, backend runtime IAM, Cloud Run, WIF, custom domain/LB |
+
+Current plan-only review stops at Terraform fmt/validate/plan and boundary grep.
+Do not run `terraform apply`, `gcloud sql ... describe`, Alembic migration,
+seed import, or embedding generation until resource creation is explicitly
+approved.
 
 ## 7B. GitHub Issue Readiness
 
@@ -671,6 +678,7 @@ When Phase 2 is executed, record a short status note.
 - Do not put raw DB passwords in Terraform, docs, or git.
 - Do not expose full `DATABASE_URL` as a Terraform output if it contains
   credentials.
+- Do not grant backend runtime Cloud SQL access from the Phase 2 data root.
 - Do not edit `backend/data/law_chunks/` directly.
 - Do not change public API contracts.
 - Do not open SCN-001 live/backend draft generation.

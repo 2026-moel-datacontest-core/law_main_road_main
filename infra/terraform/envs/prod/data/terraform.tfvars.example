@@ -1,0 +1,26 @@
+# Skeleton only. Do not use for terraform plan/apply until prod-opening review.
+
+project_id = "law-main-road"
+env        = "prod"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "portfolio"
+
+database_name = "klabor"
+
+# Prod values are intentionally placeholders pending separate approval.
+postgres_version  = "<approve-postgres-version>"
+cloud_sql_edition = "<approve-edition>"
+cloud_sql_tier    = "<approve-prod-tier>"
+
+disk_type                = "PD_SSD"
+disk_size_gb             = 0
+disk_autoresize          = true
+disk_autoresize_limit_gb = 0
+
+availability_type = "<approve-zonal-or-regional>"
+
+backup_enabled          = true
+backup_retained_backups = 7
+pitr_enabled            = true
+deletion_protection     = true

@@ -1,6 +1,6 @@
 # Terraform
 
-Phase 1 cloud migration Terraform lives here.
+Cloud migration Terraform lives here.
 
 Current status:
 
@@ -9,14 +9,23 @@ Current status:
 - `envs/dev/foundation`: initialized against the approved GCS state bucket and
   applied on `2026-05-06`.
 - `envs/prod/foundation`: skeleton only.
+- `envs/dev/data`: Phase 2 data foundation root, plan-only until separate human
+  approval opens Cloud SQL creation.
+- `envs/prod/data`: skeleton only.
 
 Phase 1 resources are limited to remote state bootstrap, required APIs, service
 accounts, Artifact Registry, Secret Manager secret shells, a private artifact
 bucket, and baseline IAM for those resources.
 
-Forbidden in Phase 1:
+Phase 2 plan-only scope is limited to Cloud SQL PostgreSQL infrastructure and
+non-secret metadata for Phase 3. It must not create DB users/passwords, Secret
+Manager secret versions, pgvector extension, schema, indexes, seed data,
+embeddings, backend runtime IAM, Cloud Run, WIF, GitHub workflows, service
+account keys, or prod resources. The backend Cloud SQL client IAM grant belongs
+to Phase 3 backend runtime wiring.
 
-- Cloud SQL,
+Forbidden without explicit phase approval:
+
 - Cloud Run,
 - Workload Identity Federation provider/trust binding,
 - GitHub Actions workflow,
@@ -36,6 +45,10 @@ terraform validate
 terraform plan -var='project_id=law-main-road'
 
 cd ../../envs/dev/foundation
+terraform init -backend=false
+terraform validate
+
+cd ../data
 terraform init -backend=false
 terraform validate
 ```
