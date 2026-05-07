@@ -1,0 +1,44 @@
+project_id = "law-main-road"
+env        = "dev"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "portfolio"
+
+labels = {
+  app        = "law-main-road"
+  env        = "dev"
+  managed_by = "terraform"
+  owner      = "portfolio"
+}
+
+foundation_state_bucket = "lmr-dev-law-main-road-tfstate"
+foundation_state_prefix = "envs/dev/foundation"
+data_state_bucket       = "lmr-dev-law-main-road-tfstate"
+data_state_prefix       = "envs/dev/data"
+
+backend_image = "asia-northeast3-docker.pkg.dev/law-main-road/lmr-dev-ar/backend@sha256:03c649f277d37f780f0d1794d9bedac89a842627f0503bc9e5d4aacc02296bea"
+
+# Secret reference only. Create the lmr-dev-database-url version outside Terraform
+# before apply. Do not place the DATABASE_URL value in this file.
+database_url_secret_version = "latest"
+
+min_instance_count = 0
+max_instance_count = 2
+concurrency        = 20
+timeout            = "300s"
+cpu                = "1"
+memory             = "512Mi"
+
+deletion_protection   = false
+allow_unauthenticated = true
+
+db_pool_size            = 2
+db_max_overflow         = 3
+db_pool_timeout_seconds = 30
+
+gcp_location        = "us-central1"
+vertex_answer_model = "gemini-2.5-flash"
+firebase_project_id = "law-main-road"
+
+# Temporary dev/bootstrap CORS only. Replace after Phase 4 frontend URL is known.
+backend_cors_origin_regex = "^https?://(localhost|127\\.0\\.0\\.1):(30[0-9]{2}|5090)$"

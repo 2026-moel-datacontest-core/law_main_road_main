@@ -1,0 +1,29 @@
+# Prod backend runtime is not apply-ready.
+# Keep this file as shape documentation only until a separate prod-opening
+# review approves exact values and an apply-ready root.
+
+project_id = "<prod-or-approved-project-id>"
+env        = "prod"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "<approved-owner>"
+
+backend_image = "<immutable-prod-backend-image-digest>"
+
+# Secret reference only. Never put DATABASE_URL values in tfvars.
+database_url_secret_version = "<approved-version>"
+
+min_instance_count = 0
+max_instance_count = 0
+concurrency        = 0
+
+db_pool_size            = 0
+db_max_overflow         = 0
+db_pool_timeout_seconds = 0
+
+gcp_location        = "us-central1"
+vertex_answer_model = "gemini-2.5-flash"
+firebase_project_id = "<approved-firebase-project-id>"
+
+# Must be an approved frontend/custom origin regex, not wildcard CORS.
+backend_cors_origin_regex = "<approved-prod-origin-regex>"
