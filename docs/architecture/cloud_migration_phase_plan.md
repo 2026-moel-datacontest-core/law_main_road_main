@@ -1186,7 +1186,7 @@ Recommended issue split:
 | CI/CD | Phase 5 WIF/workflows/rollback automation | Runtime feature changes |
 | Shell/Python runbooks | Optional scripts for MFA prerequisite evidence, resource describe checks, migration/seed orchestration, post-deploy smoke, log redaction check, rollback drill | Terraform resource ownership and secret value storage |
 | Observability | Phase 6 metrics/alerts/lifecycle/rollback drill | New structured logging code unless separately approved |
-| Custom domain launch | Phase 7A Gabia DNS, Firebase Hosting custom domain/rewrites, managed certificate, Firebase Authorized Domains, CORS/API-base smoke | Phase 1-6 acceptance criteria and API contract changes |
+| Custom domain launch | Phase 7A Gabia DNS, Firebase Hosting custom domain/rewrites, managed certificate, Firebase Authorized Domains, conditional CORS/API-base smoke only if same-origin API routing is separately approved | Phase 1-6 acceptance criteria and API contract changes |
 | Optional hardening | One Phase 7 candidate per design note | Phase 1-6 acceptance criteria |
 
 Every issue should include:

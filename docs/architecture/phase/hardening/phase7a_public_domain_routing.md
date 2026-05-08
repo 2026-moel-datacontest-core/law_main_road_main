@@ -48,7 +48,7 @@ Host plan:
 | Host | Decision | Notes |
 |---|---|---|
 | `www.law-main-road.cloud` | first public frontend host | canonical public demo URL candidate |
-| `law-main-road.cloud` | redirect to `www` or same Hosting target | decide during Firebase custom-domain setup |
+| `law-main-road.cloud` | human decision gate | do not implement in the first frontend-only pass |
 | `app.law-main-road.cloud` | defer | alternative only if `www` is rejected |
 | `api.law-main-road.cloud` | defer | open only if a separate API domain is approved |
 
@@ -125,7 +125,8 @@ Before implementation:
 - Firebase Hosting billing/plan posture is accepted under the existing project
   budget monitoring.
 - `www.law-main-road.cloud` is approved as the canonical public frontend host.
-- Root apex behavior is selected: redirect to `www` or same Hosting target.
+- Root apex behavior remains a human decision gate and is not required for the
+  first `www` frontend-only pass.
 - Same-origin `/api/**` routing is approved or explicitly deferred.
 - If same-origin `/api/**` routing is approved, Hosting rewrite order is
   approved: `/api/**` before frontend catch-all `/**`.
@@ -144,9 +145,14 @@ Before implementation:
 In scope:
 
 - Firebase Hosting setup for the existing Firebase/GCP project.
-- `firebase.json` Hosting rewrites if repo-managed Hosting config is selected.
-  The first pass uses the frontend catch-all rewrite only unless same-origin API
-  routing is explicitly approved. If `/api/**` is approved, it must precede the
+- Root `firebase.json` owns the repo-managed Hosting rewrite for this pass. It
+  routes only the frontend catch-all `**` to the existing dev frontend Cloud Run
+  service in `asia-northeast3`.
+- Do not commit `.firebaserc` for this pass. The deploy operator must pass the
+  approved Firebase/GCP project id at deploy time or use a private local alias.
+  Do not store the project id in public docs.
+- Do not add `/api/**` to `firebase.json` unless same-origin API routing is
+  explicitly approved. If `/api/**` is later approved, it must precede the
   frontend catch-all rewrite.
 - Firebase custom domain setup for `www.law-main-road.cloud`.
 - Gabia DNS records required by Firebase.
@@ -170,6 +176,76 @@ Out of scope:
 - `api.law-main-road.cloud`,
 - `prod` resources.
 
+## Repo-Managed Config
+
+The first implementation adds only this Hosting shape:
+
+```json
+{
+  "hosting": {
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "lmr-dev-frontend",
+          "region": "asia-northeast3"
+        }
+      }
+    ]
+  }
+}
+```
+
+This is frontend-only routing. It does not:
+
+- create a new Firebase project or Hosting site,
+- add `.firebaserc`,
+- add `/api/**`,
+- change `NEXT_PUBLIC_API_BASE_URL`,
+- change backend CORS,
+- change Cloud Run ingress or IAM,
+- create or apply Terraform,
+- connect `law-main-road.cloud` apex.
+
+Deploy command shape after the human gates are cleared:
+
+```bash
+firebase deploy --only hosting --project <approved-firebase-project-id>
+```
+
+Use the approved private project id from the private runbook or Console context;
+do not paste it into public docs, GitHub issue text, screenshots, or committed
+files.
+
+## Human-Only Custom Domain Steps
+
+These steps are intentionally not automated in this patch.
+
+1. Confirm Firebase Hosting billing/plan posture and that the existing Firebase
+   project is the same project that owns the dev frontend Cloud Run service.
+2. Deploy the repo-managed Hosting config with the command shape above, using
+   the approved project id from private context.
+3. In Firebase Console, open Hosting for the approved project and start custom
+   domain connection for `www.law-main-road.cloud` only. Do not add the root
+   apex yet.
+4. Copy the DNS ownership record values shown by Firebase Console into Gabia DNS.
+   The exact record type, host/name, and value must come from Firebase Console.
+   Keep the ownership TXT record present as instructed by Firebase.
+5. After Firebase verifies ownership, copy the requested Hosting target records
+   shown by Firebase Console into Gabia DNS. Use the exact type, host/name, and
+   value shown there; do not infer or reuse values from docs.
+6. Wait for Firebase Hosting custom domain status and managed certificate status
+   to become connected/ready. Record only redacted status evidence in public
+   docs.
+7. Add `www.law-main-road.cloud` to Firebase Authentication Authorized Domains.
+8. Run the frontend-only smoke below. Use the existing Cloud Run frontend URL as
+   the full API-flow rollback/smoke path until backend CORS or same-origin API
+   routing is separately approved.
+
+Do not change Gabia DNS, Firebase Authorized Domains, certificate/cutover state,
+or any public posture beyond `www.law-main-road.cloud` without the matching
+human gate.
+
 ## Verification
 
 Required smoke:
@@ -177,6 +253,10 @@ Required smoke:
 - `https://www.law-main-road.cloud` loads the deployed frontend over HTTPS.
 - `/`, `/before`, `/after`, and `/history` load or guard safely.
 - Google Sign-In does not fail with `auth/unauthorized-domain`.
+- API-calling flows from the custom domain are not acceptance criteria for this
+  frontend-only pass because `/api/**`, `NEXT_PUBLIC_API_BASE_URL`, and backend
+  CORS changes are deferred. Use the existing Cloud Run frontend fallback for
+  full backend/API smoke until a later API-routing gate is approved.
 - If same-origin `/api/**` routing is used,
   `https://www.law-main-road.cloud/api/v1/auth/me` returns the expected
   unauthenticated response without raw token/user data.

@@ -388,7 +388,7 @@ Recommended public host split:
 | Host | Target | Notes |
 |---|---|---|
 | `www.law-main-road.cloud` | Cloud Run frontend through Firebase Hosting | portfolio/demo entrypoint |
-| `law-main-road.cloud` | redirect to `www` or same Hosting target | decide during Phase 7A implementation |
+| `law-main-road.cloud` | redirect to `www` or same Hosting target | human decision gate; not in the first frontend-only pass |
 | `api.law-main-road.cloud` | defer | open only if a separate custom API domain is approved |
 
 Required boundary decisions:

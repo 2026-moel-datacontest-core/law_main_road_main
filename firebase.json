@@ -1,0 +1,13 @@
+{
+  "hosting": {
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "lmr-dev-frontend",
+          "region": "asia-northeast3"
+        }
+      }
+    ]
+  }
+}

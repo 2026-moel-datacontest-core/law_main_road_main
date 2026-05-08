@@ -266,7 +266,7 @@ Host candidates:
 | Host | Candidate use | Current decision |
 |---|---|---|
 | `www.law-main-road.cloud` | public frontend entry | preferred first custom frontend host |
-| `law-main-road.cloud` | root entry or redirect to `www` | decide during Phase 7A implementation |
+| `law-main-road.cloud` | root entry or redirect to `www` | human decision gate; not in the first frontend-only pass |
 | `app.law-main-road.cloud` | alternative frontend entry | defer unless `www` is rejected |
 | `api.law-main-road.cloud` | backend API through edge routing | defer unless backend custom API routing is explicitly approved |
 
@@ -311,7 +311,7 @@ Recommended portfolio host split:
 | Host | Target | Default |
 |---|---|---|
 | `www.law-main-road.cloud` | frontend Cloud Run service through Firebase Hosting | yes |
-| `law-main-road.cloud` | redirect to `www` or same Hosting target | decide during Phase 7A implementation |
+| `law-main-road.cloud` | redirect to `www` or same Hosting target | human decision gate; not in the first frontend-only pass |
 | `app.law-main-road.cloud` | alternative frontend host | defer unless `www` is rejected |
 | `api.law-main-road.cloud` | backend API through a separate custom API host | defer unless explicitly approved |
 
@@ -346,8 +346,8 @@ Likely resources or configuration:
     is explicitly approved for this pass,
   - `/**` to the existing Cloud Run frontend.
   If `/api/**` is approved, that rule must precede the frontend catch-all rule.
-- Firebase Hosting custom domain for `www.law-main-road.cloud`, and optionally
-  root apex redirect or same target.
+- Firebase Hosting custom domain for `www.law-main-road.cloud`. Root apex
+  redirect or same target remains a separate human decision gate.
 - Managed certificate provisioned through Firebase Hosting.
 - DNS records remain manual in Gabia unless Cloud DNS is separately opened.
 - No external HTTPS Load Balancer, serverless NEG, Cloud Armor, or `api.<domain>`
