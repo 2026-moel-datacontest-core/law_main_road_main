@@ -108,10 +108,12 @@ module "iam" {
 module "artifact_registry" {
   source = "../../../modules/artifact-registry"
 
-  project_id    = var.project_id
-  location      = var.region
-  repository_id = "${local.resource_prefix}-ar"
-  labels        = merge(local.labels, { component = "artifact-registry" })
+  project_id             = var.project_id
+  location               = var.region
+  repository_id          = "${local.resource_prefix}-ar"
+  labels                 = merge(local.labels, { component = "artifact-registry" })
+  cleanup_policy_dry_run = var.artifact_registry_cleanup_policy_dry_run
+  cleanup_policies       = var.artifact_registry_cleanup_policies
 
   depends_on = [
     module.project_services,

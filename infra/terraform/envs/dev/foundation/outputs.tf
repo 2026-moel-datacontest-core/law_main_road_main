@@ -28,6 +28,16 @@ output "artifact_registry_location" {
   value       = module.artifact_registry.location
 }
 
+output "artifact_registry_cleanup_policy_dry_run" {
+  description = "Whether Artifact Registry cleanup policies are dry-run only."
+  value       = module.artifact_registry.cleanup_policy_dry_run
+}
+
+output "artifact_registry_cleanup_policy_ids" {
+  description = "Configured Artifact Registry cleanup policy ids."
+  value       = module.artifact_registry.cleanup_policy_ids
+}
+
 output "frontend_service_account_email" {
   description = "Frontend runtime service account email. Treat as internal cloud inventory."
   value       = module.iam.service_account_emails["frontend"]

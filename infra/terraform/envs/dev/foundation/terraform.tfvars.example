@@ -16,3 +16,34 @@ labels = {
 
 # Dev artifact retention baseline. Set to null only after a reviewed policy change.
 artifact_lifecycle_delete_age_days = 30
+
+# Phase 6 image cleanup baseline. Keep dry-run enabled until deletion impact and
+# rollback image retention are approved.
+artifact_registry_cleanup_policy_dry_run = true
+artifact_registry_cleanup_policies = [
+  {
+    id     = "keep-recent-backend"
+    action = "KEEP"
+    most_recent_versions = {
+      keep_count            = 10
+      package_name_prefixes = ["backend"]
+    }
+  },
+  {
+    id     = "keep-recent-frontend"
+    action = "KEEP"
+    most_recent_versions = {
+      keep_count            = 10
+      package_name_prefixes = ["frontend"]
+    }
+  },
+  {
+    id     = "delete-old-untagged"
+    action = "DELETE"
+    condition = {
+      tag_state             = "UNTAGGED"
+      package_name_prefixes = ["backend", "frontend"]
+      older_than            = "2592000s"
+    }
+  },
+]

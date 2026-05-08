@@ -17,6 +17,10 @@ Creates:
 - one private artifact bucket,
 - backend IAM access to DB-related secret shells and the artifact bucket.
 
+Phase 6 extends the foundation-owned Artifact Registry repository with dry-run
+cleanup policy inputs. Keep `artifact_registry_cleanup_policy_dry_run = true`
+until rollback image retention and irreversible delete impact are approved.
+
 Does not create:
 
 - Cloud SQL,
@@ -26,6 +30,7 @@ Does not create:
 - secret versions or values,
 - service account key JSON,
 - Firebase Admin JSON.
+- destructive Artifact Registry cleanup with dry-run disabled.
 
 Initialize after `bootstrap/remote-state` has been applied and approved:
 

@@ -15,6 +15,8 @@ gcloud artifacts repositories describe <repo-id> \
 
 Rollback/destructive behavior:
 
-- No image cleanup policy is configured in Phase 1.
-- Delete only before images or deploy pipelines depend on the repository, or
-  after a reviewed image retention/rollback plan.
+- Phase 6 can pass cleanup policies to this module. Keep
+  `cleanup_policy_dry_run = true` until image retention and rollback impact is
+  approved.
+- Do not configure a delete policy that can remove current or previous stable
+  rollback images before smoke evidence is recorded.

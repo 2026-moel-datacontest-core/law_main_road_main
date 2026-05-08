@@ -50,6 +50,33 @@ variable "artifact_lifecycle_delete_age_days" {
   default     = 30
 }
 
+variable "artifact_registry_cleanup_policy_dry_run" {
+  description = "Whether Artifact Registry cleanup policies are dry-run only. Keep true until irreversible deletion is approved."
+  type        = bool
+  default     = true
+}
+
+variable "artifact_registry_cleanup_policies" {
+  description = "Phase 6 image cleanup policies for the foundation-owned Artifact Registry repository."
+  type = list(object({
+    id     = string
+    action = string
+    condition = optional(object({
+      tag_state             = optional(string)
+      tag_prefixes          = optional(list(string))
+      version_name_prefixes = optional(list(string))
+      package_name_prefixes = optional(list(string))
+      older_than            = optional(string)
+      newer_than            = optional(string)
+    }))
+    most_recent_versions = optional(object({
+      keep_count            = number
+      package_name_prefixes = optional(list(string))
+    }))
+  }))
+  default = []
+}
+
 variable "foundation_services" {
   description = "Post-bootstrap project APIs owned by the dev foundation root."
   type        = set(string)

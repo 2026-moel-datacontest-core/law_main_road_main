@@ -1,0 +1,6 @@
+# Skeleton only. Prod ops is not opened.
+project_id = "<prod-project-id>"
+env        = "prod"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "<owner>"
