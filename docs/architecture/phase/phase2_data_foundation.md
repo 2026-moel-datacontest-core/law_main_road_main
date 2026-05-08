@@ -5,10 +5,11 @@
 ## 1. Goal
 
 Phase 2는 Cloud Run backend가 나중에 연결할 수 있는 managed PostgreSQL
-data foundation shell을 만든다. 엄격한 Terraform boundary는 Cloud SQL
-PostgreSQL instance, application database shell, non-secret outputs only다.
-Backend runtime IAM, Cloud Run service, schema/data bootstrap은 이 boundary에
-포함하지 않는다.
+data foundation을 만든다. 엄격한 Terraform boundary는 Cloud SQL PostgreSQL
+instance, application database shell, non-secret outputs only다. DB user
+bootstrap, Secret Manager version 추가, pgvector/schema/index/seed/embedding
+검증은 Terraform 밖의 승인된 admin/runbook 작업으로 수행한다. Backend runtime
+IAM과 Cloud Run service는 이 boundary에 포함하지 않는다.
 
 핵심 목표는 다음과 같다.
 
@@ -18,9 +19,10 @@ Backend runtime IAM, Cloud Run service, schema/data bootstrap은 이 boundary에
 - Cloud Run scale-out 전에 필요한 DB connection guardrail 값을 선정하고,
   현재 backend가 그 값을 소비하지 못하면 Phase 3 구현 전제조건으로 남긴다.
 
-The migration/seed sections below are runbook references for after explicit
-resource-creation approval. They must not be encoded in Terraform and are not
-evidence from a plan-only Phase 2 review.
+The migration/seed sections below are runbook references for approved
+post-Terraform DB/data readiness work. They must not be encoded in Terraform and
+must not expose raw DB passwords, credential-bearing `DATABASE_URL`, tokens, or
+service account key material.
 
 ## 2. Phase Status
 
@@ -36,12 +38,18 @@ evidence from a plan-only Phase 2 review.
 | Required previous phase | [`phase1_bootstrap_foundation.md`](phase1_bootstrap_foundation.md) |
 | Next phase | [`phase3_backend_runtime.md`](phase3_backend_runtime.md) |
 
-Implementation status on `2026-05-07`: Phase 2 is complete for the first `dev`
-cloud target. The dev data root was applied after saved-plan review, creating
-only the Cloud SQL PostgreSQL instance and application database shell. The
-post-apply plan returned no changes. DB users/passwords, Secret Manager versions,
-pgvector extension, schema migration, indexes, seed data, embeddings, backend
-runtime IAM, Cloud Run, WIF, and prod resources remain unopened.
+Implementation status on `2026-05-07`: Phase 2 DB/data readiness is complete for
+the first `dev` cloud target. The dev data root was applied after saved-plan
+review, creating the Cloud SQL PostgreSQL instance and application database
+shell; the post-apply plan returned no changes. Approved post-Terraform
+bootstrap then completed the admin/app DB credential setup, split DB Secret
+Manager versions, pgvector extension, Alembic migration, `law_chunks` seed,
+embedding fill, HNSW index verification, retrieval smoke, and answer smoke.
+
+Still not opened: Cloud Run deploy, backend runtime IAM including
+`roles/cloudsql.client`, WIF/GitHub workflow, service account key JSON, prod
+resources, backend/frontend/API/runtime code changes, and
+the credential-bearing database-url Secret Manager version.
 
 ## 3. Read First
 
@@ -177,11 +185,12 @@ the phase boundary.
 | Rollback/delete policy | prefer backward-compatible migrations; never delete prod Cloud SQL as normal rollback; dev delete only after dependency review |
 | Do not manage yet | pgvector extension creation, schema migrations, vector indexes, `law_chunks` seed/import, embeddings, backend runtime IAM, Cloud Run, WIF, custom domain/LB |
 
-Initial plan-only review stopped at Terraform fmt/validate/plan and boundary
-grep. The approved dev apply has since completed. Do not run Alembic migration,
-pgvector extension setup, seed import, embedding generation, backend runtime IAM,
-Cloud Run deploy, or prod data resources until those later steps are explicitly
-opened.
+The approved dev apply and post-Terraform DB/data readiness have completed. The
+Terraform root still owns only Cloud SQL infrastructure and non-secret outputs;
+pgvector, schema migration, seed, embeddings, and smoke checks were performed by
+approved admin/runbook steps outside Terraform. Do not open backend runtime IAM,
+Cloud Run deploy, WIF/GitHub workflow, or prod data resources until those later
+phases are explicitly approved.
 
 ## 7B. GitHub Issue Readiness
 
@@ -336,14 +345,13 @@ the full dev/demo/prod posture and Cloud Run scaling tradeoffs.
 Private IP + Serverless VPC Access is not part of Phase 2 first migration. Keep
 it as Phase 7 hardening unless a real deployment constraint requires it earlier.
 
-Planning review note on `2026-05-07`: Phase 2 implementation/apply has not been
-opened. The current dev recommendation is `POSTGRES_17`, Cloud SQL
-`ENTERPRISE`, `db-f1-micro`, 10 GB SSD, automated backups with 3-day retention,
-PITR off, `ZONAL`, HA off, deletion protection false, Cloud SQL connector/Auth
-Proxy access, no authorized networks, and no private IP/VPC until a later
-hardening phase. Confirm current Google Cloud support/pricing immediately before
-the implementation plan, because Cloud SQL version, edition, backup, and pricing
-facts are time-sensitive.
+Implementation result on `2026-05-07`: the first `dev` target uses
+`POSTGRES_17` on Cloud SQL `ENTERPRISE`, observed PostgreSQL `17.9`,
+`db-f1-micro`, 10 GB SSD with a 20 GB auto-increase cap, automated backups with
+3 retained backups, PITR off, `ZONAL`, HA off, deletion protection false, Cloud
+SQL connector/Auth Proxy access, no authorized networks, and no private IP/VPC.
+Prod remains unopened and must go through a separate prod-opening review before
+exact prod sizing, backup, PITR, HA, and deletion protection are selected.
 
 ## 14. Naming And Labels
 
@@ -418,6 +426,19 @@ Minimum DB user principle:
 - migration role can be separate from runtime app role if the project grows.
 - destructive grants are not needed for the first migration.
 
+Dev completion note on `2026-05-07`:
+
+- PostgreSQL admin password setup completed.
+- Application DB role/password setup completed outside Terraform state.
+- Secret Manager versions were added for split DB user, DB name, and DB password
+  secrets.
+- The credential-bearing database-url Secret Manager version was not created.
+- Cloud SQL Auth Proxy loopback access was used for DB bootstrap and
+  verification.
+- No raw password, credential-bearing `DATABASE_URL`, token, Firebase uid,
+  provider subject, private key material, or service account key JSON is recorded
+  in this document.
+
 ## 17. Migration Procedure
 
 Run migration after the database is reachable through `DATABASE_URL`.
@@ -442,6 +463,11 @@ Current migration responsibilities include:
 
 The migration step is idempotent at the Alembic level: repeated `alembic upgrade
 head` should end at the same head revision.
+
+Dev completion note on `2026-05-07`: pgvector extension setup completed as the
+PostgreSQL admin user with `CREATE EXTENSION IF NOT EXISTS vector`, observed
+`vector` version `0.8.1`. Alembic `upgrade head` completed and both current/head
+are `20260427_000007`.
 
 ## 18. Seed Procedure
 
@@ -484,6 +510,18 @@ Notes:
 - The full embedding run can take time and incur cost.
 - Do not modify `backend/data/law_chunks/` directly.
 
+Dev completion note on `2026-05-07`:
+
+- Seed source: `backend/data/law_chunks/all_chunks.json`.
+- Imported rows: `1722`.
+- `selected_as_of = 2026-04-11` verified for all `1722` rows.
+- Embedding model: `gemini-embedding-001`.
+- Output dimension: `768`.
+- Embedded rows: `1722`.
+- Rows with `NULL` embedding: `0`.
+- Full embedding run warning/error count: `1/0`; the warning was one Vertex auto
+  truncation event, and completeness/dimension verification passed.
+
 ## 19. Verification Procedure
 
 Run these checks after migration and seed.
@@ -515,6 +553,20 @@ Expected:
 - `vector` extension exists.
 - `idx_law_chunks_embedding` exists.
 - auth/history tables exist even if row counts are zero.
+
+Dev verification result on `2026-05-07`:
+
+- `idx_law_chunks_embedding` exists.
+- HNSW index `valid=true`, `ready=true`.
+- Retrieval smoke passed with `top_k=5`, `result_count=5`, and non-empty
+  `cited_articles`.
+- Retrieval smoke passed with `top_k=10`, `result_count=10`, and non-empty
+  `cited_articles`.
+- Answer smoke passed with `gemini-2.5-flash` for a general query at `top_k=5`
+  and a scenario query at `top_k=10`.
+- Answer smoke returned non-empty `cited_articles`, non-empty context grounding
+  ids, `citation_violations=0`, generated `answer` / `key_points` /
+  `cautions`, and surfaced no timeout, retry, or error.
 
 ## 20. Cloud SQL Connection Guardrail
 
@@ -605,6 +657,10 @@ Phase 2 is complete when:
 - prod backup retention baseline is 7 days.
 - prod PITR baseline is enabled unless a cost exception is approved before prod opens.
 
+Current `dev` result on `2026-05-07`: all Phase 2 DB/data readiness criteria
+above are complete for the first dev target. This does not open Phase 3 runtime
+deployment and does not imply production readiness.
+
 ## 24. Rollback
 
 Rollback rules:
@@ -648,6 +704,25 @@ Phase 3 backend runtime is blocked if any of these are true.
 - Cloud SQL tier/max connections cannot support the planned Cloud Run max
   instances.
 
+Current Phase 3 gate after Phase 2 completion:
+
+- Phase 3 implementation approval is still required.
+- Backend Cloud Run deploy is not started.
+- Backend runtime IAM, including Cloud SQL Client access for the backend service
+  account, is not granted yet.
+- The credential-bearing database-url Secret Manager version is not created yet;
+  either create it through an approved secret-value path or implement verified
+  split DB config before backend runtime wiring.
+- Backend image build strategy and Cloud Run service config must be opened in
+  Phase 3.
+- Backend DB pool guardrail support or an equivalent reviewed SQLAlchemy/Cloud
+  SQL connection cap must be verified/implemented before any production-ready
+  claim.
+- Public AI endpoint request/body/rate/cost guardrails, CORS policy, and
+  sensitive log review remain Phase 3+/Phase 6 gates.
+- WIF/GitHub workflow, service account key JSON, prod resources, and Phase 4
+  frontend runtime remain unopened.
+
 ## 26. Status Note Template
 
 Current status note for the first `dev` apply:
@@ -656,28 +731,40 @@ Current status note for the first `dev` apply:
 ## Phase 2 Status — Data Foundation
 
 - Environment: dev
-- GCP project: existing law-main-road project
 - Region: asia-northeast3
 - Terraform root: infra/terraform/envs/dev/data
 - Cloud SQL instance: created
-- Database: created
-- DB user strategy: outside Terraform; not created yet
+- Database: klabor
+- PostgreSQL: POSTGRES_17, observed 17.9
+- DB user strategy: outside Terraform; app role/password setup completed
+- Secret Manager versions: DB user, DB name, DB password added; database-url
+  version not created
 - Backup/PITR: backups enabled with 3 retained backups; PITR off
 - Deletion protection: false for disposable dev
-- Migration head: not run yet
-- law_chunks row count: not run yet
-- selected_as_of: not verified in Cloud SQL yet
-- embedding status: not run yet
-- HNSW index: not created yet
+- pgvector: vector extension exists, observed version 0.8.1
+- Migration head: current/head 20260427_000007
+- law_chunks row count: 1722
+- selected_as_of: 2026-04-11 x 1722
+- embedding status: gemini-embedding-001, 768 dimensions, embedded_rows=1722,
+  null_rows=0, warning/error=1/0 with one Vertex auto truncation warning
+- HNSW index: idx_law_chunks_embedding exists, valid=true, ready=true
+- Retrieval smoke: top_k=5 and top_k=10 passed with non-empty cited_articles
+- Answer smoke: gemini-2.5-flash top_k=5 general and top_k=10 scenario passed,
+  citation_violations=0, no surfaced timeout/retry/error
 - DB pool values: recommended for Phase 3 as small dev guardrails
 - Cloud Run max instance cap recommended for Phase 3: low cap, initially 2
 - Admin actions performed: Terraform saved-plan apply for Cloud SQL instance and
-  app database shell only
+  app database shell; DB bootstrap, Secret Manager split DB versions, pgvector,
+  Alembic, seed, embeddings, retrieval smoke, and answer smoke completed outside
+  Terraform
 - Commands run: Terraform validate, saved plan apply, post-apply no-change plan,
-  Cloud SQL instance/database describe
-- Skipped checks: DB user/password, pgvector extension, Alembic migration,
-  law_chunks seed, embeddings, backend runtime IAM, Cloud Run deploy
-- Blockers: none for DB bootstrap planning; later steps still need approval
+  Cloud SQL instance/database describe, DB bootstrap/migration/seed/embedding
+  verification, retrieval smoke, answer smoke
+- Skipped/not opened: Cloud Run deploy, backend runtime IAM/roles/cloudsql.client,
+  WIF/GitHub workflow, service account key JSON, prod resources,
+  backend/frontend/API/runtime code changes, database-url Secret Manager version
+- Blockers: none for Phase 2 DB/data readiness; Phase 3 requires separate
+  implementation approval and runtime gates
 ```
 
 For future reruns or another environment, record a short status note.
@@ -724,7 +811,9 @@ For future reruns or another environment, record a short status note.
 
 ## 28. Suggested Agent Prompt
 
-Use this prompt when asking an implementation agent to work on Phase 2.
+Use this prompt only when rerunning Phase 2 for another environment or rebuilding
+the data foundation from scratch. For the current `dev` target, Phase 2 DB/data
+readiness is already complete and Phase 3 must be opened separately.
 
 ```text
 Read docs/architecture/CLAUDE.md, docs/architecture/cloud_migration_architecture.md,
