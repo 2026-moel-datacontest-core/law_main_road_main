@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="K-Labor Shield Retrieval API",
+    title="법대로(LawMainRoad) Retrieval API",
     version="0.1.0",
     lifespan=lifespan,
 )
