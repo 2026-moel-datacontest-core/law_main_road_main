@@ -354,6 +354,22 @@ test "${digest}" = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 ## 2026-05-08 Phase 6 Observability / Reliability Troubleshooting
 
+### 0. Phase 6 apply 이후에도 notification channel이 빠져 보임
+
+정상 해석:
+
+- 승인된 notification channel은 repo에 커밋하지 않고 apply-time variable로만
+  주입한다.
+- `terraform.tfvars.example`의 `notification_channels = []`는 안전한 기본값으로
+  유지한다.
+
+조치:
+
+- post-apply no-change plan을 확인할 때도 동일한 approved channel variable을
+  함께 전달한다.
+- channel 변경, Slack/PagerDuty 추가, threshold 조정은 1-2일 dev noise 관찰 후
+  별도 승인으로 진행한다.
+
 ### 1. Ops root가 foundation-owned repository/bucket을 다시 만들려고 함
 
 정상 해석:

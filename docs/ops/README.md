@@ -108,11 +108,12 @@
 - Budget/mirror policy 반영: `lmr-dev-demo-monthly` budget alert threshold는
   `KRW 70,000`, `25/50/80/100 actual + 100 forecasted`로 생성 완료했다.
   Budget alert는 hard cap이 아니며, 실제 비용 중지/삭제는 사람이 판단한다.
-- Cloud migration Phase 6 Observability/Reliability dev baseline authoring
-  반영: `envs/dev/ops`, `log-based-metrics`, `monitoring-alerts` Terraform이
-  추가됐고, foundation-owned Artifact Registry cleanup policy는 dry-run 상태로
-  wire-up됐다. Alert receiver/owner, threshold tuning, actual apply, lifecycle
-  delete impact, and Cloud SQL restore test는 human-only gate다.
+- Cloud migration Phase 6 Observability/Reliability dev baseline 반영:
+  `envs/dev/ops`, `log-based-metrics`, `monitoring-alerts` Terraform이 추가됐고,
+  foundation-owned Artifact Registry cleanup policy는 dry-run 상태로 적용됐다.
+  Team email notification channel이 연결된 dev alert policies와 log-based
+  metrics는 apply 완료 상태다. Cleanup dry-run 해제, threshold 재조정, Slack/
+  PagerDuty 추가, actual Cloud SQL restore test, prod opening은 human-only gate다.
 
 현재 코드/구조 기준으로 반영된 주요 상태:
 

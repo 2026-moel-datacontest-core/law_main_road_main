@@ -46,6 +46,36 @@ Expected Phase 6 plan:
 Do not apply either root until alert receiver, threshold/noise, cleanup retention,
 and rollback-image retention decisions are approved.
 
+First dev apply status on `2026-05-08`:
+
+- receiver/owner approved: team email channel, LMR Team,
+- thresholds: dev defaults,
+- Artifact Registry cleanup: dry-run enabled,
+- Cloud SQL restore test: deferred,
+- prod: not opened.
+
+When applying alert policies, pass the approved channel at apply time rather than
+committing it to `terraform.tfvars.example`:
+
+```bash
+terraform plan -detailed-exitcode \
+  -var-file=terraform.tfvars.example \
+  -var='notification_channels=["<approved-channel-resource>"]' \
+  -out=tfplan.phase6-ops
+terraform apply tfplan.phase6-ops
+```
+
+Post-apply checks:
+
+```bash
+terraform plan -detailed-exitcode -var-file=terraform.tfvars.example
+terraform plan -detailed-exitcode \
+  -var-file=terraform.tfvars.example \
+  -var='notification_channels=["<approved-channel-resource>"]'
+```
+
+Expected result after the first apply: both roots report no changes.
+
 ## 2. Sensitive Log Sampling
 
 Default check is summary-only. Do not print raw `textPayload`,
@@ -60,15 +90,7 @@ Safe shape:
 gcloud logging read '<bounded-filter>' \
   --freshness=2h \
   --limit=500 \
-  --format=json > /tmp/lmr-phase6-log-sample.json
-```
-
-Review only bounded counts:
-
-```bash
-jq 'length' /tmp/lmr-phase6-log-sample.json
-jq '[.[].severity] | group_by(.) | map({severity: .[0], count: length})' \
-  /tmp/lmr-phase6-log-sample.json
+  --format='value(severity)' | sort | uniq -c
 ```
 
 Sensitive pattern check should report only category names and counts. If a hit

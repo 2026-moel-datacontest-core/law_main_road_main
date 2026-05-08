@@ -24,9 +24,9 @@ Current status:
 - `envs/dev/cicd`: Phase 5 dev CI/CD WIF/deploy root. Phase 5 deploy and
   rollback rehearsal evidence is recorded in
   `docs/architecture/phase/phase5_cicd.md`.
-- `envs/dev/ops`: authored for Phase 6 dev observability/reliability. It creates
-  log-based metrics, alert policies, and optional minimal ops IAM grants after
-  human approval.
+- `envs/dev/ops`: applied for Phase 6 dev observability/reliability on
+  `2026-05-08`. It manages log-based metrics, alert policies with one approved
+  team email notification channel, and minimal ops IAM grants.
 - `envs/prod/ops`: skeleton only.
 
 Phase 1 resources are limited to remote state bootstrap, required APIs, service
@@ -121,6 +121,17 @@ Phase 6 authoring validation on `2026-05-08`:
 - `envs/dev/foundation` `terraform plan -detailed-exitcode`: expected in-place
   Artifact Registry cleanup dry-run policy plan; no destroy.
 
-Do not run additional `terraform apply`, disable cleanup dry-run, configure alert
-channels, execute rollback drills, or open prod resources without explicit human
-approval for that phase.
+Phase 6 post-apply validation on `2026-05-08`:
+
+- dev foundation apply: `0 added, 1 changed, 0 destroyed`; Artifact Registry
+  cleanup policy remains dry-run.
+- dev ops apply: `18 added, 0 changed, 0 destroyed`; 5 log-based metrics, 11
+  alert policies, and 2 ops IAM bindings created.
+- dev foundation post-apply plan: no changes.
+- dev ops post-apply plan with the approved notification channel variable: no
+  changes.
+- backend `/health` and frontend route smoke: PASS.
+
+Do not run additional `terraform apply`, disable cleanup dry-run, change alert
+channels or thresholds, execute rollback drills, run Cloud SQL restore tests, or
+open prod resources without explicit human approval for that phase.

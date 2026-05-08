@@ -73,11 +73,12 @@ Validation evidence:
 
 Current apply boundary:
 
-- Apply is not executed until alert receiver/owner, threshold noise posture,
-  cleanup retention, rollback image retention, and lifecycle deletion impact are
+- The first dev apply has been completed after alert receiver/owner, threshold
+  noise posture, cleanup dry-run, backup check, and restore-test deferral were
   approved.
-- Notification channels remain an empty variable by default. Terraform should
-  reference only an approved existing channel.
+- Notification channels remain an empty variable by default in committed
+  example vars. Apply-time variables should reference only an approved existing
+  channel.
 - Cleanup policy dry-run remains enabled. Disabling dry-run is a human-only
   destructive gate because image deletion can break rollback.
 - GCS artifact durability is not claimed by Phase 6 while backend artifact
@@ -88,6 +89,47 @@ Current apply boundary:
   authoring pass.
 - Phase 5 rollback rehearsal evidence is reused as baseline; a new Phase 6 drill
   requires an approved dev drill window.
+
+## 2B. Dev Apply Evidence
+
+Evidence date: `2026-05-08`
+
+Human approvals recorded before apply:
+
+- Dev notification channel: one team-owned email channel, enabled.
+- Incident owner: LMR Team.
+- Threshold posture: current dev defaults approved; observe alert noise for the
+  first 1-2 days and tune if needed.
+- Artifact Registry cleanup: apply cleanup policy with dry-run still enabled.
+  Keep recent backend/frontend images and only record old untagged images as
+  delete candidates.
+- Cloud SQL backup check: instance runnable, latest successful automated backup
+  confirmed at `2026-05-07 17:00 UTC`, retained backups `3`, PITR off.
+- Cloud SQL actual restore test: deferred until separate cost, cleanup, and
+  maintenance-window approval.
+- Prod: not opened.
+
+Apply evidence:
+
+| Root | Result |
+|---|---|
+| `envs/dev/foundation` | Applied saved plan: `0 added, 1 changed, 0 destroyed`. The only change was the foundation-owned Artifact Registry cleanup policy dry-run wiring. |
+| `envs/dev/ops` | Applied saved plan: `18 added, 0 changed, 0 destroyed`. Created 5 log-based metrics, 11 alert policies, and 2 minimal ops IAM bindings. |
+| `envs/dev/foundation` post-apply plan | No changes. |
+| `envs/dev/ops` post-apply plan | No changes when using the approved notification channel variable. |
+| Notification channel | Terraform output shows notification channel configured with count `1`. |
+| Cleanup posture | Terraform output shows Artifact Registry cleanup policy dry-run is `true`. |
+| Runtime smoke | Backend `/health` returned `ok`; frontend route fetched successfully. Direct service URLs were not copied into public evidence. |
+| Log sampling | Recent Cloud Run log check used severity-only output, not raw payloads. |
+
+Remaining gates:
+
+- Slack/PagerDuty channel addition after threshold stability review.
+- Alert threshold changes after 1-2 days of dev noise observation.
+- Artifact Registry dry-run disablement and any irreversible lifecycle delete
+  impact.
+- Actual Cloud SQL restore rehearsal.
+- Any prod opening or public demo posture change.
 
 ## 3. Read First
 
