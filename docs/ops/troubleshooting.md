@@ -424,7 +424,6 @@ test "${digest}" = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   PASS/FAIL만 남긴다.
 - 민감 hit가 있으면 route/window/source와 mitigation만 기록하고 원문은
   붙이지 않는다.
-
 ## 2026-04-22 Firebase Auth / ID Token Troubleshooting
 
 ### 1. 목표 구조를 혼동함: Firebase ID token은 “등록”하는 값이 아니다
