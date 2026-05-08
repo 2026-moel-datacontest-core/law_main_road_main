@@ -108,6 +108,11 @@
 - Budget/mirror policy 반영: `lmr-dev-demo-monthly` budget alert threshold는
   `KRW 70,000`, `25/50/80/100 actual + 100 forecasted`로 생성 완료했다.
   Budget alert는 hard cap이 아니며, 실제 비용 중지/삭제는 사람이 판단한다.
+- Cloud migration Phase 6 Observability/Reliability dev baseline authoring
+  반영: `envs/dev/ops`, `log-based-metrics`, `monitoring-alerts` Terraform이
+  추가됐고, foundation-owned Artifact Registry cleanup policy는 dry-run 상태로
+  wire-up됐다. Alert receiver/owner, threshold tuning, actual apply, lifecycle
+  delete impact, and Cloud SQL restore test는 human-only gate다.
 
 현재 코드/구조 기준으로 반영된 주요 상태:
 
@@ -382,6 +387,7 @@ repo 전체 구조와 핵심 파일 역할을 설명하는 저장소 지도 문�
 - [cloud_migration_manual_preflight.md](./cloud_migration_manual_preflight.md)
 - [cloud_migration_budget_and_mirror_policy.md](./cloud_migration_budget_and_mirror_policy.md)
 - [submission_mirror_readme_draft.md](./submission_mirror_readme_draft.md)
+- [phase6_observability_reliability_runbook.md](./phase6_observability_reliability_runbook.md)
 
 Cloud Run / Cloud SQL / GCS 구조 전환을 염두에 둔 운영 설계 문서다.
 

@@ -32,6 +32,63 @@ backup verification, lifecycle cleanup, cost guardrail을 실제 운영 기준�
 | Required previous phase | [`phase5_cicd.md`](phase5_cicd.md) |
 | Next phase | [`phase7_optional_hardening.md`](phase7_optional_hardening.md) |
 
+## 2A. Dev Ops Authoring Evidence
+
+Evidence date: `2026-05-08`
+
+Scope:
+
+- Target profile: `dev`.
+- `infra/terraform/envs/dev/ops` is authored as the first apply-ready Phase 6
+  ops root.
+- `infra/terraform/modules/log-based-metrics` creates project-scoped counter
+  metrics from current plain-text backend log signals.
+- `infra/terraform/modules/monitoring-alerts` creates Cloud Monitoring
+  metric-threshold alert policies without creating notification channels.
+- Artifact Registry cleanup remains owned by the existing foundation root. Phase
+  6 wires dry-run cleanup policy inputs there instead of duplicating repository
+  ownership in the ops state.
+- Prod ops remains skeleton-only.
+
+Planned dev signals:
+
+| Area | Signal |
+|---|---|
+| Backend/frontend 5xx | Cloud Run `run.googleapis.com/request_count` with `response_code_class=5xx` |
+| Provider timeout | backend app log `reason=provider_timeout` |
+| Provider/runtime error | backend app log `reason=provider_runtime`, `reason=vertex_runtime`, or `reason=query_embedding` |
+| Database/internal error | backend app log `reason=database` / `reason=internal` |
+| Artifact persistence failure | backend app log `artifact_persist_failed` |
+| Cloud SQL saturation | CPU, memory, disk utilization, and PostgreSQL connection count candidates |
+
+Validation evidence:
+
+| Check | Evidence |
+|---|---|
+| Terraform fmt | `terraform fmt -recursive infra/terraform` completed and normalized the new ops root. |
+| Ops validate | `terraform init -backend=false -input=false && terraform validate` passed for `envs/dev/ops`. |
+| Foundation validate | `terraform init -backend=false -input=false && terraform validate` passed for `envs/dev/foundation` after adding cleanup policy inputs. |
+| Ops plan | `envs/dev/ops` remote-backend `terraform plan -detailed-exitcode -var-file=terraform.tfvars.example` produced the expected create-only plan: log metrics, alert policies, and minimal ops IAM grants; no destroy. |
+| Foundation cleanup plan | `envs/dev/foundation` `terraform plan -detailed-exitcode -var-file=terraform.tfvars.example` produced the expected in-place Artifact Registry cleanup policy dry-run update; no destroy. |
+
+Current apply boundary:
+
+- Apply is not executed until alert receiver/owner, threshold noise posture,
+  cleanup retention, rollback image retention, and lifecycle deletion impact are
+  approved.
+- Notification channels remain an empty variable by default. Terraform should
+  reference only an approved existing channel.
+- Cleanup policy dry-run remains enabled. Disabling dry-run is a human-only
+  destructive gate because image deletion can break rollback.
+- GCS artifact durability is not claimed by Phase 6 while backend artifact
+  writers can still use local paths. The private artifact bucket lifecycle policy
+  exists, but durable artifact adapter completion remains a separate runtime
+  boundary.
+- Cloud SQL actual restore test remains human-only and is not performed by this
+  authoring pass.
+- Phase 5 rollback rehearsal evidence is reused as baseline; a new Phase 6 drill
+  requires an approved dev drill window.
+
 ## 3. Read First
 
 Phase 6 작업자는 아래 순서로 읽는다.
