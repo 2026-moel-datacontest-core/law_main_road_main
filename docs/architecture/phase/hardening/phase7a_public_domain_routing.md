@@ -15,8 +15,8 @@ Selected path:
 law-main-road.cloud
 -> Gabia DNS
 -> Firebase Hosting custom domain / managed certificate
--> Hosting rewrites
--> existing dev Cloud Run frontend/backend
+-> Hosting frontend rewrite
+-> existing dev Cloud Run frontend
 ```
 
 Target profile:
@@ -54,23 +54,32 @@ Host plan:
 
 ## Routing Plan
 
-Preferred first-pass routing:
+Default first-pass routing:
 
 ```text
 https://www.law-main-road.cloud/**
 -> Firebase Hosting rewrite
 -> Cloud Run frontend
+```
 
+Deferred unless explicitly approved:
+
+```text
 https://www.law-main-road.cloud/api/**
 -> Firebase Hosting rewrite
 -> Cloud Run backend
 ```
 
-Rewrite rule ordering is a hard gate. Firebase Hosting applies the first matching
-rewrite rule, so `/api/**` must be listed before the frontend catch-all `/**`.
+The first Phase 7A implementation should connect only the frontend public domain
+unless same-origin API routing is explicitly approved. Do not add a `/api/**`
+Hosting rewrite, change `NEXT_PUBLIC_API_BASE_URL`, or change backend CORS as a
+side effect of the frontend-only domain launch.
 
-The same-origin API route requires a frontend image rebuild with an approved
-build-time API base such as:
+If same-origin `/api/**` routing is later approved, rewrite rule ordering becomes
+a hard gate. Firebase Hosting applies the first matching rewrite rule, so
+`/api/**` must be listed before the frontend catch-all `/**`. The same-origin API
+route also requires a frontend image rebuild with an approved build-time API base
+such as:
 
 ```text
 NEXT_PUBLIC_API_BASE_URL=https://www.law-main-road.cloud
@@ -85,7 +94,9 @@ decision.
 If the same-origin API path is not ready, the fallback is to connect only the
 frontend custom domain first and keep the existing backend Cloud Run URL as the
 frontend API base during the first smoke. That fallback must still update
-Firebase Authorized Domains and backend CORS for the approved frontend origin.
+Firebase Authorized Domains for the approved frontend origin. Backend CORS is
+changed only if a browser cross-origin path requires a new allowed origin and
+that change is explicitly approved.
 
 ## Why Not Load Balancer First
 
@@ -116,12 +127,16 @@ Before implementation:
 - `www.law-main-road.cloud` is approved as the canonical public frontend host.
 - Root apex behavior is selected: redirect to `www` or same Hosting target.
 - Same-origin `/api/**` routing is approved or explicitly deferred.
-- Hosting rewrite order is approved: `/api/**` before frontend catch-all `/**`.
-- Long-running API paths are identified; any path that can exceed the Firebase
-  Hosting 60-second timeout is kept on direct backend fallback or deferred to a
-  separate API-domain/edge decision.
-- Frontend rebuild impact for `NEXT_PUBLIC_API_BASE_URL` is accepted.
-- Backend CORS target and rollback origin are selected.
+- If same-origin `/api/**` routing is approved, Hosting rewrite order is
+  approved: `/api/**` before frontend catch-all `/**`.
+- If same-origin `/api/**` routing is approved, long-running API paths are
+  identified; any path that can exceed the Firebase Hosting 60-second timeout is
+  kept on direct backend fallback or deferred to a separate API-domain/edge
+  decision.
+- If same-origin `/api/**` routing is approved, frontend rebuild impact for
+  `NEXT_PUBLIC_API_BASE_URL` is accepted.
+- If backend CORS changes are approved, backend CORS target and rollback origin
+  are selected.
 - DNS remains in Gabia unless Cloud DNS is separately opened.
 
 ## Implementation Scope
@@ -130,13 +145,16 @@ In scope:
 
 - Firebase Hosting setup for the existing Firebase/GCP project.
 - `firebase.json` Hosting rewrites if repo-managed Hosting config is selected.
-  The `/api/**` rewrite must precede the frontend catch-all rewrite.
+  The first pass uses the frontend catch-all rewrite only unless same-origin API
+  routing is explicitly approved. If `/api/**` is approved, it must precede the
+  frontend catch-all rewrite.
 - Firebase custom domain setup for `www.law-main-road.cloud`.
 - Gabia DNS records required by Firebase.
 - Firebase Authentication Authorized Domains update.
-- Frontend rebuild if the API base changes to the public custom domain.
-- Backend CORS re-apply for the approved frontend custom origin when needed.
-- Route/auth/API smoke and rollback note.
+- Frontend rebuild only if the API base change is explicitly approved.
+- Backend CORS re-apply only if the approved routing path requires it.
+- Route/auth smoke, conditional API smoke for any approved API routing change,
+  and rollback note.
 
 Out of scope:
 

@@ -184,7 +184,7 @@ Cloud Run Jobs are opened, do not create `edge/` or `networking/`.
 | Field | Content |
 |---|---|
 | Issue title | Phase 7A: Public domain routing with Firebase Hosting |
-| Scope | Create a candidate-specific design and, only after approval, implement Firebase Hosting custom domain routing, DNS instructions, Firebase Authorized Domains, CORS/API-base updates, smoke, and rollback |
+| Scope | Create a candidate-specific design and, only after approval, implement Firebase Hosting custom domain routing, DNS instructions, Firebase Authorized Domains, conditional CORS/API-base updates only if same-origin API routing is separately approved, smoke, and rollback |
 | Acceptance criteria | candidate preserves SCN/API/auth/storage boundaries; cost and DNS ownership are approved; custom domain smoke passes; rollback to Cloud Run direct URL is documented |
 | Forbidden changes | making Phase 7 mandatory, mixing with Phase 1-6 fixes, API contract changes, auth persistence changes, raw inventory exposure, Local LLM/GPU/self-hosted model serving |
 | Validation | candidate Terraform checks, DNS/cert checks, route/API/auth smoke, public evidence redaction review |
@@ -276,9 +276,9 @@ Selected Phase 7A implementation path:
 - Keep Gabia DNS authoritative and add only the records Firebase/Google requires.
 - Route `www.law-main-road.cloud` to the existing Cloud Run frontend through
   Firebase Hosting.
-- Prefer same-origin API calls through Hosting rewrites, with `/api/**` routed to
-  the existing Cloud Run backend, after confirming the frontend build-time API
-  base, rewrite order, timeout risk, and route smoke.
+- Defer same-origin API calls by default. Do not add `/api/**` Hosting rewrites,
+  change `NEXT_PUBLIC_API_BASE_URL`, or change backend CORS unless that routing
+  change is explicitly approved.
 - Defer `api.law-main-road.cloud`, external HTTPS Load Balancer, serverless NEG,
   Cloud Armor, Cloud DNS delegation, separate `demo` environment, and `prod`
   opening.
@@ -295,7 +295,11 @@ User
 -> Firebase Hosting custom domain / managed certificate
 -> Hosting rewrite `/**`
 -> Cloud Run frontend
+```
 
+Deferred unless explicitly approved:
+
+```text
 Frontend browser/API calls
 -> same-origin `https://www.law-main-road.cloud/api/**`
 -> Hosting rewrite `/api/**`
@@ -338,10 +342,10 @@ Likely resources or configuration:
 
 - Firebase Hosting site/config for the selected Firebase project.
 - Hosting rewrites:
-  - `/api/**` to the existing Cloud Run backend if same-origin API routing is
-    approved for this pass,
+  - `/api/**` to the existing Cloud Run backend only if same-origin API routing
+    is explicitly approved for this pass,
   - `/**` to the existing Cloud Run frontend.
-  The `/api/**` rule must precede the frontend catch-all rule.
+  If `/api/**` is approved, that rule must precede the frontend catch-all rule.
 - Firebase Hosting custom domain for `www.law-main-road.cloud`, and optionally
   root apex redirect or same target.
 - Managed certificate provisioned through Firebase Hosting.
@@ -380,8 +384,9 @@ Likely resources or configuration:
   fallback.
 - `NEXT_PUBLIC_API_BASE_URL` points to the intended backend path and matches the
   latest frontend image build.
-- Backend `BACKEND_CORS_ORIGIN_REGEX` allows only the approved frontend custom
-  domain, plus any explicitly documented rollback origin.
+- If backend CORS changes are approved, backend `BACKEND_CORS_ORIGIN_REGEX`
+  allows only the approved frontend custom domain, plus any explicitly
+  documented rollback origin.
 - Google Sign-In does not fail with `auth/unauthorized-domain`.
 - SCN-004 exact preset remains frozen.
 - SCN-001 exact fixed preset remains frontend-local frozen draft path.
