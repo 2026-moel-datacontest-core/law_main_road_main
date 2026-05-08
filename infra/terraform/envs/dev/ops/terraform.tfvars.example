@@ -1,0 +1,45 @@
+project_id = "law-main-road"
+env        = "dev"
+region     = "asia-northeast3"
+prefix     = "lmr"
+owner      = "portfolio"
+
+labels = {
+  app        = "law-main-road"
+  env        = "dev"
+  managed_by = "terraform"
+  owner      = "portfolio"
+}
+
+foundation_state_bucket = "lmr-dev-law-main-road-tfstate"
+foundation_state_prefix = "envs/dev/foundation"
+
+data_state_bucket = "lmr-dev-law-main-road-tfstate"
+data_state_prefix = "envs/dev/data"
+
+backend_runtime_state_bucket = "lmr-dev-law-main-road-tfstate"
+backend_runtime_state_prefix = "envs/dev/runtime/backend"
+
+frontend_runtime_state_bucket = "lmr-dev-law-main-road-tfstate"
+frontend_runtime_state_prefix = "envs/dev/runtime/frontend"
+
+# Human gate: keep empty until the receiver/channel and incident owner are approved.
+notification_channels = []
+
+manage_terraform_ops_iam = true
+
+backend_5xx_count_threshold              = 0
+frontend_5xx_count_threshold             = 0
+provider_timeout_count_threshold         = 1
+runtime_error_count_threshold            = 0
+database_error_count_threshold           = 0
+internal_error_count_threshold           = 0
+artifact_persist_failure_count_threshold = 0
+
+cloud_sql_cpu_utilization_threshold    = 0.8
+cloud_sql_memory_utilization_threshold = 0.8
+cloud_sql_disk_utilization_threshold   = 0.8
+
+# Dev backend DB pool guardrail is 2 max instances * (2 pool + 3 overflow) = 10.
+# Start below the theoretical cap and tune after baseline traffic.
+cloud_sql_postgres_connection_threshold = 8

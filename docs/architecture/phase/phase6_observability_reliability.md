@@ -32,6 +32,105 @@ backup verification, lifecycle cleanup, cost guardrail을 실제 운영 기준�
 | Required previous phase | [`phase5_cicd.md`](phase5_cicd.md) |
 | Next phase | [`phase7_optional_hardening.md`](phase7_optional_hardening.md) |
 
+## 2A. Dev Ops Authoring Evidence
+
+Evidence date: `2026-05-08`
+
+Scope:
+
+- Target profile: `dev`.
+- `infra/terraform/envs/dev/ops` is authored as the first apply-ready Phase 6
+  ops root.
+- `infra/terraform/modules/log-based-metrics` creates project-scoped counter
+  metrics from current plain-text backend log signals.
+- `infra/terraform/modules/monitoring-alerts` creates Cloud Monitoring
+  metric-threshold alert policies without creating notification channels.
+- Artifact Registry cleanup remains owned by the existing foundation root. Phase
+  6 wires dry-run cleanup policy inputs there instead of duplicating repository
+  ownership in the ops state.
+- Prod ops remains skeleton-only.
+
+Planned dev signals:
+
+| Area | Signal |
+|---|---|
+| Backend/frontend 5xx | Cloud Run `run.googleapis.com/request_count` with `response_code_class=5xx` |
+| Provider timeout | backend app log `reason=provider_timeout` |
+| Provider/runtime error | backend app log `reason=provider_runtime`, `reason=vertex_runtime`, or `reason=query_embedding` |
+| Database/internal error | backend app log `reason=database` / `reason=internal` |
+| Artifact persistence failure | backend app log `artifact_persist_failed` |
+| Cloud SQL saturation | CPU, memory, disk utilization, and PostgreSQL connection count candidates |
+
+Validation evidence:
+
+| Check | Evidence |
+|---|---|
+| Terraform fmt | `terraform fmt -recursive infra/terraform` completed and normalized the new ops root. |
+| Ops validate | `terraform init -backend=false -input=false && terraform validate` passed for `envs/dev/ops`. |
+| Foundation validate | `terraform init -backend=false -input=false && terraform validate` passed for `envs/dev/foundation` after adding cleanup policy inputs. |
+| Ops plan | `envs/dev/ops` remote-backend `terraform plan -detailed-exitcode -var-file=terraform.tfvars.example` produced the expected create-only plan: log metrics, alert policies, and minimal ops IAM grants; no destroy. |
+| Foundation cleanup plan | `envs/dev/foundation` `terraform plan -detailed-exitcode -var-file=terraform.tfvars.example` produced the expected in-place Artifact Registry cleanup policy dry-run update; no destroy. |
+
+Current apply boundary:
+
+- The first dev apply has been completed after alert receiver/owner, threshold
+  noise posture, cleanup dry-run, backup check, and restore-test deferral were
+  approved.
+- Notification channels remain an empty variable by default in committed
+  example vars. Apply-time variables should reference only an approved existing
+  channel.
+- Cleanup policy dry-run remains enabled. Disabling dry-run is a human-only
+  destructive gate because image deletion can break rollback.
+- GCS artifact durability is not claimed by Phase 6 while backend artifact
+  writers can still use local paths. The private artifact bucket lifecycle policy
+  exists, but durable artifact adapter completion remains a separate runtime
+  boundary.
+- Cloud SQL actual restore test remains human-only and is not performed by this
+  authoring pass.
+- Phase 5 rollback rehearsal evidence is reused as baseline; a new Phase 6 drill
+  requires an approved dev drill window.
+
+## 2B. Dev Apply Evidence
+
+Evidence date: `2026-05-08`
+
+Human approvals recorded before apply:
+
+- Dev notification channel: one team-owned email channel, enabled.
+- Incident owner: LMR Team.
+- Threshold posture: current dev defaults approved; observe alert noise for the
+  first 1-2 days and tune if needed.
+- Artifact Registry cleanup: apply cleanup policy with dry-run still enabled.
+  Keep recent backend/frontend images and only record old untagged images as
+  delete candidates.
+- Cloud SQL backup check: instance runnable, latest successful automated backup
+  confirmed at `2026-05-07 17:00 UTC`, retained backups `3`, PITR off.
+- Cloud SQL actual restore test: deferred until separate cost, cleanup, and
+  maintenance-window approval.
+- Prod: not opened.
+
+Apply evidence:
+
+| Root | Result |
+|---|---|
+| `envs/dev/foundation` | Applied saved plan: `0 added, 1 changed, 0 destroyed`. The only change was the foundation-owned Artifact Registry cleanup policy dry-run wiring. |
+| `envs/dev/ops` | Applied saved plan: `18 added, 0 changed, 0 destroyed`. Created 5 log-based metrics, 11 alert policies, and 2 minimal ops IAM bindings. |
+| `envs/dev/foundation` post-apply plan | No changes. |
+| `envs/dev/ops` post-apply plan | No changes when using the approved notification channel variable. |
+| Notification channel | Terraform output shows notification channel configured with count `1`. |
+| Cleanup posture | Terraform output shows Artifact Registry cleanup policy dry-run is `true`. |
+| Runtime smoke | Backend `/health` returned `ok`; frontend route fetched successfully. Direct service URLs were not copied into public evidence. |
+| Log sampling | Recent Cloud Run log check used severity-only output, not raw payloads. |
+
+Remaining gates:
+
+- Slack/PagerDuty channel addition after threshold stability review.
+- Alert threshold changes after 1-2 days of dev noise observation.
+- Artifact Registry dry-run disablement and any irreversible lifecycle delete
+  impact.
+- Actual Cloud SQL restore rehearsal.
+- Any prod opening or public demo posture change.
+
 ## 3. Read First
 
 Phase 6 작업자는 아래 순서로 읽는다.

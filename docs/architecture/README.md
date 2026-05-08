@@ -21,6 +21,7 @@ Feature requirements, screen plans, API contracts, and data models belong in `do
 | `images_drawio/` | Current presentation and implementation-handoff draw.io source files for overview/detail architecture visuals. Draw.io files are visual sources; PNGs are generated previews. Edit these first for visual updates. |
 | `cloud_migration_phase_plan.md` | Phase-by-phase implementation architecture for the GCP migration target, with Terraform layer/module boundaries and verification gates. |
 | `phase/phaseN_*.md` | Phase-specific execution documents. Use these for assigning or implementing one phase at a time. |
+| `phase/hardening/phase7x_*.md` | Phase 7 candidate-specific design/opening-gate notes. Keep optional hardening details here instead of bloating the Phase 7 umbrella document. |
 | `current_project_architecture.md` / `current_project_architecture.mmd` | Temporary current project reference that summarizes the current repo surfaces. Keep it for now as source material while `docs/specs/` is being filled out. After specs are complete, move/delete only if it becomes duplicate and there is an explicit follow-up task. |
 
 ## Future Production Runbook Docs
@@ -55,3 +56,6 @@ the cloud deployment is live, not prerequisites for starting Phase 1.
 - For phase-specific work, read `phase/README.md` and the matching
   `phase/phaseN_*.md` file before changing Terraform, runtime code, or
   deployment docs.
+- For Phase 7 optional hardening, keep the umbrella decision in
+  `phase/phase7_optional_hardening.md` and put candidate-specific opening gates
+  under `phase/hardening/`.

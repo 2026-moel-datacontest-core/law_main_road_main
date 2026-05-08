@@ -1,4 +1,4 @@
-# Frontend Implementation Handoff — K-Labor Shield SCN-004 Demo
+# Frontend Implementation Handoff — 법대로(LawMainRoad) SCN-004 Demo
 
 기준일: `2026-05-04`
 대상: Codex / QA handoff
@@ -1280,4 +1280,4 @@ uvicorn backend.main:app --reload
 
 ---
 
-*이 문서는 2026-05-04 기준 K-Labor Shield SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록, 2026-04-20 presentation-local preset 기준, 2026-04-24 SCN-001 protected answer/linkage 기준, 2026-04-28 `fdde441` visual/progress/history polish 기준, 2026-04-29 visual checkpoint `85d10fa` 기준은 evolution history로 보존한다. Current main `e79fa68`까지의 workspace/draft-scope documentation alignment는 frontend/backend public contract를 변경하지 않았으며, Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer/accessibility blocker fixes는 frontend-only 상태다. Backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*
+*이 문서는 2026-05-04 기준 법대로(LawMainRoad) SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록, 2026-04-20 presentation-local preset 기준, 2026-04-24 SCN-001 protected answer/linkage 기준, 2026-04-28 `fdde441` visual/progress/history polish 기준, 2026-04-29 visual checkpoint `85d10fa` 기준은 evolution history로 보존한다. Current main `e79fa68`까지의 workspace/draft-scope documentation alignment는 frontend/backend public contract를 변경하지 않았으며, Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer/accessibility blocker fixes는 frontend-only 상태다. Backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*

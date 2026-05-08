@@ -352,6 +352,78 @@ test "${digest}" = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 - workflow에는 GCP key JSON, 실제 `DATABASE_URL`, DB password, token을 넣지
   않는다.
 
+## 2026-05-08 Phase 6 Observability / Reliability Troubleshooting
+
+### 0. Phase 6 apply 이후에도 notification channel이 빠져 보임
+
+정상 해석:
+
+- 승인된 notification channel은 repo에 커밋하지 않고 apply-time variable로만
+  주입한다.
+- `terraform.tfvars.example`의 `notification_channels = []`는 안전한 기본값으로
+  유지한다.
+
+조치:
+
+- post-apply no-change plan을 확인할 때도 동일한 approved channel variable을
+  함께 전달한다.
+- channel 변경, Slack/PagerDuty 추가, threshold 조정은 1-2일 dev noise 관찰 후
+  별도 승인으로 진행한다.
+
+### 1. Ops root가 foundation-owned repository/bucket을 다시 만들려고 함
+
+정상 해석:
+
+- `infra/terraform/envs/dev/ops`는 log-based metrics, alert policies, and
+  ops IAM을 소유한다.
+- Artifact Registry repository와 artifact bucket은 Phase 1 foundation root가
+  이미 소유한다.
+- Phase 6 cleanup/lifecycle 설정이 필요하면 기존 foundation-owned module
+  inputs를 통해 in-place update로 연결한다.
+
+금지:
+
+- ops state에서 같은 Artifact Registry repository나 GCS bucket을 새 resource로
+  선언/import해서 state ownership을 둘로 나누는 것.
+- cleanup dry-run을 끄기 전에 rollback image 보존과 삭제 영향 승인을 생략하는
+  것.
+
+### 2. Runtime plan drift와 Phase 6 ops plan을 혼동함
+
+증상:
+
+- `envs/dev/runtime/backend` 또는 `envs/dev/runtime/frontend` plan이 image digest
+  변경을 보여주며 exit code `2`를 반환한다.
+
+정상 해석:
+
+- 이것은 Phase 5 deploy workflow가 최신 digest로 runtime state를 업데이트한 뒤
+  `terraform.tfvars.example`이 오래된 digest를 가리킬 때 생기는 runtime drift다.
+- Phase 6 ops root authoring/validation 자체와는 별도 문제다.
+
+조치:
+
+- Phase 6 apply 전에는 runtime root가 현재 stable digest와 reconciliation됐는지
+  확인한다.
+- 이 drift를 alert/metric 리소스 실패로 기록하지 않는다.
+- 오래된 digest를 되돌리는 apply를 실행하지 않는다.
+
+### 3. Sensitive log sampling에서 raw log를 출력함
+
+정상 해석:
+
+- Phase 6 log sampling은 summary/count 중심이다.
+- raw `textPayload`, stack trace, full request URL, token, credential, Firebase
+  uid/provider subject, email, raw OCR/case facts, raw answer/draft payload,
+  bucket/object path, service account email, direct `run.app` URL은 출력하지
+  않는다.
+
+조치:
+
+- `/tmp` 같은 local scratch에 JSON을 저장하고, 문서에는 category별 count와
+  PASS/FAIL만 남긴다.
+- 민감 hit가 있으면 route/window/source와 mitigation만 기록하고 원문은
+  붙이지 않는다.
 ## 2026-04-22 Firebase Auth / ID Token Troubleshooting
 
 ### 1. 목표 구조를 혼동함: Firebase ID token은 “등록”하는 값이 아니다

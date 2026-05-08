@@ -51,6 +51,23 @@ public demo는 contest review와 public presentation을 위한 것입니다. ope
 hardening items, production opening, retention lifecycle expansion은 이후 review로
 명시적으로 열기 전까지 future work로 관리합니다.
 
+## Public Demo URL / Domain
+
+현재 Cloud Run managed HTTPS URL은 first migration과 rollback 확인에 충분한 기본
+배포 경로입니다. Public contest/portfolio용 custom domain은 Phase 7A optional
+hardening으로 열며, 첫 경로는 Firebase Hosting custom domain + Cloud Run rewrite입니다.
+
+- custom domain은 `demo/contest` posture이며, 별도 승인 없이 `prod`를 의미하지
+  않습니다.
+- domain 구매, Gabia DNS, Firebase Authorized Domains, CORS, certificate 상태는
+  custom domain 후보를 열 때 함께 검증합니다.
+- Gabia URL forwarding은 가장 단순한 임시 연결 방식이지만, public portfolio의 기본
+  custom domain hosting 방식으로는 선호하지 않습니다.
+- HTTPS Load Balancer, Cloud Armor, 별도 `api` domain은 이후 별도 hardening 후보로
+  둡니다.
+- direct backend Cloud Run URL과 내부 cloud inventory는 public docs/screenshots에
+  노출하지 않습니다.
+
 ## 클라우드 경계 요약
 
 - first cloud target은 `dev`입니다.

@@ -79,7 +79,7 @@ presentation. This is stronger than day-to-day dev, but it is still not full pro
 | Area | Demo/contest setting |
 |---|---|
 | Terraform env | usually `dev` resources with presentation posture |
-| Custom domain | optional Phase 7A after dev Cloud Run smoke passes |
+| Custom domain | `law-main-road.cloud` purchased; optional Phase 7A connection after dev Cloud Run smoke passes |
 | Gabia / DNS | Phase 7A candidate; not a Phase 1-6 prerequisite |
 | Cloud Run frontend min instances | `1` during judging/presentation window |
 | Cloud Run backend min instances | `1` during judging/presentation window |

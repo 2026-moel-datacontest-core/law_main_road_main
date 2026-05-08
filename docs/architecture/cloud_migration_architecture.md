@@ -50,7 +50,7 @@ application behavior migration tool.
 |---|---|
 | Phase sizing | Author Terraform in small phase roots. Phase 0 is docs/decision freeze only; Phase 1 is the first resource phase. |
 | Application contract | Terraform must not change `/api/v1/answer`, `/api/v1/documents/draft`, protected SCN-001 Bridge/history behavior, SCN-004 freeze, SCN-001 frozen draft, auth persistence, or Web Storage policy. |
-| Optional edge | Custom domain / HTTPS Load Balancer / Gabia DNS is Phase 7A optional hardening, not a Phase 1-6 prerequisite. |
+| Optional edge | Custom domain / Firebase Hosting edge / Gabia DNS is Phase 7A optional hardening, not a Phase 1-6 prerequisite. HTTPS Load Balancer remains a later edge candidate. |
 | State | Shared applies use a GCS remote state bucket after bootstrap. The approved baseline is local-state `bootstrap/remote-state` for the first state bucket creation, followed by GCS backend initialization for later env roots. A separate pre-created bootstrap bucket is not the approved baseline. |
 | Cloud Run revision ownership | Build/push images outside Terraform, pass an immutable image digest or explicit tag into Terraform, and let Terraform update Cloud Run service config/traffic so the apply creates the revision. `gcloud run deploy` is not the steady-state path while Terraform owns Cloud Run; emergency manual changes must be reconciled back into Terraform. |
 | Secrets | Terraform may create Secret Manager resources and IAM bindings, but raw secret values and credential-bearing outputs stay out of `.tf` files, tfvars, Terraform state, GitHub Actions logs, and public evidence. |
@@ -359,7 +359,8 @@ production abuse-resistant public AI API.
 | Candidate | When to add |
 |---|---|
 | Backend Cloud Run IAM auth / service-to-service auth | When frontend/backend split needs non-public backend ingress |
-| HTTPS Load Balancer + custom domain | Phase 7A portfolio launch candidate, after Cloud Run `run.app` smoke is stable |
+| Firebase Hosting custom domain edge | selected Phase 7A portfolio launch candidate, after Cloud Run `run.app` smoke is stable |
+| HTTPS Load Balancer + serverless NEG | future Phase 7 edge candidate when Cloud Armor or centralized routing is justified |
 | Cloud Armor | Phase 7 edge hardening for public abuse protection/rate limiting beyond the mandatory app/runtime guardrails |
 | Private IP + Serverless VPC Access or Direct VPC egress | When network isolation becomes worth the added Terraform complexity |
 | API Gateway | When external API productization or API-key style policy is needed |
@@ -370,30 +371,33 @@ The first Cloud Run migration can be considered valid on the default `run.app`
 URLs. A purchased domain, for example through Gabia, is a portfolio/public launch
 hardening step rather than a Phase 1-6 requirement.
 
-For the Seoul target (`asia-northeast3`), prefer a Google external Application
-Load Balancer with serverless NEGs over Cloud Run domain mapping. The custom
-domain target should be designed in Phase 7A:
+For the purchased `law-main-road.cloud` domain, Phase 7A selects Firebase Hosting
+custom domain routing as the lightweight public demo edge. This keeps the first
+custom-domain pass smaller than a Google external Application Load Balancer while
+still using managed HTTPS and Cloud Run rewrites:
 
 ```text
 Gabia DNS
-  -> Google external HTTPS Load Balancer
-  -> serverless NEG for Cloud Run frontend
-  -> optional serverless NEG for Cloud Run backend
+  -> Firebase Hosting custom domain / managed certificate
+  -> Hosting rewrite `/**` to Cloud Run frontend
+  -> optional Hosting rewrite `/api/**` to Cloud Run backend
 ```
 
 Recommended public host split:
 
 | Host | Target | Notes |
 |---|---|---|
-| `app.<domain>` or `www.<domain>` | Cloud Run frontend through HTTPS Load Balancer | portfolio/demo entrypoint |
-| `api.<domain>` | Cloud Run backend through HTTPS Load Balancer, or defer and keep backend `run.app` | choose before frontend image build because `NEXT_PUBLIC_API_BASE_URL` is build-time |
+| `www.law-main-road.cloud` | Cloud Run frontend through Firebase Hosting | portfolio/demo entrypoint |
+| `law-main-road.cloud` | redirect to `www` or same Hosting target | human decision gate; not in the first frontend-only pass |
+| `api.law-main-road.cloud` | defer | open only if a separate custom API domain is approved |
 
 Required boundary decisions:
 
 - Add the chosen frontend host to Firebase Authentication Authorized Domains.
 - Rebuild frontend with the approved backend base URL if moving from backend
-  `run.app` to `api.<domain>`.
-- Re-apply backend `BACKEND_CORS_ORIGIN_REGEX` to the approved frontend origin.
+  `run.app` to same-origin `https://www.law-main-road.cloud/api/**`.
+- Re-apply backend `BACKEND_CORS_ORIGIN_REGEX` to the approved frontend origin
+  when any browser cross-origin path remains or for rollback compatibility.
 - Keep Cloud Run direct `run.app` URLs documented for rollback unless disabled
   after a separate ingress/rollback design.
 - Do not change public API contracts, SCN-004 freeze behavior, SCN-001 frozen
@@ -613,7 +617,7 @@ changes.
 | 4 | Frontend Runtime | Cloud Run frontend revision, public env wiring, Firebase domain check |
 | 5 | CI/CD | GitHub Actions + Workload Identity Federation keyless deploy pipeline |
 | 6 | Observability / Reliability | logging metrics, alert policies, rollback drill, cleanup policies |
-| 7 | Optional Hardening | VPC/LB/Cloud Armor/API Gateway/jobs only after separate approval |
+| 7 | Optional Hardening | Firebase Hosting edge for Phase 7A; VPC/LB/Cloud Armor/API Gateway/jobs only after separate approval |
 
 ## 12. Not In Scope For This Target
 

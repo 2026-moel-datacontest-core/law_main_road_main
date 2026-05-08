@@ -19,7 +19,8 @@ SCN-001 live/backend document draft 범위는 열지 않는다.
 - 배포된 frontend Cloud Run `run.app` URL을 Firebase Authorized Domains에
   등록한다.
 - Backend `BACKEND_CORS_ORIGIN_REGEX`를 frontend Cloud Run URL에 맞게
-  재적용한다. Custom domain / HTTPS Load Balancer는 Phase 7A에서 별도로 연다.
+  재적용한다. Custom domain / Firebase Hosting edge는 Phase 7A에서 별도로 열며,
+  HTTPS Load Balancer는 이후 edge hardening 후보로 둔다.
 - `/`, `/before`, `/after`, `/after/result`, `/after/intake`, `/after/draft`,
   `/history` route smoke를 수행한다.
 - SCN-004 freeze와 SCN-001 frontend-local frozen draft boundary가 유지되는지
@@ -50,8 +51,9 @@ Scope and inventory handling:
   outputs / operational inventory. Do not copy them into public screenshots or
   public submission text unless the demo owner explicitly approves that public
   URL posture.
-- WIF/GitHub workflow, prod resources, custom domain / HTTPS Load Balancer, and
-  SCN-001 live/backend document draft generation remain unopened.
+- WIF/GitHub workflow, prod resources, custom domain / Firebase Hosting edge, and
+  SCN-001 live/backend document draft generation remain unopened. HTTPS Load
+  Balancer remains a later edge hardening candidate.
 
 Runtime wiring evidence:
 
@@ -82,8 +84,9 @@ Current promotion boundary:
 
 - Phase 4 dev frontend runtime smoke is complete.
 - This is still `dev/demo-only`, not a production-ready public API claim.
-- WIF/GitHub workflow, prod resources, custom domain / HTTPS Load Balancer, and
-  SCN-001 live/backend document draft generation remain unopened.
+- WIF/GitHub workflow, prod resources, custom domain / Firebase Hosting edge, and
+  SCN-001 live/backend document draft generation remain unopened. HTTPS Load
+  Balancer remains a later edge hardening candidate.
 
 ## 3. Read First
 
@@ -155,8 +158,9 @@ deployment should not hide a broken backend.
 - Step 3 full retention lifecycle.
 - Independent `/bridge` or Recovery implementation.
 - API Gateway, Cloud Armor, private VPC.
-- Custom domain / HTTPS Load Balancer. Use Phase 7A after the `run.app` path is
-  stable.
+- Custom domain / Firebase Hosting edge. Use Phase 7A after the `run.app` path is
+  stable; HTTPS Load Balancer is deferred until stronger edge hardening is
+  approved.
 
 ## 6. Terraform Layout
 
@@ -670,7 +674,8 @@ When Phase 4 is executed, record a short status note.
 - Do not add Firebase Admin credentials to frontend.
 - Do not treat Firebase public web config as a private secret.
 - Do not implement independent `/bridge` or Recovery.
-- Do not implement custom domain / HTTPS Load Balancer in Phase 4; use Phase 7A.
+- Do not implement custom domain / Firebase Hosting edge in Phase 4; use Phase
+  7A. HTTPS Load Balancer remains a later edge hardening candidate.
 - Do not mix SCN-004 freeze verification with SCN-005 or new document type
   expansion.
 

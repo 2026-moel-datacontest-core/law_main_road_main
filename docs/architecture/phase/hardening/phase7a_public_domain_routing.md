@@ -1,0 +1,285 @@
+# Phase 7A — Public Domain Routing
+
+기준일: `2026-05-08`
+
+## Status
+
+Phase 7A는 `demo/contest` public presentation domain을 여는 optional hardening
+후보다. 이 문서는 implementation 전 decision/opening gate를 고정한다.
+
+## Decision
+
+Selected path:
+
+```text
+law-main-road.cloud
+-> Gabia DNS
+-> Firebase Hosting custom domain / managed certificate
+-> Hosting frontend rewrite
+-> existing dev Cloud Run frontend
+```
+
+Target profile:
+
+```text
+demo/contest on existing dev resources
+```
+
+Not selected for the first Phase 7A pass:
+
+- separate `demo` Terraform environment,
+- `prod` opening,
+- Cloud DNS delegation,
+- external HTTPS Load Balancer,
+- serverless NEG,
+- Cloud Armor,
+- `api.law-main-road.cloud`.
+
+## Domain And Host Plan
+
+Purchased domain:
+
+```text
+law-main-road.cloud
+```
+
+Host plan:
+
+| Host | Decision | Notes |
+|---|---|---|
+| `www.law-main-road.cloud` | first public frontend host | canonical public demo URL candidate |
+| `law-main-road.cloud` | human decision gate | do not implement in the first frontend-only pass |
+| `app.law-main-road.cloud` | defer | alternative only if `www` is rejected |
+| `api.law-main-road.cloud` | defer | open only if a separate API domain is approved |
+
+## Routing Plan
+
+Default first-pass routing:
+
+```text
+https://www.law-main-road.cloud/**
+-> Firebase Hosting rewrite
+-> Cloud Run frontend
+```
+
+Deferred unless explicitly approved:
+
+```text
+https://www.law-main-road.cloud/api/**
+-> Firebase Hosting rewrite
+-> Cloud Run backend
+```
+
+The first Phase 7A implementation should connect only the frontend public domain
+unless same-origin API routing is explicitly approved. Do not add a `/api/**`
+Hosting rewrite, change `NEXT_PUBLIC_API_BASE_URL`, or change backend CORS as a
+side effect of the frontend-only domain launch.
+
+If same-origin `/api/**` routing is later approved, rewrite rule ordering becomes
+a hard gate. Firebase Hosting applies the first matching rewrite rule, so
+`/api/**` must be listed before the frontend catch-all `/**`. The same-origin API
+route also requires a frontend image rebuild with an approved build-time API base
+such as:
+
+```text
+NEXT_PUBLIC_API_BASE_URL=https://www.law-main-road.cloud
+```
+
+Firebase Hosting rewrites to Cloud Run are subject to the Hosting 60-second
+request timeout. Do not route long-running API paths through same-origin Hosting
+rewrites until smoke confirms the request completes within that limit; otherwise
+keep the direct backend Cloud Run fallback or open a separate API-domain/edge
+decision.
+
+If the same-origin API path is not ready, the fallback is to connect only the
+frontend custom domain first and keep the existing backend Cloud Run URL as the
+frontend API base during the first smoke. That fallback must still update
+Firebase Authorized Domains for the approved frontend origin. Backend CORS is
+changed only if a browser cross-origin path requires a new allowed origin and
+that change is explicitly approved.
+
+## Why Not Load Balancer First
+
+External HTTPS Load Balancer with serverless NEG is deferred because Phase 7A is
+for a contest/portfolio URL, not production edge consolidation.
+
+Firebase Hosting is preferred for this pass because:
+
+- Firebase is already used for Auth in this project.
+- It provides a lighter custom-domain and managed-HTTPS path.
+- It can rewrite to Cloud Run services in the current region.
+- Gabia can remain authoritative for DNS.
+- It avoids opening Cloud Armor, serverless NEG, and LB Terraform complexity
+  before there is a concrete production edge requirement.
+
+Load Balancer remains the future path if the project later needs Cloud Armor,
+centralized multi-service routing, or a formal `api.law-main-road.cloud`
+endpoint.
+
+## Opening Gates
+
+Before implementation:
+
+- Phase 6 close-out verification is completed or explicitly accepted as stable
+  enough for Phase 7A.
+- Firebase Hosting billing/plan posture is accepted under the existing project
+  budget monitoring.
+- `www.law-main-road.cloud` is approved as the canonical public frontend host.
+- Root apex behavior remains a human decision gate and is not required for the
+  first `www` frontend-only pass.
+- Same-origin `/api/**` routing is approved or explicitly deferred.
+- If same-origin `/api/**` routing is approved, Hosting rewrite order is
+  approved: `/api/**` before frontend catch-all `/**`.
+- If same-origin `/api/**` routing is approved, long-running API paths are
+  identified; any path that can exceed the Firebase Hosting 60-second timeout is
+  kept on direct backend fallback or deferred to a separate API-domain/edge
+  decision.
+- If same-origin `/api/**` routing is approved, frontend rebuild impact for
+  `NEXT_PUBLIC_API_BASE_URL` is accepted.
+- If backend CORS changes are approved, backend CORS target and rollback origin
+  are selected.
+- DNS remains in Gabia unless Cloud DNS is separately opened.
+
+## Implementation Scope
+
+In scope:
+
+- Firebase Hosting setup for the existing Firebase/GCP project.
+- Root `firebase.json` owns the repo-managed Hosting rewrite for this pass. It
+  routes only the frontend catch-all `**` to the existing dev frontend Cloud Run
+  service in `asia-northeast3`.
+- Do not commit `.firebaserc` for this pass. The deploy operator must pass the
+  approved Firebase/GCP project id at deploy time or use a private local alias.
+  Do not store the project id in public docs.
+- Do not add `/api/**` to `firebase.json` unless same-origin API routing is
+  explicitly approved. If `/api/**` is later approved, it must precede the
+  frontend catch-all rewrite.
+- Firebase custom domain setup for `www.law-main-road.cloud`.
+- Gabia DNS records required by Firebase.
+- Firebase Authentication Authorized Domains update.
+- Frontend rebuild only if the API base change is explicitly approved.
+- Backend CORS re-apply only if the approved routing path requires it.
+- Route/auth smoke, conditional API smoke for any approved API routing change,
+  and rollback note.
+
+Out of scope:
+
+- backend/frontend feature changes,
+- public API contract changes,
+- SCN-004 freeze changes,
+- SCN-001 live/backend draft opening,
+- Firebase Auth persistence changes,
+- raw case facts or token storage changes,
+- external HTTPS Load Balancer,
+- Cloud Armor,
+- Cloud DNS delegation,
+- `api.law-main-road.cloud`,
+- `prod` resources.
+
+## Repo-Managed Config
+
+The first implementation adds only this Hosting shape:
+
+```json
+{
+  "hosting": {
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "lmr-dev-frontend",
+          "region": "asia-northeast3"
+        }
+      }
+    ]
+  }
+}
+```
+
+This is frontend-only routing. It does not:
+
+- create a new Firebase project or Hosting site,
+- add `.firebaserc`,
+- add `/api/**`,
+- change `NEXT_PUBLIC_API_BASE_URL`,
+- change backend CORS,
+- change Cloud Run ingress or IAM,
+- create or apply Terraform,
+- connect `law-main-road.cloud` apex.
+
+Deploy command shape after the human gates are cleared:
+
+```bash
+firebase deploy --only hosting --project <approved-firebase-project-id>
+```
+
+Use the approved private project id from the private runbook or Console context;
+do not paste it into public docs, GitHub issue text, screenshots, or committed
+files.
+
+## Human-Only Custom Domain Steps
+
+These steps are intentionally not automated in this patch.
+
+1. Confirm Firebase Hosting billing/plan posture and that the existing Firebase
+   project is the same project that owns the dev frontend Cloud Run service.
+2. Deploy the repo-managed Hosting config with the command shape above, using
+   the approved project id from private context.
+3. In Firebase Console, open Hosting for the approved project and start custom
+   domain connection for `www.law-main-road.cloud` only. Do not add the root
+   apex yet.
+4. Copy the DNS ownership record values shown by Firebase Console into Gabia DNS.
+   The exact record type, host/name, and value must come from Firebase Console.
+   Keep the ownership TXT record present as instructed by Firebase.
+5. After Firebase verifies ownership, copy the requested Hosting target records
+   shown by Firebase Console into Gabia DNS. Use the exact type, host/name, and
+   value shown there; do not infer or reuse values from docs.
+6. Wait for Firebase Hosting custom domain status and managed certificate status
+   to become connected/ready. Record only redacted status evidence in public
+   docs.
+7. Add `www.law-main-road.cloud` to Firebase Authentication Authorized Domains.
+8. Run the frontend-only smoke below. Use the existing Cloud Run frontend URL as
+   the full API-flow rollback/smoke path until backend CORS or same-origin API
+   routing is separately approved.
+
+Do not change Gabia DNS, Firebase Authorized Domains, certificate/cutover state,
+or any public posture beyond `www.law-main-road.cloud` without the matching
+human gate.
+
+## Verification
+
+Required smoke:
+
+- `https://www.law-main-road.cloud` loads the deployed frontend over HTTPS.
+- `/`, `/before`, `/after`, and `/history` load or guard safely.
+- Google Sign-In does not fail with `auth/unauthorized-domain`.
+- API-calling flows from the custom domain are not acceptance criteria for this
+  frontend-only pass because `/api/**`, `NEXT_PUBLIC_API_BASE_URL`, and backend
+  CORS changes are deferred. Use the existing Cloud Run frontend fallback for
+  full backend/API smoke until a later API-routing gate is approved.
+- If same-origin `/api/**` routing is used,
+  `https://www.law-main-road.cloud/api/v1/auth/me` returns the expected
+  unauthenticated response without raw token/user data.
+- Same-origin API smoke includes representative non-long-running endpoints. Any
+  long-running endpoint is verified separately or kept on the direct backend
+  fallback.
+- SCN-004 exact preset remains frozen.
+- SCN-001 exact fixed preset remains frontend-local.
+- Missing/invalid Firebase Bearer tokens are rejected on protected SCN-001 paths.
+- Public docs/screenshots use the custom domain and do not expose direct backend
+  Cloud Run URLs or internal cloud inventory.
+
+## Rollback
+
+Rollback path:
+
+- Keep Cloud Run managed HTTPS URLs available during Phase 7A.
+- Roll back Firebase Hosting release/config if rewrite behavior is wrong.
+- Remove or repoint Gabia DNS records if custom domain routing is faulty.
+- Rebuild frontend with the previous API base if a same-origin API-base change
+  caused the issue.
+- Re-apply previous backend CORS if the custom-domain allowlist causes a smoke
+  failure.
+
+Do not disable direct Cloud Run URLs until a separate ingress and rollback design
+approves that change.

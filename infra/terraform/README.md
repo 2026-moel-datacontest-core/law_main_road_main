@@ -21,11 +21,13 @@ Current status:
   runtime on `2026-05-07`; route/CORS/SCN-004/SCN-001 boundary smoke passed.
   Firebase Authorized Domain, Google Sign-In, and protected SCN-001 history
   smoke passed through the deployed frontend.
-- `envs/dev/cicd`: authored for Phase 5 dev CI/CD on `2026-05-07`; local
-  validate passed and the remote-state plan produced a create-only WIF/IAM plan.
-  Initial apply, GitHub Actions variable/environment configuration, WIF auth dry
-  run, deploy workflow run, and rollback workflow rehearsal are pending
-  human-approved gates.
+- `envs/dev/cicd`: Phase 5 dev CI/CD WIF/deploy root. Phase 5 deploy and
+  rollback rehearsal evidence is recorded in
+  `docs/architecture/phase/phase5_cicd.md`.
+- `envs/dev/ops`: applied for Phase 6 dev observability/reliability on
+  `2026-05-08`. It manages log-based metrics, alert policies with one approved
+  team email notification channel, and minimal ops IAM grants.
+- `envs/prod/ops`: skeleton only.
 
 Phase 1 resources are limited to remote state bootstrap, required APIs, service
 accounts, Artifact Registry, Secret Manager secret shells, a private artifact
@@ -58,10 +60,10 @@ frontend boundary smoke. Firebase Authorized Domain, Google Sign-In, and
 protected SCN-001 history smoke passed through the deployed frontend without
 recording raw tokens or user identifiers.
 
-WIF/GitHub workflow code is now authored for Phase 5 dev only, but not applied
-or smoked. Service account key JSON, Firebase Admin JSON, prod resources, custom
-domain/LB, and backend/frontend/API behavior expansion remain unopened from this
-Terraform README's perspective.
+WIF/GitHub workflow code is now authored and rehearsed for Phase 5 dev only.
+Service account key JSON, Firebase Admin JSON, prod resources, custom domain/LB,
+and backend/frontend/API behavior expansion remain unopened from this Terraform
+README's perspective.
 
 Forbidden without explicit phase approval:
 
@@ -111,6 +113,25 @@ Post-apply validation on `2026-05-07`:
 - dev cicd `terraform plan -detailed-exitcode`: create-only WIF/IAM plan; no
   destroy, no runtime replacement.
 
-Do not run additional `terraform apply`, configure GitHub Actions variables or
-environment gates, execute WIF/deploy workflows, or open prod resources without
-explicit human approval for that phase.
+Phase 6 authoring validation on `2026-05-08`:
+
+- `envs/dev/ops` `terraform validate`: PASS.
+- `envs/dev/ops` `terraform plan -detailed-exitcode`: expected create-only ops
+  plan; no destroy.
+- `envs/dev/foundation` `terraform plan -detailed-exitcode`: expected in-place
+  Artifact Registry cleanup dry-run policy plan; no destroy.
+
+Phase 6 post-apply validation on `2026-05-08`:
+
+- dev foundation apply: `0 added, 1 changed, 0 destroyed`; Artifact Registry
+  cleanup policy remains dry-run.
+- dev ops apply: `18 added, 0 changed, 0 destroyed`; 5 log-based metrics, 11
+  alert policies, and 2 ops IAM bindings created.
+- dev foundation post-apply plan: no changes.
+- dev ops post-apply plan with the approved notification channel variable: no
+  changes.
+- backend `/health` and frontend route smoke: PASS.
+
+Do not run additional `terraform apply`, disable cleanup dry-run, change alert
+channels or thresholds, execute rollback drills, run Cloud SQL restore tests, or
+open prod resources without explicit human approval for that phase.

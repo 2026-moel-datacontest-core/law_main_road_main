@@ -4,7 +4,7 @@
 
 | Item | Value |
 |---|---|
-| Name | K-Labor Shield |
+| Name | 법대로(LawMainRoad) |
 | One-liner | 외국인 근로자를 위한 노동권 보호 통합 AI |
 | Goal | 공모전 제출 안정성 중심 MVP 완성 |
 | Priority | 제출 안정성 > 기능 추가 > 리팩토링 |

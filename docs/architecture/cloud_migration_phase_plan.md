@@ -25,7 +25,7 @@ work until their phase is opened.
 - Phase 1 is the first resource phase. It owns remote state bootstrap,
   foundation APIs, service accounts, Artifact Registry, Secret Manager shells,
   and the private artifact bucket.
-- Phase 7A custom domain / HTTPS Load Balancer / Gabia DNS remains optional
+- Phase 7A custom domain / Firebase Hosting edge / Gabia DNS remains optional
   hardening. It is not a hidden prerequisite for Phase 1-6.
 - Terraform does not change application contracts. It must preserve
   `/api/v1/answer`, `/api/v1/documents/draft`, protected SCN-001 Bridge/history
@@ -128,7 +128,7 @@ targets before adding new automation.
 - live/backend SCN-001 document draft generation
 - protected SCN-001 draft endpoint
 - Step 3 full retention lifecycle beyond MVP soft-delete
-- custom domain / HTTPS Load Balancer, API Gateway, Cloud Armor, private IP/VPC
+- custom domain edge, HTTPS Load Balancer, API Gateway, Cloud Armor, private IP/VPC
   as first migration requirements
 
 ## 2. Phase Principles
@@ -170,7 +170,8 @@ infra/terraform/
     artifact-bucket/
     iam-wif/
     secret-manager/
-    load-balancer-domain/        # optional Phase 7A only
+    firebase-hosting-domain/     # optional Phase 7A Hosting edge config/root if repo-managed
+    load-balancer-domain/        # future/deferred LB candidate only
     artifact-registry/           # supporting Phase 1 module
     project-services/            # supporting Phase 1 module
     monitoring-alerts/
@@ -226,8 +227,9 @@ Notes:
 - `iam-wif` can be split internally into service-account and WIF submodules if
   implementation clarity requires it, but the phase contract stays keyless and
   service-account-key-free.
-- `load-balancer-domain` is optional Phase 7A only. Phase 1-6 must be valid on
-  Cloud Run managed HTTPS URLs.
+- Firebase Hosting custom-domain config is the selected Phase 7A edge candidate.
+  `load-balancer-domain` is a future/deferred LB candidate only. Phase 1-6 must be
+  valid on Cloud Run managed HTTPS URLs.
 
 ### Why Layered Roots
 
@@ -273,7 +275,7 @@ secrets.
 | 4 | Frontend Runtime | `infra/terraform/envs/{env}/runtime/frontend` | Cloud Run frontend revision | browser route smoke pass |
 | 5 | CI/CD | `infra/terraform/envs/{env}/cicd` + GitHub workflow | keyless deploy pipeline | PR/main workflow dry run pass |
 | 6 | Observability / Reliability | `infra/terraform/envs/{env}/ops` | alerts, rollback/runbook controls | alert and rollback drills pass |
-| 7 | Optional Hardening | candidate root or `load-balancer-domain` module if approved | custom domain/LB/VPC/Armor/jobs if approved | separate design approval |
+| 7 | Optional Hardening | candidate root/config, starting with Firebase Hosting custom-domain edge if approved | custom domain edge/LB/VPC/Armor/jobs if approved | separate design approval |
 
 In the first implementation pass, every `{env}` placeholder in apply commands is
 `dev`. `envs/prod/*` stays skeleton/README/tfvars-example only until a separate
@@ -892,7 +894,8 @@ Only open after Phase 1-6 are stable.
 Candidates:
 
 - backend Cloud Run IAM auth / service-to-service auth
-- HTTPS Load Balancer + custom domain
+- custom domain edge with Firebase Hosting selected for Phase 7A
+- HTTPS Load Balancer + serverless NEG only if later edge hardening is approved
 - Cloud Armor
 - private IP + Serverless VPC Access or Direct VPC egress
 - API Gateway
@@ -1130,7 +1133,7 @@ in generic "decision needed" lists.
 |---|---|
 | Finalized now | first target `dev` only; `envs/dev` and `envs/prod` layout with only `envs/dev` apply-ready and only `dev` instantiated first; `envs/prod` skeleton/README/tfvars-example only until a separate prod-opening review; one GCP project with env-prefixed resources; `law-main-road` app label; `lmr` prefix; `lmr-{env}-{component}` naming where allowed; local-state bootstrap for GCS tfstate bucket; env roots use GCS remote backend after bootstrap; bootstrap local `terraform.tfstate*` never committed; Terraform creates Secret Manager secret resources only; no Terraform-managed secret values by default; `google_secret_manager_secret_version` forbidden by default; one private artifact bucket per env; globally unique variant of `lmr-{env}-artifacts`; `before-runs/` and `after-runs/` object prefixes; Phase 4 uses Cloud Run `run.app`; baseline migration does not include host configuration-management tooling. |
 | Phase-gated decision | Closed by Phase 2 dev apply: dev Cloud SQL exact tier/storage and DB/data readiness. Closed by Phase 3 dev backend smoke: backend Cloud Run runtime deploy, database-url secret version presence, backend Cloud SQL/Vertex runtime IAM, DB pool env wiring, and health/auth-negative/retrieve/answer/document draft smoke evidence. Phase 2 before prod opening: prod exact tier, PITR cost exception, backup retention confirmation. Phase 3 or later before any production-ready public API claim: GCS adapter durability, public endpoint rate/body/cost guardrails, and artifact retrieval mode if UI/runtime needs it. Phase 6: budget alert Terraform management if billing IAM allows, otherwise billing/admin checklist fallback. Phase 6: exact alert thresholds after baseline smoke/traffic. |
-| Deferred by design | separate dev/prod GCP projects; Phase 7A custom domain / HTTPS Load Balancer / Gabia DNS; `api.<domain>` backend public endpoint; advanced SLO/alerting; signed URL/auth proxy/artifact retrieval UI unless required later. |
+| Deferred by design | separate dev/prod GCP projects; Phase 7A custom domain / Firebase Hosting edge / Gabia DNS until opened; HTTPS Load Balancer; `api.<domain>` backend public endpoint; advanced SLO/alerting; signed URL/auth proxy/artifact retrieval UI unless required later. |
 
 ## 13. Release Gate Summary
 
@@ -1160,7 +1163,7 @@ Recommended first implementation sequence:
 9. frontend Cloud Run service
 10. `infra/terraform/modules/iam-wif` WIF slice + GitHub Actions
 11. monitoring alerts and cleanup policies
-12. optional `infra/terraform/modules/load-balancer-domain` Phase 7A launch
+12. optional Phase 7A Firebase Hosting custom-domain launch; `load-balancer-domain` remains deferred unless later approved
 
 This order keeps the first live application deployment after the foundational
 security, storage, and DB layers are already verifiable.
@@ -1183,7 +1186,7 @@ Recommended issue split:
 | CI/CD | Phase 5 WIF/workflows/rollback automation | Runtime feature changes |
 | Shell/Python runbooks | Optional scripts for MFA prerequisite evidence, resource describe checks, migration/seed orchestration, post-deploy smoke, log redaction check, rollback drill | Terraform resource ownership and secret value storage |
 | Observability | Phase 6 metrics/alerts/lifecycle/rollback drill | New structured logging code unless separately approved |
-| Custom domain launch | Phase 7A Gabia DNS, HTTPS Load Balancer, serverless NEG, certificate, Firebase Authorized Domains, CORS, smoke | Phase 1-6 acceptance criteria and API contract changes |
+| Custom domain launch | Phase 7A Gabia DNS, Firebase Hosting custom domain/rewrites, managed certificate, Firebase Authorized Domains, conditional CORS/API-base smoke only if same-origin API routing is separately approved | Phase 1-6 acceptance criteria and API contract changes |
 | Optional hardening | One Phase 7 candidate per design note | Phase 1-6 acceptance criteria |
 
 Every issue should include:

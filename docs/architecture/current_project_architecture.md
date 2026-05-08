@@ -1,4 +1,4 @@
-# K-Labor Shield — Current Project Architecture
+# 법대로(LawMainRoad) — Current Project Architecture
 
 기준일: `2026-05-04` 또는 현재 repo 기준
 
@@ -116,7 +116,7 @@ SCN-004 draft flow is additionally gated by document-type eligibility. The front
 동일한 다이어그램은 `docs/architecture/current_project_architecture.mmd`에도 별도 저장한다.
 
 ```mermaid
-%% K-Labor Shield current project architecture
+%% 법대로(LawMainRoad) current project architecture
 %% 기준일: 2026-05-04 / 현재 repo 기준
 %% Local LLM / Compute Engine GPU VM is intentionally omitted from this current MVP diagram.
 flowchart LR
