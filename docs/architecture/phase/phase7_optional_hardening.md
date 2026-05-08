@@ -103,7 +103,8 @@ phase first.
 
 | Candidate | Default | Primary Value | Main Risk |
 |---|---|---|---|
-| Custom domain / HTTPS Load Balancer | Phase 7A candidate | Stable portfolio URL, centralized routing | Cost, DNS, certificate, and Terraform complexity |
+| Custom domain / Firebase Hosting edge | Phase 7A candidate | Stable portfolio URL with a lightweight managed HTTPS edge | DNS, certificate, Hosting config, and frontend API-base rebuild complexity |
+| HTTPS Load Balancer + serverless NEG | Defer | Future centralized routing and Cloud Armor attachment | Cost, DNS, certificate, and Terraform complexity |
 | Cloud Armor | Defer | WAF/rate limit edge protection | Requires LB path; false positives |
 | Backend Cloud Run IAM auth | Defer | Non-public backend ingress | Browser frontend cannot directly call IAM-protected backend without topology change |
 | Private IP / VPC egress | Defer | Network isolation for Cloud SQL/private services | VPC complexity, connector cost, routing/debugging overhead |
@@ -182,18 +183,18 @@ Cloud Run Jobs are opened, do not create `edge/` or `networking/`.
 
 | Field | Content |
 |---|---|
-| Issue title | Phase 7A: Optional custom domain / HTTPS Load Balancer launch |
-| Scope | Create a candidate-specific design and, only after approval, implement domain/LB resources, DNS instructions, Firebase Authorized Domains, CORS update, smoke, and rollback |
+| Issue title | Phase 7A: Public domain routing with Firebase Hosting |
+| Scope | Create a candidate-specific design and, only after approval, implement Firebase Hosting custom domain routing, DNS instructions, Firebase Authorized Domains, CORS/API-base updates, smoke, and rollback |
 | Acceptance criteria | candidate preserves SCN/API/auth/storage boundaries; cost and DNS ownership are approved; custom domain smoke passes; rollback to Cloud Run direct URL is documented |
 | Forbidden changes | making Phase 7 mandatory, mixing with Phase 1-6 fixes, API contract changes, auth persistence changes, raw inventory exposure, Local LLM/GPU/self-hosted model serving |
 | Validation | candidate Terraform checks, DNS/cert checks, route/API/auth smoke, public evidence redaction review |
-| Rollback | revert DNS/edge routing or frontend API base/CORS through the owning roots; keep direct Cloud Run URLs available until rollback is separately redesigned |
+| Rollback | revert DNS/Hosting routing or frontend API base/CORS through the owning roots; keep direct Cloud Run URLs available until rollback is separately redesigned |
 
 ## 9. Terraform vs CI vs Admin Responsibility
 
 | Area | Terraform Owns | CI/Scripts Own | Admin/Manual Owns |
 |---|---|---|---|
-| Edge/LB | LB, serverless NEG, cert resources where manageable, forwarding rules | smoke against domain and Cloud Run URLs | DNS ownership, cutover timing, domain purchase |
+| Edge/Hosting | Firebase Hosting config/site or candidate-specific Terraform where support is selected; no LB in 7A | smoke against domain and Cloud Run URLs | DNS ownership, cutover timing, domain purchase |
 | Cloud Armor | policy, rules, attachment | security smoke and allowed/blocked request tests | threshold tuning, false-positive approval |
 | Backend IAM auth | Cloud Run ingress/auth/IAM bindings if selected | service-to-service token smoke if topology supports it | approval for topology/code change |
 | VPC/private IP | VPC/subnet/connector/direct egress settings, private service access if selected | connectivity smoke and DB connection test | network range decisions, cost approval |
@@ -205,13 +206,13 @@ Cloud Run Jobs are opened, do not create `edge/` or `networking/`.
 Secret values, DNS registrar changes, production traffic cutover, and emergency
 rollback decisions remain administrator actions.
 
-## 10. Candidate A — Custom Domain / HTTPS Load Balancer / Portfolio Launch
+## 10. Candidate A — Custom Domain / Firebase Hosting Edge / Portfolio Launch
 
 ### When To Open
 
-Open this candidate when a stable public domain is needed for portfolio review,
-public sharing, centralized routing, Cloud Armor, or future multi-service edge
-control. This is the preferred place to use a domain purchased through Gabia.
+Open this candidate when a stable public domain is needed for portfolio review
+or public sharing. This is the preferred place to use a domain purchased through
+Gabia.
 
 Do not open this candidate before the Phase 4 Cloud Run `run.app` frontend smoke
 passes. Prefer opening it after Phase 5/6 when CI/CD, rollback notes, and basic
@@ -231,39 +232,93 @@ This is acceptable for first migration. A custom domain is not required for
 basic production-oriented proof.
 
 Cloud Run domain mapping is not the preferred path for this project because the
-target region is `asia-northeast3` and the portfolio launch benefits from load
-balancer routing, managed certificate, and future Cloud Armor attachment.
+target region is `asia-northeast3` and the portfolio launch benefits from a
+managed custom-domain edge. The selected Phase 7A path is Firebase Hosting custom
+domain routing with rewrites to the existing Cloud Run services. External HTTPS
+Load Balancer, serverless NEG, and Cloud Armor are deferred until a stronger
+edge/security requirement justifies their cost and Terraform complexity.
+
+### 2026-05-08 Domain Purchase / Routing Decision Note
+
+Purchased public demo domain:
+
+```text
+law-main-road.cloud
+```
+
+Current decision:
+
+- Treat `law-main-road.cloud` as a `demo/contest` public presentation domain on
+  top of the existing `dev` resources.
+- Do not create a separate `demo` Terraform environment only because the domain
+  exists.
+- Do not claim `prod` readiness only because a custom domain is purchased or
+  connected.
+- Keep Cloud Run managed HTTPS URLs available as the smoke and rollback path
+  until a separate rollback design disables them.
+- Do not use simple registrar URL forwarding as the preferred public portfolio
+  path. It can be useful as a temporary redirect, but it is not a true custom
+  domain hosting path and can make browser auth/routing behavior harder to
+  reason about.
+
+Host candidates:
+
+| Host | Candidate use | Current decision |
+|---|---|---|
+| `www.law-main-road.cloud` | public frontend entry | preferred first custom frontend host |
+| `law-main-road.cloud` | root entry or redirect to `www` | decide during Phase 7A implementation |
+| `app.law-main-road.cloud` | alternative frontend entry | defer unless `www` is rejected |
+| `api.law-main-road.cloud` | backend API through edge routing | defer unless backend custom API routing is explicitly approved |
+
+Selected Phase 7A implementation path:
+
+- Use Firebase Hosting custom domain routing as the public edge.
+- Keep Gabia DNS authoritative and add only the records Firebase/Google requires.
+- Route `www.law-main-road.cloud` to the existing Cloud Run frontend through
+  Firebase Hosting.
+- Prefer same-origin API calls through Hosting rewrites, with `/api/**` routed to
+  the existing Cloud Run backend, after confirming the frontend build-time API
+  base, rewrite order, timeout risk, and route smoke.
+- Defer `api.law-main-road.cloud`, external HTTPS Load Balancer, serverless NEG,
+  Cloud Armor, Cloud DNS delegation, separate `demo` environment, and `prod`
+  opening.
+
+Before implementation, record the final DNS records, certificate status,
+Firebase Authorized Domains status, frontend API base, CORS target, and rollback
+path.
 
 ### Possible Target
 
 ```text
 User
 -> Gabia DNS
--> Google external HTTPS Load Balancer / managed certificate
--> serverless NEG
+-> Firebase Hosting custom domain / managed certificate
+-> Hosting rewrite `/**`
 -> Cloud Run frontend
 
 Frontend browser/API calls
--> Cloud Run backend URL, or
--> api.<domain> through the same edge path
+-> same-origin `https://www.law-main-road.cloud/api/**`
+-> Hosting rewrite `/api/**`
+-> Cloud Run backend
 ```
 
 Recommended portfolio host split:
 
 | Host | Target | Default |
 |---|---|---|
-| `app.<domain>` or `www.<domain>` | frontend Cloud Run service through HTTPS Load Balancer | yes |
-| `api.<domain>` | backend Cloud Run service through HTTPS Load Balancer | preferred if budget/complexity is acceptable |
-| root apex | redirect or static landing later | defer unless needed |
+| `www.law-main-road.cloud` | frontend Cloud Run service through Firebase Hosting | yes |
+| `law-main-road.cloud` | redirect to `www` or same Hosting target | decide during Phase 7A implementation |
+| `app.law-main-road.cloud` | alternative frontend host | defer unless `www` is rejected |
+| `api.law-main-road.cloud` | backend API through a separate custom API host | defer unless explicitly approved |
 
-If the backend is routed through the edge, choose before frontend image build
-whether `NEXT_PUBLIC_API_BASE_URL` becomes:
+If the backend is routed through Firebase Hosting, choose before frontend image
+build whether `NEXT_PUBLIC_API_BASE_URL` becomes:
 
 ```text
-https://api.example.com
+https://www.law-main-road.cloud
 ```
 
-or whether it remains the backend Cloud Run URL:
+or whether the first custom-domain pass keeps the backend Cloud Run URL:
 
 ```text
 https://lmr-dev-backend-<hash>-<region>.run.app
@@ -271,40 +326,58 @@ https://lmr-dev-backend-<hash>-<region>.run.app
 
 Do not change `NEXT_PUBLIC_API_BASE_URL` routing casually. It is bundled into the
 frontend image and directly affects CORS, Firebase browser smoke, and rollback.
+Firebase Hosting applies the first matching rewrite rule, so `/api/**` must be
+listed before the frontend catch-all `/**`. Hosting rewrites to Cloud Run are
+also subject to the Hosting 60-second request timeout, so long-running API paths
+need a direct backend fallback or a separate API-domain/edge decision before
+they move behind the same-origin Hosting rewrite.
 
-### Terraform Scope
+### Config / Terraform Scope
 
-Likely resources:
+Likely resources or configuration:
 
-- global external HTTPS Load Balancer
-- serverless NEG for frontend Cloud Run
-- optional serverless NEG for backend Cloud Run
-- managed certificate
-- global static IP
-- forwarding rule
-- target HTTPS proxy
-- URL map
-- backend service or services
-- optional HTTP to HTTPS redirect
-- DNS record only if Cloud DNS is selected; if Gabia DNS remains authoritative,
-  Terraform should output the required records but not mutate registrar DNS
+- Firebase Hosting site/config for the selected Firebase project.
+- Hosting rewrites:
+  - `/api/**` to the existing Cloud Run backend if same-origin API routing is
+    approved for this pass,
+  - `/**` to the existing Cloud Run frontend.
+  The `/api/**` rule must precede the frontend catch-all rule.
+- Firebase Hosting custom domain for `www.law-main-road.cloud`, and optionally
+  root apex redirect or same target.
+- Managed certificate provisioned through Firebase Hosting.
+- DNS records remain manual in Gabia unless Cloud DNS is separately opened.
+- No external HTTPS Load Balancer, serverless NEG, Cloud Armor, or `api.<domain>`
+  in the first Phase 7A implementation.
 
 ### Admin Scope
 
 - Own or purchase domain, for example through Gabia.
-- Confirm whether DNS remains in Gabia or is delegated to Cloud DNS.
+- Keep DNS in Gabia for the first Phase 7A implementation unless Cloud DNS is
+  separately approved.
 - Add required `A`/`AAAA`/`CNAME`/CAA records in the chosen DNS provider.
 - Approve cutover window.
 - Add final frontend custom domain to Firebase Authorized Domains.
-- If the backend uses `api.<domain>`, approve backend CORS update and frontend
-  image rebuild using that API base URL.
+- If the backend uses same-origin `/api/**`, approve frontend image rebuild using
+  `NEXT_PUBLIC_API_BASE_URL=https://www.law-main-road.cloud` or an equivalent
+  approved same-origin base.
+- If the backend uses same-origin `/api/**`, approve the rewrite order and confirm
+  that routed API calls complete within Firebase Hosting 60-second timeout
+  limits. Keep long-running endpoints on direct backend fallback or defer them to
+  a separate API-domain/edge design.
+- Approve backend CORS update for the custom frontend origin if any browser
+  cross-origin path remains or for rollback compatibility.
 
 ### Verification
 
 - Custom frontend domain returns the deployed frontend over HTTPS.
 - `/`, `/before`, `/after`, and `/history` load or guard safely from the custom
   frontend domain.
-- If `api.<domain>` is used, `GET https://api.<domain>/health` passes.
+- If same-origin `/api/**` routing is used, an auth-negative request to
+  `https://www.law-main-road.cloud/api/v1/auth/me` returns the expected
+  unauthenticated response without exposing raw token/user data.
+- Same-origin API smoke includes representative non-long-running endpoints; any
+  long-running endpoint is verified separately or kept on the direct backend
+  fallback.
 - `NEXT_PUBLIC_API_BASE_URL` points to the intended backend path and matches the
   latest frontend image build.
 - Backend `BACKEND_CORS_ORIGIN_REGEX` allows only the approved frontend custom
@@ -326,8 +399,8 @@ Likely resources:
 
 - Repoint DNS to previous target, lower TTL before planned cutover, or use Cloud
   Run direct URL.
-- Shift load balancer routing back to the previous backend service or detach LB
-  routing after traffic is stable elsewhere.
+- Roll back Firebase Hosting release/config if rewrites or custom domain behavior
+  is faulty.
 - Keep Cloud Run revisions unchanged during edge rollback.
 - Revert `NEXT_PUBLIC_API_BASE_URL` and backend CORS only through the relevant
   Phase 4/3 roots if the backend public host changes.

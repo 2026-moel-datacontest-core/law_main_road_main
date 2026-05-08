@@ -20,6 +20,8 @@ order:
 7. `docs/architecture/env_profiles.md`
 8. `docs/architecture/phase/README.md`
 9. the specific `docs/architecture/phase/phaseN_*.md` file for the requested phase
+10. for Phase 7 candidates, the relevant
+    `docs/architecture/phase/hardening/phase7x_*.md` file if it exists
 
 ## Source Of Truth
 
@@ -29,6 +31,9 @@ order:
 - `env_profiles.md`: dev / demo-contest / prod operating profiles, scaling,
   sizing, public posture, and prod-opening boundary.
 - `phase/phaseN_*.md`: tactical execution checklist for that phase.
+- `phase/hardening/phase7x_*.md`: candidate-specific Phase 7 optional hardening
+  design/opening gates. These documents refine the Phase 7 umbrella without
+  making every hardening candidate mandatory.
 - `current_project_architecture.md`: current local/MVP architecture reference.
 
 When changing phase numbering, Terraform roots, or runtime boundaries, update the
@@ -51,6 +56,8 @@ documentation patch.
 - Keep Terraform, CI/scripts, and Admin/manual responsibility split explicit.
 - Prefer adding phase-specific detail under `phase/` instead of bloating the
   top-level phase plan.
+- For Phase 7 optional hardening, keep `phase/phase7_optional_hardening.md` as
+  the umbrella and put accepted candidate details under `phase/hardening/`.
 - For any cloud migration or Terraform task, identify the target profile before
   editing: `dev`, `demo/contest`, or `prod`. If the user does not explicitly
   approve `prod`, assume `dev` or `demo/contest`, not prod.
@@ -80,7 +87,8 @@ When asked to implement or review a phase, first open the matching phase file:
 - Phase 4: `phase/phase4_frontend_runtime.md`
 - Phase 5: `phase/phase5_cicd.md`
 - Phase 6: `phase/phase6_observability_reliability.md`
-- Phase 7: `phase/phase7_optional_hardening.md`
+- Phase 7: `phase/phase7_optional_hardening.md`; if a candidate is opened, also
+  read the matching `phase/hardening/phase7x_*.md`
 
 Report whether the phase is ready, blocked, or needs a preceding phase output
 before editing Terraform or runtime code.
