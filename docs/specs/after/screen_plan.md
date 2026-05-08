@@ -14,7 +14,7 @@
 
 ## 1. 문서 목적
 
-이 문서는 K-Labor Shield **After 화면 기획서**다. 새 UI 제안서가 아니라 현재 main `frontend/src/app`에 구현된 After route, 화면 상태, 사용자 액션, API 호출, 표시 데이터를 코드 기준으로 정리한다.
+이 문서는 법대로(LawMainRoad) **After 화면 기획서**다. 새 UI 제안서가 아니라 현재 main `frontend/src/app`에 구현된 After route, 화면 상태, 사용자 액션, API 호출, 표시 데이터를 코드 기준으로 정리한다.
 
 기준 route는 `/`, `/after`, `/after/result`, `/after/intake`, `/after/draft`다. `z_before_begin/`의 Before/Begin 계약서 업로드, OCR, review 화면과 팀 통합 후 integrated Before/Bridge/After 화면은 이 문서에서 다루지 않는다. integrated screen plan은 팀 merge 후 별도 문서에서 다시 작성한다.
 
@@ -73,7 +73,7 @@ flowchart TD
 
 | 항목 | 내용 |
 |---|---|
-| 표시 목적 | K-Labor Shield frontend scaffold/entry 상태를 표시한다. After 기능의 실제 입력 화면은 `/after`다. |
+| 표시 목적 | 법대로(LawMainRoad) frontend scaffold/entry 상태를 표시한다. After 기능의 실제 입력 화면은 `/after`다. |
 | 주요 UI 영역 | static main section, eyebrow `SCN-004 Phase 1A`, title, body copy. `Masthead`는 이 page 안에서 렌더링되지 않지만 다른 After routes의 shared nav에는 `/after` 링크가 있다. |
 | 주요 사용자 액션 | 현재 page body에는 CTA/action 없음. 사용자는 주소 입력 또는 shared nav가 있는 화면에서 `/after`로 진입한다. |
 | 사용 state/props/context | 없음. `FlowContext`를 읽지 않는다. |

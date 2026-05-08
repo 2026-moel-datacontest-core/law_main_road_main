@@ -18,7 +18,7 @@
 
 ## 1. 문서 목적
 
-이 문서는 K-Labor Shield **After** 기능의 요구정의서다. 현재 main `frontend/` Next.js 앱과 main `backend/` FastAPI 구현을 기준으로, 법률 질의에서 근거 답변과 지원 문서 초안까지 이어지는 MVP 요구사항을 정리한다.
+이 문서는 법대로(LawMainRoad) **After** 기능의 요구정의서다. 현재 main `frontend/` Next.js 앱과 main `backend/` FastAPI 구현을 기준으로, 법률 질의에서 근거 답변과 지원 문서 초안까지 이어지는 MVP 요구사항을 정리한다.
 
 이 문서는 `z_before_begin/`의 Before/Begin 계약서 업로드, OCR, 계약서 review 기능을 다루지 않는다. 통합 앱(integrated Before/Bridge/After) 요구정의서도 이 문서의 범위가 아니며, 팀 merge 이후 별도 문서에서 확정한다.
 

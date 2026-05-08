@@ -2,7 +2,7 @@
 
 ## Project
 
-- **Name:** K-Labor Shield
+- **Name:** 법대로(LawMainRoad)
 - **Goal:** 외국인 근로자를 위한 노동권 보호 통합 AI
 - **Priority:** 제출 안정성 > 기능 추가
 

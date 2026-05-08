@@ -1,8 +1,8 @@
-# K-Labor Shield Design Direction
+# 법대로(LawMainRoad) Design Direction
 
 Date: 2026-04-29
 
-This document defines the visual direction for K-Labor Shield after the latest
+This document defines the visual direction for 법대로(LawMainRoad) after the latest
 frontend route-level polish. It replaces the earlier IBM Carbon-clone direction
 with a trusted labor-rights SaaS direction that keeps public-service clarity:
 calm, trustworthy, accessible, workflow-oriented, and useful for Korean-first
@@ -38,7 +38,7 @@ Use these references in combination, not as a single style to copy.
 
 ## 2. Design Positioning
 
-K-Labor Shield should feel like a trusted labor-rights SaaS with public-service
+법대로(LawMainRoad) should feel like a trusted labor-rights SaaS with public-service
 clarity: safe like a public service, but warmer and more guided than a blank
 government form. It should not feel like a consumer AI chat toy, a generic
 polished SaaS shell, or a law-firm marketing site.
@@ -435,7 +435,7 @@ Rules:
 
 Use this when asking an agent to continue visual work:
 
-> Polish the selected K-Labor Shield route using the DESIGN.md direction. Keep
+> Polish the selected 법대로(LawMainRoad) route using the DESIGN.md direction. Keep
 > `--kl-*` tokens, preserve SCN-004 freeze and SCN-001 protected/frozen paths,
 > keep Korean primary copy, avoid API/schema/auth/storage changes, use a warm
 > labor/legal SaaS tone with neutral surfaces and restrained semantic color,
