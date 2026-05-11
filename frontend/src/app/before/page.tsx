@@ -22,7 +22,7 @@ import {
 } from '@/components/before/ResultPanel';
 import { UploadPanel } from '@/components/before/UploadPanel';
 import { Masthead } from '@/components/layout/Masthead';
-import { WorkspaceSidebar } from '@/components/layout/WorkspaceSidebar';
+import { WorkspaceSidebar, type WorkspaceNavItem } from '@/components/layout/WorkspaceSidebar';
 import { Button } from '@/components/ui/Button';
 import { Notification } from '@/components/ui/Notification';
 import { SkipLink } from '@/components/ui/SkipLink';
@@ -645,8 +645,8 @@ export default function BeforePage() {
     }
   }
 
-  function handleReset() {
-    setIsUploadVisible(true);
+  function resetBeforeWorkspace({ showUpload }: { showUpload: boolean }) {
+    setIsUploadVisible(showUpload);
     setScreenState('home');
     setSelectedFiles([]);
     setLoadingJob(null);
@@ -664,6 +664,18 @@ export default function BeforePage() {
     setBeforeAnalyzeAuthMessage(null);
     clearBridgeActionFeedback();
     dispatch({ type: 'CLEAR_BEFORE_REVIEW_RESULT' });
+  }
+
+  function handleReset() {
+    resetBeforeWorkspace({ showUpload: true });
+  }
+
+  function handleWorkspaceNavItemClick(item: WorkspaceNavItem) {
+    if (item !== 'before' || isSubmitting || isBridgeSubmitting) {
+      return;
+    }
+
+    resetBeforeWorkspace({ showUpload: false });
   }
 
   function handleStartNewReview() {
@@ -850,6 +862,7 @@ export default function BeforePage() {
             actionDescription="새 계약서 검토를 시작합니다"
             actionDisabled={isSubmitting || isBridgeSubmitting}
             onAction={handleStartNewReview}
+            onNavItemClick={handleWorkspaceNavItemClick}
             ariaLabel="계약서 검토 메뉴"
             summary={
               <>

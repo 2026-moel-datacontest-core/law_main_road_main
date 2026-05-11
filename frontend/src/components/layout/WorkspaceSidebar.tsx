@@ -14,6 +14,7 @@ interface WorkspaceSidebarProps {
   actionDescription?: string;
   actionDisabled?: boolean;
   onAction?: () => void;
+  onNavItemClick?: (item: WorkspaceNavItem) => void;
   reserveActionSlot?: boolean;
   summary?: ReactNode;
   ariaLabel?: string;
@@ -37,6 +38,7 @@ export function WorkspaceSidebar({
   actionDescription,
   actionDisabled = false,
   onAction,
+  onNavItemClick,
   reserveActionSlot = false,
   summary,
   ariaLabel = '작업 메뉴',
@@ -80,6 +82,7 @@ export function WorkspaceSidebar({
               href={item.href}
               className={className}
               aria-current={isActive ? 'page' : undefined}
+              onClick={() => onNavItemClick?.(item.key)}
             >
               <Icon size={16} aria-hidden="true" />
               {item.label}
