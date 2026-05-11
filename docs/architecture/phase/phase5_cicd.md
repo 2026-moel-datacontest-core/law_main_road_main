@@ -1,6 +1,6 @@
 # Phase 5 — CI/CD
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 ## 1. Goal
 
@@ -47,8 +47,11 @@ Scope:
 - `.github/workflows/pr-checks.yml`, `.github/workflows/deploy-dev.yml`, and
   `.github/workflows/rollback-dev.yml` have been authored for dev-only
   validation, deployment, and rollback.
-- Prod, custom domain/LB, backend API contracts, SCN-004 freeze behavior, and
-  SCN-001 live/backend document draft generation remain unopened.
+- At Phase 5 completion, prod, custom domain/LB, backend API contracts,
+  SCN-004 freeze behavior, and SCN-001 live/backend document draft generation
+  were unopened. Phase 7A later completed only the `www` Firebase Hosting
+  custom-domain slice; prod, LB, API contracts, and SCN-001 live/backend draft
+  remain unopened.
 
 Validation evidence:
 

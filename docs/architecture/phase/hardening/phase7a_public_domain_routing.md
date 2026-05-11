@@ -1,11 +1,12 @@
 # Phase 7A — Public Domain Routing
 
-기준일: `2026-05-08`
+기준일: `2026-05-11`
 
 ## Status
 
 Phase 7A는 `demo/contest` public presentation domain을 여는 optional hardening
-후보다. 이 문서는 implementation 전 decision/opening gate를 고정한다.
+후보다. 2026-05-11 기준 첫 `www` frontend-domain pass는 완료됐고, 이 문서는
+opening gate와 완료 evidence를 함께 기록한다.
 
 ## Decision
 
@@ -47,7 +48,7 @@ Host plan:
 
 | Host | Decision | Notes |
 |---|---|---|
-| `www.law-main-road.cloud` | first public frontend host | canonical public demo URL candidate |
+| `www.law-main-road.cloud` | first public frontend host | approved public demo URL |
 | `law-main-road.cloud` | human decision gate | do not implement in the first frontend-only pass |
 | `app.law-main-road.cloud` | defer | alternative only if `www` is rejected |
 | `api.law-main-road.cloud` | defer | open only if a separate API domain is approved |
@@ -70,10 +71,12 @@ https://www.law-main-road.cloud/api/**
 -> Cloud Run backend
 ```
 
-The first Phase 7A implementation should connect only the frontend public domain
-unless same-origin API routing is explicitly approved. Do not add a `/api/**`
-Hosting rewrite, change `NEXT_PUBLIC_API_BASE_URL`, or change backend CORS as a
-side effect of the frontend-only domain launch.
+The first Phase 7A implementation connects only the frontend public domain
+unless same-origin API routing is explicitly approved. It does not add a
+`/api/**` Hosting rewrite or change `NEXT_PUBLIC_API_BASE_URL`. The only backend
+change in this pass is the explicitly approved small CORS extension for
+`https://www.law-main-road.cloud`, while keeping the Phase 4 frontend Cloud Run
+origin for rollback/debug.
 
 If same-origin `/api/**` routing is later approved, rewrite rule ordering becomes
 a hard gate. Firebase Hosting applies the first matching rewrite rule, so
@@ -159,8 +162,8 @@ In scope:
 - Firebase Authentication Authorized Domains update.
 - Frontend rebuild only if the API base change is explicitly approved.
 - Backend CORS re-apply only if the approved routing path requires it.
-- Route/auth smoke, conditional API smoke for any approved API routing change,
-  and rollback note.
+- Route/auth smoke, direct-backend CORS/API smoke for the approved custom
+  frontend origin, and rollback note.
 
 Out of scope:
 
@@ -202,7 +205,7 @@ This is frontend-only routing. It does not:
 - add `.firebaserc`,
 - add `/api/**`,
 - change `NEXT_PUBLIC_API_BASE_URL`,
-- change backend CORS,
+- change backend CORS except through the approved Phase 7A allowlist extension,
 - change Cloud Run ingress or IAM,
 - create or apply Terraform,
 - connect `law-main-road.cloud` apex.
@@ -238,9 +241,9 @@ These steps are intentionally not automated in this patch.
    to become connected/ready. Record only redacted status evidence in public
    docs.
 7. Add `www.law-main-road.cloud` to Firebase Authentication Authorized Domains.
-8. Run the frontend-only smoke below. Use the existing Cloud Run frontend URL as
-   the full API-flow rollback/smoke path until backend CORS or same-origin API
-   routing is separately approved.
+8. Run the frontend route smoke first. After the approved backend CORS extension
+   is applied, run the direct-backend auth/API smoke from the custom origin.
+   Same-origin API routing remains separately gated.
 
 Do not change Gabia DNS, Firebase Authorized Domains, certificate/cutover state,
 or any public posture beyond `www.law-main-road.cloud` without the matching
@@ -253,10 +256,9 @@ Required smoke:
 - `https://www.law-main-road.cloud` loads the deployed frontend over HTTPS.
 - `/`, `/before`, `/after`, and `/history` load or guard safely.
 - Google Sign-In does not fail with `auth/unauthorized-domain`.
-- API-calling flows from the custom domain are not acceptance criteria for this
-  frontend-only pass because `/api/**`, `NEXT_PUBLIC_API_BASE_URL`, and backend
-  CORS changes are deferred. Use the existing Cloud Run frontend fallback for
-  full backend/API smoke until a later API-routing gate is approved.
+- API-calling flows from the custom domain use the existing direct backend API
+  base plus the approved CORS allowlist extension. `/api/**` Hosting rewrite and
+  `NEXT_PUBLIC_API_BASE_URL` changes remain deferred.
 - If same-origin `/api/**` routing is used,
   `https://www.law-main-road.cloud/api/v1/auth/me` returns the expected
   unauthenticated response without raw token/user data.
@@ -268,6 +270,128 @@ Required smoke:
 - Missing/invalid Firebase Bearer tokens are rejected on protected SCN-001 paths.
 - Public docs/screenshots use the custom domain and do not expose direct backend
   Cloud Run URLs or internal cloud inventory.
+
+## 2026-05-11 Frontend Domain Smoke Evidence
+
+Scope:
+
+- Target profile: `demo/contest` public presentation domain on existing `dev`
+  resources.
+- Host checked: `www.law-main-road.cloud` only.
+- Root apex `law-main-road.cloud`, `api.law-main-road.cloud`, `/api/**`
+  Hosting rewrites, `NEXT_PUBLIC_API_BASE_URL`, backend API contracts, auth
+  persistence, and storage behavior were not changed. Backend CORS was changed
+  only in the later approved small extension recorded below.
+- Codex did not run a Firebase deploy, change Gabia DNS, or mutate Console
+  settings during this smoke.
+
+Observed DNS / TLS:
+
+- Firebase Console custom domain status was reported by the project owner as
+  `Connected` for `www.law-main-road.cloud`.
+- `www.law-main-road.cloud` resolves through Firebase Hosting, with the generic
+  Firebase Hosting IPv4 `199.36.158.100` observed. The Firebase default host
+  name is treated as operational inventory and is not repeated in this public
+  evidence note.
+- An IPv6 answer was also observed through the same CNAME chain, but local IPv6
+  connection from the smoke environment failed, so IPv6 reachability was not
+  accepted as verified evidence.
+- HTTPS certificate is issued for `www.law-main-road.cloud` by Google Trust
+  Services, with the SAN containing `DNS:www.law-main-road.cloud`.
+- Public TXT ownership record retention was not confirmed from this shell with
+  `dig TXT`; Firebase Console remains the source of truth for ownership TXT
+  status and should be checked before deleting any TXT record.
+
+Route smoke:
+
+| Check | Result |
+|---|---|
+| `curl -4 -L https://www.law-main-road.cloud/` | `200`, served the 법대로 frontend HTML |
+| `curl -4 -L https://www.law-main-road.cloud/before` | `200` |
+| `curl -4 -L https://www.law-main-road.cloud/after` | `200` |
+| `curl -4 -L https://www.law-main-road.cloud/history` | `200` |
+| Browser-like compressed `GET /` | `404 Site Not Found` from Firebase Hosting |
+| Browser-like compressed `GET /before`, `/after`, `/history` | `200` |
+| Browser-like compressed `GET /?smoke=20260511` | `200` |
+
+Recheck after Console `Connected` status was reported:
+
+- Browser-like compressed `GET /` initially still returned Firebase Hosting
+  `404 Site Not Found`.
+- Browser-like compressed `GET /before`, `/after`, and `/history` still
+  returned `200` and rendered the 법대로 frontend.
+
+Final recheck after the edge/cache state settled:
+
+- Browser-like compressed `GET /`, `/before`, `/after`, and `/history` returned
+  `200`.
+- Headless browser route smoke for `/`, `/before`, `/after`, and `/history`
+  returned `200`, page title `법대로`, and rendered 법대로 brand text.
+- The Firebase default Hosting domain also returned `200`, but the approved
+  public evidence and submission target remains `www.law-main-road.cloud`.
+
+Interactive auth observation:
+
+- The project owner reported that opening the custom domain surfaced
+  `인증 확인 서버에 연결할 수 없습니다.`
+- Passive headless route smoke did not reproduce the message without an active
+  Firebase session.
+- Current repo/config evidence explains the likely cause: the frontend image
+  still calls the direct backend URL through `NEXT_PUBLIC_API_BASE_URL`, while
+  backend `BACKEND_CORS_ORIGIN_REGEX` remains narrowed to the Phase 4 Cloud Run
+  frontend origin only. Protected/auth API flows from
+  `https://www.law-main-road.cloud` therefore need a small approved backend CORS
+  re-apply, unless a later same-origin `/api/**` Hosting rewrite path is opened.
+
+Backend CORS extension:
+
+- Phase 7A CORS extension was applied through the dev backend runtime Terraform
+  root only.
+- New `BACKEND_CORS_ORIGIN_REGEX` allows exactly:
+  `https://www.law-main-road.cloud` and the existing Phase 4 dev frontend Cloud
+  Run rollback/debug origin.
+- Wildcard CORS was not used.
+- `/api/**` Firebase Hosting rewrite, `NEXT_PUBLIC_API_BASE_URL`, frontend
+  rebuild, `api.law-main-road.cloud`, and root apex `law-main-road.cloud` were
+  not opened.
+- The first Terraform plan was not applied because it also showed a stale
+  backend image digest in the tfvars file. The tfvars backend image reference
+  was synced to the current Cloud Run image digest first, then the saved apply
+  plan contained only the CORS env var update.
+- Apply result: `0 added, 1 changed, 0 destroyed`. A refresh-only state update
+  then recorded the latest backend revision outputs without infrastructure
+  changes.
+
+CORS / auth smoke after apply:
+
+| Check | Result |
+|---|---|
+| Preflight from `https://www.law-main-road.cloud` to `/api/v1/auth/me` | `200`, `access-control-allow-origin` echoed the custom domain |
+| Preflight from Phase 4 dev frontend Cloud Run origin | `200`, rollback/debug origin still allowed |
+| Preflight from root apex `https://law-main-road.cloud` | `400`, no approved origin echo |
+| `GET /api/v1/auth/me` from custom domain origin without token | `200`, `logged_in=false`, custom origin allowed |
+| Browser fetch from `https://www.law-main-road.cloud` to `/api/v1/auth/me` | `200`, no CORS console error |
+| Google login popup from custom domain | Popup opened through Firebase auth handler; no `auth/unauthorized-domain` observed in headless smoke |
+| Custom domain routes `/`, `/after`, `/history` | `200` |
+| Project-owner interactive smoke | Custom-domain login, auth verification, protected/history flows, and public routes reported working |
+
+Decision:
+
+- DNS and managed TLS are connected.
+- The frontend-only custom domain route smoke passed for `/`, `/before`,
+  `/after`, and `/history`.
+- The small backend CORS extension is applied and verified for the custom
+  frontend origin.
+- `auth/unauthorized-domain` was not observed in the popup smoke.
+- Project-owner interactive browser smoke reported that login/auth/history
+  functionality works after the CORS extension.
+
+Next action:
+
+- Keep monitoring the custom domain during the demo window for provider timeout
+  or auth API regressions.
+- Keep this as `demo/contest`, not `prod`, and keep Cloud Run direct URLs as the
+  private rollback path.
 
 ## Rollback
 

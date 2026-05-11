@@ -11,7 +11,7 @@
 
 ## Current Phase
 
-기준일: `2026-04-29`
+기준일: `2026-05-11`
 
 - RAG refinement landing 완료
 - SCN-004 document draft backend 완료
@@ -60,6 +60,15 @@
 - 실제 브라우저 logged-in/history deletion smoke는 PASS 상태이며, SCN-001 live/backend document draft generation은 NOT opened 상태다.
 - 현재 source of truth는 `backend/data/law_chunks/all_chunks.json`
 - current live corpus: `1722` chunks, `selected_as_of = 2026-04-11`
+- Cloud migration Phase 7A public domain launch completed for
+  `www.law-main-road.cloud`: Firebase Hosting custom domain is Connected,
+  Firebase Auth Authorized Domains includes the host, frontend routes
+  `/`, `/before`, `/after`, `/history` smoke PASS, and backend Cloud Run CORS
+  now allows exactly the custom domain plus the existing Phase 4 frontend
+  Cloud Run rollback/debug origin. `/api/**` Hosting rewrite,
+  `NEXT_PUBLIC_API_BASE_URL` change, frontend rebuild, `api.law-main-road.cloud`,
+  root apex `law-main-road.cloud`, HTTPS Load Balancer, Cloud Armor, and prod
+  opening remain deferred.
 
 Evolution note:
 

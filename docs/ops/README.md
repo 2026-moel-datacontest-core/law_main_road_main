@@ -8,7 +8,7 @@
 
 ## 현재 진행 상태
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 현재 `ops` 문서 기준으로 정리된 상태는 아래와 같다.
 
@@ -76,8 +76,21 @@
   plan check는 no changes다. 생성 범위는 Cloud SQL PostgreSQL instance와
   application database shell뿐이다. DB user/password, Secret Manager version,
   pgvector extension, Alembic schema, HNSW index, seed data, embeddings,
-  backend runtime IAM, Cloud Run, WIF, GitHub workflow, prod resources는 아직
-  열지 않았다. Phase 3+ runtime roots remain unopened.
+  backend runtime IAM, Cloud Run, WIF, GitHub workflow, prod resources는 Phase 2
+  자체에서는 열지 않았다.
+- Cloud migration Phase 3/4 runtime 완료: dev backend/frontend Cloud Run runtime
+  roots가 적용됐고, backend health/auth-negative/retrieve/answer/document-draft
+  smoke와 frontend route/CORS/SCN-004/SCN-001 boundary smoke가 PASS 상태다.
+  Cloud Run runtime은 `min_instances = 0` 기본값을 유지한다.
+- Cloud migration Phase 5/6 운영 baseline 반영: private source/deploy repo 기준
+  WIF/CI/CD dev path와 observability/reliability dev baseline이 정리됐다. Prod는
+  아직 별도 prod-opening review 전까지 미오픈이다.
+- Cloud migration Phase 7A public domain launch 완료:
+  `https://www.law-main-road.cloud`가 Firebase Hosting custom domain으로
+  Connected 상태이고, Firebase Auth Authorized Domains에 추가됐으며, backend
+  CORS는 custom origin과 기존 Phase 4 frontend rollback/debug origin만 허용한다.
+  `/api/**` Hosting rewrite, frontend API-base rebuild, `api.*`, root apex, HTTPS
+  Load Balancer, Cloud Armor, prod opening은 열지 않았다.
 - Phase 0 final decisions 반영: first cloud target은 `dev` only, initial GCP
   model은 one project + env-prefixed resources, Terraform/resource prefix는
   `lmr`, human-readable app label은 `law-main-road`다. 기존 코드/서비스 이름을

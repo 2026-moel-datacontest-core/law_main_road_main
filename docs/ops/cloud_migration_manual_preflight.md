@@ -1,6 +1,6 @@
 # Cloud Migration Manual Preflight
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 이 문서는 GCP cloud migration Terraform authoring을 시작하기 전에 사람이 먼저
 준비하고 결정해야 하는 항목을 정리한 운영 런북이다. 실제 Terraform 파일,
@@ -13,6 +13,13 @@ now exist under `infra/terraform`, bootstrap and dev foundation were applied, an
 post-apply plan checks returned no changes. No secret values, Cloud SQL, Cloud
 Run, WIF provider, GitHub workflow, or backend/frontend runtime changes were
 added in Phase 1.
+
+Phase 7A implementation note on `2026-05-11`: `www.law-main-road.cloud` is the
+approved `demo/contest` public frontend domain through Firebase Hosting. Backend
+CORS was extended only for this custom origin plus the existing frontend
+rollback/debug origin. Same-origin `/api/**`, frontend API-base rebuild,
+`api.*`, root apex, HTTPS Load Balancer, Cloud Armor, and `prod` remain
+separate gates.
 
 Environment/profile별 운영값은
 [`../architecture/env_profiles.md`](../architecture/env_profiles.md)를 기준으로
@@ -33,7 +40,7 @@ GCP auth: human MFA + later GitHub WIF
 service account key JSON: forbidden
 Terraform: Phase 1부터 resource 생성
 Ansible: first migration scope에서 사용하지 않음
-demo/contest: dev smoke 후 public contest posture로 강화 가능
+demo/contest: dev smoke 후 `https://www.law-main-road.cloud` public contest posture 적용 완료
 prod: separate prod-opening review 전까지 열지 않음
 ```
 
@@ -142,8 +149,8 @@ Console에서 진행:
 5. Web app을 추가한다.
 6. Authentication > Sign-in method에서 Google provider를 활성화한다.
 7. Authentication > Settings > Authorized domains를 확인한다.
-8. 지금은 `localhost`를 유지하고, Phase 4 이후 frontend Cloud Run `run.app`
-   domain을 추가한다.
+8. `localhost`, Phase 4 frontend Cloud Run host, and Phase 7A
+   `www.law-main-road.cloud` custom host가 Authorized Domains에 있는지 확인한다.
 
 기록할 값:
 
@@ -153,7 +160,8 @@ firebase_web_app_created: PASS/FAIL
 google_sign_in_enabled: PASS/FAIL
 authorized_domains:
   - localhost
-  - <future frontend run.app domain>
+  - <frontend run.app domain>
+  - www.law-main-road.cloud
 auth_persistence_policy: inMemoryPersistence
 providers_opened: Google only
 phone_auth_opened: no

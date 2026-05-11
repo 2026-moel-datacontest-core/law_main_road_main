@@ -1,6 +1,6 @@
 # Cloud Migration Budget And Mirror Policy
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 이 문서는 cloud migration preflight의 남은 운영 결정을 고정한다.
 
@@ -109,6 +109,8 @@ Mirror rule:
   private runbook을 넣지 않는다.
 - 2번 repo README는 완성본 설명, 실행/시연 방법, public demo URL 또는 custom
   domain, 그리고 개발 이력 repo 안내만 담는다.
+- 현재 승인된 public demo URL은 `https://www.law-main-road.cloud`이다. 이는
+  `demo/contest` posture이며 `prod` opening을 의미하지 않는다.
 - 1번 repo가 private인 동안 2번 repo README의 1번 repo 링크는 “reviewer access
   required”로 표시한다. 심사자가 commit history 확인을 요구하면 1번 repo 접근권한을
   별도로 부여한다.

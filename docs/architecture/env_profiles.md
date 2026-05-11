@@ -1,6 +1,6 @@
 # Cloud Migration Environment Profiles
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 이 문서는 cloud migration phase plan을 실행할 때 사용할 environment/profile별
 운영 설정을 정리한다. Phase 문서는 무엇을 어떤 순서로 만들지 정의하고, 이
@@ -24,6 +24,11 @@ Baseline rule:
 - `demo/contest` is not a separate first Terraform environment by default. It is
   a time-bounded public presentation posture applied after dev smoke passes.
 - `prod` must not be claimed only because a custom domain exists.
+- Phase 7A connected `www.law-main-road.cloud` as a `demo/contest` public
+  presentation domain on existing `dev` resources. The backend still uses the
+  direct Cloud Run API base from the frontend image, with a small approved CORS
+  extension for the custom origin. Same-origin `/api/**`, `api.*`, root apex,
+  and prod remain unopened.
 - GitHub deploy/WIF is bound only to the development/deploy source repo
   `2026-moel-datacontest-core/law_main_road_main`, which stays private for the
   current preflight. The public/submission mirror repo
@@ -59,7 +64,7 @@ cost-controlled Free Trial / dev-demo validation.
 | Cloud SQL PITR | off/optional |
 | Cloud SQL deletion protection | false unless later dependencies make deletion risky |
 | Firebase Auth | existing `law-main-road` Firebase project, Google provider |
-| Firebase Authorized Domains | `localhost`, `127.0.0.1`, Firebase defaults; Cloud Run frontend `run.app` after Phase 4 |
+| Firebase Authorized Domains | `localhost`, `127.0.0.1`, Firebase defaults; Cloud Run frontend `run.app` after Phase 4; `www.law-main-road.cloud` after Phase 7A |
 | Public backend guardrails | mark dev/demo-only until rate/body/scale/budget/log controls pass |
 | Budget alert | `lmr-dev-demo-monthly`, KRW 70,000, 25/50/80/100 actual + 100 forecasted |
 
@@ -79,8 +84,8 @@ presentation. This is stronger than day-to-day dev, but it is still not full pro
 | Area | Demo/contest setting |
 |---|---|
 | Terraform env | usually `dev` resources with presentation posture |
-| Custom domain | `law-main-road.cloud` purchased; optional Phase 7A connection after dev Cloud Run smoke passes |
-| Gabia / DNS | Phase 7A candidate; not a Phase 1-6 prerequisite |
+| Custom domain | `www.law-main-road.cloud` connected through Firebase Hosting in Phase 7A |
+| Gabia / DNS | Gabia remains authoritative; Phase 7A DNS/Hosting connection completed for `www` only |
 | Cloud Run frontend min instances | `1` during judging/presentation window |
 | Cloud Run backend min instances | `1` during judging/presentation window |
 | Cloud Run max instances | `2-3` unless load evidence requires more |
@@ -90,6 +95,7 @@ presentation. This is stronger than day-to-day dev, but it is still not full pro
 | Cloud SQL HA | off unless contest rules or uptime requirement justify cost |
 | Cloud SQL deletion protection | usually false for disposable dev-backed demo; true only if a long-lived demo database is approved |
 | Public backend posture | `contest/demo`, not production-ready public API |
+| Backend CORS | custom frontend origin plus Phase 4 Cloud Run frontend rollback/debug origin; no wildcard |
 | Public AI endpoint controls | max instances, budget alerts, request/body/rate guardrails as available |
 | Monitoring | basic uptime/smoke, error-rate/provider-timeout checks |
 | Repository posture | private source repo deploys; public mirror repo is README/snapshot only |
@@ -132,7 +138,7 @@ prod-opening review approves cost, reliability, security, and operating owner.
 |---|---|
 | Terraform env | `envs/prod/*`, apply only after prod-opening review |
 | GCP project model | one project/env-prefixed first; separate prod project is future hardening |
-| Custom domain | yes, after Phase 7A/domain design |
+| Custom domain | choose during prod-opening review; Phase 7A `www` domain is demo/contest only |
 | Cloud Run min instances | `0` or `1` based on latency SLO and cost approval |
 | Cloud Run max instances | based on load test and DB capacity |
 | Cloud SQL tier | small dedicated production tier, not shared-core by default |

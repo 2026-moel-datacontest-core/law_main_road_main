@@ -16,7 +16,7 @@ foundation_state_prefix = "envs/dev/foundation"
 data_state_bucket       = "lmr-dev-law-main-road-tfstate"
 data_state_prefix       = "envs/dev/data"
 
-backend_image = "asia-northeast3-docker.pkg.dev/law-main-road/lmr-dev-ar/backend@sha256:03c649f277d37f780f0d1794d9bedac89a842627f0503bc9e5d4aacc02296bea"
+backend_image = "asia-northeast3-docker.pkg.dev/law-main-road/lmr-dev-ar/backend@sha256:c1f2386b4708070500291d852d7df901cc45dcaeed023c84e424deededd35cc2"
 
 # Secret reference only. Create the lmr-dev-database-url version outside Terraform
 # before apply. Do not place the DATABASE_URL value in this file.
@@ -40,6 +40,7 @@ gcp_location        = "us-central1"
 vertex_answer_model = "gemini-2.5-flash"
 firebase_project_id = "law-main-road"
 
-# Phase 4 dev frontend Cloud Run origin. Local frontend development should use a
-# local backend process or an explicit reviewed CORS override.
-backend_cors_origin_regex = "^https://lmr-dev-frontend-nhthv64dcq-du\\.a\\.run\\.app$"
+# Phase 7A allows the approved custom frontend domain while keeping the Phase 4
+# dev frontend Cloud Run origin available as the rollback/debug path. Do not use
+# wildcard CORS.
+backend_cors_origin_regex = "^https://(lmr-dev-frontend-nhthv64dcq-du\\.a\\.run\\.app|www\\.law-main-road\\.cloud)$"

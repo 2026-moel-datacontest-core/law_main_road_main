@@ -1,6 +1,6 @@
 # 법대로(LawMainRoad) — Cloud Migration Phase Plan
 
-기준일: `2026-05-07`
+기준일: `2026-05-11`
 
 이 문서는 [`cloud_migration_architecture.md`](cloud_migration_architecture.md)의 GCP
 migration target을 실제 구현 가능한 phase로 나눈 계획이다. 목표는 Terraform을
@@ -25,8 +25,9 @@ work until their phase is opened.
 - Phase 1 is the first resource phase. It owns remote state bootstrap,
   foundation APIs, service accounts, Artifact Registry, Secret Manager shells,
   and the private artifact bucket.
-- Phase 7A custom domain / Firebase Hosting edge / Gabia DNS remains optional
-  hardening. It is not a hidden prerequisite for Phase 1-6.
+- Phase 7A custom domain / Firebase Hosting edge / Gabia DNS is optional
+  hardening and not a hidden prerequisite for Phase 1-6. The first Phase 7A
+  pass is complete for `www.law-main-road.cloud` on existing `dev` resources.
 - Terraform does not change application contracts. It must preserve
   `/api/v1/answer`, `/api/v1/documents/draft`, protected SCN-001 Bridge/history
   paths, SCN-004 demo freeze, SCN-001 frontend-local frozen draft behavior,
@@ -128,8 +129,9 @@ targets before adding new automation.
 - live/backend SCN-001 document draft generation
 - protected SCN-001 draft endpoint
 - Step 3 full retention lifecycle beyond MVP soft-delete
-- custom domain edge, HTTPS Load Balancer, API Gateway, Cloud Armor, private IP/VPC
-  as first migration requirements
+- HTTPS Load Balancer, API Gateway, Cloud Armor, private IP/VPC as first
+  migration requirements. Phase 7A `www` custom domain is complete, but it is
+  still optional hardening rather than a Phase 1-6 prerequisite.
 
 ## 2. Phase Principles
 
@@ -227,9 +229,12 @@ Notes:
 - `iam-wif` can be split internally into service-account and WIF submodules if
   implementation clarity requires it, but the phase contract stays keyless and
   service-account-key-free.
-- Firebase Hosting custom-domain config is the selected Phase 7A edge candidate.
-  `load-balancer-domain` is a future/deferred LB candidate only. Phase 1-6 must be
-  valid on Cloud Run managed HTTPS URLs.
+- Firebase Hosting custom-domain config was the selected Phase 7A edge
+  candidate and is now applied for `www.law-main-road.cloud`. The first pass
+  kept the direct backend Cloud Run API base and added only a small backend CORS
+  extension for the custom frontend origin. `load-balancer-domain` is a
+  future/deferred LB candidate only. Phase 1-6 must remain valid on Cloud Run
+  managed HTTPS URLs for rollback.
 
 ### Why Layered Roots
 
@@ -641,8 +646,9 @@ CORS bootstrap note:
 
 - The frontend URL is not known until Phase 4. Deploy the backend with an
   explicitly approved temporary `BACKEND_CORS_ORIGIN_REGEX`, then update that
-  env var after the frontend Cloud Run `run.app` URL is confirmed. If Phase 7A
-  later introduces a custom domain, re-apply CORS again in that phase.
+  env var after the frontend Cloud Run `run.app` URL is confirmed. Phase 7A
+  later added the approved `www.law-main-road.cloud` origin while keeping the
+  Phase 4 Cloud Run frontend origin for rollback/debug.
 - Avoid leaving wildcard CORS in prod after Phase 4 or Phase 7A.
 
 Firebase Admin ADC note:
@@ -760,7 +766,7 @@ Acceptance:
 - CORS allows deployed frontend origin only.
 - Firebase Console Authorized Domains includes the deployed Cloud Run frontend
   URL. Google Sign-In fails with `auth/unauthorized-domain` until this is added.
-  Custom domains are handled by Phase 7A.
+  Phase 7A later added `www.law-main-road.cloud` as the approved custom domain.
 - Next.js Cloud Run container build is verified with `output: "standalone"` plus
   `frontend/Dockerfile`, or an explicitly approved equivalent build strategy.
 - Frontend image build passes `NEXT_PUBLIC_API_BASE_URL` and Firebase public web
@@ -894,7 +900,8 @@ Only open after Phase 1-6 are stable.
 Candidates:
 
 - backend Cloud Run IAM auth / service-to-service auth
-- custom domain edge with Firebase Hosting selected for Phase 7A
+- custom domain edge with Firebase Hosting selected for Phase 7A; first `www`
+  frontend-domain pass complete
 - HTTPS Load Balancer + serverless NEG only if later edge hardening is approved
 - Cloud Armor
 - private IP + Serverless VPC Access or Direct VPC egress
@@ -995,9 +1002,9 @@ Cloud identifier note:
   password-like secrets, but they are internal inventory. Do not expose exact
   values in public portfolio content, screenshots, frontend UI, browser storage,
   or user-facing logs.
-- Use custom domains for public demo URLs after Phase 7A. Keep direct backend
-  `run.app` URLs out of public portfolio material when a custom API domain is
-  available.
+- Use `https://www.law-main-road.cloud` as the approved public demo URL after
+  Phase 7A. Keep direct backend `run.app` URLs out of public portfolio material;
+  a custom API domain remains unopened.
 - Do not add any `VERTEX_API_KEY`, `GOOGLE_APPLICATION_CREDENTIALS_JSON`, or
   service-account-key style env var to this contract for Cloud Run runtime.
   Vertex AI uses backend service identity/ADC.
@@ -1133,7 +1140,7 @@ in generic "decision needed" lists.
 |---|---|
 | Finalized now | first target `dev` only; `envs/dev` and `envs/prod` layout with only `envs/dev` apply-ready and only `dev` instantiated first; `envs/prod` skeleton/README/tfvars-example only until a separate prod-opening review; one GCP project with env-prefixed resources; `law-main-road` app label; `lmr` prefix; `lmr-{env}-{component}` naming where allowed; local-state bootstrap for GCS tfstate bucket; env roots use GCS remote backend after bootstrap; bootstrap local `terraform.tfstate*` never committed; Terraform creates Secret Manager secret resources only; no Terraform-managed secret values by default; `google_secret_manager_secret_version` forbidden by default; one private artifact bucket per env; globally unique variant of `lmr-{env}-artifacts`; `before-runs/` and `after-runs/` object prefixes; Phase 4 uses Cloud Run `run.app`; baseline migration does not include host configuration-management tooling. |
 | Phase-gated decision | Closed by Phase 2 dev apply: dev Cloud SQL exact tier/storage and DB/data readiness. Closed by Phase 3 dev backend smoke: backend Cloud Run runtime deploy, database-url secret version presence, backend Cloud SQL/Vertex runtime IAM, DB pool env wiring, and health/auth-negative/retrieve/answer/document draft smoke evidence. Phase 2 before prod opening: prod exact tier, PITR cost exception, backup retention confirmation. Phase 3 or later before any production-ready public API claim: GCS adapter durability, public endpoint rate/body/cost guardrails, and artifact retrieval mode if UI/runtime needs it. Phase 6: budget alert Terraform management if billing IAM allows, otherwise billing/admin checklist fallback. Phase 6: exact alert thresholds after baseline smoke/traffic. |
-| Deferred by design | separate dev/prod GCP projects; Phase 7A custom domain / Firebase Hosting edge / Gabia DNS until opened; HTTPS Load Balancer; `api.<domain>` backend public endpoint; advanced SLO/alerting; signed URL/auth proxy/artifact retrieval UI unless required later. |
+| Deferred by design | separate dev/prod GCP projects; HTTPS Load Balancer; `api.<domain>` backend public endpoint; root apex domain routing; same-origin `/api/**` Hosting rewrite; advanced SLO/alerting; signed URL/auth proxy/artifact retrieval UI unless required later. Phase 7A `www` Firebase Hosting custom domain is complete. |
 
 ## 13. Release Gate Summary
 
@@ -1163,7 +1170,9 @@ Recommended first implementation sequence:
 9. frontend Cloud Run service
 10. `infra/terraform/modules/iam-wif` WIF slice + GitHub Actions
 11. monitoring alerts and cleanup policies
-12. optional Phase 7A Firebase Hosting custom-domain launch; `load-balancer-domain` remains deferred unless later approved
+12. Phase 7A Firebase Hosting custom-domain launch for `www.law-main-road.cloud`
+    is complete; `load-balancer-domain`, same-origin `/api/**`, `api.*`, and
+    root apex routing remain deferred unless later approved
 
 This order keeps the first live application deployment after the foundational
 security, storage, and DB layers are already verifiable.
@@ -1186,7 +1195,7 @@ Recommended issue split:
 | CI/CD | Phase 5 WIF/workflows/rollback automation | Runtime feature changes |
 | Shell/Python runbooks | Optional scripts for MFA prerequisite evidence, resource describe checks, migration/seed orchestration, post-deploy smoke, log redaction check, rollback drill | Terraform resource ownership and secret value storage |
 | Observability | Phase 6 metrics/alerts/lifecycle/rollback drill | New structured logging code unless separately approved |
-| Custom domain launch | Phase 7A Gabia DNS, Firebase Hosting custom domain/rewrites, managed certificate, Firebase Authorized Domains, conditional CORS/API-base smoke only if same-origin API routing is separately approved | Phase 1-6 acceptance criteria and API contract changes |
+| Custom domain launch | Phase 7A `www.law-main-road.cloud` Firebase Hosting custom domain, managed certificate, Firebase Authorized Domain, and small backend CORS extension are complete; same-origin `/api/**` and API-base rebuild remain separately gated | Phase 1-6 acceptance criteria and API contract changes |
 | Optional hardening | One Phase 7 candidate per design note | Phase 1-6 acceptance criteria |
 
 Every issue should include:

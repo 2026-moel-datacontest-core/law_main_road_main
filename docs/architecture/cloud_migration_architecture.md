@@ -1,6 +1,6 @@
 # 법대로(LawMainRoad) — Production-Oriented GCP Migration Architecture
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 > 주의: 이 문서는 현재 로컬 MVP 구조가 아니라 후속 GCP cloud migration 목표
 > 아키텍처다. 현재 구현 상태는
@@ -50,7 +50,7 @@ application behavior migration tool.
 |---|---|
 | Phase sizing | Author Terraform in small phase roots. Phase 0 is docs/decision freeze only; Phase 1 is the first resource phase. |
 | Application contract | Terraform must not change `/api/v1/answer`, `/api/v1/documents/draft`, protected SCN-001 Bridge/history behavior, SCN-004 freeze, SCN-001 frozen draft, auth persistence, or Web Storage policy. |
-| Optional edge | Custom domain / Firebase Hosting edge / Gabia DNS is Phase 7A optional hardening, not a Phase 1-6 prerequisite. HTTPS Load Balancer remains a later edge candidate. |
+| Optional edge | Phase 7A `www.law-main-road.cloud` Firebase Hosting custom domain is complete as optional hardening, not a Phase 1-6 prerequisite. HTTPS Load Balancer, `api.*`, root apex, and same-origin `/api/**` remain later edge candidates. |
 | State | Shared applies use a GCS remote state bucket after bootstrap. The approved baseline is local-state `bootstrap/remote-state` for the first state bucket creation, followed by GCS backend initialization for later env roots. A separate pre-created bootstrap bucket is not the approved baseline. |
 | Cloud Run revision ownership | Build/push images outside Terraform, pass an immutable image digest or explicit tag into Terraform, and let Terraform update Cloud Run service config/traffic so the apply creates the revision. `gcloud run deploy` is not the steady-state path while Terraform owns Cloud Run; emergency manual changes must be reconciled back into Terraform. |
 | Secrets | Terraform may create Secret Manager resources and IAM bindings, but raw secret values and credential-bearing outputs stay out of `.tf` files, tfvars, Terraform state, GitHub Actions logs, and public evidence. |
@@ -359,7 +359,7 @@ production abuse-resistant public AI API.
 | Candidate | When to add |
 |---|---|
 | Backend Cloud Run IAM auth / service-to-service auth | When frontend/backend split needs non-public backend ingress |
-| Firebase Hosting custom domain edge | selected Phase 7A portfolio launch candidate, after Cloud Run `run.app` smoke is stable |
+| Firebase Hosting custom domain edge | Phase 7A completed for `www.law-main-road.cloud` on existing `dev` resources; further edge/API-domain work remains separate |
 | HTTPS Load Balancer + serverless NEG | future Phase 7 edge candidate when Cloud Armor or centralized routing is justified |
 | Cloud Armor | Phase 7 edge hardening for public abuse protection/rate limiting beyond the mandatory app/runtime guardrails |
 | Private IP + Serverless VPC Access or Direct VPC egress | When network isolation becomes worth the added Terraform complexity |
@@ -383,6 +383,19 @@ Gabia DNS
   -> optional Hosting rewrite `/api/**` to Cloud Run backend
 ```
 
+Implementation status on `2026-05-11`:
+
+- `www.law-main-road.cloud` is connected through Firebase Hosting and is the
+  approved public demo URL.
+- Firebase Auth Authorized Domains includes `www.law-main-road.cloud`.
+- Backend Cloud Run CORS allows exactly the custom frontend origin plus the
+  Phase 4 frontend Cloud Run rollback/debug origin.
+- The frontend image still uses the direct backend Cloud Run API base baked into
+  `NEXT_PUBLIC_API_BASE_URL`.
+- Same-origin `/api/**` Hosting rewrite, frontend API-base rebuild,
+  `api.law-main-road.cloud`, root apex `law-main-road.cloud`, HTTPS Load
+  Balancer, Cloud Armor, and prod opening remain deferred.
+
 Recommended public host split:
 
 | Host | Target | Notes |
@@ -394,10 +407,13 @@ Recommended public host split:
 Required boundary decisions:
 
 - Add the chosen frontend host to Firebase Authentication Authorized Domains.
+  This is complete for `www.law-main-road.cloud`.
 - Rebuild frontend with the approved backend base URL if moving from backend
-  `run.app` to same-origin `https://www.law-main-road.cloud/api/**`.
+  `run.app` to same-origin `https://www.law-main-road.cloud/api/**`. This was
+  not done in Phase 7A.
 - Re-apply backend `BACKEND_CORS_ORIGIN_REGEX` to the approved frontend origin
-  when any browser cross-origin path remains or for rollback compatibility.
+  when any browser cross-origin path remains or for rollback compatibility. This
+  is complete for the direct backend API-base path.
 - Keep Cloud Run direct `run.app` URLs documented for rollback unless disabled
   after a separate ingress/rollback design.
 - Do not change public API contracts, SCN-004 freeze behavior, SCN-001 frozen

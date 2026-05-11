@@ -1,6 +1,6 @@
 # Cloud Migration Phase Index
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 This directory contains phase-specific execution plans for the GCP migration
 target. Use these files when assigning focused implementation work to an agent.
@@ -27,7 +27,7 @@ target. Use these files when assigning focused implementation work to an agent.
 | 4 | Frontend Runtime | [`phase4_frontend_runtime.md`](phase4_frontend_runtime.md) | Deploy frontend Cloud Run service and verify browser, Firebase, CORS, and preset flows |
 | 5 | CI/CD | [`phase5_cicd.md`](phase5_cicd.md) | Add GitHub Actions, Workload Identity Federation, deploy permissions, and rollback job |
 | 6 | Observability / Reliability | [`phase6_observability_reliability.md`](phase6_observability_reliability.md) | Add monitoring, alerting, lifecycle cleanup, and rollback drill |
-| 7 | Optional Hardening | [`phase7_optional_hardening.md`](phase7_optional_hardening.md) | Evaluate optional custom domain edge/LB/VPC/Cloud Armor/API Gateway/jobs only after Phase 1-6 are stable |
+| 7 | Optional Hardening | [`phase7_optional_hardening.md`](phase7_optional_hardening.md) | Phase 7A `www` Firebase Hosting custom domain is complete; evaluate any further LB/VPC/Cloud Armor/API Gateway/jobs separately |
 
 ## Terraform Authoring Map
 
@@ -44,7 +44,7 @@ paths until their phase opens.
 | 4 | Phase 4: Frontend Cloud Run runtime and public build env | `infra/terraform/envs/{env}/runtime/frontend` | `cloud-run-service` | yes |
 | 5 | Phase 5: GitHub Actions WIF keyless CI/CD | `infra/terraform/envs/{env}/cicd` | `iam-wif` WIF slice | yes |
 | 6 | Phase 6: Observability, lifecycle, cleanup, and rollback drill | `infra/terraform/envs/{env}/ops` | `monitoring-alerts`, lifecycle/cleanup settings | yes |
-| 7 | Phase 7A+: Optional hardening candidates | candidate-specific root | Firebase Hosting edge for 7A, `load-balancer-domain` deferred, candidate-specific modules | only after separate approval |
+| 7 | Phase 7A+: Optional hardening candidates | candidate-specific root/config | Firebase Hosting edge for 7A completed for `www`, `load-balancer-domain` deferred, candidate-specific modules | only after separate approval |
 
 Each phase issue should include scope, acceptance criteria, forbidden changes,
 validation commands, rollback/delete policy, secrets handling, and a
@@ -75,9 +75,10 @@ Decision status:
 - Phase-gated: Cloud SQL exact sizing, prod PITR/cost confirmation, GCS adapter
   and `ARTIFACT_BUCKET_NAME` activation, artifact retrieval if runtime/UI needs
   it, budget alert ownership, and exact alert thresholds.
-- Deferred by design: separate dev/prod GCP projects, Phase 7A custom
-  domain/Firebase Hosting edge/Gabia until opened, LB, `api.<domain>`, advanced
-  SLO/alerting, and retrieval UI unless required later.
+- Deferred by design: separate dev/prod GCP projects, HTTPS Load Balancer,
+  `api.<domain>`, root apex routing, same-origin `/api/**`, advanced
+  SLO/alerting, and retrieval UI unless required later. Phase 7A `www` Firebase
+  Hosting custom domain is complete.
 
 ## Shell/Python Runbook Boundary
 

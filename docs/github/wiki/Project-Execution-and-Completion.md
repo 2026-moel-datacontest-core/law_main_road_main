@@ -11,7 +11,7 @@
 
 ## 현재 완료 범위
 
-기준일: `2026-05-07`
+기준일: `2026-05-11`
 
 | 트랙 | 결과 |
 |---|---|
@@ -21,7 +21,7 @@
 | Auth | Firebase Google Sign-In과 backend verification 구현 |
 | History | protected record archive, saved selector, MVP soft-delete 구현 |
 | Demo stability | fixed preset paths와 preflight script 구현 |
-| Cloud migration | dev-first migration 진행 중 |
+| Cloud migration | dev-first runtime smoke와 Phase 7A `www.law-main-road.cloud` public domain launch 완료 |
 
 ## 수행 요약
 
@@ -56,12 +56,12 @@ behavior, DB contents, public API contract가 바뀐 경우에만 실행합니�
 
 ## 남은 작업
 
-남은 작업은 기능 확장보다 공개 문서, QA evidence, cloud dev smoke,
+남은 작업은 기능 확장보다 공개 문서, QA evidence, demo-window monitoring,
 contest/demo posture review에 초점을 둡니다.
 
 - public README/Wiki polish
 - manual visual QA and print preview evidence
-- cloud dev smoke and contest/demo posture review
+- custom-domain demo-window monitoring and contest/demo posture review
 - 향후 production을 열기로 결정하는 경우 production opening review
 
 ## 함께 보기

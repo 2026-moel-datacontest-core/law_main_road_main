@@ -56,10 +56,11 @@ Prerequisite before apply:
 - Keep the secret value out of Terraform files, tfvars, plan output, git,
   screenshots, and public evidence.
 
-Current CORS posture is Phase 4 dev frontend Cloud Run only:
+Current CORS posture is Phase 7A custom frontend domain plus the Phase 4 dev
+frontend Cloud Run rollback/debug origin:
 
 ```text
-^https://lmr-dev-frontend-nhthv64dcq-du\.a\.run\.app$
+^https://(lmr-dev-frontend-nhthv64dcq-du\.a\.run\.app|www\.law-main-road\.cloud)$
 ```
 
 Use a local backend process or an explicit reviewed CORS override for local

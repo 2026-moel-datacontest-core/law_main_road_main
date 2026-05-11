@@ -1,6 +1,6 @@
 # Repo 2 Submission Mirror README Draft
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 이 문서는 `Team-msp-architect-2026/msp-team02` public mirror repo의 README 초안이다.
 그대로 복사하기 전에 demo URL, screenshot, contest notice, license 문구를 최종
@@ -21,13 +21,16 @@ case-context handoff, and evidence-led answer/draft flows.
 ## Demo
 
 ```text
-Public demo URL: <approved frontend URL or custom domain>
+Public demo URL: https://www.law-main-road.cloud
 Target profile: demo/contest
 Production claim: no
 ```
 
 이 demo는 공모전/발표용 public demo posture입니다. 실제 장기 운영 production
 서비스라고 주장하지 않습니다.
+Firebase Hosting custom domain, Firebase Auth authorized domain, and backend
+CORS smoke are complete for the `www` host only. Root apex, `api.*`, and
+same-origin `/api/**` routing remain future gates.
 
 ## Key Features
 

@@ -21,6 +21,10 @@ Current status:
   runtime on `2026-05-07`; route/CORS/SCN-004/SCN-001 boundary smoke passed.
   Firebase Authorized Domain, Google Sign-In, and protected SCN-001 history
   smoke passed through the deployed frontend.
+- Phase 7A `www.law-main-road.cloud` public domain launch completed on
+  `2026-05-11`: Firebase Hosting custom domain is connected, Firebase Auth
+  Authorized Domains includes the host, backend CORS was extended through the
+  dev backend runtime root, and custom-domain route/auth/CORS smoke passed.
 - `envs/dev/cicd`: Phase 5 dev CI/CD WIF/deploy root. Phase 5 deploy and
   rollback rehearsal evidence is recorded in
   `docs/architecture/phase/phase5_cicd.md`.
@@ -61,9 +65,10 @@ protected SCN-001 history smoke passed through the deployed frontend without
 recording raw tokens or user identifiers.
 
 WIF/GitHub workflow code is now authored and rehearsed for Phase 5 dev only.
-Service account key JSON, Firebase Admin JSON, prod resources, custom domain/LB,
-and backend/frontend/API behavior expansion remain unopened from this Terraform
-README's perspective.
+Service account key JSON, Firebase Admin JSON, prod resources, HTTPS Load
+Balancer, `api.*`/root apex domain, `/api/**` Hosting rewrite, frontend API-base
+rebuild, and backend/frontend/API contract expansion remain unopened from this
+Terraform README's perspective.
 
 Forbidden without explicit phase approval:
 

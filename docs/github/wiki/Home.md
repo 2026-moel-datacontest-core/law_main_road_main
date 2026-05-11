@@ -24,7 +24,7 @@
 
 ## 프로젝트 상태
 
-기준일: `2026-05-07`
+기준일: `2026-05-11`
 
 | 영역 | 상태 |
 |---|---|
@@ -34,7 +34,8 @@
 | SCN-001 fixed-preset frozen draft demo | 완료 |
 | Firebase Auth integration | 완료 |
 | Frontend visual polish | 2026-04-29 visual baseline까지 완료 |
-| Cloud migration | 진행 중, dev-first |
+| Cloud migration | dev-first runtime + Phase 7A public `www` domain launch 완료 |
+| Public demo URL | `https://www.law-main-road.cloud` |
 | Production opening | 미오픈(NOT opened) |
 
 ---
@@ -80,6 +81,8 @@ public mirror 정책을 우선합니다.
 - independent `/bridge` route
 - Recovery implementation
 - SCN-005 frontend/document draft expansion
+- root apex / `api.*` domain / same-origin `/api/**` routing
+- HTTPS Load Balancer / Cloud Armor
 - full retention lifecycle, hard delete, and artifact file purge
 - production deployment claim
 

@@ -1,6 +1,6 @@
 # Phase 4 — Frontend Runtime
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 ## 1. Goal
 
@@ -19,8 +19,10 @@ SCN-001 live/backend document draft 범위는 열지 않는다.
 - 배포된 frontend Cloud Run `run.app` URL을 Firebase Authorized Domains에
   등록한다.
 - Backend `BACKEND_CORS_ORIGIN_REGEX`를 frontend Cloud Run URL에 맞게
-  재적용한다. Custom domain / Firebase Hosting edge는 Phase 7A에서 별도로 열며,
-  HTTPS Load Balancer는 이후 edge hardening 후보로 둔다.
+  재적용한다. Phase 4 자체는 Cloud Run `run.app` frontend 기준으로 완료됐고,
+  Phase 7A에서 `www.law-main-road.cloud` Firebase Hosting custom domain과 작은
+  CORS 확장이 별도로 완료됐다. HTTPS Load Balancer는 이후 edge hardening 후보로
+  둔다.
 - `/`, `/before`, `/after`, `/after/result`, `/after/intake`, `/after/draft`,
   `/history` route smoke를 수행한다.
 - SCN-004 freeze와 SCN-001 frontend-local frozen draft boundary가 유지되는지
@@ -51,8 +53,9 @@ Scope and inventory handling:
   outputs / operational inventory. Do not copy them into public screenshots or
   public submission text unless the demo owner explicitly approves that public
   URL posture.
-- WIF/GitHub workflow, prod resources, custom domain / Firebase Hosting edge, and
-  SCN-001 live/backend document draft generation remain unopened. HTTPS Load
+- At Phase 4 completion, WIF/GitHub workflow, prod resources, custom domain /
+  Firebase Hosting edge, and SCN-001 live/backend document draft generation were
+  unopened. Phase 7A later connected `www.law-main-road.cloud`; HTTPS Load
   Balancer remains a later edge hardening candidate.
 
 Runtime wiring evidence:
@@ -84,9 +87,10 @@ Current promotion boundary:
 
 - Phase 4 dev frontend runtime smoke is complete.
 - This is still `dev/demo-only`, not a production-ready public API claim.
-- WIF/GitHub workflow, prod resources, custom domain / Firebase Hosting edge, and
-  SCN-001 live/backend document draft generation remain unopened. HTTPS Load
-  Balancer remains a later edge hardening candidate.
+- WIF/GitHub workflow, prod resources, and SCN-001 live/backend document draft
+  generation remain unopened. Phase 7A later connected the `www` Firebase Hosting
+  custom domain with a direct-backend CORS extension; HTTPS Load Balancer remains
+  a later edge hardening candidate.
 
 ## 3. Read First
 
@@ -158,9 +162,9 @@ deployment should not hide a broken backend.
 - Step 3 full retention lifecycle.
 - Independent `/bridge` or Recovery implementation.
 - API Gateway, Cloud Armor, private VPC.
-- Custom domain / Firebase Hosting edge. Use Phase 7A after the `run.app` path is
-  stable; HTTPS Load Balancer is deferred until stronger edge hardening is
-  approved.
+- Custom domain / Firebase Hosting edge inside Phase 4. Phase 7A later connected
+  the approved `www` domain after the `run.app` path was stable; HTTPS Load
+  Balancer is deferred until stronger edge hardening is approved.
 
 ## 6. Terraform Layout
 
@@ -269,7 +273,7 @@ Some actions remain administrator-owned in Phase 4.
 |---|---|
 | Firebase Authorized Domains | add deployed Cloud Run `run.app` URL |
 | Firebase Google provider | confirm provider is enabled |
-| Custom domain | deferred to Phase 7A; not required for first migration |
+| Custom domain | Phase 7A later completed `www.law-main-road.cloud`; not required for first migration |
 | Demo approval | confirm deployed UI matches presentation expectations |
 | CORS approval | confirm final frontend origin regex before backend re-apply |
 | Rollback | decide whether to shift frontend traffic back after smoke failure |
@@ -403,8 +407,8 @@ Expected Terraform outputs:
 ## 14. Firebase Authorized Domain
 
 After the frontend Cloud Run URL is created, add it to Firebase Console
-Authorized Domains. Phase 4 uses the Cloud Run `run.app` host; a purchased custom
-domain is handled later in Phase 7A.
+Authorized Domains. Phase 4 uses the Cloud Run `run.app` host. Phase 7A later
+added `www.law-main-road.cloud` as the approved Firebase Hosting custom domain.
 
 Required manual check:
 
@@ -421,8 +425,8 @@ Google Sign-In fails with `auth/unauthorized-domain` until this is done.
 Notes:
 
 - Cloud Run service URL is stable for the service, even as revisions change.
-- If a custom domain is later added in Phase 7A, add that custom domain and
-  smoke that URL in the Phase 7A checklist.
+- Phase 7A later added `www.law-main-road.cloud`; keep any further custom host
+  additions behind a separate checklist and smoke.
 - Do not add broad or unrelated domains just to make login pass.
 
 ## 15. Backend CORS Two-Pass Update
@@ -443,8 +447,9 @@ Example shape:
 ^https://lmr-dev-frontend-...\\.asia-northeast3\\.run\\.app$
 ```
 
-If Phase 7A later adds a custom domain, replace or narrow this allowlist to the
-approved custom frontend origin during that phase.
+Phase 7A later added the approved custom frontend origin to the backend CORS
+allowlist while keeping the Phase 4 Cloud Run frontend origin for
+rollback/debug. Keep any further origin changes allowlist-only.
 
 Do not leave wildcard CORS in prod.
 
@@ -674,8 +679,9 @@ When Phase 4 is executed, record a short status note.
 - Do not add Firebase Admin credentials to frontend.
 - Do not treat Firebase public web config as a private secret.
 - Do not implement independent `/bridge` or Recovery.
-- Do not implement custom domain / Firebase Hosting edge in Phase 4; use Phase
-  7A. HTTPS Load Balancer remains a later edge hardening candidate.
+- Do not implement custom domain / Firebase Hosting edge inside Phase 4. Phase
+  7A owns the completed `www` domain slice; HTTPS Load Balancer remains a later
+  edge hardening candidate.
 - Do not mix SCN-004 freeze verification with SCN-005 or new document type
   expansion.
 

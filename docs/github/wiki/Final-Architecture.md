@@ -1,6 +1,6 @@
 # 최종 아키텍처
 
-기준일: `2026-05-07`
+기준일: `2026-05-11`
 
 ## 기술 스택
 
@@ -136,8 +136,12 @@ Cloud migration은 현재 dev-first입니다.
 
 - first Terraform target: `dev`
 - public presentation posture: `demo/contest`
+- public demo URL: `https://www.law-main-road.cloud`
 - production-ready claim: 없음
 - production opening: 별도 review 필요
+
+Phase 7A custom domain 연결은 `www` host에 한정되어 완료됐습니다. Same-origin
+`/api/**`, root apex, `api.*`, HTTPS Load Balancer, Cloud Armor는 별도 gate입니다.
 
 ## 함께 보기
 

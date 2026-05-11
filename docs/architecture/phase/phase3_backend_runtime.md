@@ -1,6 +1,6 @@
 # Phase 3 — Backend Runtime
 
-기준일: `2026-05-07`
+기준일: `2026-05-11`
 
 ## 1. Goal
 
@@ -82,8 +82,10 @@ Current promotion boundary:
 
 - This is a `dev/demo-only` backend runtime smoke pass, not a production-ready
   public API claim.
-- Frontend runtime, WIF/GitHub deploy automation, prod resources, custom domain,
-  and Phase 7 edge hardening remain unopened.
+- At Phase 3 completion, frontend runtime, WIF/GitHub deploy automation, prod
+  resources, custom domain, and Phase 7 edge hardening were unopened. Later
+  phases completed dev frontend/WIF/ops and the Phase 7A `www` custom-domain
+  slice; prod and stronger edge/API hardening remain unopened.
 
 ## 3. Read First
 

@@ -67,3 +67,13 @@ After apply:
 2. Re-apply the backend runtime root with `BACKEND_CORS_ORIGIN_REGEX` set to the
    `backend_cors_origin_regex_candidate` output.
 3. Run route, CORS, Google Sign-In, SCN-004 freeze, and SCN-001 boundary smoke.
+
+Phase 7A follow-up:
+
+- `www.law-main-road.cloud` was connected through Firebase Hosting as the
+  approved `demo/contest` public frontend domain.
+- The frontend image still uses the Phase 3 backend URL for
+  `NEXT_PUBLIC_API_BASE_URL`; no frontend rebuild or same-origin `/api/**`
+  Hosting rewrite was opened.
+- The backend runtime root now allows the custom frontend origin plus this Cloud
+  Run frontend origin as rollback/debug CORS origins.

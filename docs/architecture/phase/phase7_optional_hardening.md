@@ -1,6 +1,6 @@
 # Phase 7 — Optional Hardening
 
-기준일: `2026-05-06`
+기준일: `2026-05-11`
 
 ## 1. Goal
 
@@ -29,7 +29,7 @@ note를 작성한 뒤 진행한다.
 | Primary Terraform root | Candidate-specific; no default root required |
 | Required previous phase | [`phase6_observability_reliability.md`](phase6_observability_reliability.md) |
 | Core migration dependency | Phase 1-6 applied, smoke-tested, and operationally observed |
-| Default decision | Defer until justified |
+| Default decision | Defer until justified; Phase 7A frontend-domain slice is complete for `www.law-main-road.cloud` |
 
 ## 3. Read First
 
@@ -103,7 +103,7 @@ phase first.
 
 | Candidate | Default | Primary Value | Main Risk |
 |---|---|---|---|
-| Custom domain / Firebase Hosting edge | Phase 7A candidate | Stable portfolio URL with a lightweight managed HTTPS edge | DNS, certificate, Hosting config, and frontend API-base rebuild complexity |
+| Custom domain / Firebase Hosting edge | Phase 7A `www` slice complete; further edge/API work deferred | Stable portfolio URL with a lightweight managed HTTPS edge | DNS, certificate, Hosting config, and frontend API-base rebuild complexity |
 | HTTPS Load Balancer + serverless NEG | Defer | Future centralized routing and Cloud Armor attachment | Cost, DNS, certificate, and Terraform complexity |
 | Cloud Armor | Defer | WAF/rate limit edge protection | Requires LB path; false positives |
 | Backend Cloud Run IAM auth | Defer | Non-public backend ingress | Browser frontend cannot directly call IAM-protected backend without topology change |
@@ -184,8 +184,8 @@ Cloud Run Jobs are opened, do not create `edge/` or `networking/`.
 | Field | Content |
 |---|---|
 | Issue title | Phase 7A: Public domain routing with Firebase Hosting |
-| Scope | Create a candidate-specific design and, only after approval, implement Firebase Hosting custom domain routing, DNS instructions, Firebase Authorized Domains, conditional CORS/API-base updates only if same-origin API routing is separately approved, smoke, and rollback |
-| Acceptance criteria | candidate preserves SCN/API/auth/storage boundaries; cost and DNS ownership are approved; custom domain smoke passes; rollback to Cloud Run direct URL is documented |
+| Scope | Phase 7A first pass implemented Firebase Hosting custom domain routing for `www.law-main-road.cloud`, Gabia DNS/Firebase Auth domain setup, the approved backend CORS extension for direct backend API calls, smoke, and rollback notes. Same-origin `/api/**`, API-base rebuild, root apex, and `api.*` remain separate gates |
+| Acceptance criteria | candidate preserves SCN/API/auth/storage boundaries; cost and DNS ownership are approved; custom domain smoke passes; backend CORS remains allowlist-only; rollback to Cloud Run direct URL is documented |
 | Forbidden changes | making Phase 7 mandatory, mixing with Phase 1-6 fixes, API contract changes, auth persistence changes, raw inventory exposure, Local LLM/GPU/self-hosted model serving |
 | Validation | candidate Terraform checks, DNS/cert checks, route/API/auth smoke, public evidence redaction review |
 | Rollback | revert DNS/Hosting routing or frontend API base/CORS through the owning roots; keep direct Cloud Run URLs available until rollback is separately redesigned |
@@ -265,7 +265,7 @@ Host candidates:
 
 | Host | Candidate use | Current decision |
 |---|---|---|
-| `www.law-main-road.cloud` | public frontend entry | preferred first custom frontend host |
+| `www.law-main-road.cloud` | public frontend entry | Phase 7A first custom frontend host, connected |
 | `law-main-road.cloud` | root entry or redirect to `www` | human decision gate; not in the first frontend-only pass |
 | `app.law-main-road.cloud` | alternative frontend entry | defer unless `www` is rejected |
 | `api.law-main-road.cloud` | backend API through edge routing | defer unless backend custom API routing is explicitly approved |
@@ -276,16 +276,30 @@ Selected Phase 7A implementation path:
 - Keep Gabia DNS authoritative and add only the records Firebase/Google requires.
 - Route `www.law-main-road.cloud` to the existing Cloud Run frontend through
   Firebase Hosting.
-- Defer same-origin API calls by default. Do not add `/api/**` Hosting rewrites,
-  change `NEXT_PUBLIC_API_BASE_URL`, or change backend CORS unless that routing
-  change is explicitly approved.
+- Keep direct backend API calls for the first pass. Do not add `/api/**` Hosting
+  rewrites or change `NEXT_PUBLIC_API_BASE_URL` unless same-origin API routing is
+  separately approved.
+- The only backend change approved for Phase 7A was the small
+  `BACKEND_CORS_ORIGIN_REGEX` extension for `https://www.law-main-road.cloud`,
+  while keeping the Phase 4 frontend Cloud Run origin as rollback/debug. Wildcard
+  CORS remains forbidden.
 - Defer `api.law-main-road.cloud`, external HTTPS Load Balancer, serverless NEG,
   Cloud Armor, Cloud DNS delegation, separate `demo` environment, and `prod`
   opening.
 
-Before implementation, record the final DNS records, certificate status,
-Firebase Authorized Domains status, frontend API base, CORS target, and rollback
-path.
+Implementation evidence is recorded in
+[`hardening/phase7a_public_domain_routing.md`](hardening/phase7a_public_domain_routing.md):
+
+- Firebase Hosting custom domain status for `www.law-main-road.cloud`:
+  connected.
+- Firebase Auth Authorized Domains includes `www.law-main-road.cloud`.
+- Frontend routes `/`, `/before`, `/after`, and `/history` load over the custom
+  domain.
+- Google Sign-In popup opens without `auth/unauthorized-domain`.
+- Backend CORS preflight and browser fetch from the custom origin pass for
+  `/api/v1/auth/me`.
+- `/api/**` Hosting rewrite, frontend API-base rebuild, `api.*`, root apex,
+  HTTPS Load Balancer, Cloud Armor, and `prod` remain deferred.
 
 ### Possible Target
 
@@ -382,6 +396,9 @@ Likely resources or configuration:
 - Same-origin API smoke includes representative non-long-running endpoints; any
   long-running endpoint is verified separately or kept on the direct backend
   fallback.
+- If the frontend keeps the direct backend API base, CORS preflight and browser
+  fetch from `https://www.law-main-road.cloud` to a representative auth endpoint
+  must pass with an allowlist-only backend CORS value.
 - `NEXT_PUBLIC_API_BASE_URL` points to the intended backend path and matches the
   latest frontend image build.
 - If backend CORS changes are approved, backend `BACKEND_CORS_ORIGIN_REGEX`
@@ -1017,7 +1034,8 @@ Phase 7 documentation is acceptable when:
 - Candidate risks are visible before implementation.
 - Phase 7A custom domain launch does not become a hidden Phase 4 requirement.
 - Phase 7A documents DNS ownership, certificate status, Firebase Authorized
-  Domains, CORS, frontend API base URL, and rollback before traffic cutover.
+  Domains, CORS, frontend API base URL, and rollback before or at traffic
+  cutover.
 - Backend IAM auth caveat is explicitly documented.
 - Private IP/VPC candidate does not become a hidden Phase 2/3 requirement.
 - Cloud Armor/API Gateway are not presented as mandatory first migration items.
