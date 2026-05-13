@@ -330,6 +330,16 @@ Final recheck after the edge/cache state settled:
 - The Firebase default Hosting domain also returned `200`, but the approved
   public evidence and submission target remains `www.law-main-road.cloud`.
 
+2026-05-13 cache hardening note:
+
+- The custom domain can otherwise keep serving stale prerendered HTML/chunk
+  references after a Cloud Run frontend redeploy because the Next.js standalone
+  server returned long `s-maxage` headers.
+- `frontend/next.config.mjs` and `firebase.json` now set `Cache-Control:
+  no-store, max-age=0, must-revalidate` on the app routes (`/`, `/before`,
+  `/after`, `/after/*`, `/history`) while leaving hashed `_next/static` assets
+  outside the route-specific no-store list.
+
 Interactive auth observation:
 
 - The project owner reported that opening the custom domain surfaced

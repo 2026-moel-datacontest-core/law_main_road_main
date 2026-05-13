@@ -1,5 +1,52 @@
 {
   "hosting": {
+    "headers": [
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/before",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/after",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/after/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/history",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store, max-age=0, must-revalidate"
+          }
+        ]
+      }
+    ],
     "rewrites": [
       {
         "source": "**",

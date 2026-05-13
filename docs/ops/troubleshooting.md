@@ -1135,7 +1135,23 @@ curl -I http://localhost:5090/after
 - 발표 전에는 stale server가 남아 있지 않은 상태에서 backend/frontend를 깨끗하게 재시작하는 편이 안전하다.
 - `scripts/demo_preflight.sh`는 dev server를 start/stop하지 않는다. preflight 통과 후 별도 터미널에서 수동 실행한다.
 
-### 4. `127.0.0.1:5090`에서 Next dev HMR cross-origin warning 또는 route guard 재현 차이
+### 4. `www.law-main-road.cloud`에서 Cloud Run보다 오래된 화면이 보임
+
+증상:
+
+- Cloud Run 직접 URL은 최신 chunk를 주지만 `www.law-main-road.cloud`는 이전
+  HTML/chunk 조합을 준다.
+- `curl -I https://www.law-main-road.cloud/history`에서 `x-cache: HIT`와 긴
+  `s-maxage`가 보인다.
+
+대응:
+
+- `frontend/next.config.mjs`와 `firebase.json`의 app route `Cache-Control`이
+  `no-store, max-age=0, must-revalidate`인지 확인한다.
+- Cloud Run frontend를 재배포한 뒤 Firebase Hosting config도 재배포해서 CDN
+  edge가 오래된 rewrite 응답을 내려주지 않게 한다.
+
+### 5. `127.0.0.1:5090`에서 Next dev HMR cross-origin warning 또는 route guard 재현 차이
 
 증상:
 
