@@ -1,6 +1,6 @@
 # Cloud Migration Manual Preflight
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 이 문서는 GCP cloud migration Terraform authoring을 시작하기 전에 사람이 먼저
 준비하고 결정해야 하는 항목을 정리한 운영 런북이다. 실제 Terraform 파일,
@@ -20,6 +20,11 @@ CORS was extended only for this custom origin plus the existing frontend
 rollback/debug origin. Same-origin `/api/**`, frontend API-base rebuild,
 `api.*`, root apex, HTTPS Load Balancer, Cloud Armor, and `prod` remain
 separate gates.
+
+Phase 7B candidate note on `2026-05-13`: private GCS artifact storage +
+observability is documented as optional hardening only. Runtime GCS artifact
+writes, dashboard panels, signed URL/auth proxy retrieval, and physical purge
+lifecycle remain unopened until a separate implementation gate approves them.
 
 Environment/profile별 운영값은
 [`../architecture/env_profiles.md`](../architecture/env_profiles.md)를 기준으로

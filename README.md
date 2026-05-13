@@ -28,7 +28,7 @@
 
 ## 현재 구현 범위
 
-기준일: `2026-05-07`
+기준일: `2026-05-13`
 
 - SCN-004 login-free After answer/draft demo
 - SCN-001 Before -> Bridge -> After answer linkage
@@ -40,6 +40,8 @@
 - Next.js App Router 기반 frontend
 - FastAPI 기반 backend
 - 법령 chunk `1722`개, `selected_as_of = 2026-04-11`
+- 공개 demo URL: `https://www.law-main-road.cloud`
+- 최신 코드 기준선: `b013429` (`fix: reset before workspace from sidebar`)
 
 구현된 주요 route:
 
@@ -107,6 +109,9 @@ Cloud migration은 dev-first policy를 사용합니다.
 - `dev`: first cloud target and smoke-test environment
 - `demo/contest`: dev smoke 이후 기간 한정 public presentation posture
 - `prod`: 별도 production-opening review 전까지 미오픈(NOT opened)
+- Phase 7A: `www.law-main-road.cloud` Firebase Hosting custom domain launch 완료
+- Phase 7B: private GCS artifact storage + operations dashboard 후보 문서화 완료,
+  구현은 미오픈(NOT opened)
 
 이 저장소와 공개 문서는 운영 배포 주장으로 읽히지 않습니다. 공모전 제출과 공개
 검토를 위한 demo posture, 구현 범위, 미오픈 범위를 구분해 설명합니다.
@@ -127,6 +132,7 @@ cloud migration과 public mirror 정책의 상세 내용은
 - SCN-005
 - full retention lifecycle
 - hard delete, artifact purge, account deletion, undo/restore
+- GCS artifact adapter activation and artifact retrieval UI
 - 운영 배포 주장
 
 SCN-001의 고정 preset 기반 frozen draft demo는 frontend-local deterministic

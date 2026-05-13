@@ -1,6 +1,6 @@
 # Repo 2 Submission Mirror README Draft
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 이 문서는 `Team-msp-architect-2026/msp-team02` public mirror repo의 README 초안이다.
 그대로 복사하기 전에 demo URL, screenshot, contest notice, license 문구를 최종
@@ -31,6 +31,9 @@ Production claim: no
 Firebase Hosting custom domain, Firebase Auth authorized domain, and backend
 CORS smoke are complete for the `www` host only. Root apex, `api.*`, and
 same-origin `/api/**` routing remain future gates.
+Phase 7B private GCS artifact storage and operations dashboard are documented as
+future optional hardening; runtime GCS artifact writes and artifact retrieval UI
+are not opened.
 
 ## Key Features
 

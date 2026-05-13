@@ -11,7 +11,7 @@
 
 ## Current Phase
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 - RAG refinement landing 완료
 - SCN-004 document draft backend 완료
@@ -44,7 +44,7 @@
 - Before analysis progress UX completed: `/before` scrolls to the progress area after analysis starts, OCR guidance says document quality/length can make OCR take about 1~2 minutes, and raw job id/status/provider/internal error remains hidden. Backend OCR/provider/polling contracts were not changed. The first screen now stays upload-focused and no longer carries local server/demo copy.
 - SCN-001 frontend visual/history/After polish remains frontend-only: public API contracts, auth persistence, Web Storage policy, SCN-004 freeze behavior, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, `/api/v1/history` unified backend API, and Step 3 full retention lifecycle were not opened.
 - recent security/history cleanup: local secret/database ignore rules hardening 완료, 문서 hash 참조는 current git history 기준으로 관리
-- 2026-05-04 code/docs audit refresh 기준 current main은 `e79fa68`이며, `85d10fa` 이후 workspace/draft-scope documentation alignment는 backend/API/schema/Auth/Bridge/Web Storage policy를 변경하지 않았다.
+- 2026-05-13 docs refresh 기준 latest code/runtime checkpoint는 `b013429`이며, `85d10fa` 이후 workspace/draft-scope documentation alignment, Cloud migration Phase 7A public domain launch, Before workspace sidebar reset은 backend/API/schema/Auth/Bridge/Web Storage policy를 변경하지 않았다.
 - 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history, `/after` saved history selector, MVP soft-delete, SCN-001 fixed-preset frozen draft path까지의 public contract 보호**
 - SCN-001 Step 4 document draft design은 docs-only baseline으로 유지한다.
 - SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow completed: `/after -> /after/result -> /after/intake -> /after/draft`, `workplace_change_reason_summary` / 사업장 변경 사유 정리서 초안.
@@ -69,13 +69,17 @@
   `NEXT_PUBLIC_API_BASE_URL` change, frontend rebuild, `api.law-main-road.cloud`,
   root apex `law-main-road.cloud`, HTTPS Load Balancer, Cloud Armor, and prod
   opening remain deferred.
+- Cloud migration Phase 7B private GCS artifact storage + observability is a
+  documented optional hardening candidate only. Terraform already has the
+  private artifact bucket boundary, but runtime artifact writers still use local
+  paths until a GCS adapter and dashboard implementation are explicitly opened.
 
 Evolution note:
 
 - 2026-04-17 기준 상태는 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal 완료였다.
 - 2026-04-20에는 위 상태를 흔들지 않고 presentation-local preset, preflight, free-input guard, eval evidence report를 추가해 MVP 제출 기준을 보강했다.
 - 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, frontend persistence는 `inMemoryPersistence`다.
-- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 docs-only design baseline, SCN-001-BRIDGE-DEMO frozen draft flow, stale OCR review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history selector, frontend history/After polish completed 상태가 확인됐다. 2026-04-28 기준 최신 main은 `fdde441`까지 push 완료 상태이며 visual foundation/home/internal route chrome/after-flow detail polish, Before progress UX, masthead light alignment, `/after` + `/history` case record fold, wage/deduction summary fix, main page login priority가 완료됐다. 2026-04-29 visual checkpoint `85d10fa`에서는 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer fixes, and accessibility legal-basis blocker fix가 완료됐다. 2026-05-04 current main은 `e79fa68`이며 `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다.
+- 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 docs-only design baseline, SCN-001-BRIDGE-DEMO frozen draft flow, stale OCR review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history selector, frontend history/After polish completed 상태가 확인됐다. 2026-04-28 기준 최신 main은 `fdde441`까지 push 완료 상태이며 visual foundation/home/internal route chrome/after-flow detail polish, Before progress UX, masthead light alignment, `/after` + `/history` case record fold, wage/deduction summary fix, main page login priority가 완료됐다. 2026-04-29 visual checkpoint `85d10fa`에서는 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer fixes, and accessibility legal-basis blocker fix가 완료됐다. 2026-05-04 checkpoint는 `e79fa68`이며 `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다. 2026-05-11에는 Phase 7A `www.law-main-road.cloud` public domain launch가 완료됐고, 2026-05-13에는 Phase 7B GCS artifact storage/observability 후보와 사업계획서 문서를 최신화했다.
 
 ## Structure
 

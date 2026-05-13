@@ -1,6 +1,6 @@
 # 법대로(LawMainRoad) — Cloud Migration Phase Plan
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 이 문서는 [`cloud_migration_architecture.md`](cloud_migration_architecture.md)의 GCP
 migration target을 실제 구현 가능한 phase로 나눈 계획이다. 목표는 Terraform을
@@ -28,6 +28,10 @@ work until their phase is opened.
 - Phase 7A custom domain / Firebase Hosting edge / Gabia DNS is optional
   hardening and not a hidden prerequisite for Phase 1-6. The first Phase 7A
   pass is complete for `www.law-main-road.cloud` on existing `dev` resources.
+- Phase 7B private GCS artifact storage + observability is documented as an
+  optional hardening candidate. It may use the existing private artifact bucket
+  boundary, but runtime GCS writes and dashboard panels are not open until the
+  adapter/monitoring implementation is explicitly approved.
 - Terraform does not change application contracts. It must preserve
   `/api/v1/answer`, `/api/v1/documents/draft`, protected SCN-001 Bridge/history
   paths, SCN-004 demo freeze, SCN-001 frontend-local frozen draft behavior,
@@ -233,8 +237,9 @@ Notes:
   candidate and is now applied for `www.law-main-road.cloud`. The first pass
   kept the direct backend Cloud Run API base and added only a small backend CORS
   extension for the custom frontend origin. `load-balancer-domain` is a
-  future/deferred LB candidate only. Phase 1-6 must remain valid on Cloud Run
-  managed HTTPS URLs for rollback.
+  future/deferred LB candidate only. Phase 7B private artifact storage remains
+  candidate-specific hardening under `phase/hardening/`; Phase 1-6 must remain
+  valid on Cloud Run managed HTTPS URLs for rollback.
 
 ### Why Layered Roots
 

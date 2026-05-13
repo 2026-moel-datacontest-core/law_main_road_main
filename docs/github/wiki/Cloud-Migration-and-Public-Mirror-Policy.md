@@ -76,6 +76,18 @@ optional hardening으로 열었고, 첫 경로는 Firebase Hosting custom domain
 - direct backend Cloud Run URL과 내부 cloud inventory는 public docs/screenshots에
   노출하지 않습니다.
 
+## Phase 7B 후보 / Artifact Storage Hardening
+
+Phase 7B private GCS artifact storage + operations dashboard는 optional
+hardening 후보로 문서화됐습니다.
+
+- 기존 Terraform foundation의 private artifact bucket boundary를 활용할 수 있습니다.
+- runtime Before/After artifact writer가 GCS로 전환된 것은 아닙니다.
+- artifact retrieval UI, signed URL/auth proxy, physical purge lifecycle은
+  별도 approval gate입니다.
+- 공개 문서에는 exact bucket name, private `gs://` object path, raw OCR text,
+  raw answer/draft payload를 기록하지 않습니다.
+
 ## 클라우드 경계 요약
 
 - first cloud target은 `dev`입니다.

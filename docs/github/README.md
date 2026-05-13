@@ -36,7 +36,7 @@ GitHub Wiki에 올릴 문서는 [`wiki/`](wiki/) 아래에 쌓습니다.
 
 ## 현재 기준선
 
-기준일: `2026-05-07`
+기준일: `2026-05-13`
 
 - 메인 public demo: SCN-004 After document draft flow
 - 보호 연결 흐름: SCN-001 Before -> Bridge -> After
@@ -46,7 +46,10 @@ GitHub Wiki에 올릴 문서는 [`wiki/`](wiki/) 아래에 쌓습니다.
   `/after/intake`, `/after/draft`, `/history`
 - Backend: FastAPI + PostgreSQL + pgvector
 - 최신 UI 기준선: 2026-04-29 integrated visual polish
-- 최신 code/status 문서 기준선: 2026-05-04 audit refresh
+- 최신 code/runtime 기준선: `b013429`
+- public demo URL: `https://www.law-main-road.cloud`
+- cloud posture: Phase 7A public `www` domain launch 완료, Phase 7B GCS
+  artifact/observability 후보 문서화 완료(구현 미오픈)
 
 ## 공개 경계
 

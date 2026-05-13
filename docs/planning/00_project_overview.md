@@ -78,12 +78,13 @@
 
 ## Current Status
 
-기준일: `2026-04-29`
+기준일: `2026-05-13`
 
-현재 코드 기준 최신 checkpoint는
-[`23_code_based_status_2026_04_29.md`](23_code_based_status_2026_04_29.md)다.
-아래 요약은 이 checkpoint와 실제 backend/frontend route surface를 기준으로
-갱신했다.
+현재 코드 기준 최신 runtime checkpoint는 `b013429`이며, 세부 historical code
+checkpoint는 [`23_code_based_status_2026_04_29.md`](23_code_based_status_2026_04_29.md)에
+보존한다. 아래 요약은 이 checkpoint, 이후 SCN-001/SCN-004 freeze 유지 상태,
+Cloud migration Phase 7A public domain launch, 그리고 2026-05-13 docs refresh를
+기준으로 갱신했다.
 
 - legalize-kr submodule, chunking Step 1~10, `backend/data/law_chunks/all_chunks.json`
   기준선 유지
@@ -128,9 +129,15 @@
 - live/backend SCN-001 document draft generation, protected SCN-001 draft
   endpoint, independent `/bridge`, Recovery, SCN-005 frontend expansion, and
   Step 3 full retention lifecycle remain not opened.
-- 2026-05-04 current main is `e79fa68`; later workspace/draft-scope
-  documentation alignment did not change backend/API/schema/Auth/Bridge/Web
-  Storage boundaries.
+- public demo domain `https://www.law-main-road.cloud` is connected through the
+  Phase 7A Firebase Hosting `www` slice. Root apex, `api.*`, same-origin
+  `/api/**`, HTTPS Load Balancer, Cloud Armor, and production opening remain
+  not opened.
+- Phase 7B private GCS artifact storage + operations dashboard is documented as
+  an optional hardening candidate. It is not implemented; runtime artifact
+  writers still use local paths until the GCS adapter and dashboard are opened.
+- 2026-05-13 current code/runtime checkpoint is `b013429`; later docs refresh
+  does not change backend/API/schema/Auth/Bridge/Web Storage boundaries.
 
 ## Historical Status Snapshot
 
@@ -253,13 +260,17 @@ Evolution note:
 - 2026-04-20 기준으로 위 demo freeze를 유지하면서 fixed preset, free-input guard, preflight, item-level eval evidence가 추가됐다.
 - 2026-04-22 기준으로 SCN-001 Firebase Auth Phase 0~3이 완료됐다.
 - 2026-04-24 기준으로 SCN-001 Phase 4/5/6A~6F와 Phase 7A~7B가 완료됐다. public answer/draft contract와 SCN-004 freeze는 변경하지 않았다.
+- 2026-05-11 기준으로 Cloud migration Phase 7A `www.law-main-road.cloud`
+  public domain launch가 완료됐다.
+- 2026-05-13 기준으로 Phase 7B GCS artifact storage/observability 후보,
+  공개 문서 기준선, 사업계획서 문서를 갱신했다.
 
 ---
 
 ## Next Step
 
 현재 구현 기준의 다음 작업은 기능 확장보다 문서 정리, demo freeze 보호,
-선택적 frontend-only polish다.
+선택적 frontend-only polish, 그리고 cloud hardening 후보의 gate review다.
 
 ### Step 0. Baseline freeze 유지
 
@@ -313,6 +324,8 @@ backend/API/schema를 건드리지 않는 경우에만 진행한다.
 - SCN-005 frontend preset / document draft 확장
 - auth persistence 변경
 - provider_timeout retry/backoff full hardening
+- Phase 7B GCS artifact adapter/dashboard implementation
+- GCS artifact retrieval UI, signed URL/auth proxy, physical purge lifecycle
 
 ---
 

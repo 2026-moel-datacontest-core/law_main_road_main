@@ -8,7 +8,7 @@
 
 ## 현재 진행 상태
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 현재 `ops` 문서 기준으로 정리된 상태는 아래와 같다.
 
@@ -38,7 +38,7 @@
   `/history`는 Before/Bridge 분리형 list/card가 아니라 사건 중심 compact summary
   + details/fold 구조다. 사건 요약, 확인된 쟁점, 참고할 법 조항 후보, 권장 다음
   단계, After 질문과 연결점을 한 카드에서 사용자 설명형 문장으로 보여준다.
-- visual checkpoint는 `85d10fa`, current main 기준은 `e79fa68`이다.
+- visual checkpoint는 `85d10fa`, current code/runtime 기준은 `b013429`이다.
   visual/UI polish와 workspace/draft-scope docs/code alignment 반영:
   DESIGN.md visual guide,
   visual foundation token alignment, home visual simplification, Main
@@ -91,6 +91,10 @@
   CORS는 custom origin과 기존 Phase 4 frontend rollback/debug origin만 허용한다.
   `/api/**` Hosting rewrite, frontend API-base rebuild, `api.*`, root apex, HTTPS
   Load Balancer, Cloud Armor, prod opening은 열지 않았다.
+- Cloud migration Phase 7B private GCS artifact storage + observability 후보
+  문서화 완료: private artifact bucket boundary는 기존 foundation에 있으나,
+  runtime GCS writer, dashboard, artifact retrieval UI, physical purge lifecycle은
+  구현 미오픈 상태다.
 - Phase 0 final decisions 반영: first cloud target은 `dev` only, initial GCP
   model은 one project + env-prefixed resources, Terraform/resource prefix는
   `lmr`, human-readable app label은 `law-main-road`다. 기존 코드/서비스 이름을

@@ -1,6 +1,6 @@
 # 최종 아키텍처
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 ## 기술 스택
 
@@ -137,11 +137,15 @@ Cloud migration은 현재 dev-first입니다.
 - first Terraform target: `dev`
 - public presentation posture: `demo/contest`
 - public demo URL: `https://www.law-main-road.cloud`
+- latest code/runtime checkpoint: `b013429`
 - production-ready claim: 없음
 - production opening: 별도 review 필요
 
 Phase 7A custom domain 연결은 `www` host에 한정되어 완료됐습니다. Same-origin
 `/api/**`, root apex, `api.*`, HTTPS Load Balancer, Cloud Armor는 별도 gate입니다.
+Phase 7B private GCS artifact storage + operations dashboard는 후보 설계가
+문서화된 상태이며, runtime GCS writer나 artifact retrieval UI가 구현됐다는
+주장은 하지 않습니다.
 
 ## 함께 보기
 

@@ -78,7 +78,7 @@ template 세부사항을 확정하지 않는다. 각 step은 착수 전에 별�
     protected SCN-001 draft endpoint, SCN-005, or Step 3 full retention
     lifecycle.
 - Latest integrated frontend visual/UI polish is completed through visual
-  checkpoint `85d10fa`; current main `e79fa68` preserves the same
+  checkpoint `85d10fa`; current code/runtime checkpoint `b013429` preserves the same
   backend/API/schema/Auth/Bridge/Web Storage boundaries:
   - DESIGN.md visual guide alignment: token-first, neutral/dense/evidence-led,
     disclaimers/uncertainty prominent
@@ -1336,8 +1336,8 @@ Step 4는 live/backend SCN-001 Document Draft Design baseline으로 유지한다
 Bridge/query relevance guard matrix review는 completed/current design baseline으로
 문서화됐다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow, continuity
 panel, `/after` saved Before/Bridge history selector, frontend history/After
-polish는 completed 상태다. visual checkpoint는 `85d10fa`이며 current main은
-`e79fa68` 상태이고, visual foundation/home/internal route chrome/after-flow detail polish, Before
+polish는 completed 상태다. visual checkpoint는 `85d10fa`이며 current code/runtime
+checkpoint는 `b013429` 상태이고, visual foundation/home/internal route chrome/after-flow detail polish, Before
 progress UX, masthead light alignment, `/after` + `/history` case record fold,
 wage/deduction summary fix, main page login priority, integrated Before/After/
 History/Main polish, DESIGN.md visual guide, contrast/disclaimer fixes, and

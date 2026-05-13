@@ -1,6 +1,6 @@
 # 시스템 아키텍처
 
-기준일: `2026-05-07`
+기준일: `2026-05-13`
 
 이 문서는 법대로(LawMainRoad)의 public-safe short architecture reference입니다.
 더 자세한 architecture notes의 publish source는 GitHub Wiki입니다.
@@ -16,6 +16,7 @@
 | Embedding | `gemini-embedding-001`, 768 dimensions |
 | Frontend | Next.js App Router, React, TypeScript |
 | Local environment | WSL Ubuntu + conda |
+| Public demo host | `https://www.law-main-road.cloud` |
 
 ## High-level Flow
 
@@ -127,3 +128,13 @@ Firebase signed-in state만으로는 protected SCN-001 actions에 충분하지 �
 SCN-001 Bridge context는 safe summary로만 표시되고 사용됩니다. Bridge는 사건
 맥락 연결/참고용이며, legal citations, grounded context ids, retrieved chunks를
 새로 만들거나 수정하지 않습니다.
+
+## Cloud Posture
+
+- Latest code/runtime checkpoint: `b013429`
+- Phase 7A `www.law-main-road.cloud` public domain launch is complete.
+- Phase 7B private GCS artifact storage + operations dashboard is documented as
+  an optional hardening candidate only.
+- Runtime GCS artifact writer activation, artifact retrieval UI, root apex,
+  `api.*`, same-origin `/api/**`, HTTPS Load Balancer, Cloud Armor, and prod
+  opening remain not opened.

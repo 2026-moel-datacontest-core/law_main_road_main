@@ -11,7 +11,7 @@
 
 ## 현재 완료 범위
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 | 트랙 | 결과 |
 |---|---|
@@ -21,7 +21,8 @@
 | Auth | Firebase Google Sign-In과 backend verification 구현 |
 | History | protected record archive, saved selector, MVP soft-delete 구현 |
 | Demo stability | fixed preset paths와 preflight script 구현 |
-| Cloud migration | dev-first runtime smoke와 Phase 7A `www.law-main-road.cloud` public domain launch 완료 |
+| Cloud migration | dev-first runtime smoke와 Phase 7A `www.law-main-road.cloud` public domain launch 완료; Phase 7B GCS artifact/observability 후보 문서화 |
+| Latest code/runtime checkpoint | `b013429` |
 
 ## 수행 요약
 
@@ -62,6 +63,7 @@ contest/demo posture review에 초점을 둡니다.
 - public README/Wiki polish
 - manual visual QA and print preview evidence
 - custom-domain demo-window monitoring and contest/demo posture review
+- Phase 7B GCS artifact storage/dashboard opening gate review
 - 향후 production을 열기로 결정하는 경우 production opening review
 
 ## 함께 보기

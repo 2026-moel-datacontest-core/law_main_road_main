@@ -1,6 +1,6 @@
 # API Reference / API 참조
 
-기준일: `2026-05-07`
+기준일: `2026-05-13`
 
 이 문서는 법대로(LawMainRoad)의 public-safe short API reference입니다. 상세 API
 notes의 publish source는 GitHub Wiki입니다.

@@ -1,11 +1,13 @@
 # Architecture
 
-기준일: `2026-04-29`
+기준일: `2026-05-13`
 
 이 문서는 현재 코드 기준의 아키텍처 요약이다. 세부 phase 기록은
 `docs/planning/19_scn001_auth_integration_status.md`,
 `docs/planning/22_post_phase8_scn001_extension_roadmap.md`, 최신 checkpoint는
-`docs/planning/23_code_based_status_2026_04_29.md`를 참조한다.
+`docs/planning/23_code_based_status_2026_04_29.md`를 참조한다. 최신
+code/runtime 기준선은 `b013429`이며, 이후 문서 refresh는 public API,
+schema, auth, Bridge, Web Storage policy를 변경하지 않는다.
 
 ## Current MVP Architecture
 
@@ -68,7 +70,8 @@ State and privacy model:
 - Raw flow payloads, auth state, tokens, raw Bridge payloads, and raw
   `after_query_seed` are not stored in Web Storage.
 
-Visual/UI state as of latest main `85d10fa`:
+Visual/UI state as of visual checkpoint `85d10fa` and current code/runtime
+checkpoint `b013429`:
 
 - `DESIGN.md` is the frontend visual guide: token-first,
   neutral/dense/evidence-led, with disclaimers and uncertainty prominent.
@@ -82,6 +85,17 @@ Visual/UI state as of latest main `85d10fa`:
 - History is centered with readable folded incident cards and a blue left accent.
 - Main page H1/lead/nav typography is cleaned up and includes a compact flow
   strip.
+
+## Cloud / Deployment State
+
+- Cloud migration remains dev-first; `demo/contest` is a time-bounded public
+  presentation posture and `prod` is not opened.
+- Public demo host `https://www.law-main-road.cloud` is connected through the
+  Phase 7A Firebase Hosting `www` custom-domain slice.
+- Frontend API base still uses the approved backend path; root apex, `api.*`,
+  same-origin `/api/**`, HTTPS Load Balancer, and Cloud Armor remain gated.
+- Phase 7B private GCS artifact storage + operations dashboard is documented as
+  an optional hardening candidate, not an implemented runtime change.
 
 ## Implemented Flows
 

@@ -1,6 +1,6 @@
 # Frontend Implementation Handoff — 법대로(LawMainRoad) SCN-004 Demo
 
-기준일: `2026-05-04`
+기준일: `2026-05-13`
 대상: Codex / QA handoff
 범위: SCN-004 After flow (4 routes)
 
@@ -8,7 +8,7 @@
 
 ## 0. Current Implementation Status
 
-이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 2026-04-24에는 SCN-001 Phase 6/7 상태와 freeze 보호 정책을 추가 반영했다. 2026-04-28에는 최신 main `fdde441` 기준 visual redesign, Before progress UX, SCN-001 case record fold, main login priority를 반영했다. 2026-04-29에는 visual checkpoint `85d10fa` 기준 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer fixes, and accessibility legal-basis blocker fix를 반영했다. 2026-05-04 기준 current main은 `e79fa68`이며, 이후 workspace/draft-supported scope documentation alignment는 backend/API/schema/Auth/Bridge/Web Storage policy를 변경하지 않았다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
+이 문서는 원래 2026-04-16 기준 frontend 구현 handoff였고, 2026-04-17 구현/QA/content/frontend rehearsal 완료 상태를 거쳐 2026-04-20 presentation-local preset, free-input guard, preflight 기준까지 반영됐다. 2026-04-24에는 SCN-001 Phase 6/7 상태와 freeze 보호 정책을 추가 반영했다. 2026-04-28에는 최신 main `fdde441` 기준 visual redesign, Before progress UX, SCN-001 case record fold, main login priority를 반영했다. 2026-04-29에는 visual checkpoint `85d10fa` 기준 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer fixes, and accessibility legal-basis blocker fix를 반영했다. 2026-05-13 기준 current code/runtime checkpoint는 `b013429`이며, 이후 workspace/draft-supported documentation alignment와 Cloud Phase 7A/7B 문서화는 backend/API/schema/Auth/Bridge/Web Storage policy를 변경하지 않았다. 이후에는 이 문서를 새 feature 지시서가 아니라 **demo freeze 기준서**로 사용한다.
 
 현재 코드 위치:
 
@@ -41,7 +41,7 @@
   - `SCN-004-DEMO-FREEZE`는 eval `SCN-004-Q1`이 아닌 document draft freeze query를 쓰며 fixed/live 여부와 관계없이 기존 SCN-004 draft eligibility 적용
   - SCN-005는 현재 UI preset에서 제외하고 후속 확장 후보로만 유지
 - Latest integrated frontend visual/UI polish through visual checkpoint `85d10fa`
-  and current docs/code checkpoint `e79fa68`
+  and current code/runtime checkpoint `b013429`
   - DESIGN.md is the current visual guide: token-first,
     neutral/dense/evidence-led, with disclaimers/uncertainty prominent
   - visual foundation token alignment
@@ -1280,4 +1280,4 @@ uvicorn backend.main:app --reload
 
 ---
 
-*이 문서는 2026-05-04 기준 법대로(LawMainRoad) SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록, 2026-04-20 presentation-local preset 기준, 2026-04-24 SCN-001 protected answer/linkage 기준, 2026-04-28 `fdde441` visual/progress/history polish 기준, 2026-04-29 visual checkpoint `85d10fa` 기준은 evolution history로 보존한다. Current main `e79fa68`까지의 workspace/draft-scope documentation alignment는 frontend/backend public contract를 변경하지 않았으며, Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer/accessibility blocker fixes는 frontend-only 상태다. Backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*
+*이 문서는 2026-05-13 기준 법대로(LawMainRoad) SCN-004 frontend demo의 구현 완료 상태와 QA/freeze handoff를 함께 기록한다. 2026-04-17 초기 QA 기록, 2026-04-20 presentation-local preset 기준, 2026-04-24 SCN-001 protected answer/linkage 기준, 2026-04-28 `fdde441` visual/progress/history polish 기준, 2026-04-29 visual checkpoint `85d10fa` 기준, 2026-05-04 `e79fa68` docs/code checkpoint는 evolution history로 보존한다. Current code/runtime checkpoint `b013429`까지의 workspace/draft/cloud documentation alignment는 frontend/backend public contract를 변경하지 않았으며, Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer/accessibility blocker fixes는 frontend-only 상태다. Backend 코드 및 API contract는 regression 확인 없이 임의 변경하지 않는다.*

@@ -1,6 +1,6 @@
 # SCN-001 Auth Integration Status
 
-기준일: `2026-04-29`
+기준일: `2026-05-13`
 
 ## Purpose
 
@@ -32,7 +32,7 @@
 | SCN-001 continuity panel | completed | `f574e6b` adds continuity panel on `/after/result` and `/after/draft`. It preserves Bridge-as-Continuity, Not Grounding and does not create or modify legal basis, citations, source/grounded context ids, or retrieved chunks |
 | `/after` saved history selector | completed | `2ec5488` shows saved Before/Bridge history on `/after` for backend-verified logged-in users. The section is collapsible, saved Bridge selection uses only the displayed safe subset for Bridge handoff memory state, Before/Bridge soft-delete uses existing protected DELETE helpers, exact preset submit keeps fixed answer priority, and SCN-004 public flow remains unchanged |
 | SCN-001 history/After frontend polish | completed | `f38aea6` clarifies `/after` saved history cards, `3822da2` makes the SCN-001 fixed-draft result panel non-sticky while preserving SCN-004 selector behavior, `d8ea907` polishes `/history`, `903ec4f` improves nav/delete accessibility, `1a57601` removes stale `/before` embedded-history CSS, `8cd1ccb` polishes SCN-001 history cards, `c365ca5` clarifies SCN-001 history summaries, `6263a8e` folds SCN-001 case records, and `f15430c`/`a2d984f` fix overbroad wage/deduction summaries. `/after` saved history and `/history` now use incident-centered compact summary + details/fold cards with user-facing Korean explanations instead of separate Before/Bridge list cards or raw status/key output. Frontend-only; public API contracts, auth persistence, storage policy, `/api/v1/history` unified backend API, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, Step 3 full retention lifecycle, and SCN-004 freeze remain unchanged |
-| Frontend visual/UI polish / progress UX / main login priority | completed | Visual checkpoint `85d10fa` completed DESIGN.md visual guide alignment, visual foundation token alignment, home visual simplification, Main H1/lead/nav typography cleanup and compact flow strip, `/before`/`/after`/`/history` internal route chrome simplification, Before upload-first first screen with local server/demo copy removed and examples preserved, `/after/result`/`/after/intake`/`/after/draft` detail visual polish, After entry centering/guidance cards/preset display label cleanup/disclaimer restoration, After saved-history connection accent contrast (unselected primary blue, selected success green), History centered layout/readable folded cards/blue left accent, warning/status contrast fixes, draft print CSS specificity fix, Before analysis progress UX, masthead light surface alignment, main page login priority, and removal of hardcoded default accessibility legal basis. Current main is `e79fa68`; later workspace/draft-scope documentation alignment did not change backend/API/schema, RAG/data, auth persistence, Web Storage policy, Bridge data boundary, or SCN-004 public contracts. Logged-out first viewport prioritizes Google login CTA; backend-verified logged-in users keep `History / Before / After` entry order. `/before` analysis start scrolls to the progress area and shows OCR 1~2 minute guidance without exposing raw job id/status/provider/internal error. Backend OCR/provider/polling contracts remain unchanged |
+| Frontend visual/UI polish / progress UX / main login priority | completed | Visual checkpoint `85d10fa` completed DESIGN.md visual guide alignment, visual foundation token alignment, home visual simplification, Main H1/lead/nav typography cleanup and compact flow strip, `/before`/`/after`/`/history` internal route chrome simplification, Before upload-first first screen with local server/demo copy removed and examples preserved, `/after/result`/`/after/intake`/`/after/draft` detail visual polish, After entry centering/guidance cards/preset display label cleanup/disclaimer restoration, After saved-history connection accent contrast (unselected primary blue, selected success green), History centered layout/readable folded cards/blue left accent, warning/status contrast fixes, draft print CSS specificity fix, Before analysis progress UX, masthead light surface alignment, main page login priority, and removal of hardcoded default accessibility legal basis. Current code/runtime checkpoint is `b013429`; later workspace/draft/cloud/report documentation alignment did not change backend/API/schema, RAG/data, auth persistence, Web Storage policy, Bridge data boundary, or SCN-004 public contracts. Logged-out first viewport prioritizes Google login CTA; backend-verified logged-in users keep `History / Before / After` entry order. `/before` analysis start scrolls to the progress area and shows OCR 1~2 minute guidance without exposing raw job id/status/provider/internal error. Backend OCR/provider/polling contracts remain unchanged |
 
 ## Current Git History References
 
@@ -257,7 +257,8 @@ Implemented behavior:
 
 ## Incident-centered History UI Status
 
-2026-04-29 visual checkpoint is `85d10fa`; 2026-05-04 current main is `e79fa68`.
+2026-04-29 visual checkpoint is `85d10fa`; 2026-05-13 current code/runtime
+checkpoint is `b013429`.
 The SCN-001 history surfaces
 are now aligned around an incident-centered compact summary + details/fold model.
 

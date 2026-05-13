@@ -1,6 +1,6 @@
 # Cloud Migration Phase Index
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 This directory contains phase-specific execution plans for the GCP migration
 target. Use these files when assigning focused implementation work to an agent.
@@ -27,7 +27,7 @@ target. Use these files when assigning focused implementation work to an agent.
 | 4 | Frontend Runtime | [`phase4_frontend_runtime.md`](phase4_frontend_runtime.md) | Deploy frontend Cloud Run service and verify browser, Firebase, CORS, and preset flows |
 | 5 | CI/CD | [`phase5_cicd.md`](phase5_cicd.md) | Add GitHub Actions, Workload Identity Federation, deploy permissions, and rollback job |
 | 6 | Observability / Reliability | [`phase6_observability_reliability.md`](phase6_observability_reliability.md) | Add monitoring, alerting, lifecycle cleanup, and rollback drill |
-| 7 | Optional Hardening | [`phase7_optional_hardening.md`](phase7_optional_hardening.md) | Phase 7A `www` Firebase Hosting custom domain is complete; evaluate any further LB/VPC/Cloud Armor/API Gateway/jobs separately |
+| 7 | Optional Hardening | [`phase7_optional_hardening.md`](phase7_optional_hardening.md) | Phase 7A `www` Firebase Hosting custom domain is complete; Phase 7B private GCS artifact storage + observability is a candidate; evaluate any further LB/VPC/Cloud Armor/API Gateway/jobs separately |
 
 ## Terraform Authoring Map
 
@@ -74,7 +74,8 @@ Decision status:
   deployment, and shell/Python helper-only automation.
 - Phase-gated: Cloud SQL exact sizing, prod PITR/cost confirmation, GCS adapter
   and `ARTIFACT_BUCKET_NAME` activation, artifact retrieval if runtime/UI needs
-  it, budget alert ownership, and exact alert thresholds.
+  it, Cloud Monitoring custom dashboard ownership, budget alert ownership, and
+  exact alert thresholds.
 - Deferred by design: separate dev/prod GCP projects, HTTPS Load Balancer,
   `api.<domain>`, root apex routing, same-origin `/api/**`, advanced
   SLO/alerting, and retrieval UI unless required later. Phase 7A `www` Firebase

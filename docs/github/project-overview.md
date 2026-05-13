@@ -1,6 +1,6 @@
 # 프로젝트 개요
 
-기준일: `2026-05-07`
+기준일: `2026-05-13`
 
 법대로(LawMainRoad)는 한국의 외국인 근로자와 취약 노동자를 위한 노동권 지원
 MVP입니다.
@@ -17,6 +17,8 @@ MVP입니다.
 - Bridge를 통해 Before의 위험 신호를 After 질문에 연결합니다.
 - 법적 근거(legal grounding)가 있을 때 SCN-004 문서 초안을 deterministic하게 생성합니다.
 - SCN-001 Bridge 정보는 사건 맥락 연결/참고용이며, 법적 근거(legal grounding)가 아닙니다.
+- public demo URL은 `https://www.law-main-road.cloud`입니다. 이 URL은
+  `demo/contest` posture이며 production opening을 의미하지 않습니다.
 
 ## 주요 시나리오
 
@@ -56,6 +58,18 @@ MVP입니다.
 
 SCN-005와 Recovery는 후속 후보입니다. 현재 frontend preset flow로 노출되지
 않습니다.
+
+### Cloud Hardening
+
+구현/문서 상태:
+
+- Phase 7A `www.law-main-road.cloud` public domain launch 완료
+- Phase 7B private GCS artifact storage + operations dashboard 후보 문서화 완료
+
+경계:
+
+- Phase 7B runtime GCS writer, artifact retrieval UI, physical purge lifecycle은
+  미오픈(NOT opened)입니다.
 
 ## 현재 사용자-facing routes
 

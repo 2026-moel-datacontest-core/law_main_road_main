@@ -1,6 +1,6 @@
 # Phase 7 — Optional Hardening
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 ## 1. Goal
 
@@ -29,7 +29,7 @@ note를 작성한 뒤 진행한다.
 | Primary Terraform root | Candidate-specific; no default root required |
 | Required previous phase | [`phase6_observability_reliability.md`](phase6_observability_reliability.md) |
 | Core migration dependency | Phase 1-6 applied, smoke-tested, and operationally observed |
-| Default decision | Defer until justified; Phase 7A frontend-domain slice is complete for `www.law-main-road.cloud` |
+| Default decision | Defer until justified; Phase 7A frontend-domain slice is complete for `www.law-main-road.cloud`; Phase 7B private GCS artifact storage + observability is documented as a candidate |
 
 ## 3. Read First
 
@@ -104,6 +104,7 @@ phase first.
 | Candidate | Default | Primary Value | Main Risk |
 |---|---|---|---|
 | Custom domain / Firebase Hosting edge | Phase 7A `www` slice complete; further edge/API work deferred | Stable portfolio URL with a lightweight managed HTTPS edge | DNS, certificate, Hosting config, and frontend API-base rebuild complexity |
+| Private GCS artifact storage + operations dashboard | Candidate note added as Phase 7B; implementation not opened | Cloud Run statelessness, durable raw artifact storage, and clearer cloud operations story | Sensitive artifact handling, metadata migration, dashboard/noise tuning |
 | HTTPS Load Balancer + serverless NEG | Defer | Future centralized routing and Cloud Armor attachment | Cost, DNS, certificate, and Terraform complexity |
 | Cloud Armor | Defer | WAF/rate limit edge protection | Requires LB path; false positives |
 | Backend Cloud Run IAM auth | Defer | Non-public backend ingress | Browser frontend cannot directly call IAM-protected backend without topology change |

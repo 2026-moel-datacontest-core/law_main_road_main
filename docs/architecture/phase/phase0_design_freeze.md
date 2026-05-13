@@ -1,6 +1,6 @@
 # Phase 0 — Docs / Design Freeze
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 ## 1. Goal
 
@@ -121,7 +121,7 @@ cost/permission/code evidence, and defers optional hardening by design.
 |---|---|
 | Finalized now | first target is `dev` only; keep `envs/dev` and `envs/prod` in the layout but make only `envs/dev` apply-ready and instantiate `dev` first; keep `envs/prod` skeleton/README/tfvars-example only until a separate prod-opening review; use the existing `law-main-road` GCP/Firebase project with env-prefixed resources; Firebase Auth Google provider only and no Firebase SMS MFA / Phone Auth for MVP; budget alert `lmr-dev-demo-monthly` with KRW 70,000 and `25/50/80/100 actual + 100 forecasted`; private source/deploy repo `2026-moel-datacontest-core/law_main_road_main`; public curated mirror `Team-msp-architect-2026/msp-team02` with no deploy permission; service account key JSON forbidden; `protect-main` policy-defined/enforcement-pending; `law-main-road` app label; `lmr` prefix; `lmr-{env}-{component}` resource naming where possible; local-state bootstrap creates the GCS tfstate bucket; env roots use GCS backend after bootstrap; bootstrap local `terraform.tfstate*` is never committed; Terraform creates Secret Manager secret resources only; `google_secret_manager_secret_version` is forbidden by default; one private artifact bucket per env; globally unique `lmr-{env}-artifacts` bucket naming pattern; `before-runs/` and `after-runs/` object prefixes; Phase 4 uses Cloud Run `run.app`; shell/Python runbooks are helper-only. |
 | Phase-gated decision | Phase 2 before apply: dev Cloud SQL exact tier/storage. Phase 2 before prod opening: prod exact tier, PITR cost exception, backup retention confirmation. Phase 3 before backend deploy: GCS adapter implementation boundary and whether `ARTIFACT_BUCKET_NAME` becomes active runtime env. Phase 3 or later: artifact retrieval mode only if UI/runtime needs it. Phase 6: budget alert Terraform management if billing IAM allows, otherwise billing/admin checklist fallback. Phase 6: exact alert thresholds after baseline smoke/traffic. Phase 5: WIF implementation bound only to the private source/deploy repo. |
-| Deferred by design | separate dev/prod GCP projects; HTTPS Load Balancer; `api.<domain>` backend public endpoint; root apex routing; same-origin `/api/**`; advanced SLO/alerting; signed URL/auth proxy/artifact retrieval UI unless required later; host configuration-management tooling for baseline migration. Phase 7A `www` Firebase Hosting custom domain is complete. |
+| Deferred by design | separate dev/prod GCP projects; HTTPS Load Balancer; `api.<domain>` backend public endpoint; root apex routing; same-origin `/api/**`; advanced SLO/alerting; signed URL/auth proxy/artifact retrieval UI unless required later; host configuration-management tooling for baseline migration. Phase 7A `www` Firebase Hosting custom domain is complete. Phase 7B private GCS artifact storage + observability is documented as an optional hardening candidate, not an active runtime change. |
 
 ## 6. MVP / SCN Boundaries
 

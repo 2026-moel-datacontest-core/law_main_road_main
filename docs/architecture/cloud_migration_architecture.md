@@ -1,6 +1,6 @@
 # 법대로(LawMainRoad) — Production-Oriented GCP Migration Architecture
 
-기준일: `2026-05-11`
+기준일: `2026-05-13`
 
 > 주의: 이 문서는 현재 로컬 MVP 구조가 아니라 후속 GCP cloud migration 목표
 > 아키텍처다. 현재 구현 상태는
@@ -51,6 +51,7 @@ application behavior migration tool.
 | Phase sizing | Author Terraform in small phase roots. Phase 0 is docs/decision freeze only; Phase 1 is the first resource phase. |
 | Application contract | Terraform must not change `/api/v1/answer`, `/api/v1/documents/draft`, protected SCN-001 Bridge/history behavior, SCN-004 freeze, SCN-001 frozen draft, auth persistence, or Web Storage policy. |
 | Optional edge | Phase 7A `www.law-main-road.cloud` Firebase Hosting custom domain is complete as optional hardening, not a Phase 1-6 prerequisite. HTTPS Load Balancer, `api.*`, root apex, and same-origin `/api/**` remain later edge candidates. |
+| Optional artifact hardening | Phase 7B private GCS artifact storage + operations dashboard is documented as a candidate. It does not claim runtime GCS writer activation until the adapter and monitoring implementation are explicitly opened. |
 | State | Shared applies use a GCS remote state bucket after bootstrap. The approved baseline is local-state `bootstrap/remote-state` for the first state bucket creation, followed by GCS backend initialization for later env roots. A separate pre-created bootstrap bucket is not the approved baseline. |
 | Cloud Run revision ownership | Build/push images outside Terraform, pass an immutable image digest or explicit tag into Terraform, and let Terraform update Cloud Run service config/traffic so the apply creates the revision. `gcloud run deploy` is not the steady-state path while Terraform owns Cloud Run; emergency manual changes must be reconciled back into Terraform. |
 | Secrets | Terraform may create Secret Manager resources and IAM bindings, but raw secret values and credential-bearing outputs stay out of `.tf` files, tfvars, Terraform state, GitHub Actions logs, and public evidence. |

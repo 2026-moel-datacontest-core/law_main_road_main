@@ -1,6 +1,6 @@
 # 법대로(LawMainRoad) — Current Project Architecture
 
-기준일: `2026-05-04` 또는 현재 repo 기준
+기준일: `2026-05-13`
 
 ## 1. 문서 목적
 
@@ -11,8 +11,10 @@
 정확한 현재 상태 요약:
 
 - Current architecture has one primary Next.js/FastAPI surface: `/before` + `/after` + `/history` in `frontend/`, and `backend/` FastAPI with mounted Before stack plus SCN-001 protected Bridge/history endpoints.
-- Visual checkpoint `85d10fa` includes integrated visual/UI polish, and current
-  main is `e79fa68` after docs/workspace-scope alignment. The checkpoint includes
+- Visual checkpoint `85d10fa` includes integrated visual/UI polish, and the
+  current code/runtime checkpoint is `b013429`. Later docs/cloud/report refresh
+  does not change backend/API/schema/Auth/Bridge/Web Storage policy. The visual
+  checkpoint includes
   `DESIGN.md` token-first guide, Before first screen upload focus and OCR 1~2분
   progress copy, After entry centered guidance/disclaimer, History centered fold
   cards with blue accent, Main H1/lead/nav/compact flow strip cleanup, contrast
@@ -23,6 +25,10 @@
 - Before contract upload path currently uses Vertex AI for OCR and LLM-based content review.
 - Phase 6F live subset PASS with retry. Vertex IAM/credential issue is runtime resolved; residual runtime risk is transient `provider_timeout`.
 - Local LLM / Compute Engine GPU VM is not part of the current MVP architecture. The cloud migration target also excludes it from the 1차 migration scope.
+- Cloud migration Phase 7A `www.law-main-road.cloud` public domain launch is
+  complete. Phase 7B private GCS artifact storage + operations dashboard is a
+  documented optional hardening candidate only; runtime artifact writers still
+  use local paths until a GCS adapter is explicitly opened.
 
 ## 2. 현재 구현 범위 요약
 
@@ -117,7 +123,7 @@ SCN-004 draft flow is additionally gated by document-type eligibility. The front
 
 ```mermaid
 %% 법대로(LawMainRoad) current project architecture
-%% 기준일: 2026-05-04 / 현재 repo 기준
+%% 기준일: 2026-05-13 / 현재 repo 기준
 %% Local LLM / Compute Engine GPU VM is intentionally omitted from this current MVP diagram.
 flowchart LR
 

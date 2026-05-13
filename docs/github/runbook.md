@@ -1,6 +1,6 @@
 # Runbook / 실행 점검
 
-기준일: `2026-05-07`
+기준일: `2026-05-13`
 
 이 문서는 public mirror용 concise quick reference입니다. 실행/배포 command의
 canonical owner는 GitHub Wiki의 `Deployment-and-Setup-Guide`이고,
