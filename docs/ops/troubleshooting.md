@@ -793,19 +793,18 @@ const context = await chromium.launchPersistentContext("/tmp/law-main-road-auth-
 증상:
 
 - Google login 후 backend auth status가 `logged_in=true`로 보인다.
-- page refresh / reload 또는 browser close 후 다시 열면 signed-out 상태로 돌아온다.
+- 같은 브라우저 세션 안의 page refresh / reload 또는 직접 `/history` 진입에서는 Firebase auth state가 복원되어야 한다. 브라우저 세션 종료 후에는 재로그인이 필요할 수 있다.
 
 판정:
 
-- MVP Phase 3 frontend에서는 정상 동작이다.
-- 현재 구현은 Firebase Auth `inMemoryPersistence`를 사용한다.
-- Firebase auth state / token을 `localStorage` 또는 `sessionStorage`에 남기지 않기 위한 의도된 선택이다.
+- 현재 구현은 Firebase Auth `browserSessionPersistence`를 사용한다.
+- Firebase SDK의 browser-session auth state 복원만 허용하고 raw flow payload나 Firebase ID token을 app code가 직접 Web Storage에 저장하지 않는다.
 
 대응:
 
-1. refresh / reload 후에는 필요 시 다시 Google login을 진행한다.
-2. SCN-001 protected API 호출 전에는 현재 memory auth state가 있을 때 `getIdToken()`으로 새 Firebase ID token을 받는다.
-3. 로그인 유지 UX가 필요해지면 `browserSessionPersistence`를 Future/Post-MVP tradeoff로 재검토한다.
+1. refresh / reload 후 로그아웃처럼 보이면 같은 브라우저 세션인지, Firebase Authorized Domain과 popup login 성공 여부를 확인한다.
+2. SCN-001 protected API 호출 전에는 현재 Firebase auth state가 있을 때 `getIdToken()`으로 새 Firebase ID token을 받는다.
+3. 브라우저를 완전히 닫은 뒤 장기 로그인 유지가 필요하면 `browserLocalPersistence`를 Future/Post-MVP tradeoff로 별도 검토한다.
 
 주의:
 

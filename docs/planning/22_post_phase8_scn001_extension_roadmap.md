@@ -151,8 +151,8 @@ Status (2026-04-24): completed and pushed in `030e7ac`.
 
 - 로그아웃 시 `FlowContext`, Before local state, Bridge handoff memory state를
   초기화한다.
-- Firebase Auth MVP frontend persistence는 memory-oriented policy를 유지한다.
-- Web Storage에 raw flow payload, auth state, token을 저장하지 않는다.
+- Firebase Auth MVP frontend persistence는 `browserSessionPersistence`를 유지한다.
+- Web Storage에 raw flow payload나 Firebase ID token을 app code가 직접 저장하지 않는다.
 - SCN-004 `/after` login-free path는 계속 유지한다.
 - direct `/after` entry, SCN-004 exact preset, SCN-004 free input behavior를
   regression check 대상으로 둔다.
@@ -252,7 +252,8 @@ Acceptance direction:
 
 Current verification status:
 
-- Codex headless 환경에서는 interactive Firebase Google popup + `inMemoryPersistence`
+- Codex headless 환경에서는 interactive Firebase Google popup + Firebase session
+  persistence
   때문에 logged-in live smoke가 여전히 제한된다.
 - 실제 사용자 브라우저에서는 `/before` logged-in history endpoints Authorization
   PRESENT와 history records read-only render가 PASS 확인됐다.
@@ -340,8 +341,9 @@ Browser smoke result:
 - Before delete hides/removes linked Bridge visible path PASS.
 - Before/Bridge count mismatch is expected because Bridge is created only after
   explicit handoff.
-- Refresh logout is expected because Firebase Auth MVP uses `inMemoryPersistence`.
-- Session extension was NOT changed for MVP.
+- Refresh/direct `/history` entry should restore Firebase Auth within the same
+  browser session because the frontend now uses `browserSessionPersistence`.
+- Long-term local persistence was NOT opened for MVP.
 - SCN-004 freeze impact: NO.
 
 Remaining boundary:
@@ -352,7 +354,8 @@ Remaining boundary:
 - retention lifecycle and GCS lifecycle remain out of scope.
 - audit/export remains out of scope.
 - undo/restore remains out of scope.
-- auth persistence changes remain out of scope.
+- auth persistence changes beyond the current browser-session UX fix remain out
+  of scope.
 - account deletion/access-control remains out of scope.
 - orphan cleanup remains out of scope.
 - live/backend SCN-001 document draft implementation remains out of scope.
@@ -380,7 +383,8 @@ Full lifecycle areas for future policy review:
 - undo/restore
 - account deletion/access-control
 - orphan cleanup
-- auth persistence changes: explicitly out of scope, not a deletion lifecycle area
+- auth persistence changes beyond the current browser-session UX fix:
+  explicitly out of scope, not a deletion lifecycle area
 
 Lifecycle decision table:
 
@@ -1300,8 +1304,8 @@ freeze fixture/preset 후보로 검토한다.
 - `/after` saved history selector는 backend-verified logged-in user에게만 추가로
   보이는 SCN-001 protected-history surface이며, logged-out SCN-004 public
   preset/free input flow를 막지 않는다.
-- Web Storage에 raw payload, raw answer/draft body, raw flow data, auth state, token
-  저장 금지.
+- Web Storage에 raw payload, raw answer/draft body, raw flow data, Firebase ID
+  token을 app code가 직접 저장하는 것은 금지.
 - Firebase uid, provider_subject, email, token 노출 금지.
 - raw Before/Bridge payload, raw `after_query_seed`, raw query, full answer body,
   artifact body를 docs/logs/UI/commits/issues/chat에 기록하지 않는다.

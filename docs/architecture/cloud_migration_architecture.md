@@ -257,8 +257,9 @@ Auth role such as `roles/firebaseauth.admin` or a narrower custom role after val
 | Firebase Admin credential | Use Cloud Run service identity / ADC for the current migration. Do not create a Firebase Admin JSON secret or service account key JSON in Phase 1-6; if ADC cannot be made to work, open a separate security exception instead of silently adding a key fallback. |
 | App signing/session secret if introduced later | Secret Manager |
 
-The current MVP frontend uses Firebase `inMemoryPersistence`; cloud migration does not change
-that policy by default.
+The current MVP frontend uses Firebase `browserSessionPersistence` for same
+browser-session auth restore; cloud migration must not move raw flow payloads
+into app-managed Web Storage.
 
 ### Runtime / Environment Boundary
 

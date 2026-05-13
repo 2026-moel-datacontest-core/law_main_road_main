@@ -155,7 +155,7 @@ deployment should not hide a broken backend.
 - GitHub Actions WIF and full CI/CD.
 - Firebase Admin SDK backend changes.
 - Direct Google OAuth + backend-managed session cookie.
-- Auth persistence change from `inMemoryPersistence`.
+- Auth persistence change from the current approved mode.
 - Raw flow payload storage in Web Storage.
 - SCN-001 live/backend document draft generation.
 - Protected SCN-001 draft endpoint path/method/schema.
@@ -540,13 +540,16 @@ SCN-001 live/backend document draft generation remains out of migration scope.
 
 ## 20. Auth Persistence And Storage Policy
 
-Phase 4 must keep the current frontend auth/storage policy.
+Phase 4 originally kept the then-current frontend auth/storage policy. Current
+runtime uses session-scoped Firebase persistence while keeping raw flow payloads
+out of app-managed Web Storage.
 
 Expected:
 
-- Firebase Auth uses `inMemoryPersistence`.
-- `browserSessionPersistence` is not introduced.
-- token/auth state is not stored in `localStorage` or `sessionStorage`.
+- Firebase Auth uses `browserSessionPersistence`.
+- Firebase SDK session auth state may be restored within the same browser
+  session.
+- Firebase ID token is not directly stored by app code in Web Storage.
 - raw `user_statement` is not stored in Web Storage.
 - raw `answer_response` is not stored in Web Storage.
 - raw `case_intake` is not stored in Web Storage.
@@ -599,8 +602,8 @@ Phase 4 is complete when:
 - Logged-out `/after` remains accessible.
 - Protected `/before` and `/history` gates still use backend-verified
   `backendUser.logged_in`.
-- Firebase `inMemoryPersistence` policy remains unchanged.
-- No raw flow payload is moved into Web Storage.
+- Firebase `browserSessionPersistence` policy remains unchanged.
+- No raw flow payload is moved into app-managed Web Storage.
 - SCN-004 freeze remains unchanged.
 
 ## 23. Rollback
@@ -673,8 +676,9 @@ When Phase 4 is executed, record a short status note.
 - Do not change `/api/v1/answer` or `/api/v1/documents/draft`.
 - Do not open SCN-001 live/backend draft generation.
 - Do not add protected SCN-001 draft endpoint.
-- Do not change Firebase Auth persistence away from `inMemoryPersistence`.
-- Do not store tokens or raw flow payloads in Web Storage.
+- Do not change Firebase Auth persistence away from `browserSessionPersistence`
+  without a separate auth UX/security review.
+- Do not directly store Firebase ID tokens or raw flow payloads in Web Storage.
 - Do not hide CORS failure by weakening backend CORS to wildcard in prod.
 - Do not add Firebase Admin credentials to frontend.
 - Do not treat Firebase public web config as a private secret.
@@ -711,7 +715,7 @@ host, then update backend BACKEND_CORS_ORIGIN_REGEX through the backend runtime
 root and re-smoke browser calls from the deployed frontend.
 
 Do not change backend API contracts, do not change Firebase auth persistence, do
-not store raw flow payloads in Web Storage, and do not open SCN-001 live/backend
+not store raw flow payloads in app-managed Web Storage, and do not open SCN-001 live/backend
 document draft generation. Preserve SCN-004 exact fixture path and SCN-001
 frontend-local frozen draft boundary.
 ```

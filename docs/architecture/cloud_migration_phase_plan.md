@@ -35,7 +35,8 @@ work until their phase is opened.
 - Terraform does not change application contracts. It must preserve
   `/api/v1/answer`, `/api/v1/documents/draft`, protected SCN-001 Bridge/history
   paths, SCN-004 demo freeze, SCN-001 frontend-local frozen draft behavior,
-  Firebase `inMemoryPersistence`, and the Web Storage policy.
+  Firebase `browserSessionPersistence`, and the raw flow payload Web Storage
+  policy.
 - Terraform must not own `pgvector` extension creation, schema migrations,
   vector indexes, `law_chunks` seed/import, image build logic, secret values, or
   runtime artifact payloads.
@@ -777,8 +778,8 @@ Acceptance:
 - Frontend image build passes `NEXT_PUBLIC_API_BASE_URL` and Firebase public web
   config as Docker build args; setting only Cloud Run runtime env vars is not
   enough for client-bundled `NEXT_PUBLIC_*` values.
-- Firebase `inMemoryPersistence` policy remains unchanged.
-- No raw flow payload is moved into Web Storage.
+- Firebase `browserSessionPersistence` policy remains unchanged.
+- No raw flow payload is moved into app-managed Web Storage.
 
 Rollback:
 

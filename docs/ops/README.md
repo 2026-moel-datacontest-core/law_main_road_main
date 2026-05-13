@@ -142,7 +142,7 @@
 - `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id`: Phase 1 schema 반영 완료
 - `/api/v1/auth/me`: Phase 2 backend Firebase ID token verification 반영 완료
 - frontend Firebase Auth Google Sign-In, `AuthContext`, Login UI, backend verification UI: Phase 3 반영 완료
-- Firebase Auth persistence: MVP default는 `inMemoryPersistence`; `browserSessionPersistence`는 Future/Post-MVP tradeoff 후보
+- Firebase Auth persistence: MVP default는 `browserSessionPersistence`; Firebase SDK session auth state 복원만 허용하고 raw flow payload는 Web Storage에 저장하지 않음
 - `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`: Phase 4 반영 완료
 - Before review job optional auth linkage: Phase 5 반영 완료
 - Bridge -> After answer-only handoff: Phase 6A~6F 반영 완료

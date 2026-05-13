@@ -31,8 +31,8 @@
 - 전화번호 scope 요청은 금지한다.
 - 이메일은 nullable 표시 정보로만 다루며 primary identifier로 사용하지 않는다.
 - access token / refresh token 장기 저장은 금지한다.
-- Firebase Auth MVP frontend persistence는 `inMemoryPersistence`다. token/auth state를 `localStorage`나 `sessionStorage`에 저장하지 않는다.
-- `browserSessionPersistence`는 MVP default가 아니라 Future/Post-MVP UX tradeoff 후보로만 둔다.
+- Firebase Auth MVP frontend persistence는 `browserSessionPersistence`다. Firebase SDK의 browser-session auth state 복원만 허용하며 raw flow payload나 Firebase ID token을 app-managed Web Storage에 직접 저장하지 않는다.
+- 장기 local persistence는 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - 저장 가능한 최소 사용자 필드는 `internal user id`, `auth_provider="firebase_google"`, `provider_subject = Firebase uid`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다.
 - Firebase Auth Google Sign-In을 1차 provider로 둔다. 외국인 근로자 대상 접근성이 Kakao보다 넓고, 현재 GCP/Vertex 기반 인프라와 운영 친화적이기 때문이다.
 - Kakao OAuth는 한국 생활 밀착 UX나 KakaoTalk 기반 알림/상담 연계가 필요해질 때 검토할 후속 provider 후보이며, 첫 구현 범위에서는 제외한다.
@@ -89,7 +89,7 @@
   - `AuthContext`
   - Login UI
   - `/api/v1/auth/me` backend verification UI
-  - Firebase Auth `inMemoryPersistence`
+  - Firebase Auth `browserSessionPersistence`
   - actual Google popup login E2E, `users` row upsert, repeated auth same `user_id`, `/after` login-free, frontend build 통과 확인
 - SCN-001 Phase 4/5/6A~6F 구현이 frontend에 반영됐다.
   - `/before` result에서 logged-in completed Before job을 protected `bridge_runs`로 연결
@@ -132,7 +132,7 @@
     present.
   - The polish is frontend-only: SCN-004 exact/free input flow, public
     `/api/v1/answer`, public `/api/v1/documents/draft`, Firebase
-    `inMemoryPersistence`, Web Storage policy, `/api/v1/history` unified backend
+    `browserSessionPersistence`, raw flow payload Web Storage policy, `/api/v1/history` unified backend
     API boundary, live/backend SCN-001 draft generation, protected SCN-001 draft
     endpoint, and Step 3 full retention lifecycle remain unchanged/NOT opened.
 - SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행한다.

@@ -38,7 +38,8 @@
 - SCN-001 incident cards show situation summary, confirmed issues, candidate legal references, recommended next steps, and the After question connection in one card. Summaries are user-facing Korean explanations rather than raw status/key output; `mandatory_terms_missing`, `dormitory_missing_info`, `deduction_risk`, and unknown snake_case values are rendered through Korean label/description or readable fallback. Bridge remains continuity/reference only, not legal grounding, and raw `after_query_seed` remains null and hidden from UI/query/storage.
 - Latest integrated frontend visual/UI polish completed through visual checkpoint `85d10fa`: DESIGN.md visual guide alignment, token-first neutral/dense/evidence-led surfaces, Before upload-first first screen, local server/demo copy removal, example affordance preservation, result/accessibility layout cleanup, After entry centering/guidance cards/preset display label cleanup/disclaimer restoration, After saved history connection accent states (unselected primary blue, selected success green), History centered layout with readable folded incident cards and blue left accent, Main H1/lead/nav typography cleanup, compact flow strip, contrast fixes, and removal of hardcoded default accessibility legal basis.
 - Before analysis progress UX completed: `/before` scrolls to the progress area after analysis starts, OCR guidance says document quality/length can make OCR take about 1~2 minutes, and raw job id/status/provider/internal error remains hidden. Backend OCR/provider/polling contracts were not changed. The first screen now stays upload-focused and no longer carries local server/demo copy.
-- SCN-001 frontend visual/history/After polish remains frontend-only: public API contracts, auth persistence, Web Storage policy, SCN-004 freeze behavior, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, `/api/v1/history` unified backend API, and Step 3 full retention lifecycle were not opened.
+- SCN-001 auth session persistence UX fix completed: frontend now uses Firebase `browserSessionPersistence` so main-page login remains available across reload/direct `/history` entry in the same browser session. Raw case/answer/draft/Bridge payloads remain out of Web Storage.
+- SCN-001 frontend visual/history/After polish remains frontend-only: public API contracts, raw flow payload Web Storage policy, SCN-004 freeze behavior, live/backend SCN-001 draft generation, protected SCN-001 draft endpoint, `/api/v1/history` unified backend API, and Step 3 full retention lifecycle were not opened.
 - recent security/history cleanup: local secret/database ignore rules hardening 완료, 문서 hash 참조는 current git history 기준으로 관리
 - 2026-05-13 docs refresh 기준 latest code/runtime checkpoint는 `b013429`이며, `85d10fa` 이후 workspace/draft-scope documentation alignment, Cloud migration Phase 7A public domain launch, Before workspace sidebar reset은 backend/API/schema/Auth/Bridge/Web Storage policy를 변경하지 않았다.
 - 현재 구현 기준은 **SCN-004 demo freeze 유지와 SCN-001 protected Bridge answer/history, `/after` saved history selector, MVP soft-delete, SCN-001 fixed-preset frozen draft path까지의 public contract 보호**
@@ -87,7 +88,7 @@ Evolution note:
 
 - 2026-04-17 기준 상태는 RAG refinement, SCN-004 document draft backend, SCN-004 After frontend Phase 3A/B, content QA, manual browser rehearsal 완료였다.
 - 2026-04-20에는 위 상태를 흔들지 않고 presentation-local preset, preflight, free-input guard, eval evidence report를 추가해 MVP 제출 기준을 보강했다.
-- 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, frontend persistence는 `inMemoryPersistence`다.
+- 2026-04-22에는 SCN-001 Firebase Auth Phase 0~3이 완료됐다. MVP auth path는 Firebase Auth Google Sign-In + Bearer Firebase ID token + backend Firebase Admin SDK verification이며, 당시 frontend persistence는 `inMemoryPersistence`였다. 2026-05-13에는 `/history` 직접 진입 UX를 위해 같은 브라우저 세션 안에서만 복원되는 `browserSessionPersistence`로 전환했다.
 - 2026-04-24 기준으로 Phase 4/5/6A~6F, Phase 7A~7E, Phase 8 regression/demo checks, Post-Phase 8 Step 1/1.5/2A/2B-1/2B-2/1.6이 완료됐다. 2026-04-27에는 실제 브라우저 logged-in smoke PASS, backend-verified auth gate sync hardening, Step 3 MVP soft-delete slice completed, Step 4 SCN-001 docs-only design baseline, SCN-001-BRIDGE-DEMO frozen draft flow, stale OCR review job guard, SCN-001 continuity panel, `/after` saved Before/Bridge history selector, frontend history/After polish completed 상태가 확인됐다. 2026-04-28 기준 최신 main은 `fdde441`까지 push 완료 상태이며 visual foundation/home/internal route chrome/after-flow detail polish, Before progress UX, masthead light alignment, `/after` + `/history` case record fold, wage/deduction summary fix, main page login priority가 완료됐다. 2026-04-29 visual checkpoint `85d10fa`에서는 Before/After/History/Main integrated UI polish, DESIGN.md visual guide, contrast/disclaimer fixes, and accessibility legal-basis blocker fix가 완료됐다. 2026-05-04 checkpoint는 `e79fa68`이며 `/api/v1/answer`와 `/api/v1/documents/draft` public contract는 변경하지 않았다. 2026-05-11에는 Phase 7A `www.law-main-road.cloud` public domain launch가 완료됐고, 2026-05-13에는 Phase 7B GCS artifact storage/observability 후보와 사업계획서 문서를 최신화했다.
 
 ## Read Order
@@ -277,7 +278,7 @@ Implemented integration:
 * `after_artifact_runs.source_bridge_run_id`는 MVP에서 single primary `bridge_run_id`만 저장한다. multi-bridge full provenance는 Post-MVP join table 후보로 둔다.
 * SCN-001 Step 4 document draft design은 docs-only baseline이다. SCN-001-BRIDGE-DEMO exact fixed preset frozen draft flow는 frontend fixture/deterministic template로 completed 상태지만, live/backend SCN-001 draft generation과 protected SCN-001 draft endpoint path/method/schema는 NOT opened.
 * `Bridge/query relevance guard matrix review`는 current Step 4 design baseline으로 정리됐다. SCN-001 continuity panel은 `/after/result`와 `/after/draft`에 completed 상태이며, Bridge는 legal grounding이 아니라 continuity 설명으로만 다룬다.
-* Step 3 full retention lifecycle은 NOT opened. Hard delete, artifact physical deletion/file purge, retention lifecycle, GCS lifecycle, audit/export, undo/restore, auth persistence changes, account deletion/access-control, orphan cleanup은 후속 정책 영역으로 둔다.
+* Step 3 full retention lifecycle은 NOT opened. Hard delete, artifact physical deletion/file purge, retention lifecycle, GCS lifecycle, audit/export, undo/restore, current browser-session UX fix를 넘어서는 auth persistence changes, account deletion/access-control, orphan cleanup은 후속 정책 영역으로 둔다.
 
 ## Frontend Rules
 
@@ -289,8 +290,8 @@ Implemented integration:
 * 현재 SCN-004 demo freeze 유지 작업과 SCN-005 문서 타입 frontend 확장을 한 패치에 섞지 않음
 * SCN-005 After frontend / 문서 타입 확장은 SCN-004 freeze 기준을 유지한 별도 패치에서 진행 가능
 * SCN-001 `Before -> Bridge -> After` answer-only handoff는 checked Bridge submit의 protected answer path와 all-unchecked public answer fallback까지 구현되어 있다. 추가 확장은 SCN-004 freeze를 유지한 별도 단계에서만 검토
-* Firebase Auth MVP frontend persistence는 `inMemoryPersistence`; token/auth state와 raw flow payload를 Web Storage에 저장하지 않음
-* `browserSessionPersistence`는 MVP default가 아니라 Future/Post-MVP UX tradeoff 후보
+* Firebase Auth MVP frontend persistence는 `browserSessionPersistence`; Firebase SDK의 browser-session auth state 복원만 허용하고 raw flow payload를 Web Storage에 저장하지 않음
+* 장기 local persistence는 Future/Post-MVP UX tradeoff 후보
 * raw `user_statement`, `answer_response`, `case_intake`, `draft_response`는 Web Storage에 저장하지 않음
 * presentation preset exact path는 fixed answer fixture를 사용하고 `/api/v1/answer`를 호출하지 않음
 * `/after`에 saved Bridge context가 있어도 SCN-001/SCN-004 preset buttons는 계속 표시한다.

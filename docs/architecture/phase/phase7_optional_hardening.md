@@ -1113,8 +1113,8 @@ When a Phase 7 candidate is evaluated or implemented, record a short status note
 - Do not change `/api/v1/answer` or `/api/v1/documents/draft` public contracts.
 - Do not open SCN-001 live/backend document draft generation.
 - Do not open the protected SCN-001 draft endpoint.
-- Do not weaken the frontend `inMemoryPersistence` auth boundary as part of
-  infra hardening.
+- Do not change the frontend `browserSessionPersistence` auth boundary as part
+  of infra hardening.
 - Do not store raw case facts, raw OCR text, raw Bridge payload, answer payload,
   or draft payload in browser storage.
 - Do not reintroduce Compute Engine GPU VM, Ollama, Qwen, vLLM, or a local LLM

@@ -442,19 +442,19 @@ Implemented Phase 3 files:
 
 ### 10.2 Firebase persistence strategy
 
-Phase 3 구현 기준으로 MVP frontend는 Firebase Auth `inMemoryPersistence`를 기본값으로 사용한다.
+Phase 3 구현 당시 MVP frontend는 Firebase Auth `inMemoryPersistence`를 기본값으로 사용했다. 2026-05-13 `/history` 직접 진입 UX fix 이후 현재 구현은 같은 브라우저 세션 안에서만 auth state를 복원하는 `browserSessionPersistence`를 사용한다.
 
 | 방식 | 장점 | 단점 | 비고 |
 |---|---|---|---|
-| `inMemoryPersistence` | Firebase auth state / token을 `localStorage`나 `sessionStorage`에 남기지 않음. token memory-only 정책과 가장 잘 맞음 | refresh / reload / browser close 후 재로그인이 필요할 수 있음 | **MVP 기본값 / Phase 3 구현값** |
-| `browserSessionPersistence` | 새로고침 복원성이 더 좋음 | Firebase auth state가 browser session Web Storage에 남음. XSS 방어와 잔존 범위 검토 필요 | Future/Post-MVP UX tradeoff 후보 |
+| `inMemoryPersistence` | Firebase auth state / token을 `localStorage`나 `sessionStorage`에 남기지 않음. token memory-only 정책과 가장 잘 맞음 | refresh / reload / browser close 후 재로그인이 필요할 수 있음 | Phase 3 초기 구현값 |
+| `browserSessionPersistence` | 새로고침과 직접 `/history` 진입 복원성이 더 좋음 | Firebase auth state가 browser session persistence에 남음. XSS 방어와 잔존 범위 검토 필요 | **현재 MVP 구현값** |
 | browser local persistence | UX 좋음, 새로고침 후 로그인 유지 | XSS 방어 중요, local persistence 정책 검토 필요 | Post-MVP UX hardening에서 재검토 |
 
 주의:
 
-- Phase 3 frontend 구현은 `frontend/src/lib/firebase.ts`에서 `setPersistence(auth, inMemoryPersistence)`를 사용한다.
-- MVP에서는 Firebase auth state / token을 browser Web Storage에 남기지 않는 정책을 우선한다.
-- refresh / reload 후 로그인 유지가 약한 것은 의도된 tradeoff이며, 사용자는 필요 시 다시 Google login을 진행한다.
+- 현재 frontend 구현은 `frontend/src/lib/firebase.ts`에서 `setPersistence(auth, browserSessionPersistence)`를 사용한다.
+- MVP에서는 Firebase SDK의 browser-session auth state 복원만 허용하고 raw flow payload나 Firebase ID token을 app-managed Web Storage에 직접 저장하지 않는다.
+- refresh / reload 또는 직접 `/history` 진입 후에도 같은 브라우저 세션 안에서는 backend `/api/v1/auth/me` 재검증을 거쳐 로그인 상태를 복원한다.
 - SCN-001 protected API 호출은 현재 memory auth state가 있을 때 `getIdToken()`으로 token을 받아 수행한다.
 - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`는 Web Storage에 저장하지 않는다.
 - Firebase ID token은 장기 직접 저장하지 않고 SDK에서 필요한 시점에 가져오는 방향을 우선한다.
@@ -643,7 +643,7 @@ acceptance criteria:
 - Firebase project / web app config env naming은 결정 완료. 실제 값은 local env / secret으로만 관리하며 문서에 기록하지 않음.
 - Firebase Admin SDK credentials strategy는 결정 완료. local credential provisioning은 ops 문서에서 관리한다.
 - token refresh strategy는 protected request 직전 `getIdToken()`, 401 forced refresh 1회로 결정 완료.
-- Firebase persistence mode는 `inMemoryPersistence`로 결정 완료. refresh / reload 후 재로그인 가능성은 token memory-only 정책의 tradeoff로 수용한다.
+- Firebase persistence mode는 2026-05-13 기준 `browserSessionPersistence`로 전환 완료. refresh / reload 또는 직접 `/history` 진입 시 같은 브라우저 세션 안에서 backend 재검증으로 로그인 상태를 복원한다.
 - CORS는 `Authorization` header 허용 필요로 결정 완료했고 Phase 2에서 코드 반영 완료.
 - `/api/v1/auth/me`는 `GET /api/v1/auth/me`, missing token `{ logged_in: false }`, invalid token 401로 결정 완료.
 - exact `after_query_seed` handoff transport는 Phase 6에서 transient response direct handoff -> React memory state로 구현됐다. raw seed는 answer query에 넣지 않는다.
@@ -969,7 +969,7 @@ acceptance criteria:
 | `bridge_runs.user_id` | SCN-001 protected bridge flow에서 required internal `users.id` |
 | raw `after_query_seed` persistence | MVP에서 금지. `after_query_seed_hash` 저장 후보/필수 |
 | `/api/v1/auth/me` policy | `GET /api/v1/auth/me`; missing token `{ logged_in: false }`; invalid token 401 |
-| Firebase Auth persistence | `inMemoryPersistence` Phase 3 구현값. `browserSessionPersistence`는 Future/Post-MVP UX tradeoff 후보 |
+| Firebase Auth persistence | `browserSessionPersistence` current MVP 구현값. `inMemoryPersistence`는 Phase 3 초기 구현값 |
 | token refresh | protected request 직전 `getIdToken()`, 401 시 forced refresh 1회 |
 | anonymous artifacts | Firebase Auth 도입 전 artifact는 MVP에서 orphan 유지 |
 | Direct Google OAuth / session cookie | Alternative/Fallback 또는 Future/Post-MVP only |

@@ -87,7 +87,7 @@
 SCN-001 Firebase Auth note:
 
 - Phase 3 frontend integration은 완료됐다: Firebase Web SDK, `AuthContext`, Login UI, `/api/v1/auth/me` verification UI.
-- Phase 3 구현값은 Firebase Auth `inMemoryPersistence`이며 browser Web Storage persistence를 MVP default로 쓰지 않는다.
+- Phase 3 초기 구현값은 Firebase Auth `inMemoryPersistence`였고, 현재 구현은 같은 브라우저 세션 안에서만 복원되는 `browserSessionPersistence`다. Raw flow payload는 Web Storage에 저장하지 않는다.
 - actual Google popup login E2E, `users` row upsert, repeated auth same `user_id`, `/after` login-free, frontend build 통과가 확인됐다.
 - Phase 4/5/6A~6F와 Phase 7A~7B는 완료됐다. Phase 6F live subset은 retry 후 PASS이며, Vertex IAM은 runtime resolved, residual risk는 transient `provider_timeout`이다.
 - 이 handoff 문서는 여전히 SCN-004 4-route freeze 기준서이며, protected bridge answer frontend routing 같은 SCN-001 후속 작업과 SCN-004 freeze QA를 한 patch에 섞지 않는다.
@@ -214,8 +214,8 @@ live `/api/v1/answer` 호출 시 `ef_search`는 항상 100. preset exact path는
 - 전화번호 scope 요청은 금지하고, 이메일은 nullable 표시 정보로만 다루며 primary identifier로 사용하지 않는다.
 - 저장 가능한 최소 사용자 필드는 `internal user id`, `auth_provider="firebase_google"`, `provider_subject = Firebase uid`, `display_name nullable`, `email nullable`, `created_at`, `last_login_at` 수준으로 제한한다.
 - Before / Bridge / After 결과를 사용자 계정에 연결 저장하는 것은 Firebase Auth 공통 인증 capability의 적용 범위로 둔다.
-- Firebase Auth MVP frontend persistence는 `inMemoryPersistence`다. token/auth state를 `localStorage`나 `sessionStorage`에 저장하지 않는다.
-- `browserSessionPersistence`는 MVP default가 아니라 Future/Post-MVP UX tradeoff 후보로만 둔다.
+- Firebase Auth MVP frontend persistence는 `browserSessionPersistence`다. Firebase SDK의 session auth state 복원만 허용하며 raw flow payload나 Firebase ID token을 app-managed Web Storage에 직접 저장하지 않는다.
+- 장기 local persistence는 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - access token / refresh token 장기 저장은 금지한다.
 - Kakao OAuth는 첫 구현 범위에서 제외하고, 한국 생활 밀착 UX나 KakaoTalk 알림/상담 연계가 필요해질 때 후속 provider 후보로 검토한다.
 

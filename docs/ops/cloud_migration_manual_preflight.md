@@ -167,7 +167,7 @@ authorized_domains:
   - localhost
   - <frontend run.app domain>
   - www.law-main-road.cloud
-auth_persistence_policy: inMemoryPersistence
+auth_persistence_policy: browserSessionPersistence
 providers_opened: Google only
 phone_auth_opened: no
 ```
@@ -422,7 +422,7 @@ human_mfa_attested:
 firebase_project_id:
 google_sign_in_enabled:
 authorized_domains:
-auth_persistence_policy: inMemoryPersistence
+auth_persistence_policy: browserSessionPersistence
 
 ## Secrets
 - lmr-dev-database-url: value manual, Terraform shell only

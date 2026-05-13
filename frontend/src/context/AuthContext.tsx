@@ -21,7 +21,7 @@ import {
 import { AuthApiError, fetchAuthMe } from '@/lib/auth-api';
 import {
   createGoogleAuthProvider,
-  ensureFirebaseMemoryPersistence,
+  ensureFirebaseSessionPersistence,
   getFirebaseAuth,
   getFirebaseClientStatus,
 } from '@/lib/firebase';
@@ -141,7 +141,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     setAuthInstance(auth);
-    void ensureFirebaseMemoryPersistence(auth).catch((error: unknown) => {
+    void ensureFirebaseSessionPersistence(auth).catch((error: unknown) => {
       setErrorMessage(getAuthErrorMessage(error));
     });
 
@@ -174,7 +174,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setErrorMessage(null);
 
     try {
-      await ensureFirebaseMemoryPersistence(auth);
+      await ensureFirebaseSessionPersistence(auth);
       const credential = await signInWithPopup(auth, createGoogleAuthProvider());
       setFirebaseUser(toFirebaseUserSummary(credential.user));
       await verifyBackendUser(credential.user);

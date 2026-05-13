@@ -41,7 +41,7 @@ Implementation status:
 | `AGENTS.md` | SCN-004 freeze, public contract, Web Storage 금지, Phase 7A~7E status |
 | `CLAUDE.md` | SCN-001 protected path는 Firebase Bearer token, public answer/draft contract 유지 |
 | `backend/CLAUDE.md` | Firebase uid / provider_subject 노출 금지, SCN-004 public endpoints 유지 |
-| `frontend/CLAUDE.md` | `inMemoryPersistence`, raw flow payload Web Storage 저장 금지 |
+| `frontend/CLAUDE.md` | Firebase session persistence, raw flow payload Web Storage 저장 금지 |
 | `docs/planning/16_scn001_before_bridge_contract.md` | `BridgeOutputDTO`, raw `after_query_seed` persistence 금지, `after_artifact_runs` nullable linkage column |
 | `docs/planning/17_firebase_auth_scn001_implementation_plan.md` | Phase 7 after_artifact_runs linkage phase, public endpoint guard |
 | `docs/planning/18_scn001_firebase_auth_phase0_decisions.md` | Phase 7 gate, orphan artifact policy, raw seed policy |

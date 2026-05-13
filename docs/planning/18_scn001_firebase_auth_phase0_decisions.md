@@ -20,7 +20,7 @@
 | 3. provider_subject meaning | Firebase Auth MVP path에서 `provider_subject = Firebase uid` | Decided | Phase 1 / Phase 2 | Google `sub`는 Direct Google OAuth Alternative/Fallback subject |
 | 4. Firebase project config env names | env var naming은 이 문서 기준으로 고정. 실제 값은 TBD | Decided / TBD | Phase 2 / Phase 3 | 값 제공은 Blocking Before Phase 2 또는 Phase 3 |
 | 5. Firebase Admin SDK credential strategy | Local은 ADC 우선, ignored service account path fallback. Cloud Run은 service account identity | Decided / TBD | Phase 2 | 실제 credential provisioning은 Blocking Before Phase 2 |
-| 6. Firebase Auth persistence mode | MVP는 `inMemoryPersistence` 사용 | Decided | Phase 3 | Phase 3 구현 결과와 일치. Firebase auth state / token을 browser Web Storage에 남기지 않음 |
+| 6. Firebase Auth persistence mode | MVP는 `browserSessionPersistence` 사용 | Revised 2026-05-13 | Phase 3 / UX fix | 같은 브라우저 세션 복원 허용. Raw flow payload와 Firebase ID token은 app-managed Web Storage에 직접 저장하지 않음 |
 | 7. token refresh strategy | protected SCN-001 API 호출 직전 `getIdToken()`, 401 시 forced refresh 1회 | Decided | Phase 3 | interval polling 금지, token 장기 app state 저장 금지 |
 | 8. SCN-001 protected endpoints | `POST /api/v1/scn001/bridge-runs`, `GET /api/v1/scn001/bridge-runs/{bridge_run_id}`, `POST /api/v1/scn001/bridge-runs/{bridge_run_id}/answer` | Decided | Phase 4 / Phase 7B | `GET /api/v1/scn001/runs`는 optional |
 | 9. `/api/v1/auth/me` path and bearer policy | `GET /api/v1/auth/me`, missing token은 `{ logged_in: false }`, invalid token은 401 | Decided | Phase 2 | Firebase uid / provider_subject는 response에 노출하지 않음 |
@@ -129,18 +129,16 @@ Backend config:
 
 ### D-006. Firebase Auth Persistence Mode
 
-- Decision: MVP frontend는 Firebase Auth `inMemoryPersistence`를 기본으로 사용한다.
-- Status: Decided
+- Decision: MVP frontend는 Firebase Auth `browserSessionPersistence`를 기본으로 사용한다.
+- Status: Revised 2026-05-13
 - Blocks: Phase 3
 - Rationale:
-  - Phase 3 frontend 구현은 Firebase SDK `setPersistence(auth, inMemoryPersistence)`로 확정됐다.
-  - Firebase auth state / token을 `localStorage` 또는 `sessionStorage`에 남기지 않는 token memory-only 정책을 우선한다.
-  - SCN-001 protected API 호출은 현재 memory auth state가 있을 때 `getIdToken()`으로 Firebase ID token을 받아 수행한다.
-  - refresh / reload / browser close 후 로그인 유지가 약해지고 재로그인이 필요할 수 있지만, MVP에서는 보안 우선 tradeoff로 수용한다.
+  - Phase 3 frontend 초기 구현은 Firebase SDK `setPersistence(auth, inMemoryPersistence)`였으나, `/history` 직접 진입 UX fix에서 `browserSessionPersistence`로 전환했다.
+  - SCN-001 protected API 호출은 현재 Firebase auth state가 있을 때 `getIdToken()`으로 Firebase ID token을 받아 수행한다.
+  - refresh / reload 또는 직접 `/history` 진입 후에도 같은 브라우저 세션 안에서는 backend `/api/v1/auth/me` 재검증으로 로그인 상태를 복원한다.
 - Implementation Notes:
-  - Firebase Auth persistence는 Firebase SDK의 auth session persistence 문제이며, MVP에서는 browser Web Storage 잔존을 만들지 않는 방향을 우선한다.
+  - Firebase Auth persistence는 Firebase SDK의 auth session persistence 문제이며, MVP에서는 browser-session 범위 복원만 허용한다.
   - raw `user_statement`, `answer_response`, `case_intake`, `draft_response`, raw Before review result를 Web Storage에 저장하지 않는 원칙은 그대로 유지한다.
-  - `browserSessionPersistence`는 refresh 복원성이 필요할 때 Future/Post-MVP UX tradeoff 후보로 재검토한다.
   - `browserLocalPersistence`는 Post-MVP UX hardening에서 별도로 재검토한다.
 
 ### D-007. Token Refresh Strategy
@@ -328,7 +326,7 @@ Public 유지:
 |---|---|---:|---|
 | Phase 1 DB models | D-002, D-003, D-011, D-012 | Completed | `users`, `bridge_runs`, `before_review_jobs.user_id`, `after_artifact_runs.user_id`, `after_artifact_runs.source_bridge_run_id` implemented |
 | Phase 2 Backend Firebase verification | D-004, D-005, D-008, D-009, D-010 | Completed | Firebase Admin SDK verification, `/api/v1/auth/me`, CORS `Authorization` header implemented |
-| Phase 3 Frontend auth | D-004, D-006, D-007 | Completed | Firebase Web SDK, `AuthContext`, Login UI, backend verification UI, `inMemoryPersistence` implemented |
+| Phase 3 Frontend auth | D-004, D-006, D-007 | Completed | Firebase Web SDK, `AuthContext`, Login UI, backend verification UI, `browserSessionPersistence` current |
 | Phase 4 Protected bridge-runs endpoint + `BeforeHandoffDTO` extraction | D-008, D-011, D-012, D-015 | Completed | protected bridge-runs endpoint and `BeforeHandoffDTO` extraction implemented. Only linked completed Before jobs can create bridge_runs |
 | Phase 5 Before review user linkage | D-013, D-014 | Completed | `/api/v1/before/review/jobs` uses optional auth: missing auth stores `user_id = null`, valid Firebase auth stores internal `users.id`, invalid auth returns 401 |
 | Phase 6 Bridge -> After answer-only handoff | D-012 | Completed | Phase 6A~6F implemented. raw seed persistent 저장 금지, displayed safe subset query, sticky `bridge_handoff`, live subset PASS with retry |

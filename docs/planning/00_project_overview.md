@@ -233,7 +233,7 @@ Cloud migration Phase 7A public domain launch, 그리고 2026-05-13 docs refresh
   - missing/unowned bridge_run -> 404 masking
   - `AnswerResponse`-compatible response
   - `after_artifact_runs.user_id` / `after_artifact_runs.source_bridge_run_id` linkage
-- Firebase Auth MVP persistence는 `inMemoryPersistence`다. token/auth state를 `localStorage`나 `sessionStorage`에 저장하지 않으며, `browserSessionPersistence`는 Future/Post-MVP UX tradeoff 후보로만 둔다.
+- Firebase Auth MVP persistence는 `browserSessionPersistence`다. Firebase SDK의 browser-session auth state 복원만 허용하며 raw flow payload나 Firebase ID token을 app-managed Web Storage에 직접 저장하지 않는다. 장기 local persistence는 Future/Post-MVP UX tradeoff 후보로만 둔다.
 - presentation-local preset 완료:
   - `SCN-001-BRIDGE-DEMO`: exact fixed path만 frontend-local
     `workplace_change_reason_summary` frozen draft flow를 제공하며,
@@ -263,7 +263,7 @@ Evolution note:
 - 2026-05-11 기준으로 Cloud migration Phase 7A `www.law-main-road.cloud`
   public domain launch가 완료됐다.
 - 2026-05-13 기준으로 Phase 7B GCS artifact storage/observability 후보,
-  공개 문서 기준선, 사업계획서 문서를 갱신했다.
+  공개 문서 기준선, 사업계획서 문서를 갱신했고, `/history` 직접 진입 UX를 위해 Firebase Auth persistence를 `browserSessionPersistence`로 전환했다.
 
 ---
 
@@ -278,7 +278,7 @@ Evolution note:
 - public `/api/v1/documents/draft` contract unchanged
 - SCN-004 login-free After draft flow 유지
 - SCN-001 protected Bridge answer/history/frozen draft boundary 유지
-- Firebase Auth frontend persistence는 `inMemoryPersistence` 유지
+- Firebase Auth frontend persistence는 `browserSessionPersistence` 유지
 
 ### Step 1. GitHub-facing 문서 정리
 

@@ -2,9 +2,11 @@
 
 import { getApp, getApps, initializeApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 import {
+  browserPopupRedirectResolver,
+  browserSessionPersistence,
   getAuth,
   GoogleAuthProvider,
-  inMemoryPersistence,
+  initializeAuth,
   setPersistence,
   type Auth,
 } from 'firebase/auth';
@@ -52,7 +54,7 @@ const firebaseClientStatus: FirebaseClientStatus = {
 
 let firebaseApp: FirebaseApp | null = null;
 let firebaseAuth: Auth | null = null;
-let memoryPersistenceReady: Promise<void> | null = null;
+let sessionPersistenceReady: Promise<void> | null = null;
 
 export function getFirebaseClientStatus(): FirebaseClientStatus {
   return firebaseClientStatus;
@@ -67,7 +69,21 @@ export function getFirebaseAuth(): Auth | null {
     return firebaseAuth;
   }
 
-  firebaseAuth = getAuth(getFirebaseApp());
+  const app = getFirebaseApp();
+
+  try {
+    firebaseAuth = initializeAuth(app, {
+      persistence: browserSessionPersistence,
+      popupRedirectResolver: browserPopupRedirectResolver,
+    });
+  } catch (error) {
+    if (!isAuthAlreadyInitializedError(error)) {
+      throw error;
+    }
+
+    firebaseAuth = getAuth(app);
+  }
+
   return firebaseAuth;
 }
 
@@ -77,13 +93,13 @@ export function createGoogleAuthProvider(): GoogleAuthProvider {
   return provider;
 }
 
-export function ensureFirebaseMemoryPersistence(auth: Auth): Promise<void> {
-  if (!memoryPersistenceReady) {
-    // Phase 3 keeps Firebase auth state in memory; docs alignment is separate.
-    memoryPersistenceReady = setPersistence(auth, inMemoryPersistence);
+export function ensureFirebaseSessionPersistence(auth: Auth): Promise<void> {
+  if (!sessionPersistenceReady) {
+    // Keep Firebase auth across reloads in the browser session; raw flow payloads stay out of Web Storage.
+    sessionPersistenceReady = setPersistence(auth, browserSessionPersistence);
   }
 
-  return memoryPersistenceReady;
+  return sessionPersistenceReady;
 }
 
 function getFirebaseApp(): FirebaseApp {
@@ -105,4 +121,12 @@ function missingRequiredEnv(
   value: string | undefined,
 ): FirebaseRequiredEnvKey[] {
   return value ? [] : [key];
+}
+
+function isAuthAlreadyInitializedError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return false;
+  }
+
+  return (error as { code?: unknown }).code === 'auth/already-initialized';
 }

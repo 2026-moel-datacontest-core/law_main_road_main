@@ -142,7 +142,7 @@ boundaries:
 - Main page H1/lead/nav typography is cleaned up and the compact flow strip is
   present.
 - The polish did not change backend/API/schema, SCN-004 exact/free input flow,
-  Firebase `inMemoryPersistence`, Web Storage policy, `/api/v1/history` unified
+  Firebase auth persistence at that checkpoint, Web Storage policy, `/api/v1/history` unified
   backend API status, live/backend SCN-001 draft generation, protected SCN-001
   draft endpoint, or Step 3 full retention lifecycle.
 

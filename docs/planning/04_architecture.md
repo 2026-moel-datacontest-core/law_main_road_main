@@ -65,10 +65,11 @@ Implemented routes:
 State and privacy model:
 
 - React Context + reducer memory state only for After/Bridge/draft flow state.
-- Firebase Auth uses `inMemoryPersistence`.
+- Firebase Auth uses `browserSessionPersistence` so login survives reload/direct
+  protected route entry within the same browser session.
 - Protected SCN-001 gates use backend-verified `backendUser.logged_in`.
-- Raw flow payloads, auth state, tokens, raw Bridge payloads, and raw
-  `after_query_seed` are not stored in Web Storage.
+- Raw flow payloads, Firebase ID tokens, raw Bridge payloads, and raw
+  `after_query_seed` are not directly stored in app-managed Web Storage.
 
 Visual/UI state as of visual checkpoint `85d10fa` and current code/runtime
 checkpoint `b013429`:
