@@ -9,13 +9,13 @@ Public demo URL:
 https://www.law-main-road.cloud
 ```
 
-Demo preview:
+Demo video:
 
 ```text
-https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_preview.gif
+https://youtu.be/fFEPP3KtHMs
 ```
 
-MP4 file:
+MP4 backup file:
 
 ```text
 https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_web.mp4

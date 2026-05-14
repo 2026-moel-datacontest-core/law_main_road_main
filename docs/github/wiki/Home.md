@@ -9,11 +9,11 @@
 개인정보 경계가 어디에 있는지를 공개 가능한 수준으로 설명합니다.
 
 - 공개 데모: https://www.law-main-road.cloud
-- 데모 미리보기: [2분 전체 흐름 GIF 보기](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_preview.gif)
-- MP4 파일: [브라우저에서 열기 또는 다운로드](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_web.mp4)
+- 데모 시연 영상: [YouTube에서 보기](https://youtu.be/fFEPP3KtHMs)
+- MP4 백업 파일: [브라우저에서 열기 또는 다운로드](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_web.mp4)
 
-<a href="https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_preview.gif">
-  <img src="https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_preview.gif" alt="법대로 데모 영상 미리보기" width="860">
+<a href="https://youtu.be/fFEPP3KtHMs">
+  <img src="https://img.youtube.com/vi/fFEPP3KtHMs/maxresdefault.jpg" alt="법대로 데모 시연 영상" width="860">
 </a>
 
 <a href="images/screens/home-hero.png">
@@ -26,7 +26,7 @@
 
 이 Wiki는 다음 순서로 읽는 것을 권장합니다.
 
-1. [데모 미리보기](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_preview.gif) - 전체 흐름을 빠르게 확인
+1. [데모 시연 영상](https://youtu.be/fFEPP3KtHMs) - 전체 흐름을 빠르게 확인
 2. [[프로젝트 수행 및 완성|Project-Execution-and-Completion]] - 프로젝트 요약과 현재 완료 범위
 3. [[사용자 흐름|User-Flows]] - 계약서 검토, AI 법률 상담, 사건 기록 흐름
 4. [[UI 화면 구성|UI-Screens]] - 실제 화면별 역할과 스크린샷
@@ -51,8 +51,8 @@
 | 화면 시각 정리 | 2026-04-29 기준 정리 완료 |
 | 클라우드 전환 | 개발 환경 기본 확인 후 공개 `www` 도메인 연결 완료 |
 | Public demo URL | `https://www.law-main-road.cloud` |
-| Demo preview | public mirror `docs/video/lmr_demo_preview.gif` |
-| MP4 file | public mirror `docs/video/lmr_demo_web.mp4` |
+| Demo video | YouTube `https://youtu.be/fFEPP3KtHMs` |
+| MP4 backup | public mirror `docs/video/lmr_demo_web.mp4` |
 | 장기 운영 서비스 선언 | 현재 제공하지 않음 |
 
 ---
