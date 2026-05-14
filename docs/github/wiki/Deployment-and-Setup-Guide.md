@@ -9,10 +9,16 @@ Public demo URL:
 https://www.law-main-road.cloud
 ```
 
-Demo video:
+Demo preview:
 
 ```text
-https://github.com/Team-msp-architect-2026/msp-team02/blob/main/docs/video/lmr_demo_web.mp4
+https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_preview.gif
+```
+
+MP4 file:
+
+```text
+https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_web.mp4
 ```
 
 이 URL은 공모전 데모 운영 상태이며 장기 운영 서비스 전환을 의미하지 않습니다.

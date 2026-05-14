@@ -3,7 +3,7 @@
 ### 먼저 읽기
 
 - [[홈|Home]]
-- [데모 영상](https://github.com/Team-msp-architect-2026/msp-team02/blob/main/docs/video/lmr_demo_web.mp4)
+- [데모 미리보기](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_preview.gif)
 - [[프로젝트 수행 및 완성|Project-Execution-and-Completion]]
 - [[최종 아키텍처|Final-Architecture]]
 - [[사용자 흐름|User-Flows]]

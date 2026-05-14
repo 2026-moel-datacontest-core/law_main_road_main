@@ -28,7 +28,7 @@
 - DB table: `bridge_runs`, `before_review_jobs`, `after_artifact_runs`, `users`
 - API parameter: `top_k`, `ef_search`
 - Auth term: Firebase Auth, Bearer Firebase ID token, Workload Identity Federation
-- Image/file path: `images/screens/*.png`, `docs/video/lmr_demo_web.mp4`
+- Image/file path: `images/screens/*.png`, `docs/video/lmr_demo_preview.gif`, `docs/video/lmr_demo_web.mp4`
 
 ## 2. 현재 잔여 hit
 
@@ -77,13 +77,16 @@ Data-Model-and-Privacy.md: bridge_runs table 1건
 
 ## 4. 데모 영상 확인 항목
 
-공개 문서의 영상 링크는 다음 파일을 가리킵니다.
+공개 문서의 첫 확인 링크는 GitHub에서 바로 보이는 GIF 미리보기를 가리킵니다.
+MP4 파일은 브라우저 환경에 따라 바로 열리거나 다운로드될 수 있습니다.
 
 ```text
+docs/video/lmr_demo_preview.gif
 docs/video/lmr_demo_web.mp4
 ```
 
-이 파일은 README와 Wiki에서 열기 위한 web-optimized copy입니다. 로컬 원본
+`docs/video/lmr_demo_preview.gif`는 README와 Wiki에서 바로 보이는 미리보기입니다.
+`docs/video/lmr_demo_web.mp4`는 web-optimized MP4 파일입니다. 로컬 원본
 `docs/video/lmr_demo.mp4`는 GitHub 일반 파일 제한을 넘을 수 있으므로 public mirror
 commit 대상에서 제외합니다.
 

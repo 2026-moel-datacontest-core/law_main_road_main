@@ -39,9 +39,11 @@ AI 법률 상담
 
 ## 데모 영상
 
-공개 README와 Wiki에서는 다음 web-optimized 영상을 대표 확인 자료로 연결합니다.
+공개 README와 Wiki에서는 GitHub에서 바로 보이는 GIF 미리보기를 대표 확인 자료로
+연결합니다. MP4 파일은 브라우저 환경에 따라 바로 열리거나 다운로드될 수 있습니다.
 
-- [2분 전체 흐름 보기](https://github.com/Team-msp-architect-2026/msp-team02/blob/main/docs/video/lmr_demo_web.mp4)
+- [2분 전체 흐름 GIF 보기](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_preview.gif)
+- [MP4 파일 열기 또는 다운로드](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_web.mp4)
 
 영상은 AI 법률 상담, 답변 결과, 문서 정보 입력, 초안 확인 흐름을 빠르게 보여 주는
 보조 자료입니다. 실제 사용자/사건 원문, 인증 정보, 서버 직접 실행 URL, 내부

@@ -53,7 +53,7 @@ PASS / PARTIAL / FAIL 근거가 필요할 때는 item-level evidence tooling을
 Wiki만 바뀐 경우의 예상 검증은 문서 중심입니다.
 
 - 파일 목록과 링크 존재 확인
-- README/Wiki의 데모 영상 링크가 public mirror의 web-optimized file을 가리키는지 확인
+- README/Wiki의 데모 미리보기 GIF와 MP4 링크가 public mirror 파일을 가리키는지 확인
 - 공개 문서 부적합 표현 검색
 - GitHub Wiki link syntax scan
 - `git diff` review scoped to `docs/github`
