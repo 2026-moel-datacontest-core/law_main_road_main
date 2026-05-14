@@ -3,6 +3,7 @@
 ### 먼저 읽기
 
 - [[홈|Home]]
+- [데모 영상](https://github.com/Team-msp-architect-2026/msp-team02/blob/main/docs/video/lmr_demo_web.mp4)
 - [[프로젝트 수행 및 완성|Project-Execution-and-Completion]]
 - [[최종 아키텍처|Final-Architecture]]
 - [[사용자 흐름|User-Flows]]
@@ -26,7 +27,7 @@
 
 - [[사용자 흐름|User-Flows]]
 - [[UI 화면 구성|UI-Screens]]
-- [[API 엔드포인트와 스키마|API-Endpoints-and-Schemas]]
+- [[API 문서|API-Endpoints-and-Schemas]]
 
 ### 배포와 운영
 
@@ -43,3 +44,7 @@
 
 - [[ADR 설계 결정|ADR-Design-Decisions]]
 - [[용어집|Glossary]]
+
+### 부록
+
+- [[문서 표현 정비 검증|Verification-Wording-Replacement]]

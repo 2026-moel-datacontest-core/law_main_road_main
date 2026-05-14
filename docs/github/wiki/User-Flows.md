@@ -1,122 +1,115 @@
 # 사용자 흐름
 
-## SCN-004 After Document Draft
+## AI 법률 상담과 문서 초안
 
-SCN-004는 현재 법대로(LawMainRoad)의 main login-free demo path입니다.
+사용자가 로그인 없이 바로 확인할 수 있는 대표 흐름입니다.
 
 ```text
-/after
-  -> /after/result
-  -> /after/intake
-  -> /after/draft
+질문 입력
+  -> 법령 근거가 함께 제시되는 답변
+  -> 지원되는 문서 유형 선택
+  -> 필요한 사실관계 입력
+  -> 문서 초안 확인, 복사, 인쇄
 ```
 
 동작:
 
-- 사용자는 직접 질문을 입력하거나 `SCN-004-DEMO-FREEZE` preset을 선택합니다.
-- exact preset은 frontend fixed answer fixture를 사용합니다.
-- modified preset은 `/api/v1/answer`를 `top_k=10`, `ef_search=100`으로 호출합니다.
-- free input은 `/api/v1/answer`를 `top_k=5`, `ef_search=100`으로 호출합니다.
-- draft flow는 citations와 grounded context ids가 있을 때만 열립니다.
+- 사용자는 직접 질문을 입력하거나 예시 사례에서 `임금체불·부당해고 상담`을 선택합니다.
+- 선택한 예시를 그대로 제출하면 심사용으로 안정화된 답변을 보여줍니다.
+- 예시를 수정하거나 직접 입력하면 현재 구현된 법령 검색과 답변 생성을 사용합니다.
+- 문서 초안 작성은 답변에 법령 근거와 지원되는 문서 유형이 확인될 때만 열립니다.
 
-지원 draft types:
+지원 문서 유형:
 
 - 고용노동청 임금체불 진정서 초안
 - 노동위원회 부당해고 구제신청 이유서 초안
 
-Draft screen에 표시되는 항목:
+초안 화면에 표시되는 항목:
 
-- rendered text
-- missing fields
-- cautions
-- evidence checklist
-- cited articles
-- source context ids
-- copy
-- browser print
+- 초안 본문
+- 추가로 필요한 정보
+- 주의사항
+- 증거 체크리스트
+- 인용 조문
+- 근거 식별자
+- 복사
+- 브라우저 인쇄
 
-## SCN-001 Before -> Bridge -> After
+## 계약서 검토 -> 상담 연결
 
-이 흐름은 backend-verified login이 필요합니다.
+이 흐름은 서버 인증이 확인된 로그인이 필요합니다.
 
 ```text
-/before
-  -> Before review job
-  -> protected Bridge run
-  -> /after Bridge handoff
-  -> protected Bridge answer
-  -> /after/result answer-only
+계약서 검토
+  -> 검토 결과 저장
+  -> AI 법률 상담에 연결
+  -> 이어지는 상담 답변
+  -> 답변 결과 확인
 ```
 
 동작:
 
-- `/before` 화면의 actual analysis UX는 backend-verified auth를 요구합니다.
-  Mounted Before API endpoints에는 public과 optional-auth paths가 그대로 포함됩니다.
-  이 Wiki는 frontend UX gating과 raw API auth labels를 구분합니다.
-- completed Before job은 protected Bridge run을 생성할 수 있습니다.
-- Bridge handoff state는 React memory state에만 있습니다.
-- checked Bridge context는 protected Bridge answer endpoint를 호출합니다.
-- all-unchecked Bridge context는 public `/api/v1/answer`를 호출하지만,
-  결과는 Bridge-origin answer-only로 유지됩니다.
-- Bridge는 사건 맥락 연결/참고용이며, 법적 근거(legal grounding)가 아닙니다.
+- 계약서 검토 화면에서 실제 분석을 시작하려면 로그인이 필요합니다.
+- 완료된 계약서 검토 결과는 AI 법률 상담 질문에 연결할 수 있습니다.
+- 사용자가 선택한 검토 요약만 상담 질문에 이어집니다.
+- 계약서 검토 결과는 사건 설명을 이어 주는 참고 정보입니다.
+- 답변의 법적 근거는 계약서 검토 결과가 아니라 검색된 법령에서만 가져옵니다.
 
-## Saved History
+## 사건 기록
 
-Backend-verified logged-in users는 다음 기능을 사용할 수 있습니다.
+서버 인증이 확인된 로그인 사용자는 다음 기능을 사용할 수 있습니다.
 
-- `/after` saved history selector
-- `/history` record archive
+- AI 법률 상담 화면에서 저장된 사건을 선택해 상담에 연결
+- 사건 기록 화면에서 과거 계약서 검토와 상담 기록 확인
 
-History UI:
+기록 화면:
 
-- incident-centered card
-- folded detail sections
-- Korean user-facing summaries
-- confirmed issues
-- candidate legal references
-- recommended next steps
-- After question connection
-- MVP soft-delete
+- 사건 중심 카드
+- 접을 수 있는 상세 영역
+- 한국어 사용자 요약
+- 확인된 쟁점
+- 참고할 법 조항 후보
+- 권장 다음 단계
+- AI 법률 상담과의 연결점
+- 기록 삭제(목록에서 숨김)
 
-UI는 raw Bridge payloads, raw `after_query_seed`, auth-provider subject
-identifiers, email values, credential values, full answer body, artifact body,
-internal Bridge record identifiers를 노출하지 않습니다.
+사용자 화면에는 상담 연결 원문 데이터, 인증 제공자의 개인 식별자, 이메일 값,
+인증 정보, 전체 답변 본문, 전체 문서 본문, 내부 기록 식별자를 표시하지 않습니다.
 
-## SCN-001 Fixed-preset Frozen Draft
+## 사업장 변경 사유 정리서 예시 초안
 
-exact `SCN-001-BRIDGE-DEMO` preset은 frontend-local frozen draft를 지원합니다.
+`사업장 변경 사유 정리서 초안` 예시는 화면에서 제공하는 예시 작성 흐름입니다.
 
 ```text
-/after
-  -> /after/result
-  -> /after/intake
-  -> /after/draft
+AI 법률 상담
+  -> 사업장 변경 사유 정리서 선택
+  -> 필요한 사실관계 입력
+  -> 초안 확인
 ```
 
-Document type / 문서 유형:
+문서 유형:
 
-- `workplace_change_reason_summary`
 - 사업장 변경 사유 정리서 초안
 
 경계:
 
-- backend draft endpoint call 없음
-- LLM call 없음
-- `/api/v1/documents/draft` call 없음
-- live/backend SCN-001 draft generation은 미오픈(NOT opened)
+- 서버의 실시간 초안 생성 기능을 호출하지 않습니다.
+- LLM을 호출하지 않습니다.
+- 서버의 문서 초안 API를 호출하지 않습니다.
+- 계약서 검토 기반 서버 초안 생성은 현재 제공하지 않습니다.
 
-## Out-of-scope Flows / 범위 밖 흐름
+## 현재 제공하지 않는 흐름
 
-- independent `/bridge`
-- Recovery
-- SCN-005 document draft
-- production retention lifecycle
-- hard delete and artifact file purge
-- `/api/v1/history` unified backend API
-- live/backend SCN-001 draft generation과 protected SCN-001 draft endpoint
+- 독립 상담 연결 전용 화면
+- 후속 지원 흐름
+- 추가 문서/상담 시나리오 초안
+- 장기 운영용 보관 기간 정책
+- 완전 삭제와 파일 물리 삭제
+- 통합 사건 기록 API
+- 계약서 검토 기반 서버 초안 생성과 전용 로그인 API
 
 ## 함께 보기
 
 - [[UI 화면 구성|UI-Screens]]
-- [[API 엔드포인트와 스키마|API-Endpoints-and-Schemas]]
+- [[API 문서|API-Endpoints-and-Schemas]]
 - [[E2E 데모 검증|E2E-Demo-Verification]]

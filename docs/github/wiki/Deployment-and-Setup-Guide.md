@@ -1,7 +1,21 @@
 # 배포와 실행 가이드
 
-이 문서는 공개 가능한 실행 가이드입니다. 비밀값, 실제 cloud resource id,
-infrastructure state file, cloud IAM key file은 포함하지 않습니다.
+이 문서는 공개 가능한 실행 가이드입니다. 비밀값, 실제 클라우드 리소스 식별자,
+인프라 상태 파일, 클라우드 키 파일은 포함하지 않습니다.
+
+Public demo URL:
+
+```text
+https://www.law-main-road.cloud
+```
+
+Demo video:
+
+```text
+https://github.com/Team-msp-architect-2026/msp-team02/blob/main/docs/video/lmr_demo_web.mp4
+```
+
+이 URL은 공모전 데모 운영 상태이며 장기 운영 서비스 전환을 의미하지 않습니다.
 
 ## Local Requirements / 로컬 요구사항
 
@@ -53,13 +67,13 @@ local-only env files를 사용합니다. credentials는 commit하지 않습니�
 - `backend/.env.example`
 - `frontend/.env.example`
 
-## Cloud Posture / 클라우드 운영 자세
+## 클라우드 운영 상태
 
-Cloud migration은 dev-first입니다.
+클라우드 전환은 개발 환경 우선입니다.
 
 - first Terraform apply target: `dev`
-- `demo/contest`는 time-bounded presentation posture입니다.
-- `prod`는 separate production-opening review 없이는 미오픈(NOT opened)입니다.
+- `demo/contest`는 기간이 정해진 발표/심사 운영 상태입니다.
+- `prod`는 별도 장기 운영 전환 검토 없이는 제공하지 않습니다.
 
 See [[클라우드 전환과 공개 미러 정책|Cloud-Migration-and-Public-Mirror-Policy]].
 
@@ -78,13 +92,13 @@ npm run build
 bash scripts/demo_preflight.sh
 ```
 
-broad retrieval/answer eval은 retrieval, answer generation, embedding behavior,
-DB contents, API response contracts가 바뀐 경우에만 실행합니다.
+전체 검색/답변 평가는 검색, 답변 생성, 임베딩, 데이터베이스 내용, API 응답 계약이
+바뀐 경우에만 실행합니다.
 
 ## Public Setup Boundary / 공개 setup 경계
 
-이 가이드는 로컬 실행과 공개 가능한 smoke command만 설명합니다. 실제 cloud
-inventory, credential provisioning, private rollback 절차, 비용 계정 세부값은
+이 가이드는 로컬 실행과 공개 가능한 기본 확인 명령만 설명합니다. 실제 클라우드
+목록, 인증 정보 준비 절차, 비공개 rollback 절차, 비용 계정 세부값은
 공개 Wiki에 싣지 않습니다.
 
 ## 함께 보기

@@ -96,3 +96,6 @@ frontend/.codex
 frontend/.omx/
 aws-mfa-main-guide1/
 example_images/
+
+# Local full-resolution demo source video. Commit the web-optimized copy instead.
+docs/video/lmr_demo.mp4

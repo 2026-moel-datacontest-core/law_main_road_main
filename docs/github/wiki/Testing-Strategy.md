@@ -2,7 +2,7 @@
 
 ## 목표 (Goals)
 
-Testing은 demo stability, public contract safety, privacy boundary preservation에
+Testing은 데모 안정성, 공개 API 계약 안정성, 개인정보 경계 보존에
 초점을 둡니다.
 
 ## 집중 확인 명령 (Focused Checks)
@@ -20,12 +20,12 @@ npm run build
 bash scripts/demo_preflight.sh
 ```
 
-retrieval, answer-generation, embedding, DB, API contract behavior가 바뀌지 않은
-current QA/doc tasks에는 이 command를 사용합니다.
+검색, 답변 생성, 임베딩, 데이터베이스, API 계약 동작이 바뀌지 않은
+QA/문서 작업에는 이 command를 사용합니다.
 
 ## 전체 Retrieval / Answer 평가
 
-broad answer evidence eval은 다음 중 하나가 바뀐 경우에만 실행합니다.
+전체 답변 근거 평가는 다음 중 하나가 바뀐 경우에만 실행합니다.
 
 - retrieval behavior
 - answer generation behavior
@@ -33,36 +33,37 @@ broad answer evidence eval은 다음 중 하나가 바뀐 경우에만 실행합
 - DB contents
 - public API response contract
 
-PASS / PARTIAL / FAIL evidence가 필요할 때는 item-level evidence tooling을
-사용합니다. full 60-answer evidence report를 `scripts/demo_preflight.sh`에
+PASS / PARTIAL / FAIL 근거가 필요할 때는 item-level evidence tooling을
+사용합니다. 전체 60개 답변 근거 보고서를 `scripts/demo_preflight.sh`에
 추가하지 않습니다.
 
 ## 수동 브라우저 확인
 
-권장 manual checks:
+권장 수동 확인:
 
-- SCN-004 exact preset answer -> intake -> draft
-- SCN-004 copy and browser print
-- SCN-001 login, Before review, Bridge handoff, protected answer
-- `/history` visible records and MVP soft-delete
-- `/after` saved history selector
-- logout memory reset
+- `임금체불·부당해고 상담` 예시 답변 -> 문서 정보 입력 -> 초안
+- 문서 초안 복사와 브라우저 인쇄
+- 로그인, 계약서 검토, 상담 연결, 이어지는 답변
+- 사건 기록 표시와 기록 삭제
+- AI 법률 상담 화면의 저장 사건 선택
+- 로그아웃 후 화면 상태 초기화
 
 ## 문서만 변경한 경우
 
-Wiki-only update의 expected verification은 documentation-focused입니다.
+Wiki만 바뀐 경우의 예상 검증은 문서 중심입니다.
 
-- file list and link existence check
-- public forbidden wording scan
+- 파일 목록과 링크 존재 확인
+- README/Wiki의 데모 영상 링크가 public mirror의 web-optimized file을 가리키는지 확인
+- 공개 문서 부적합 표현 검색
 - GitHub Wiki link syntax scan
 - `git diff` review scoped to `docs/github`
 - backend, frontend, schema, API, Terraform, infra edits 없음
 
 ## 알려진 런타임 리스크
 
-- provider timeout은 transient일 수 있습니다.
-- OCR/live provider paths에는 retry가 필요할 수 있습니다.
-- cloud migration은 dev-first validation 상태로 유지합니다.
+- provider timeout은 일시적일 수 있습니다.
+- OCR과 실시간 provider 호출에는 재시도가 필요할 수 있습니다.
+- 클라우드 전환은 개발 환경 우선 검증 상태로 유지합니다.
 
 ## 함께 보기
 
