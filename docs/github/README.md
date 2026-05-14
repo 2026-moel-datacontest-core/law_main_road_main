@@ -11,8 +11,10 @@
 
 [![법대로 데모 시연 영상](https://img.youtube.com/vi/fFEPP3KtHMs/maxresdefault.jpg)](https://youtu.be/fFEPP3KtHMs)
 
-이 MVP는 법률 정보를 정리하고 관련 근거를 확인하는 데 도움을 주는 도구입니다.
-변호사 자문, 행정기관 판단, 법원의 판단을 대체하지 않습니다.
+이 MVP는 **법률 자문을 제공하는 서비스가 아니라**, 한국 노동법 조문을 함께
+보여 주며 사용자의 상황을 정리하는 데 도움을 주는 도구입니다. 변호사 자문,
+행정기관·법원의 판단을 대체하지 않으며, 실제 신고·소송·체류 관련 결정에는
+관련 기관 또는 전문가 확인이 필요합니다.
 
 이 공개 저장소는 공모전 제출과 공개 검토를 위한 정리본입니다. 실제 개발과 배포
 자동화 기준은 접근 권한이 필요한
@@ -24,12 +26,12 @@
 
 5분 안에 확인할 수 있는 흐름입니다.
 
-1. 위 YouTube 썸네일을 클릭해 전체 시연 영상을 먼저 확인합니다.
+1. 위 YouTube 썸네일(약 2분)을 먼저 확인하거나, 시간이 부족하면 2번부터 바로 시작합니다.
 2. https://www.law-main-road.cloud 를 엽니다.
 3. 메인 화면에서 AI 법률 상담을 선택합니다.
 4. 예시 사례에서 `임금체불·부당해고 상담`을 선택하고 제출합니다.
 5. 답변 화면에서 법령 근거, 인용 조문, 주의사항을 확인합니다.
-6. 지원되는 문서 유형을 선택하고 필요한 사실관계를 입력합니다.
+6. 지원되는 문서 유형(예: 사업장 변경 사유 정리서 초안)을 선택하고 필요한 사실관계를 입력합니다.
 7. 초안 화면에서 문서 본문, 추가로 필요한 정보, 증거 체크리스트, 복사와 인쇄 동작을 확인합니다.
 
 추가 확인 흐름:
@@ -43,23 +45,25 @@
 프로젝트 목적, 구현 범위, 공개 데모 상태, 보안·개인정보 경계를 빠르게 확인할 수
 있도록 정리한 첫 페이지입니다.
 
-주요 Wiki 링크:
+**먼저 보기 좋은 문서**
 
-- [GitHub Wiki](https://github.com/Team-msp-architect-2026/msp-team02/wiki)
-- [사용자 흐름](https://github.com/Team-msp-architect-2026/msp-team02/wiki/User-Flows)
-- [UI 화면 구성](https://github.com/Team-msp-architect-2026/msp-team02/wiki/UI-Screens)
+- [E2E 데모 검증](https://github.com/Team-msp-architect-2026/msp-team02/wiki/E2E-Demo-Verification) — 공개 데모가 실제로 동작했음을 보여 주는 기록
+- [UI 화면 구성](https://github.com/Team-msp-architect-2026/msp-team02/wiki/UI-Screens) — 주요 화면을 한눈에
+- [사용자 흐름](https://github.com/Team-msp-architect-2026/msp-team02/wiki/User-Flows) — 빠른 심사 흐름의 배경 설명
+
+**기술 상세**
+
 - [최종 아키텍처](https://github.com/Team-msp-architect-2026/msp-team02/wiki/Final-Architecture)
 - [API 문서](https://github.com/Team-msp-architect-2026/msp-team02/wiki/API-Endpoints-and-Schemas)
-- [E2E 데모 검증](https://github.com/Team-msp-architect-2026/msp-team02/wiki/E2E-Demo-Verification)
 - [클라우드 전환과 공개 미러 정책](https://github.com/Team-msp-architect-2026/msp-team02/wiki/Cloud-Migration-and-Public-Mirror-Policy)
+- [GitHub Wiki 전체 색인](https://github.com/Team-msp-architect-2026/msp-team02/wiki)
 
 내부 계획서와 운영 기록을 그대로 공개하지 않고, 현재 구현 상태와 공개 가능한
 범위만 다시 정리했습니다.
 
 ## 현재 제공 기능
 
-- 문서 최종 정리일: `2026-05-14`
-- 구현 기준일: `2026-05-13`
+> 문서 최종 정리일 `2026-05-14` · 구현 기준일 `2026-05-13`
 
 - 로그인 없이 사용할 수 있는 AI 법률 상담
 - 법령 근거가 함께 제시되는 답변
@@ -87,9 +91,9 @@
 
 ## 아키텍처 요약
 
-[![법대로 클라우드 아키텍처 개요](docs/images/cloud-migration-overview.png)](docs/images/cloud-migration-overview.png)
+![법대로 클라우드 아키텍처 개요 — 사용자 → Next.js → FastAPI → PostgreSQL/pgvector → Vertex AI Gemini 흐름](docs/images/cloud-migration-overview.png)
 
-전체 클라우드 자원과 경계는 [최종 아키텍처](https://github.com/Team-msp-architect-2026/msp-team02/wiki/Final-Architecture) 문서를 참고하세요.
+> 전체 구성도. 상세 경계는 [최종 아키텍처](https://github.com/Team-msp-architect-2026/msp-team02/wiki/Final-Architecture) 문서를 참고하세요.
 
 ```text
 사용자
@@ -150,8 +154,8 @@ API의 상세 경로와 요청/응답 구조는
 - 공개 데모 도메인 연결 완료: `https://www.law-main-road.cloud`
 - 공개 검토용 YouTube 시연 영상 연결: `https://youtu.be/fFEPP3KtHMs`
 - 공개 검토용 web-optimized MP4 백업 파일 배치: `docs/video/lmr_demo_web.mp4`
-- Google 로그인 허용 도메인과 서버 CORS 설정은 `www` 도메인 기준으로 확인
-- 사용자가 접속하는 프론트엔드 URL만 공개하고, 서버 직접 실행 URL과 내부 클라우드 목록은 공개하지 않음
+- 공개 데모는 `www.law-main-road.cloud` 한 도메인에서만 동작합니다.
+- 사용자가 접속하는 프론트엔드 URL만 공개하고, 서버 직접 실행 URL과 내부 클라우드 목록은 공개하지 않습니다.
 
 현재 제공하지 않는 클라우드 운영 항목:
 
@@ -169,8 +173,8 @@ API의 상세 경로와 요청/응답 구조는
 
 - 계약서 검토 결과를 바탕으로 서버에서 새 문서 초안을 생성하는 기능
 - 계약서 검토 기반 초안을 위한 별도 로그인 API
-- 독립된 상담 연결 전용 화면
-- Recovery 흐름
+- 계약서 검토 결과를 별도 페이지에서 상담으로 옮기는 전용 연결 화면 (현재는 동일 흐름 안에서 연결)
+- 사건 발생 이후 복구 단계(임금 지급 후속 조치, 분쟁 사후 관리 등) 흐름
 - 추가 문서 유형과 추가 상담 시나리오
 - 완전 삭제, 파일 물리 삭제, 계정 삭제, 복구, 보관 기간 정책
 - 장기 운영 배포 선언
@@ -229,6 +233,12 @@ Environment templates:
 - `frontend/.env.example`
 
 ## 검증
+
+아래 명령은 source/deploy 저장소 접근 권한이 있는 환경에서의 참고용입니다. 이
+공개 저장소만 clone한 경우에는 다음 명령이 그대로 동작하지 않을 수 있으며,
+동일 검증이 통과한 결과는
+[E2E 데모 검증](https://github.com/Team-msp-architect-2026/msp-team02/wiki/E2E-Demo-Verification)
+문서에서 확인할 수 있습니다.
 
 Focused checks:
 
