@@ -16,9 +16,6 @@
   <img src="https://img.youtube.com/vi/fFEPP3KtHMs/maxresdefault.jpg" alt="법대로 데모 시연 영상" width="860">
 </a>
 
-<a href="images/screens/home-hero.png">
-  <img src="images/screens/home-hero.png" alt="법대로 AI 메인 화면" width="860">
-</a>
 
 ---
 
