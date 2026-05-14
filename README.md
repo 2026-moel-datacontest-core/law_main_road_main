@@ -23,7 +23,6 @@
 - **시연 영상:** [YouTube](https://youtu.be/fFEPP3KtHMs) · [MP4 백업](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_web.mp4)
 - **문서 최종 정리일:** `2026-05-14` / **구현 기준일:** `2026-05-13`
 
-> 이 공개 저장소는 공모전 제출과 공개 검토를 위한 정리본입니다. 실제 개발·배포 자동화 기준은 접근 권한이 필요한 [`law_main_road_main`](https://github.com/2026-moel-datacontest-core/law_main_road_main) 내부 저장소에서 관리하며, 이 저장소에는 배포 권한·비밀값·내부 클라우드 운영 정보를 두지 않습니다.
 
 ---
 
