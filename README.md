@@ -23,7 +23,6 @@
 - **시연 영상:** [YouTube](https://youtu.be/fFEPP3KtHMs) · [MP4 백업](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_web.mp4)
 - **문서 최종 정리일:** `2026-05-14` / **구현 기준일:** `2026-05-13`
 
-
 ---
 
 ## 빠른 심사 흐름 (5분)
@@ -51,6 +50,16 @@
 - **Minimal PII surface** — 사건 원문·답변·초안·상담 연결 원문은 브라우저 저장소에 남기지 않고, 인증 제공자 식별자는 비즈니스 응답에 노출하지 않습니다.
 - **Demo-stable preset path** — 발표 안정성을 위해 fixed-answer preset과 live RAG path를 함께 운영합니다.
 - **Public mirror boundary** — 공개 저장소는 검토용 정리본. 운영 권한·비밀값·내부 클라우드 식별자는 내부 저장소에서만 관리합니다.
+
+---
+
+## 평가 상태
+
+In-scope RAG evaluation passed hard grounding/citation checks. The refusal /
+out-of-scope eval runner exists, but the first live run identified a known gap:
+the current answer path is citation-first and lacks explicit refusal mode. This
+refusal result is documented as measurement stabilization evidence, not as a
+passing public headline score.
 
 ---
 
@@ -113,7 +122,7 @@ API 상세 경로와 요청/응답 구조는 [API Endpoints & Schemas](https://g
 | 카테고리 | 문서 |
 |---|---|
 | **Start Here** | [User Flows](https://github.com/Team-msp-architect-2026/msp-team02/wiki/User-Flows) · [UI Screens](https://github.com/Team-msp-architect-2026/msp-team02/wiki/UI-Screens) · [E2E Demo Verification](https://github.com/Team-msp-architect-2026/msp-team02/wiki/E2E-Demo-Verification) |
-| **Architecture** | [Final Architecture](https://github.com/Team-msp-architect-2026/msp-team02/wiki/Final-Architecture) · [API Endpoints & Schemas](https://github.com/Team-msp-architect-2026/msp-team02/wiki/API-Endpoints-and-Schemas) |
+| **Architecture** | [Final Architecture](https://github.com/Team-msp-architect-2026/msp-team02/wiki/Final-Architecture) · [API Endpoints & Schemas](https://github.com/Team-msp-architect-2026/msp-team02/wiki/API-Endpoints-and-Schemas) · [RAG Evaluation](https://github.com/Team-msp-architect-2026/msp-team02/wiki/RAG-Evaluation) |
 | **Operations** | [Cloud Migration & Public Mirror Policy](https://github.com/Team-msp-architect-2026/msp-team02/wiki/Cloud-Migration-and-Public-Mirror-Policy) |
 
 내부 계획서·운영 기록을 그대로 공개하지 않고, 현재 구현 상태와 공개 가능한 범위만 다시 정리했습니다.

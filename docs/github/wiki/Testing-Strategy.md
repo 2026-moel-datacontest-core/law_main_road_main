@@ -37,6 +37,16 @@ PASS / PARTIAL / FAIL 근거가 필요할 때는 item-level evidence tooling을
 사용합니다. 전체 60개 답변 근거 보고서를 `scripts/demo_preflight.sh`에
 추가하지 않습니다.
 
+## Refusal / Out-of-scope Evaluation
+
+Refusal/out-of-scope eval runner exists but first live run identified a known
+gap. The result is recorded as measurement stabilization evidence, not as a
+passing headline score. The current answer path is citation-first and lacks
+explicit refusal mode, so out-of-scope prompts can still produce cited articles
+or fail citation validation when the model tries to refuse without citations.
+
+See [[RAG 평가|RAG-Evaluation]] for the recorded result and follow-up TODOs.
+
 ## 수동 브라우저 확인
 
 권장 수동 확인:

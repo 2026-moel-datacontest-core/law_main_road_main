@@ -38,6 +38,7 @@
 ### 품질
 
 - [[테스트 전략|Testing-Strategy]]
+- [[RAG 평가|RAG-Evaluation]]
 - [[E2E 데모 검증|E2E-Demo-Verification]]
 
 ### 결정과 참고

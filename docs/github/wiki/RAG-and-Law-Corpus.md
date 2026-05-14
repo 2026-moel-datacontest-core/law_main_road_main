@@ -89,6 +89,7 @@ PASS / PARTIAL / FAIL 단위로 검토하고, 인용 조문이 검색된 법령 
 
 ## 함께 보기
 
+- [[RAG 평가|RAG-Evaluation]]
 - [[최종 아키텍처|Final-Architecture]]
 - [[API 문서|API-Endpoints-and-Schemas]]
 - [[테스트 전략|Testing-Strategy]]
