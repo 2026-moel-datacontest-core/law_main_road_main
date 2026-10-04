@@ -21,6 +21,7 @@
 
 - **공개 데모:** https://www.law-main-road.cloud
 - **시연 영상:** [YouTube](https://youtu.be/fFEPP3KtHMs) · [MP4 백업](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_web.mp4)
+- **RAG 개선 저장소:** [after_step](https://github.com/2026-moel-datacontest-core/after_step)
 - **문서 최종 정리일:** `2026-05-14` / **구현 기준일:** `2026-05-13`
 
 ---
@@ -55,11 +56,11 @@
 
 ## 평가 상태
 
-In-scope RAG evaluation passed hard grounding/citation checks. The refusal /
-out-of-scope eval runner exists, but the first live run identified a known gap:
-the current answer path is citation-first and lacks explicit refusal mode. This
-refusal result is documented as measurement stabilization evidence, not as a
-passing public headline score.
+범위 내(in-scope) RAG 평가는 grounding과 citation 하드 체크를 통과했습니다. 범위 밖
+질문에 대한 거절(refusal) 평가 러너도 갖추었으나, 첫 실측에서 known gap이
+확인됐습니다 — 현재 답변 경로는 citation-first 구조라 명시적인 거절 모드가
+없습니다. 이 거절 평가 결과는 공개용 대표 점수가 아니라 **측정 체계 안정화의
+증거**로 기록합니다.
 
 ---
 
