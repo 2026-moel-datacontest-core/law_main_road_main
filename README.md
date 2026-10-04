@@ -56,7 +56,7 @@
 
 ## 평가 상태
 
-범위 내(in-scope) RAG 평가는 grounding·citation 하드 체크를 통과했습니다. 범위 밖
+범위 내(in-scope) RAG 평가는 grounding과 citation 하드 체크를 통과했습니다. 범위 밖
 질문에 대한 거절(refusal) 평가 러너도 갖추었으나, 첫 실측에서 known gap이
 확인됐습니다 — 현재 답변 경로는 citation-first 구조라 명시적인 거절 모드가
 없습니다. 이 거절 평가 결과는 공개용 대표 점수가 아니라 **측정 체계 안정화의
