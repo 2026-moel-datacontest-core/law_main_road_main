@@ -19,7 +19,7 @@
 
 법대로(LawMainRoad)는 외국인 근로자와 취약 노동자가 근로계약, 임금체불, 부당해고, 사업장 변경 같은 노동 문제를 한국 노동법 근거와 함께 정리할 수 있도록 돕는 AI 지원 MVP입니다.
 
-- **공개 데모:** https://www.law-main-road.cloud
+- **공개 데모:** 공모전 시연 뒤 클라우드 자원을 정리해 지금은 열리지 않습니다(`www.law-main-road.cloud`). 동작은 아래 시연 영상으로 확인할 수 있습니다.
 - **시연 영상:** [YouTube](https://youtu.be/fFEPP3KtHMs) · [MP4 백업](https://raw.githubusercontent.com/Team-msp-architect-2026/msp-team02/main/docs/video/lmr_demo_web.mp4)
 - **RAG 개선 저장소:** [after_step](https://github.com/2026-moel-datacontest-core/after_step)
 - **문서 최종 정리일:** `2026-05-14` / **구현 기준일:** `2026-05-13`
@@ -29,14 +29,14 @@
 ## 빠른 심사 흐름 (5분)
 
 1. 위 YouTube 썸네일을 클릭해 전체 시연 영상을 먼저 확인합니다.
-2. https://www.law-main-road.cloud 를 엽니다.
+2. 공개 데모는 정리되어 열리지 않으므로, 아래 3~7단계는 시연 영상에서 확인합니다.
 3. 메인 화면에서 **AI 법률 상담**을 선택합니다.
 4. 예시 사례에서 `사업장 변경 사유 정리서 초안`을 선택하고 제출합니다.
 5. 답변 화면에서 **법령 근거, 인용 조문, 주의사항**을 확인합니다.
 6. 지원되는 문서 유형을 선택하고 필요한 사실관계를 입력합니다.
 7. 초안 화면에서 **문서 본문, 추가로 필요한 정보, 증거 체크리스트, 복사·인쇄** 동작을 확인합니다.
 
-추가 확인 흐름:
+추가 확인 흐름(공개 데모가 운영될 때 확인할 수 있던 기능):
 
 - Google 로그인 후 **계약서 검토 결과를 AI 법률 상담에 연결**할 수 있습니다.
 - **사건 기록 화면**에서 저장된 사건 카드와 기록 삭제(목록에서 숨김)를 확인할 수 있습니다.
@@ -138,8 +138,9 @@ API 상세 경로와 요청/응답 구조는 [API Endpoints & Schemas](https://g
 - 임금체불·부당해고 상담 → 지원되는 문서 초안
 - 로그인 사용자용 계약서 검토 / 사건 기록 / 기록 삭제(목록에서 숨김)
 - 계약서 검토 결과를 AI 법률 상담에 연결
-- 공개 데모 도메인 `https://www.law-main-road.cloud` 연결, YouTube 시연 영상 및 MP4 백업
 - `사업장 변경 사유 정리서 초안` 예시 작성 흐름
+
+공모전 기간에는 공개 데모 도메인을 연결했고, 지금은 YouTube 시연 영상과 MP4 백업으로 확인할 수 있습니다.
 
 **현재 미제공:**
 
@@ -148,7 +149,7 @@ API 상세 경로와 요청/응답 구조는 [API Endpoints & Schemas](https://g
 - 추가 문서 유형 및 시나리오, 완전 삭제·파일 물리 삭제·계정 삭제·복구·보관 기간 정책
 - 장기 운영 배포 선언, root apex `law-main-road.cloud`, `api.` 서브도메인, `/api/**` 동일 도메인 라우팅, HTTPS Load Balancer, Cloud Armor
 
-**클라우드 단계:** `dev` → **`demo/contest` (현재)** → `prod` (미선언)
+**클라우드 단계:** `dev` → `demo/contest` (공모전 뒤 자원 정리) → `prod` (미선언)
 
 > `사업장 변경 사유 정리서 초안`은 화면에서 제공하는 **예시 작성 흐름**이며, 서버에서 실시간으로 계약서 검토 기반 초안을 생성한다는 의미가 아닙니다. 상세 정책은 [Cloud Migration & Public Mirror Policy](https://github.com/Team-msp-architect-2026/msp-team02/wiki/Cloud-Migration-and-Public-Mirror-Policy) 참고.
 
