@@ -183,7 +183,7 @@ def head_lineages_for_law(law_name: str) -> dict[str, dict[str, Any]]:
     """
     law_dir = KR_ROOT / law_name
     if not law_dir.exists():
-        print(f"⚠️  디렉토리 없음: {law_dir}")
+        print(f"디렉토리 없음: {law_dir}")
         return {}
 
     lineages: dict[str, dict[str, Any]] = {}
@@ -350,14 +350,14 @@ def main() -> None:
 
         print(f"\n[{law_name}]")
         if not records:
-            print("  ⚠️  선택된 스냅샷 없음")
+            print("  선택된 스냅샷 없음")
             continue
 
         for r in records:
             eff = r["enforcement_date"].isoformat() if isinstance(r["enforcement_date"], date) else "미상"
-            warning = " ⚠" if r.get("selection_warning") else ""
+            warning = " WARN" if r.get("selection_warning") else ""
             print(
-                f"  ✓ {r['full_title']} | doc_type={r['doc_type']} | "
+                f"  OK {r['full_title']} | doc_type={r['doc_type']} | "
                 f"legal_type={r['legal_type'] or '-'} | 시행={eff} | "
                 f"path={r['relative_path']} | commit={r['selected_commit'][:7]}{warning}"
             )

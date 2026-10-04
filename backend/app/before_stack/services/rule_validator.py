@@ -2,7 +2,7 @@
 rule_validator.py — Phase B-3 (수치 규칙 검증, 순수 Python)
 role_mapping 경유로 raw_sections 를 파싱해 수치 위반을 탐지한다.
 
-⚠ 절대 규칙:
+절대 규칙:
     - structured 값 사용 금지 (OCR 오류 확인됨)
     - 항목 번호 하드코딩 금지 → role_mapping 경유
     - LLM 에게 숫자 계산 위임 금지 → Python 로직으로만

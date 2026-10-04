@@ -504,7 +504,7 @@ def run_pipeline_pages(image_paths: Sequence[str]) -> dict:
             }
         }
 
-    ⚠ 절대 규칙: structured 값으로 수치 계산 금지.
+    절대 규칙: structured 값으로 수치 계산 금지.
                  시간·임금 계산은 raw_sections 에서 직접 파싱할 것.
     """
     if not image_paths:

@@ -62,19 +62,19 @@ def main():
             if (law, art) not in index:
                 if (law, art) in KNOWN_SOURCE_FORMAT_CAVEATS:
                     caveat_missing.append(f"{law} {art}")
-                    print(f"  ⚠ {law} {art} (source-format caveat)")
+                    print(f"  WARN {law} {art} (source-format caveat)")
                 else:
                     missing.append(f"{law} {art}")
-                    print(f"  ❌ {law} {art}")
+                    print(f"  FAIL {law} {art}")
             else:
-                print(f"  ✓ {law} {art}")
+                print(f"  OK {law} {art}")
     
     if missing:
-        print(f"\n⚠️  누락된 핵심 조문 {len(missing)}개 - 파싱 로직 재점검 필요")
+        print(f"\n누락된 핵심 조문 {len(missing)}개 - 파싱 로직 재점검 필요")
     else:
-        print("\n✓ 핵심 조문 hard failure 없음")
+        print("\n핵심 조문 hard failure 없음")
     if caveat_missing:
-        print(f"⚠️  source-format caveat {len(caveat_missing)}개")
+        print(f"source-format caveat {len(caveat_missing)}개")
     
     # 2. 길이 분포
     lengths = [c["char_count_normalized"] for c in chunks]
@@ -106,31 +106,31 @@ def main():
         if any(ch in c["content_normalized"] for ch in "①②③④⑤")
     )
     if circled_remnants:
-        print(f"  ⚠️  원숫자가 남은 청크: {circled_remnants}개")
+        print(f"  원숫자가 남은 청크: {circled_remnants}개")
     else:
-        print(f"  ✓ 원숫자 모두 정규화됨")
+        print(f"  원숫자 모두 정규화됨")
     
     history_remnants = sum(
         1 for c in chunks 
         if "<개정" in c["content_normalized"] or "<신설" in c["content_normalized"]
     )
     if history_remnants:
-        print(f"  ⚠️  개정 이력이 남은 청크: {history_remnants}개")
+        print(f"  개정 이력이 남은 청크: {history_remnants}개")
     else:
-        print(f"  ✓ 개정 이력 모두 제거됨")
+        print(f"  개정 이력 모두 제거됨")
 
     deletion_remnants = sum(1 for c in chunks if is_deletion_only_chunk(c))
     if deletion_remnants:
-        print(f"  ⚠️  deletion-only 청크 잔존: {deletion_remnants}개")
+        print(f"  deletion-only 청크 잔존: {deletion_remnants}개")
     else:
-        print(f"  ✓ deletion-only 청크 없음")
+        print(f"  deletion-only 청크 없음")
 
     content_hashes = Counter(content_hash(c["content_normalized"]) for c in chunks)
     content_dups = {k: v for k, v in content_hashes.items() if v > 1}
     if content_dups:
-        print(f"  ⚠️  normalized 내용 중복: {len(content_dups)}그룹 / {sum(content_dups.values())}개 청크")
+        print(f"  normalized 내용 중복: {len(content_dups)}그룹 / {sum(content_dups.values())}개 청크")
     else:
-        print(f"  ✓ normalized 내용 중복 없음")
+        print(f"  normalized 내용 중복 없음")
 
     split_field_issues = [
         c for c in chunks
@@ -143,9 +143,9 @@ def main():
         )
     ]
     if split_field_issues:
-        print(f"  ⚠️  Step 6 split fallback 필드 불일치: {len(split_field_issues)}개")
+        print(f"  Step 6 split fallback 필드 불일치: {len(split_field_issues)}개")
     else:
-        print(f"  ✓ Step 6 split fallback 필드 일관성 확인")
+        print(f"  Step 6 split fallback 필드 일관성 확인")
         
     # 근로기준법 제76조 중복 검증 (특별 케이스)
     article_76_chunks = [
@@ -159,7 +159,7 @@ def main():
     for c in article_76_chunks:
         print(f"    - ordinal={c['article_ordinal']}: {c['article_title']}")
     if len(article_76_chunks) != 3:
-        print("  ⚠️  article_ordinal 로직 실패 — Step 4 재점검 필요")
+        print("  article_ordinal 로직 실패 — Step 4 재점검 필요")
 
 
 if __name__ == "__main__":
