@@ -30,13 +30,13 @@ FastAPI 애플리케이션, RAG 엔진, PostgreSQL/pgvector DB 연결, 임베딩
 
 | Task | 산출물 |
 |------|--------|
-| Task 1 | backend 폴더/최소 파일 구조 ✓ |
+| Task 1 | backend 폴더/최소 파일 구조 (완료) |
 | Task 2 | `app/models/law_chunk.py` (ORM 모델) |
 | Task 3 | Alembic + 마이그레이션 |
-| Task 4 | `scripts/embed_chunks.py`, `verify/check_embeddings.py` ✓ |
-| Task 5 | retrieval MVP (`main.py`, `services/`, `routers/`, `schemas/`, `verify/check_retrieval.py`, `eval/run_retrieval_eval.py`) ✓ |
-| Task 6 | grounded answer generation, citation grounding, answer eval ✓ |
-| Task 7 | SCN-004 document draft API, fixtures, smoke ✓ |
+| Task 4 | `scripts/embed_chunks.py`, `verify/check_embeddings.py` (완료) |
+| Task 5 | retrieval MVP (`main.py`, `services/`, `routers/`, `schemas/`, `verify/check_retrieval.py`, `eval/run_retrieval_eval.py`) (완료) |
+| Task 6 | grounded answer generation, citation grounding, answer eval (완료) |
+| Task 7 | SCN-004 document draft API, fixtures, smoke (완료) |
 
 ## 현재 상태
 

@@ -37,18 +37,18 @@ def main():
     duplicates = {k: v for k, v in id_counts.items() if v > 1}
     
     if duplicates:
-        print(f"\n⚠️  chunk_id 중복 발견: {len(duplicates)}건")
+        print(f"\nchunk_id 중복 발견: {len(duplicates)}건")
         for cid, count in list(duplicates.items())[:5]:
             print(f"  {cid}: {count}회")
     else:
-        print("✓ chunk_id 중복 없음")
+        print("chunk_id 중복 없음")
     
     # 2. 내용 중복 검사
     content_hashes = Counter(content_hash(c["content_normalized"]) for c in chunks)
     content_dups = {k: v for k, v in content_hashes.items() if v > 1}
     
     if content_dups:
-        print(f"\n⚠️  내용 중복 발견: {len(content_dups)}그룹 / {sum(content_dups.values())}개 청크")
+        print(f"\n내용 중복 발견: {len(content_dups)}그룹 / {sum(content_dups.values())}개 청크")
         # 중복 내용 샘플 출력
         for h, count in list(content_dups.items())[:3]:
             same = [c for c in chunks if content_hash(c["content_normalized"]) == h]
@@ -56,7 +56,7 @@ def main():
             for s in same[:2]:
                 print(f"    - {s['chunk_id']}")
     else:
-        print("✓ 내용 중복 없음")
+        print("내용 중복 없음")
     
     # 3. 필수 필드 검증
     required_fields = [
@@ -73,29 +73,29 @@ def main():
                 missing_field_counts[f] += 1
     
     if missing_field_counts:
-        print(f"\n⚠️  필수 필드 누락:")
+        print(f"\n필수 필드 누락:")
         for field, count in sorted(missing_field_counts.items()):
             print(f"  {field}: {count}건")
     else:
-        print("✓ 필수 필드 모두 존재")
+        print("필수 필드 모두 존재")
     
     # 4. deletion-only 청크 검사 및 제거
     deletion_only_chunks = [c for c in chunks if is_deletion_only_chunk(c)]
     if deletion_only_chunks:
-        print(f"\n⚠️  deletion-only 청크 발견: {len(deletion_only_chunks)}건")
+        print(f"\ndeletion-only 청크 발견: {len(deletion_only_chunks)}건")
         for c in deletion_only_chunks[:5]:
             print(f"  - {c['citation_label']}")
         chunks = [c for c in chunks if not is_deletion_only_chunk(c)]
     else:
-        print("✓ deletion-only 청크 없음")
+        print("deletion-only 청크 없음")
 
     # 5. 빈 청크 검사
     empty_chunks = [c for c in chunks if len(c["content_normalized"].strip()) < 20]
     if empty_chunks:
-        print(f"\n⚠️  내용이 너무 짧은 청크: {len(empty_chunks)}건 (20자 미만)")
+        print(f"\n내용이 너무 짧은 청크: {len(empty_chunks)}건 (20자 미만)")
         chunks = [c for c in chunks if len(c["content_normalized"].strip()) >= 20]
     else:
-        print("✓ 짧은 청크 없음")
+        print("짧은 청크 없음")
     
     # 6. 중복 제거 (chunk_id 기준)
     seen_ids = set()
@@ -109,11 +109,11 @@ def main():
     remaining_content_dups = {k: v for k, v in remaining_content_hashes.items() if v > 1}
     if remaining_content_dups:
         print(
-            f"\n⚠️  최종 normalized 내용 중복 남음: "
+            f"\n최종 normalized 내용 중복 남음: "
             f"{len(remaining_content_dups)}그룹 / {sum(remaining_content_dups.values())}개 청크"
         )
     else:
-        print("\n✓ 최종 normalized 내용 중복 없음")
+        print("\n최종 normalized 내용 중복 없음")
     
     print(f"\n최종 청크: {len(unique_chunks)}개")
     

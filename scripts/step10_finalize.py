@@ -37,8 +37,8 @@ def main():
         with open(path, "w", encoding="utf-8") as f:
             json.dump(law_chunks, f, ensure_ascii=False, indent=2)
     
-    print(f"\n✓ 총 {len(chunks)}개 청크")
-    print(f"✓ 저장 위치: {output_dir}/")
+    print(f"\n총 {len(chunks)}개 청크")
+    print(f"저장 위치: {output_dir}/")
     print(f"\n다음 단계: embedding 생성 (Master Plan Step A-6)")
 
 
